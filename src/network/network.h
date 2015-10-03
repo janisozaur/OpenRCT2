@@ -94,6 +94,7 @@ extern "C" {
 #include <list>
 #include <set>
 #include <memory>
+#include <string>
 #include <vector>
 #include <SDL.h>
 
