@@ -200,6 +200,7 @@ void hookfunc(int address, int newaddress, int stacksize, int registerargs[], in
 
 void addhook(int address, int newaddress, int stacksize, int registerargs[], int registersreturned, int eaxDestinationRegister)
 {
+#if 0
 	if (!g_hooktableaddress) {
 		size_t size = g_maxhooks * 100;
 #ifdef _WIN32
@@ -230,4 +231,5 @@ void addhook(int address, int newaddress, int stacksize, int registerargs[], int
 #endif // _WIN32
 	hookfunc(hookaddress, newaddress, stacksize, registerargs, registersreturned, eaxDestinationRegister);
 	g_hooktableoffset++;
+#endif
 }

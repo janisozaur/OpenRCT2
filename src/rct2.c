@@ -220,6 +220,7 @@ int rct2_startup_checks()
 
 void rct2_update()
 {
+#if 0
 	// Set 0x009DE564 to the value of esp
 	// RCT2 sets the stack pointer to the value of this address when ending the current game tick from anywhere
 	#ifdef _MSC_VER
@@ -234,6 +235,7 @@ void rct2_update()
 		movl %%esp, (%%eax) 	\n\
 	 " : : : "eax" );
 	#endif
+#endif
 
 	if (!setjmp(_end_update_jump))
 		rct2_update_2();
