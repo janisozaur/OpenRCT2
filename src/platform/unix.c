@@ -19,7 +19,6 @@
  *****************************************************************************/
 
 #ifndef _WIN32
-#ifndef __APPLE__
 
 #include "../cmdline.h"
 #include "../openrct2.h"
@@ -74,5 +73,4 @@ bool platform_check_steam_overlay_attached() {
 	return false;
 }
 
-#endif
 #endif
