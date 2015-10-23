@@ -127,41 +127,16 @@ if [[ $(uname) == "Darwin" ]]; then
 
     # Install packages with whatever command was found.
     # Very possible I'm missing some dependencies here.
-    eval "$package_command install cmake wine"
-
-    if [[ ! -d /usr/include/wine ]]; then
-        # This will almost certainly break as brew changes. Better ideas
-        # welcome.
-        wine_path="/usr/local/Cellar/wine/1.6.2/include/wine"
-        if [ $package_command == "sudo port" ]; then
-            wine_path="/opt/local/include/wine"
-        fi
-        sudo ln -s $wine_path /usr/include
-    fi
-
-    mingw_name=mingw-w32-bin_i686-darwin
-    mingw_tar=$mingw_name"_20130531".tar.bz2
-    mingw_path=/usr/local/$mingw_name
-    if [[ ! -f $cachedir/$mingw_tar ]]; then
-        download "https://downloads.sourceforge.net/project/mingw-w64/Toolchains targetting Win32/Automated Builds/$mingw_tar" $cachedir/$mingw_tar
-    fi
-    if [[ ! -d "$mingw_path" ]]; then
-
-        pushd /usr/local/
-            sudo mkdir $mingw_name
-        popd
-
-        echo "Extracting contents of $mingw_tar to $mingw_path"
-        echo "Don't forget to add $mingw_path/bin to your PATH variable!"
-        sudo tar -xyf $cachedir/$mingw_tar -C $mingw_path
-
-        pushd /usr/local
-            sudo chmod 755 $mingw_name
-            pushd $mingw_name
-                sudo find . -type d -exec chmod 755 {} \;
-            popd
-        popd
-    fi
+	eval "$package_command update"
+	eval "$package_command install cmake"
+	eval "$package_command install jansson --universal"
+	eval "$package_command install libogg --universal"
+	eval "$package_command install speex --universal"
+	eval "$package_command install sdl2 --universal"
+	eval "$package_command install xz --universal"
+	eval "$package_command install libpng --universal"
+	eval "$package_command install freetype --universal"
+	eval "$package_command install sdl2_ttf --universal"
 elif [[ $(uname) == "Linux" ]]; then
 	if [[ -z "$TRAVIS" ]]; then
 	    sudo apt-get install -y binutils-mingw-w64-i686 gcc-mingw-w64-i686 g++-mingw-w64-i686 cmake
