@@ -229,7 +229,7 @@ void addhook(int address, int newaddress, int stacksize, int registerargs[], int
 #ifdef _WIN32
 		g_hooktableaddress = VirtualAllocEx(GetCurrentProcess(), NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 #else
-		g_hooktableaddress = mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		g_hooktableaddress = mmap(NULL, size, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
 		if (g_hooktableaddress == MAP_FAILED)
 		{
 			perror("mmap");
