@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *****************************************************************************/
 
-#ifdef __linux
+#if defined(__linux) || defined(__APPLE__)
 
 #include <libgen.h>
 #include <SDL_syswm.h>
@@ -770,4 +770,4 @@ uint8 platform_get_locale_temperature_format(){
 	STUB();
 	return TEMPERATURE_FORMAT_C;
 }
-#endif // __linux
+#endif // defined(__linux) || defined(__APPLE__)

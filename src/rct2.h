@@ -90,10 +90,11 @@ typedef utf16* utf16string;
 #endif // _WIN32
 #ifdef __linux__
 	#define OPENRCT2_PLATFORM		"Linux"
-#endif
+#endif // __linux__
 #ifdef __APPLE__
 	#define OPENRCT2_PLATFORM		"OS X"
-#endif
+#endif // __APPLE__
+
 #ifndef OPENRCT2_PLATFORM
 	#error Unknown platform!
 #endif
