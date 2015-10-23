@@ -171,14 +171,23 @@ static void openrct2_set_exe_path()
 	tempPath[exeDelimiterIndex] = L'\0';
 	_wfullpath(exePath, tempPath, MAX_PATH);
 	WideCharToMultiByte(CP_UTF8, 0, exePath, countof(exePath), gExePath, countof(gExePath), NULL, NULL);
-#else
+#else // _WIN32
 	char exePath[MAX_PATH];
+#if defined(__APPLE__)
+	uint32_t size = MAX_PATH;
+	int result = _NSGetExecutablePath(exePath, &size);
+	if (result != 0) {
+		log_fatal("failed to get path");
+	}
+	exePath[MAX_PATH - 1] = '\0';
+#else // defined(__APPLE__)
 	ssize_t bytesRead;
 	bytesRead = readlink("/proc/self/exe", exePath, MAX_PATH);
 	if (bytesRead == -1) {
 		log_fatal("failed to read /proc/self/exe");
 	}
 	exePath[bytesRead] = '\0';
+#endif // defined(__APPLE__)
 	log_verbose("######################################## Setting exe path to %s", exePath);
 	char *exeDelimiter = strrchr(exePath, platform_get_path_separator());
 	if (exeDelimiter == NULL)
