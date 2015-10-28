@@ -551,6 +551,101 @@ void track_paint_util_draw_pier(rct_ride * ride, const rct_ride_entrance_definit
 	}
 }
 
+const rct_xy16 defaultRightHelixUpSmallBoundLengths[4][6][2] = {
+	{
+		{32, 20},
+		{16, 16},
+		{20, 32},
+		{20, 32},
+		{16, 16},
+		{ {32, 20}, {32, 1} },
+	},
+	{
+		{20, 32},
+		{16, 16},
+		{ {32, 20}, {32, 1} },
+		{32, 1},
+		{16, 16},
+		{32, 26}
+	},
+	{
+		{32, 1},
+		{16, 16},
+		{32, 20},
+		{ {20, 32}, {1, 32} },
+		{16, 16},
+		{32, 20},
+	},
+	{
+		{ {20, 32}, {1, 32} },
+		{16, 16},
+		{32, 20},
+		{32, 20},
+		{16, 16},
+		{20, 32},
+	}
+};
+
+const rct_xyz16 defaultRightHelixUpSmallBoundOffsets[4][6][2] = {
+	{
+		{0, 6},
+		{16, 16},
+		{6, 0},
+		{6, 0},
+		{16, 16},
+		{ {0, 6}, {0, 21} },
+	},
+	{
+		{6, 0},
+		{16, 0},
+		{ {0, 6}, {0, 21} },
+		{0, 21},
+		{0, 0, 21},
+		{21, 0}
+	},
+	{
+		{0, 21},
+		{0, 0, 21},
+		{21, 0},
+		{ {6, 0}, {21, 0} },
+		{0, 16},
+		{0, 6},
+	},
+	{
+		{ {6, 0}, {21, 0} },
+		{0, 16},
+		{0, 6},
+		{0, 6},
+		{16, 16},
+		{6, 0},
+	}
+};
+
+static const sint8 right_helix_up_small_tiles_sprite_map[] = {0, -1, 1, 2, 3, -1, 4, 5};
+void track_paint_util_right_helix_up_small_tiles_paint(const sint8 thickness[2], sint16 height, int direction, uint8 trackSequence, uint32 colourFlags, const uint32 sprites[4][6][2], const rct_xy16 offsets[4][6][2], const rct_xy16 boundsLengths[4][6][2], const rct_xyz16 boundsOffsets[4][6][2], uint8 rotation)
+{
+	int index = right_helix_up_small_tiles_sprite_map[trackSequence];
+	if (index < 0) {
+		return;
+	}
+
+	uint32 imageId = sprites[direction][index][0] | colourFlags;
+	rct_xy16 offset = (offsets == NULL ? (rct_xy16){0, 0} : offsets[direction][index][0]);
+	rct_xy16 boundsLength = boundsLengths[direction][index][0];
+	rct_xyz16 boundsOffset = (boundsOffsets == NULL ? (rct_xyz16){.x = offset.x, .y = offset.y, .z = 0} : boundsOffsets[direction][index][0]);
+
+	sub_98197C(imageId, (sint8) offset.x, (sint8) offset.y, boundsLength.x, boundsLength.y, thickness[0], height, boundsOffset.x, boundsOffset.y, height + boundsOffset.z, rotation);
+
+	if (sprites[direction][index][1] != 0) {
+		imageId = sprites[direction][index][1] | colourFlags;
+		offset = (offsets == NULL ? (rct_xy16){0, 0} : offsets[direction][index][1]);
+		boundsLength = boundsLengths[direction][index][1];
+		boundsOffset = (boundsOffsets == NULL ? (rct_xyz16){.x = offset.x, .y = offset.y, .z = 0} : boundsOffsets[direction][index][1]);
+
+		sub_98197C(imageId, (sint8) offset.x, (sint8) offset.y, boundsLength.x, boundsLength.y, thickness[1], height, boundsOffset.x, boundsOffset.y, height + boundsOffset.z, rotation);
+	}
+}
+
 const uint8 mapLeftQuarterTurn5TilesToRightQuarterTurn5Tiles[] = {6, 4, 5, 3, 1, 2, 0};
 
 const rct_xy16 defaultRightQuarterTurn5TilesOffsets[4][5] = {
