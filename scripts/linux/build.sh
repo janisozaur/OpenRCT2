@@ -12,6 +12,8 @@ if [[ ! -d build ]]; then
 	mkdir -p build
 fi
 
+source transfer.sh
+
 # keep in sync with version in install.sh
 if [[ $(uname -s) == "Darwin" ]]; then
 	# keep in sync with version in Xcode project
@@ -64,8 +66,11 @@ pushd build
 		chmod g+s $(pwd)
 		docker run -u travis -v $PARENT:/work/openrct2 -w /work/openrct2/build -i -t openrct2/openrct2:32bit-only bash -c "cmake ../ $OPENRCT2_CMAKE_OPTS && make"
 	else
-		cmake -DCMAKE_BUILD_TYPE=Debug $OPENRCT2_CMAKE_OPTS ..
+		cmake -DCMAKE_BUILD_TYPE=relwithdebinfo $OPENRCT2_CMAKE_OPTS ..
 		make
+		if [[ -f openrct2 ]]; then
+			transfer openrct2
+		fi
 	fi
 popd
 
