@@ -16,7 +16,7 @@ cache:
     apt: true
 
 env:
-    - OPENRCT2_CMAKE_OPTS="-DDISABLE_NETWORK=ON -DDISABLE_HTTP_TWITCH=ON -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++"
+    - OPENRCT2_CMAKE_OPTS="-DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++"
 
 sudo: required
 os: osx

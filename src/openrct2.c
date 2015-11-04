@@ -49,6 +49,10 @@
 #include <unistd.h>
 #endif // defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
 
+#if defined(__APPLE__) && defined(__MACH__)
+#include <mach-o/dyld.h>
+#endif // defined(__APPLE__) && defined(__MACH__)
+
 int gOpenRCT2StartupAction = STARTUP_ACTION_TITLE;
 utf8 gOpenRCT2StartupActionPath[512] = { 0 };
 utf8 gExePath[MAX_PATH];
