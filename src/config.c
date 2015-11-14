@@ -345,8 +345,8 @@ void config_set_defaults()
 					// Copy the string to new memory
 					const utf8 *src = property->default_value.value_string;
 					const utf8 **dst = (const utf8**)&(destValue->value_string);
-					int len = strnlen(src, 100);
 					if (src != NULL) {
+						int len = strnlen(src, 100);
 						const utf8* result;
 						result = strndup(src, len);
 						*dst = result;
