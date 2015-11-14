@@ -97,6 +97,7 @@ extern "C" {
 #include <string>
 #include <vector>
 #include <SDL.h>
+#include <string>
 
 template <std::size_t size>
 struct ByteSwapT { };
