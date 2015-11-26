@@ -68,7 +68,8 @@ if (UNIX)
 endif (UNIX)
 
 # find and include SDL2
-PKG_CHECK_MODULES(SDL2 REQUIRED sdl2 SDL2_ttf)
+PKG_CHECK_MODULES(SDL2 REQUIRED sdl2)
+PKG_CHECK_MODULES(SDL2TTF REQUIRED SDL2_ttf)
 
 # speex v1.1.15 is supplied in our zipped library, but distributions provide
 # updated version, with required functions extracted out to libspeexdsp.
@@ -102,4 +103,4 @@ endif (WIN32)
 # libopenrct2.dll -> openrct2.dll
 set_target_properties(${PROJECT} PROPERTIES PREFIX "")
 
-TARGET_LINK_LIBRARIES(${PROJECT} ${SDL2_LIBRARIES} ${ORCTLIBS_LIB} ${JANSSON_LIBRARIES} ${HTTPLIBS} ${NETWORKLIBS} ${SPEEX_LIBRARIES} ${DLLIB})
+TARGET_LINK_LIBRARIES(${PROJECT} ${SDL2_LIBRARIES} ${SDL2TTF_LIBRARIES} ${ORCTLIBS_LIB} ${JANSSON_LIBRARIES} ${HTTPLIBS} ${NETWORKLIBS} ${SPEEX_LIBRARIES} ${DLLIB})
