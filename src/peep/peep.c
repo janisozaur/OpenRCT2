@@ -7133,67 +7133,65 @@ uint8 sub_69A60A(rct_peep* peep){
  *  rct2: 0x0069A5F0
  */
 static int sub_69A5F0(sint16 x, sint16 y, sint16 z, rct_peep *peep, rct_map_element *map_element){
-	//RCT2_GLOBAL(0x00F1AEDC, uint8) = sub_69A60A(peep);
+	RCT2_GLOBAL(0x00F1AEDC, uint8) = sub_69A60A(peep);
 
-	//// Redundant check to make sure peep is not null??
-	//sint16 start_x = RCT2_GLOBAL(0x00F1AECE, sint16);
-	//sint16 start_y = RCT2_GLOBAL(0x00F1AED0, sint16);
-	//uint8 start_z = RCT2_GLOBAL(0x00F1AED2, uint8);
-	//
-	//uint8 edges = 0xF;
-	//if (peep->var_CC.x == (start_x / 32) &&
-	//	peep->var_CC.y == (start_y / 32) &&
-	//	peep->var_CC.z == start_z){
+	// Redundant check to make sure peep is not null??
+	sint16 start_x = RCT2_GLOBAL(0x00F1AECE, sint16);
+	sint16 start_y = RCT2_GLOBAL(0x00F1AED0, sint16);
+	uint8 start_z = RCT2_GLOBAL(0x00F1AED2, uint8);
 
-	//	uint8 index = 0;
-	//	for (; index < 4; ++index){
-	//		if (peep->var_D0[index].x == x &&
-	//			peep->var_D0[index].y == y &&
-	//			peep->var_D0[index].z == z){
-	//			edges = peep->var_D0[index].direction & 0xF;
-	//			break;
-	//		}
-	//	}
-	//}
+	uint8 edges = 0xF;
+	if (peep->var_CC.x == (start_x / 32) &&
+		peep->var_CC.y == (start_y / 32) &&
+		peep->var_CC.z == start_z){
 
-	//bool found = false;
-	//rct_map_element *destMapElement = map_get_first_element_at(x / 32, y / 32);
-	//do{
-	//	if (destMapElement->base_height != z)
-	//		continue;
+		uint8 index = 0;
+		for (; index < 4; ++index){
+			if (peep->var_D0[index].x == x &&
+				peep->var_D0[index].y == y &&
+				peep->var_D0[index].z == z){
+				edges = peep->var_D0[index].direction & 0xF;
+				break;
+			}
+		}
+	}
 
-	//	if (map_element_get_type(destMapElement) != MAP_ELEMENT_TYPE_PATH)
-	//		continue;
+	bool found = false;
+	rct_map_element *destMapElement = map_get_first_element_at(x / 32, y / 32);
+	do{
+		if (destMapElement->base_height != z)
+			continue;
 
-	//	found = true;
-	//	break;
-	//} while (!map_element_is_last_for_tile(destMapElement++));
+		if (map_element_get_type(destMapElement) != MAP_ELEMENT_TYPE_PATH)
+			continue;
 
-	//sint8 chosenDirection = 0xF;
-	//if (!found){
-	//	chosenDirection = 0xF;
-	//	//goto 69A89C
-	//}
+		found = true;
+		break;
+	} while (!map_element_is_last_for_tile(destMapElement++));
 
-	//edges &= path_get_permitted_edges(destMapElement);
-	//if (edges == 0){
-	//	chosenDirection = 0xF;
-	//	// goto 69A89C
-	//}
+	sint8 chosenDirection = 0xF;
+	if (!found){
+		chosenDirection = 0xF;
+		//goto 69A89C
+	}
 
-	//chosenDirection = bitscanforward(edges);
-	//if (edges & ~(1 << chosenDirection) == 0){
-	//	// goto 69A8A1 chosenDirection
-	//}
+	edges &= path_get_permitted_edges(destMapElement);
+	if (edges == 0){
+		chosenDirection = 0xF;
+		// goto 69A89C
+	}
 
-	//for (; chosenDirection != -1; chosenDirection = bitscanforward(edges)){
-	//	edges &= ~(1 << chosenDirection);
-	//	//69a814
-	//}
-	////69a895
-	int eax = x, ebx, ecx = y, edx = z, esi = (int)peep, ebp, edi = (int)map_element;
-	RCT2_CALLFUNC_X(0x0069A5F0, &eax, &ebx, &ecx, &edx, &esi, &edi, &ebp);
-	return ebp;
+	chosenDirection = bitscanforward(edges);
+	if (edges & ~(1 << chosenDirection) == 0){
+		// goto 69A8A1 chosenDirection
+	}
+
+	for (; chosenDirection != -1; chosenDirection = bitscanforward(edges)){
+		edges &= ~(1 << chosenDirection);
+		//69a814
+	}
+	//69a895
+	return chosenDirection;
 }
 
 /**
