@@ -54,6 +54,7 @@ int main(int argc, const char **argv)
 
 	STUB();
 	int run_game = cmdline_run(argv, argc);
+	gtk_init(NULL, NULL);
 	if (run_game == 1)
 	{
 		openrct2_launch();

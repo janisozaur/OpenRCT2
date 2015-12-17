@@ -24,6 +24,7 @@
 #include <dlfcn.h>
 #include <stdlib.h>
 #include "../util/util.h"
+#include <gtk/gtk.h>
 
 // See http://syprog.blogspot.ru/2011/12/listing-loaded-shared-objects-in-linux.html
 struct lmap {
@@ -98,7 +99,7 @@ void platform_posix_sub_user_data_path(char *buffer, const char *homedir, const 
 			exit(-1);
 			return;
 		}
-		
+
 		strncat(buffer, homedir, MAX_PATH - 1);
 		strncat(buffer, separator, MAX_PATH - strnlen(buffer, MAX_PATH) - 1);
 		strncat(buffer, ".config", MAX_PATH - strnlen(buffer, MAX_PATH) - 1);
@@ -115,12 +116,44 @@ void platform_posix_sub_user_data_path(char *buffer, const char *homedir, const 
 utf8 *platform_open_directory_browser(utf8 *title)
 {
 	STUB();
-	return NULL;
+	gint res;
+	utf8 *outpath = NULL;
+	GtkWidget *widget =
+	gtk_file_chooser_dialog_new ("OpenRCT2",
+	                             NULL,
+	                             GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+								 "_Cancel",
+                                      GTK_RESPONSE_CANCEL,
+                                      "_Open",
+                                      GTK_RESPONSE_ACCEPT,
+                                      NULL);
+									 gtk_file_chooser_set_local_only (GTK_FILE_CHOOSER(widget), true);
+									  res = gtk_dialog_run (GTK_DIALOG (widget));
+									  if (res == GTK_RESPONSE_ACCEPT)
+  {
+    char *filename;
+    GtkFileChooser *chooser = GTK_FILE_CHOOSER (widget);
+    filename = gtk_file_chooser_get_filename (chooser);
+	size_t sz = strlen(filename) + 1;
+	outpath = malloc(sz);
+    safe_strncpy(outpath, filename, sz);
+    g_free (filename);
+}
+			  gtk_widget_destroy (widget);
+	return outpath;
 }
 
 void platform_show_messagebox(char *message)
 {
 	STUB();
+	GtkWidget *widget =
+gtk_message_dialog_new (NULL,
+                        GTK_DIALOG_MODAL,
+                        GTK_MESSAGE_WARNING,
+                        GTK_BUTTONS_OK,
+                        "test");
+						gtk_dialog_run (GTK_DIALOG (widget));
+gtk_widget_destroy (widget);
 	log_verbose(message);
 }
 
