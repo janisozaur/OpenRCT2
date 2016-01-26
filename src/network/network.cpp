@@ -879,10 +879,13 @@ void Network::UpdateClient()
 		// Check synchronisation
 		if (!_desynchronised && !CheckSRAND(RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_TICKS, uint32), RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_SRAND_0, uint32))) {
 			_desynchronised = true;
+			log_warning("desynced!");
 			window_network_status_open("Network desync detected");
 			if (!gConfigNetwork.stay_connected) {
 				Close();
 			}
+		} else if (_desynchronised) {
+			log_warning("desynced!");
 		}
 		break;
 	}
@@ -1654,6 +1657,7 @@ void Network::Server_Handle_AUTH(NetworkConnection& connection, NetworkPacket& p
 				lineCh = utf8_write_codepoint(lineCh, FORMAT_OUTLINE);
 				lineCh = utf8_write_codepoint(lineCh, FORMAT_GREEN);
 				sprintf(lineCh, "%s has joined the game", player->name);
+				reset_0x69EBE4();
 				chat_history_add(text);
 				Server_Send_MAP(&connection);
 				gNetwork.Server_Send_CHAT(text);

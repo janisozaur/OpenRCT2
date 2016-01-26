@@ -355,6 +355,11 @@ void game_logic_update()
 			return;
 		}
 	}
+	uint32 tick = RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_TICKS, uint32);
+	if ((tick & 0xF) == 0xF)
+	{
+		log_warning("tick %u", tick);
+	}
 	RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_TICKS, uint32)++;
 	RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_TICKS, uint32)++;
 	RCT2_GLOBAL(RCT2_ADDRESS_SCREEN_AGE, sint16)++;
