@@ -1136,13 +1136,16 @@ void window_guest_overview_update(rct_window* w){
 
 	// Disable peep watching thought for multiplayer as its client specific
 	if (network_get_mode() == NETWORK_MODE_NONE) {
-		// Create the "I have the strangest feeling I am being watched thought"
 		if ((w->highlighted_item & 0xFFFF) >= 3840) {
 			if (!(w->highlighted_item & 0x3FF)) {
+				// Create the "I have the strangest feeling I am being watched thought"
 				int random = util_rand() & 0xFFFF;
-				if (random <= 0x2AAA) {
+				if (random <= 0x1000) {
 					rct_peep* peep = GET_PEEP(w->number);
 					peep_insert_new_thought(peep, PEEP_THOUGHT_TYPE_WATCHED, 0xFF);
+				} else if (random <= 0x2AAA) {
+					rct_peep* peep = GET_PEEP(w->number);
+					peep_insert_new_thought(peep, PEEP_THOUGHT_LOVE_OPENRCT2, 0);
 				}
 			}
 		}

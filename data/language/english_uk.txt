@@ -1639,7 +1639,7 @@ STR_1633    :
 STR_1634    :
 STR_1635    :
 STR_1636    :{SMALLFONT}{OPENQUOTES}I'm not paying that much for a roast sausage from {STRINGID}{ENDQUOTES}
-STR_1637    :
+STR_1637    :{SMALLFONT}{OPENQUOTES}I love OpenRCT2!{ENDQUOTES}
 STR_1638    :
 STR_1639    :
 STR_1640    :
