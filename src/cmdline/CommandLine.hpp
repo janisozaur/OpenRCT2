@@ -86,6 +86,7 @@ namespace CommandLine
     extern const CommandLineCommand RootCommands[];
     extern const CommandLineCommand ScreenshotCommands[];
     extern const CommandLineCommand SpriteCommands[];
+    extern const CommandLineCommand Sv6Commands[];
 
     extern const CommandLineExample RootExamples[];
 

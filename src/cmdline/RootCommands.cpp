@@ -77,6 +77,7 @@ const CommandLineCommand CommandLine::RootCommands[]
     // Sub-commands
     DefineSubCommand("screenshot", CommandLine::ScreenshotCommands),
     DefineSubCommand("sprite",     CommandLine::SpriteCommands    ),
+    DefineSubCommand("sv6",        CommandLine::Sv6Commands    ),
 
     CommandTableEnd
 };
