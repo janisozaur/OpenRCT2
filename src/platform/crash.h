@@ -1,6 +1,8 @@
 #ifndef _OPENRCT2_CRASH_
 #define _OPENRCT2_CRASH_
 
+#define USE_BREAKPAD
+
 typedef void* CExceptionHandler;
 
 #ifdef __cplusplus
