@@ -50,7 +50,7 @@ utf8 _openrctDataDirectoryPath[MAX_PATH] = { 0 };
  * The function that is called directly from the host application (rct2.exe)'s WinMain.
  * This will be removed when OpenRCT2 can be built as a stand alone application.
  */
-sint32 main(sint32 argc, const char **argv)
+int main(int argc, char *argv[])
 {
 	core_init();
 
