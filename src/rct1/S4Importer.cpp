@@ -659,8 +659,8 @@ void S4Importer::ImportFinance()
 
     gCashEncrypted = ENCRYPT_MONEY(_s4.cash);
     gBankLoan = _s4.loan;
-    RCT2_GLOBAL(RCT2_ADDRESS_MAXIMUM_LOAN, money32) = _s4.max_loan;
-    RCT2_GLOBAL(RCT2_ADDRESS_INITIAL_CASH, money32) = _s4.cash;
+    gMaxBankLoan = _s4.max_loan;
+    gInitialCash = _s4.cash;
 
     gCompanyValue = _s4.company_value;
     gParkValue = _s4.park_value;
@@ -856,7 +856,7 @@ void S4Importer::ImportResearch()
     research_remove_non_separate_vehicle_types();
 
     // Research funding / priority
-    uint16 activeResearchTypes = 0;
+    uint8 activeResearchTypes = 0;
     if (_s4.research_priority & RCT1_RESEARCH_EXPENDITURE_ROLLERCOASTERS)
     {
         activeResearchTypes |= (1 << RESEARCH_CATEGORY_ROLLERCOASTER);
@@ -879,16 +879,16 @@ void S4Importer::ImportResearch()
     {
         activeResearchTypes |= (1 << RESEARCH_CATEGORY_SCENERYSET);
     }
-    RCT2_GLOBAL(RCT2_ADDRESS_ACTIVE_RESEARCH_TYPES, uint16) = activeResearchTypes;
-    RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_RESEARCH_LEVEL, uint8) = _s4.research_level;
+    gResearchPriorities = activeResearchTypes;
+    gResearchFundingLevel = _s4.research_level;
 
     // Research history
-    RCT2_GLOBAL(RCT2_ADDRESS_RESEARH_PROGRESS, uint8) = _s4.research_progress;
-    // RCT2_GLOBAL(RCT2_ADDRESS_RESEARH_PROGRESS_STAGE, uint8) =
-    RCT2_GLOBAL(RCT2_ADDRESS_NEXT_RESEARCH_ITEM, uint8) = _s4.next_research_item;
-    RCT2_GLOBAL(RCT2_ADDRESS_NEXT_RESEARCH_CATEGORY, uint8) = _s4.next_research_category;
-    // RCT2_GLOBAL(RCT2_ADDRESS_NEXT_RESEARCH_EXPECTED_DAY, uint8) =
-    // RCT2_GLOBAL(RCT2_ADDRESS_NEXT_RESEARCH_EXPECTED_MONTH, uint8) =
+    gResearchProgress = _s4.research_progress;
+    // gResearchProgressStage =
+    gResearchNextItem = _s4.next_research_item;
+    gResearchNextCategory = _s4.next_research_category;
+    // gResearchExpectedDay =
+    // gResearchExpectedMonth =
 
 }
 
@@ -1032,10 +1032,10 @@ void S4Importer::ImportScenarioObjective()
 
 void S4Importer::ImportSavedView()
 {
-    RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_X, uint16) = _s4.view_x;
-    RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_Y, uint16) = _s4.view_y;
-    RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_ZOOM_AND_ROTATION, uint8) = _s4.view_zoom;
-    RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_ZOOM_AND_ROTATION + 1, uint8) = _s4.view_rotation;
+    gSavedViewX = _s4.view_x;
+    gSavedViewY = _s4.view_y;
+    gSavedViewZoom = _s4.view_zoom;
+    gSavedViewRotation = _s4.view_rotation;
 }
 
 void S4Importer::ClearExtraTileEntries()
@@ -1095,7 +1095,7 @@ void S4Importer::ClearExtraTileEntries()
         *tilePointer++ = nextFreeMapElement++;
     }
 
-    RCT2_GLOBAL(RCT2_ADDRESS_NEXT_FREE_MAP_ELEMENT, rct_map_element*) = nextFreeMapElement;
+    gNextFreeMapElement = nextFreeMapElement;
 }
 
 void S4Importer::FixColours()
@@ -1128,7 +1128,7 @@ void S4Importer::FixColours()
     // }
 
     rct_map_element * mapElement = gMapElements;
-    while (mapElement < RCT2_GLOBAL(RCT2_ADDRESS_NEXT_FREE_MAP_ELEMENT, rct_map_element*))
+    while (mapElement < gNextFreeMapElement)
     {
         if (mapElement->base_height != 255)
         {
@@ -1188,7 +1188,7 @@ void S4Importer::FixZ()
     // }
 
     rct_map_element * mapElement = gMapElements;
-    while (mapElement < RCT2_GLOBAL(RCT2_ADDRESS_NEXT_FREE_MAP_ELEMENT, rct_map_element*))
+    while (mapElement < gNextFreeMapElement)
     {
         if (mapElement->base_height != 255)
         {
@@ -1203,7 +1203,7 @@ void S4Importer::FixZ()
 void S4Importer::FixPaths()
 {
     rct_map_element * mapElement = gMapElements;
-    while (mapElement < RCT2_GLOBAL(RCT2_ADDRESS_NEXT_FREE_MAP_ELEMENT, rct_map_element*))
+    while (mapElement < gNextFreeMapElement)
     {
         switch (map_element_get_type(mapElement)) {
         case MAP_ELEMENT_TYPE_PATH:

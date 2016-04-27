@@ -173,7 +173,7 @@ void screenshot_giant()
 
 	int rotation = originalRotation;
 	int zoom = originalZoom;
-	int mapSize = RCT2_GLOBAL(RCT2_ADDRESS_MAP_SIZE, uint16);
+	int mapSize = gMapSize;
 	int resolutionWidth = (mapSize * 32 * 2) >> zoom;
 	int resolutionHeight = (mapSize * 32 * 1) >> zoom;
 
@@ -217,8 +217,7 @@ void screenshot_giant()
 	viewport.view_x = x - ((viewport.view_width << zoom) / 2);
 	viewport.view_y = y - ((viewport.view_height << zoom) / 2);
 	viewport.zoom = zoom;
-
-	RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_ROTATION, uint8) = rotation;
+	gCurrentRotation = rotation;
 
 	// Ensure sprites appear regardless of rotation
 	reset_all_sprite_quadrant_placements();
@@ -309,7 +308,7 @@ int cmdline_for_screenshot(const char **argv, int argc)
 		RCT2_GLOBAL(RCT2_ADDRESS_RUN_INTRO_TICK_PART, uint8) = 0;
 		gScreenFlags = SCREEN_FLAGS_PLAYING;
 
-		int mapSize = RCT2_GLOBAL(RCT2_ADDRESS_MAP_SIZE, uint16);
+		int mapSize = gMapSize;
 		if (resolutionWidth == 0 || resolutionHeight == 0) {
 			resolutionWidth = (mapSize * 32 * 2) >> customZoom;
 			resolutionHeight = (mapSize * 32 * 1) >> customZoom;
@@ -358,14 +357,12 @@ int cmdline_for_screenshot(const char **argv, int argc)
 			viewport.view_x = x - ((viewport.view_width << customZoom) / 2);
 			viewport.view_y = y - ((viewport.view_height << customZoom) / 2);
 			viewport.zoom = customZoom;
-
-			RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_ROTATION, uint8) = customRotation;
+			gCurrentRotation = customRotation;
 		} else {
-			viewport.view_x = RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_X, sint16) - (viewport.view_width / 2);
-			viewport.view_y = RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_Y, sint16) - (viewport.view_height / 2);
-			viewport.zoom = RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_ZOOM_AND_ROTATION, uint16) & 0xFF;
-
-			RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_ROTATION, uint8) = RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_ZOOM_AND_ROTATION, uint16) >> 8;
+			viewport.view_x = gSavedViewX - (viewport.view_width / 2);
+			viewport.view_y = gSavedViewY - (viewport.view_height / 2);
+			viewport.zoom = gSavedViewZoom;
+			gCurrentRotation = gSavedViewRotation;
 		}
 
 		// Ensure sprites appear regardless of rotation

@@ -51,6 +51,8 @@ money32 *gCashHistory = RCT2_ADDRESS(RCT2_ADDRESS_BALANCE_HISTORY, money32);
 money32 *gWeeklyProfitHistory = RCT2_ADDRESS(RCT2_ADDRESS_WEEKLY_PROFIT_HISTORY, money32);
 money32 *gParkValueHistory = RCT2_ADDRESS(RCT2_ADDRESS_PARK_VALUE_HISTORY, money32);
 
+uint8 gCommandExpenditureType;
+
 /**
  * Pay an amount of money.
  *  rct2: 0x069C674
@@ -69,7 +71,7 @@ void finance_payment(money32 amount, rct_expenditure_type type)
 		RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_EXPENDITURE, money32) -= amount; // Cumulative amount of money spent this day
 
 
-	RCT2_GLOBAL(RCT2_ADDRESS_BTM_TOOLBAR_DIRTY_FLAGS, uint32) |= BTM_TB_DIRTY_FLAG_MONEY;
+	gToolbarDirtyFlags |= BTM_TB_DIRTY_FLAG_MONEY;
 	window_invalidate_by_class(WC_FINANCES);
 }
 
@@ -100,7 +102,7 @@ void finance_pay_research()
 	if (gParkFlags & PARK_FLAGS_NO_MONEY)
 		return;
 
-	level = RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_RESEARCH_LEVEL, uint8);
+	level = gResearchFundingLevel;
 	finance_payment(research_cost_table[level] / 4, RCT_EXPENDITURE_TYPE_RESEARCH);
 }
 
@@ -176,11 +178,11 @@ void finance_init() {
 	RCT2_GLOBAL(0x01358334, money32) = 0;
 	RCT2_GLOBAL(0x01358338, uint16) = 0;
 
-	RCT2_GLOBAL(RCT2_ADDRESS_INITIAL_CASH, money32) = MONEY(10000,00); // Cheat detection
+	gInitialCash = MONEY(10000,00); // Cheat detection
 
 	gCashEncrypted = ENCRYPT_MONEY(MONEY(10000,00));
 	gBankLoan = MONEY(10000,00);
-	RCT2_GLOBAL(RCT2_ADDRESS_MAXIMUM_LOAN, money32) = MONEY(20000,00);
+	gMaxBankLoan = MONEY(20000,00);
 
 	RCT2_GLOBAL(0x013587D0, uint32) = 0;
 
@@ -219,7 +221,7 @@ void finance_update_daily_profit()
 		}
 
 		// Research costs
-		uint8 level = RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_RESEARCH_LEVEL, uint8);
+		uint8 level = gResearchFundingLevel;
 		current_profit -= research_cost_table[level];
 
 		// Loan costs
@@ -252,11 +254,11 @@ void finance_update_daily_profit()
 void finance_update_loan_hash()
 {
 	sint32 value = 0x70093A;
-	value -= RCT2_GLOBAL(RCT2_ADDRESS_INITIAL_CASH, money32);
+	value -= gInitialCash;
 	value = ror32(value, 5);
 	value -= gBankLoan;
 	value = ror32(value, 7);
-	value += RCT2_GLOBAL(RCT2_ADDRESS_MAXIMUM_LOAN, money32);
+	value += gMaxBankLoan;
 	value = ror32(value, 3);
 	RCT2_GLOBAL(0x013587C4, sint32) = value;
 }
@@ -268,7 +270,7 @@ void finance_set_loan(money32 loan)
 
 money32 finance_get_initial_cash()
 {
-	return RCT2_GLOBAL(RCT2_ADDRESS_INITIAL_CASH, money32);
+	return gInitialCash;
 }
 
 money32 finance_get_current_loan()
@@ -278,7 +280,7 @@ money32 finance_get_current_loan()
 
 money32 finance_get_maximum_loan()
 {
-	return RCT2_GLOBAL(RCT2_ADDRESS_MAXIMUM_LOAN, money32);
+	return gMaxBankLoan;
 }
 
 money32 finance_get_current_cash()
@@ -299,9 +301,9 @@ void game_command_set_current_loan(int* eax, int* ebx, int* ecx, int* edx, int* 
 	money = DECRYPT_MONEY(gCashEncrypted);
 	loanDifference = currentLoan - newLoan;
 
-	RCT2_GLOBAL(RCT2_ADDRESS_NEXT_EXPENDITURE_TYPE, uint8) = RCT_EXPENDITURE_TYPE_INTEREST * 4;
+	gCommandExpenditureType = RCT_EXPENDITURE_TYPE_INTEREST;
 	if (newLoan > currentLoan) {
-		if (newLoan > RCT2_GLOBAL(RCT2_ADDRESS_MAXIMUM_LOAN, money32)) {
+		if (newLoan > gMaxBankLoan) {
 			gGameCommandErrorText = STR_BANK_REFUSES_TO_INCREASE_LOAN;
 			*ebx = MONEY32_UNDEFINED;
 			return;
@@ -317,12 +319,12 @@ void game_command_set_current_loan(int* eax, int* ebx, int* ecx, int* edx, int* 
 	if (*ebx & GAME_COMMAND_FLAG_APPLY) {
 		money -= loanDifference;
 		gBankLoan = newLoan;
-		RCT2_GLOBAL(RCT2_ADDRESS_INITIAL_CASH, money32) = money;
+		gInitialCash = money;
 		gCashEncrypted = ENCRYPT_MONEY(money);
 		finance_update_loan_hash();
 
 		window_invalidate_by_class(WC_FINANCES);
-		RCT2_GLOBAL(RCT2_ADDRESS_BTM_TOOLBAR_DIRTY_FLAGS, uint16) |= 1;
+		gToolbarDirtyFlags |= BTM_TB_DIRTY_FLAG_MONEY;
 	}
 
 	*ebx = 0;
@@ -363,5 +365,5 @@ void finance_shift_expenditure_table() {
  */
 void finance_reset_cash_to_initial()
 {
-	gCashEncrypted = ENCRYPT_MONEY(RCT2_GLOBAL(RCT2_ADDRESS_INITIAL_CASH, money32));
+	gCashEncrypted = ENCRYPT_MONEY(gInitialCash);
 }

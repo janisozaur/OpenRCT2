@@ -244,20 +244,20 @@ void scenario_begin()
 	mainWindow = window_get_main();
 
 	mainWindow->viewport_target_sprite = -1;
-	mainWindow->saved_view_x = RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_X, sint16);
-	mainWindow->saved_view_y = RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_Y, sint16);
+	mainWindow->saved_view_x = gSavedViewX;
+	mainWindow->saved_view_y = gSavedViewY;
 
-	uint8 _cl = (RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_ZOOM_AND_ROTATION, sint16) & 0xFF) - mainWindow->viewport->zoom;
-	mainWindow->viewport->zoom = RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_ZOOM_AND_ROTATION, sint16) & 0xFF;
-	*((char*)(&RCT2_GLOBAL(RCT2_ADDRESS_CURRENT_ROTATION, sint32))) = RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_ZOOM_AND_ROTATION, sint16) >> 8;
-	if (_cl != 0) {
-		if (_cl < 0) {
-			_cl = -_cl;
-			mainWindow->viewport->view_width >>= _cl;
-			mainWindow->viewport->view_height >>= _cl;
+	uint8 zoomDifference = gSavedViewZoom - mainWindow->viewport->zoom;
+	mainWindow->viewport->zoom = gSavedViewZoom;
+	gCurrentRotation = gSavedViewRotation;
+	if (zoomDifference != 0) {
+		if (zoomDifference < 0) {
+			zoomDifference = -zoomDifference;
+			mainWindow->viewport->view_width >>= zoomDifference;
+			mainWindow->viewport->view_height >>= zoomDifference;
 		} else {
-			mainWindow->viewport->view_width <<= _cl;
-			mainWindow->viewport->view_height <<= _cl;
+			mainWindow->viewport->view_width <<= zoomDifference;
+			mainWindow->viewport->view_height <<= zoomDifference;
 		}
 	}
 	mainWindow->saved_view_x -= mainWindow->viewport->view_width >> 1;
@@ -284,8 +284,8 @@ void scenario_begin()
 	gParkRating = calculate_park_rating();
 	gParkValue = calculate_park_value();
 	gCompanyValue = calculate_company_value();
-	RCT2_GLOBAL(0x013587D0, money32) = RCT2_GLOBAL(RCT2_ADDRESS_INITIAL_CASH, money32) - gBankLoan;
-	gCashEncrypted = ENCRYPT_MONEY(RCT2_GLOBAL(RCT2_ADDRESS_INITIAL_CASH, sint32));
+	RCT2_GLOBAL(0x013587D0, money32) = gInitialCash - gBankLoan;
+	gCashEncrypted = ENCRYPT_MONEY(gInitialCash);
 
 	finance_update_loan_hash();
 
@@ -530,7 +530,7 @@ static void scenario_day_update()
 	uint16 unk = (gParkFlags & PARK_FLAGS_NO_MONEY) ? 40 : 7;
 	RCT2_GLOBAL(0x00135882E, uint16) = RCT2_GLOBAL(0x00135882E, uint16) > unk ? RCT2_GLOBAL(0x00135882E, uint16) - unk : 0;
 
-	RCT2_GLOBAL(RCT2_ADDRESS_BTM_TOOLBAR_DIRTY_FLAGS, uint32) |= BTM_TB_DIRTY_FLAG_DATE;
+	gToolbarDirtyFlags |= BTM_TB_DIRTY_FLAG_DATE;
 }
 
 static void scenario_week_update()
@@ -989,15 +989,16 @@ int scenario_save(SDL_RWops* rw, int flags)
 		viewZoom = viewport->zoom;
 		viewRotation = get_current_rotation();
 	} else {
-		viewX = RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_X, uint16);
-		viewY = RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_Y, uint16);
-		viewZoom = RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_ZOOM_AND_ROTATION, uint16) & 0xFF;
-		viewRotation = RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_ZOOM_AND_ROTATION, uint16) >> 8;
+		viewX = gSavedViewX;
+		viewY = gSavedViewY;
+		viewZoom = gSavedViewZoom;
+		viewRotation = gSavedViewRotation;
 	}
 
-	RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_X, uint16) = viewX;
-	RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_Y, uint16) = viewY;
-	RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_ZOOM_AND_ROTATION, uint16) = viewZoom | (viewRotation << 8);
+	gSavedViewX = viewX;
+	gSavedViewY = viewY;
+	gSavedViewZoom = viewZoom;
+	gSavedViewRotation = viewRotation;
 
 	// Prepare S6
 	rct_s6_data *s6 = malloc(sizeof(rct_s6_data));
@@ -1069,9 +1070,10 @@ int scenario_save_network(SDL_RWops* rw)
 		viewRotation = 0;
 	}
 
-	RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_X, uint16) = viewX;
-	RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_Y, uint16) = viewY;
-	RCT2_GLOBAL(RCT2_ADDRESS_SAVED_VIEW_ZOOM_AND_ROTATION, uint16) = viewZoom | (viewRotation << 8);
+	gSavedViewX = viewX;
+	gSavedViewY = viewY;
+	gSavedViewZoom = viewZoom;
+	gSavedViewRotation = viewRotation;
 
 	// Prepare S6
 	rct_s6_data *s6 = malloc(sizeof(rct_s6_data));
