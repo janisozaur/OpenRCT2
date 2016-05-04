@@ -34,6 +34,8 @@
 #endif
 #define abstract = 0
 
+#define NO_RCT2 1
+
 #if defined(__i386__) || defined(_M_IX86)
 #define PLATFORM_X86
 #endif
