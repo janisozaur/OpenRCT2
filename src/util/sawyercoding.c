@@ -431,7 +431,7 @@ static size_t encode_chunk_repeat(const uint8 *src_buffer, uint8 *dst_buffer, si
 
 	// Iterate through remainder of the source buffer
 	for (i = 1; i < length; ) {
-		searchIndex = (i < 32) ? 0 : (i - 32);
+		searchIndex = i - 32;
 		searchEnd = i - 1;
 
 		bestRepeatCount = 0;
