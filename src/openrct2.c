@@ -184,6 +184,7 @@ bool openrct2_initialise()
 	}
 
 	crash_init();
+	sawyertest();
 
 	if (!openrct2_setup_rct2_segment()) {
 		log_fatal("Unable to load RCT2 data sector");

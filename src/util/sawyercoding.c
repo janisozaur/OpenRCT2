@@ -515,3 +515,319 @@ int sawyercoding_detect_rct1_version(int gameVersion)
 
 	return -1;
 }
+
+static size_t decode_chunk_rle_old(const uint8* src_buffer, uint8* dst_buffer, size_t length)
+{
+	size_t i, j, count;
+	uint8 *dst, rleCodeByte;
+
+	dst = dst_buffer;
+
+	for (i = 0; i < length; i++) {
+		rleCodeByte = src_buffer[i];
+		if (rleCodeByte & 128) {
+			i++;
+			count = 257 - rleCodeByte;
+			for (j = 0; j < count; j++)
+				*dst++ = src_buffer[i];
+		} else {
+			for (j = 0; j <= rleCodeByte; j++)
+				*dst++ = src_buffer[++i];
+		}
+	}
+
+	// Return final size
+	return dst - dst_buffer;
+}
+
+/**
+ *
+ *  rct2: 0x006769F1
+ */
+static size_t decode_chunk_repeat_old(uint8 *buffer, size_t length)
+{
+	size_t i, j, count;
+	uint8 *src, *dst, *copyOffset;
+
+	// Backup buffer
+	src = malloc(length);
+	memcpy(src, buffer, length);
+	dst = buffer;
+
+	for (i = 0; i < length; i++) {
+		if (src[i] == 0xFF) {
+			*dst++ = src[++i];
+		} else {
+			count = (src[i] & 7) + 1;
+			copyOffset = dst + (int)(src[i] >> 3) - 32;
+			for (j = 0; j < count; j++)
+				*dst++ = *copyOffset++;
+		}
+	}
+
+	// Free backup buffer
+	free(src);
+
+	// Return final size
+	return dst - buffer;
+}
+
+static size_t encode_chunk_rle_old(const uint8 *src_buffer, uint8 *dst_buffer, size_t length)
+{
+	const uint8* src = src_buffer;
+	uint8* dst = dst_buffer;
+	const uint8* end_src = src + length;
+	uint8 count = 0;
+	const uint8* src_norm_start = src;
+
+	while (src < end_src - 1){
+
+		if ((count && *src == src[1]) || count > 125){
+			*dst++ = count - 1;
+			for (; count != 0; --count){
+				*dst++ = *src_norm_start++;
+			}
+		}
+		if (*src == src[1]){
+			for (; (count < 125) && ((src + count) < end_src); count++){
+				if (*src != src[count]) break;
+			}
+			*dst++ = 257 - count;
+			*dst++ = *src;
+			src += count;
+			src_norm_start = src;
+			count = 0;
+		}
+		else{
+			count++;
+			src++;
+		}
+	}
+	if (src == end_src - 1)count++;
+	if (count){
+		*dst++ = count - 1;
+		for (; count != 0; --count){
+			*dst++ = *src_norm_start++;
+		}
+	}
+	return dst - dst_buffer;
+}
+
+static size_t encode_chunk_repeat_old(const uint8 *src_buffer, uint8 *dst_buffer, size_t length)
+{
+	size_t i, j, outLength;
+	size_t searchIndex, searchEnd, maxRepeatCount;
+	size_t bestRepeatIndex, bestRepeatCount, repeatIndex, repeatCount;
+
+	if (length == 0)
+		return 0;
+
+	outLength = 0;
+
+	// Need to emit at least one byte, otherwise there is nothing to repeat
+	*dst_buffer++ = 255;
+	*dst_buffer++ = src_buffer[0];
+	outLength += 2;
+
+	// Iterate through remainder of the source buffer
+	for (i = 1; i < length; ) {
+		searchIndex = max(0, i - 32);
+		searchEnd = i - 1;
+
+		bestRepeatCount = 0;
+		for (repeatIndex = searchIndex; repeatIndex <= searchEnd; repeatIndex++) {
+			repeatCount = 0;
+			maxRepeatCount = min(min(7, searchEnd - repeatIndex), length - i - 1);
+			for (j = 0; j <= maxRepeatCount; j++) {
+				assert(repeatIndex + j < length);
+				assert(i + j < length);
+				if (src_buffer[repeatIndex + j] == src_buffer[i + j]) {
+					repeatCount++;
+				} else {
+					break;
+				}
+			}
+			if (repeatCount > bestRepeatCount) {
+				bestRepeatIndex = repeatIndex;
+				bestRepeatCount = repeatCount;
+
+				// Maximum repeat count is 8
+				if (repeatCount == 8)
+					break;
+			}
+		}
+
+		if (bestRepeatCount == 0) {
+			*dst_buffer++ = 255;
+			*dst_buffer++ = src_buffer[i];
+			outLength += 2;
+			i++;
+		} else {
+			*dst_buffer++ = (uint8)((bestRepeatCount - 1) | ((32 - (i - bestRepeatIndex)) << 3));
+			outLength++;
+			i += bestRepeatCount;
+		}
+	}
+
+	return outLength;
+}
+
+
+bool fill_random(uint8 *dst, size_t size)
+{
+	FILE *source = fopen("/dev/urandom", "rb");
+	for (size_t i = 0; i < size; i++) {
+		if (fread(dst++, 1, 1, source) != 1) {
+			fclose(source);
+			log_error("failed to read %u bytes from source", size);
+			return false;
+		}
+	}
+	fclose(source);
+	return true;
+}
+
+#define TEST_SIZE (4 * 1024 * 1024)
+
+bool sawyertest()
+{
+	uint8 *random_buffer = malloc(TEST_SIZE);
+	if (!fill_random(random_buffer, TEST_SIZE)) {
+		free(random_buffer);
+		return false;
+	}
+	uint8 *encoded_buffer = malloc(TEST_SIZE * 2);
+	uint8 *encoded_buffer_repeat = malloc(TEST_SIZE * 2);
+	uint8 *encoded_buffer2 = malloc(TEST_SIZE * 2);
+	uint8 *encoded_buffer_repeat2 = malloc(TEST_SIZE * 2);
+	uint8 *decoded_buffer = malloc(TEST_SIZE * 2);
+	uint8 *decoded_buffer_repeat = malloc(TEST_SIZE * 2);
+	uint8 *decoded_buffer2 = malloc(TEST_SIZE * 2);
+	uint8 *decoded_buffer_repeat2 = malloc(TEST_SIZE * 2);
+	size_t encoded_size;
+	size_t encoded_size_repeat;
+	size_t encoded_size2;
+	size_t encoded_size_repeat2;
+	size_t decoded_size;
+	size_t decoded_size_repeat;
+	size_t decoded_size2;
+	size_t decoded_size_repeat2;
+	bool result = true;
+
+	// straight test: (1) encode and decode using new functions, (2) do the same with old functions, compare.
+	encoded_size = encode_chunk_rle(random_buffer, encoded_buffer, TEST_SIZE);
+	encoded_size2 = encode_chunk_rle_old(random_buffer, encoded_buffer2, TEST_SIZE);
+	decoded_size = decode_chunk_rle(encoded_buffer, decoded_buffer, encoded_size);
+	decoded_size2 = decode_chunk_rle_old(encoded_buffer2, decoded_buffer2, encoded_size2);
+	if (
+			!result || // skip the check if previous test failed
+			(decoded_size != TEST_SIZE) || // expect buffer size after round trip to be same
+			(decoded_size != decoded_size2) || // verify against original function
+			(encoded_size != encoded_size2) || // verify against original function
+			(memcmp(decoded_buffer, random_buffer, decoded_size) != 0) || // encoded-decoded == source?
+			(memcmp(decoded_buffer, decoded_buffer2, decoded_size) != 0) || // decoded buffers for new and old functions
+			(memcmp(encoded_buffer, encoded_buffer2, encoded_size) != 0) // decoded buffers for new and old functions
+	) {
+		log_error("Test FAILED");
+		result = false;
+	} else {
+		log_warning("Test PASSED");
+		result = true;
+	}
+
+	// cross test: (1) encode using new, decode using old, (2) encode using old, decode using new, compare
+	encoded_size = encode_chunk_rle(random_buffer, encoded_buffer, TEST_SIZE);
+	encoded_size2 = encode_chunk_rle_old(random_buffer, encoded_buffer2, TEST_SIZE);
+	decoded_size = decode_chunk_rle_old(encoded_buffer, decoded_buffer, encoded_size);
+	decoded_size2 = decode_chunk_rle(encoded_buffer2, decoded_buffer2, encoded_size2);
+	if (
+			!result || // skip the check if previous test failed
+			(decoded_size != TEST_SIZE) || // expect buffer size after round trip to be same
+			(decoded_size != decoded_size2) || // verify against original function
+			(encoded_size != encoded_size2) || // verify against original function
+			(memcmp(decoded_buffer, random_buffer, decoded_size) != 0) || // encoded-decoded == source?
+			(memcmp(decoded_buffer, decoded_buffer2, decoded_size) != 0) || // decoded buffers for new and old functions
+			(memcmp(encoded_buffer, encoded_buffer2, encoded_size) != 0) // decoded buffers for new and old functions
+	) {
+		log_error("Test FAILED");
+		result = false;
+	} else {
+		log_warning("Test PASSED");
+		result = true;
+	}
+
+	// straight repeat test
+	encoded_size_repeat = encode_chunk_repeat(random_buffer, encoded_buffer_repeat, TEST_SIZE);
+	encoded_size = encode_chunk_rle(encoded_buffer_repeat, encoded_buffer, encoded_size_repeat);
+	decoded_size = decode_chunk_rle(encoded_buffer, decoded_buffer, encoded_size);
+	decoded_size_repeat = decode_chunk_repeat(decoded_buffer, decoded_size);
+
+	encoded_size_repeat2 = encode_chunk_repeat_old(random_buffer, encoded_buffer_repeat2, TEST_SIZE);
+	encoded_size2 = encode_chunk_rle_old(encoded_buffer_repeat2, encoded_buffer2, encoded_size_repeat2);
+	decoded_size2 = decode_chunk_rle_old(encoded_buffer2, decoded_buffer2, encoded_size2);
+	decoded_size_repeat2 = decode_chunk_repeat_old(decoded_buffer2, decoded_size2);
+
+	int repeat_encode_positive = memcmp(encoded_buffer_repeat, encoded_buffer_repeat2, encoded_size_repeat);
+	int encode_positive = memcmp(encoded_buffer, encoded_buffer2, encoded_size);
+	int decode_positive = memcmp(decoded_buffer, decoded_buffer2, decoded_size);
+	if (
+			!result || // skip the check if previous test failed
+			(decoded_size_repeat != TEST_SIZE) || // expect buffer size after round trip to be same
+			(decoded_size != decoded_size2) || // verify against original function
+			(encoded_size != encoded_size2) || // verify against original function
+			(encoded_size_repeat != encoded_size_repeat2) || // verify against original function
+			(memcmp(decoded_buffer, random_buffer, decoded_size_repeat) != 0) || // encoded-decoded == source?
+			(decode_positive != 0) || // decoded buffers for new and old functions
+			(encode_positive != 0) || // decoded buffers for new and old functions
+			(repeat_encode_positive != 0) // encoded-repeat buffers for new and old functions
+	) {
+		log_error("Test FAILED");
+		result = false;
+	} else {
+		log_warning("Test PASSED");
+		result = true;
+	}
+
+	// cross repeat test
+	encoded_size_repeat = encode_chunk_repeat(random_buffer, encoded_buffer_repeat, TEST_SIZE);
+	encoded_size = encode_chunk_rle(encoded_buffer_repeat, encoded_buffer, encoded_size_repeat);
+	decoded_size = decode_chunk_rle_old(encoded_buffer, decoded_buffer, encoded_size);
+	decoded_size_repeat = decode_chunk_repeat_old(decoded_buffer, decoded_size);
+
+	encoded_size_repeat2 = encode_chunk_repeat_old(random_buffer, encoded_buffer_repeat2, TEST_SIZE);
+	encoded_size2 = encode_chunk_rle_old(encoded_buffer_repeat2, encoded_buffer2, encoded_size_repeat2);
+	decoded_size2 = decode_chunk_rle(encoded_buffer2, decoded_buffer2, encoded_size2);
+	decoded_size_repeat2 = decode_chunk_repeat(decoded_buffer2, decoded_size2);
+
+	repeat_encode_positive = memcmp(encoded_buffer_repeat, encoded_buffer_repeat2, encoded_size_repeat);
+	encode_positive = memcmp(encoded_buffer, encoded_buffer2, encoded_size);
+	decode_positive = memcmp(decoded_buffer, decoded_buffer2, decoded_size);
+	if (
+			!result || // skip the check if previous test failed
+			(decoded_size_repeat != TEST_SIZE) || // expect buffer size after round trip to be same
+			(decoded_size != decoded_size2) || // verify against original function
+			(encoded_size != encoded_size2) || // verify against original function
+			(encoded_size_repeat != encoded_size_repeat2) || // verify against original function
+			(memcmp(decoded_buffer, random_buffer, decoded_size_repeat) != 0) || // encoded-decoded == source?
+			(decode_positive != 0) || // decoded buffers for new and old functions
+			(encode_positive != 0) || // decoded buffers for new and old functions
+			(repeat_encode_positive != 0) // encoded-repeat buffers for new and old functions
+	) {
+		log_error("Test FAILED");
+		result = false;
+	} else {
+		log_warning("Test PASSED");
+		result = true;
+	}
+
+	free(encoded_buffer);
+	free(encoded_buffer_repeat);
+	free(encoded_buffer2);
+	free(encoded_buffer_repeat2);
+	free(decoded_buffer);
+	free(decoded_buffer_repeat);
+	free(decoded_buffer2);
+	free(decoded_buffer_repeat2);
+	free(random_buffer);
+	return result;
+}

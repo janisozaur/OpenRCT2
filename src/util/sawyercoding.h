@@ -58,5 +58,6 @@ int sawyercoding_validate_track_checksum(const uint8* src, size_t length);
 
 int sawyercoding_detect_file_type(const uint8 *src, size_t length);
 int sawyercoding_detect_rct1_version(int gameVersion);
+bool sawyertest();
 
 #endif
