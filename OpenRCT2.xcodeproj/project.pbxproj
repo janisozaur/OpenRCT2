@@ -7,9 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00844B9E1CF2657800F50E78 /* libcrypto.1.0.0.dylib in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 00844B9C1CF2657800F50E78 /* libcrypto.1.0.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		00844B9F1CF2657800F50E78 /* libssl.1.0.0.dylib in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 00844B9D1CF2657800F50E78 /* libssl.1.0.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		00844BA01CF266E000F50E78 /* libcrypto.1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 00844B9C1CF2657800F50E78 /* libcrypto.1.0.0.dylib */; };
 		008BF72A1CDAA5C30019A2AD /* track_design_index.c in Sources */ = {isa = PBXBuildFile; fileRef = 008BF7261CDAA5C30019A2AD /* track_design_index.c */; };
 		008BF72B1CDAA5C30019A2AD /* track_design_save.c in Sources */ = {isa = PBXBuildFile; fileRef = 008BF7271CDAA5C30019A2AD /* track_design_save.c */; };
 		008BF72C1CDAA5C30019A2AD /* track_design.c in Sources */ = {isa = PBXBuildFile; fileRef = 008BF7281CDAA5C30019A2AD /* track_design.c */; };
+		00EFEE721CF1D80B0035213B /* NetworkKey.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 00EFEE701CF1D80B0035213B /* NetworkKey.cpp */; };
 		C650B2191CCABBDD00B4D91C /* S4Importer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C650B2151CCABBDD00B4D91C /* S4Importer.cpp */; };
 		C650B21A1CCABBDD00B4D91C /* tables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C650B2171CCABBDD00B4D91C /* tables.cpp */; };
 		C650B21C1CCABC4400B4D91C /* ConvertCommand.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C650B21B1CCABC4400B4D91C /* ConvertCommand.cpp */; };
@@ -310,6 +314,8 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				00844B9E1CF2657800F50E78 /* libcrypto.1.0.0.dylib in Embed Frameworks */,
+				00844B9F1CF2657800F50E78 /* libssl.1.0.0.dylib in Embed Frameworks */,
 				D43532601C34730200BA219B /* libpng.dylib in Embed Frameworks */,
 				D4EC48D01C2634C70024B507 /* libfreetype.dylib in Embed Frameworks */,
 				D4EC48D11C2634C70024B507 /* libjansson.dylib in Embed Frameworks */,
@@ -323,10 +329,14 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		00844B9C1CF2657800F50E78 /* libcrypto.1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libcrypto.1.0.0.dylib; path = libxc/lib/libcrypto.1.0.0.dylib; sourceTree = "<group>"; };
+		00844B9D1CF2657800F50E78 /* libssl.1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.1.0.0.dylib; path = libxc/lib/libssl.1.0.0.dylib; sourceTree = "<group>"; };
 		008BF7261CDAA5C30019A2AD /* track_design_index.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = track_design_index.c; sourceTree = "<group>"; };
 		008BF7271CDAA5C30019A2AD /* track_design_save.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = track_design_save.c; sourceTree = "<group>"; };
 		008BF7281CDAA5C30019A2AD /* track_design.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = track_design.c; sourceTree = "<group>"; };
 		008BF7291CDAA5C30019A2AD /* track_design.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = track_design.h; sourceTree = "<group>"; };
+		00EFEE701CF1D80B0035213B /* NetworkKey.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NetworkKey.cpp; sourceTree = "<group>"; };
+		00EFEE711CF1D80B0035213B /* NetworkKey.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NetworkKey.h; sourceTree = "<group>"; };
 		C650B2151CCABBDD00B4D91C /* S4Importer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = S4Importer.cpp; sourceTree = "<group>"; };
 		C650B2161CCABBDD00B4D91C /* S4Importer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = S4Importer.h; sourceTree = "<group>"; };
 		C650B2171CCABBDD00B4D91C /* tables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tables.cpp; sourceTree = "<group>"; };
@@ -797,6 +807,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				00844BA01CF266E000F50E78 /* libcrypto.1.0.0.dylib in Frameworks */,
 				D47304D51C4FF8250015C0EA /* libz.tbd in Frameworks */,
 				D41B73EF1C2101890080A7B9 /* libcurl.tbd in Frameworks */,
 				D41B741D1C210A7A0080A7B9 /* libiconv.tbd in Frameworks */,
@@ -1228,6 +1239,8 @@
 		D442714F1CC81B3200D84D28 /* network */ = {
 			isa = PBXGroup;
 			children = (
+				00EFEE701CF1D80B0035213B /* NetworkKey.cpp */,
+				00EFEE711CF1D80B0035213B /* NetworkKey.h */,
 				D44271501CC81B3200D84D28 /* http.cpp */,
 				D44271511CC81B3200D84D28 /* http.h */,
 				D44271521CC81B3200D84D28 /* network.cpp */,
@@ -1437,6 +1450,8 @@
 		D497D06F1C20FD52002BF46A = {
 			isa = PBXGroup;
 			children = (
+				00844B9C1CF2657800F50E78 /* libcrypto.1.0.0.dylib */,
+				00844B9D1CF2657800F50E78 /* libssl.1.0.0.dylib */,
 				D41B72431C21015A0080A7B9 /* Sources */,
 				D497D07A1C20FD52002BF46A /* Resources */,
 				D41B73ED1C21017D0080A7B9 /* Libraries */,
@@ -1742,7 +1757,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cachedir=\".cache\"\nliburl=\"https://openrct2.website/files/orctlibs-osx.zip\"\n# keep in sync with version in build.sh\nsha256sum=\"6562ce9e1f37f125e3345bfd8b961777800436bf607b30dc7c964e0e6991ad2c\"\n\n[[ ! -e \"${SRCROOT}/libversion\" || $(head -n 1 \"${SRCROOT}/libversion\") != $sha256sum ]]\noutdated=$?\n\nif [[ $outdated -eq 0 ]] || [[ ! -f \"${SRCROOT}/$cachedir/orctlibs.zip\" ]]; then\n    if [[ ! -d \"${SRCROOT}/$cachedir\" ]]; then mkdir \"${SRCROOT}/$cachedir\"; fi\n    if [[ -f \"${SRCROOT}/$cachedir/orctlibs.zip\" ]]; then rm \"${SRCROOT}/$cachedir/orctlibs.zip\"; fi\n    curl -L -o \"${SRCROOT}/$cachedir/orctlibs.zip\" \"$liburl\"\n    if [[ -d \"${SRCROOT}/$cachedir/orctlibs\" ]]; then rm -rf \"${SRCROOT}/$cachedir/orctlibs\"; fi\n    mkdir \"${SRCROOT}/$cachedir/orctlibs\"\n    unzip -uaq -d \"${SRCROOT}/$cachedir/orctlibs\" \"${SRCROOT}/$cachedir/orctlibs.zip\"\nfi\n\nif [[ $outdated -eq 0 ]] || [[ ! -d \"${SRCROOT}/lib\" ]]; then\n    if [[ -d \"${SRCROOT}/lib\" ]]; then rm -r \"${SRCROOT}/lib\"; fi\n    cp -Rf \"${SRCROOT}/$cachedir/orctlibs/local\" \"${SRCROOT}/lib\"\nfi\nif [[ $outdated -eq 0 ]] || [[ ! -d \"${SRCROOT}/libxc\" ]]; then\n    if [[ -d \"${SRCROOT}/libxc\" ]]; then rm -r \"${SRCROOT}/libxc\"; fi\n    cp -Rf \"${SRCROOT}/$cachedir/orctlibs/glob\" \"${SRCROOT}/libxc\"\nfi\n\nif [[ $outdated -eq 0 ]]; then\n    newsha=$(shasum -a 256 \"${SRCROOT}/$cachedir/orctlibs.zip\" | cut -f1 -d\" \")\n    echo $newsha > \"${SRCROOT}/libversion\"\n    [[ \"$newsha\" == \"$sha256sum\" ]]\nfi";
+			shellScript = "cachedir=\".cache\"\nliburl=\"https://openrct2.website/files/orctlibs-osx.zip\"\n# keep in sync with version in build.sh\nsha256sum=\"a02f3708b880714888f0ddaaa2bf2ca22a866f894c983d0f8dbb3f7e1effe846\"\n\n[[ ! -e \"${SRCROOT}/libversion\" || $(head -n 1 \"${SRCROOT}/libversion\") != $sha256sum ]]\noutdated=$?\n\nif [[ $outdated -eq 0 ]] || [[ ! -f \"${SRCROOT}/$cachedir/orctlibs.zip\" ]]; then\n    if [[ ! -d \"${SRCROOT}/$cachedir\" ]]; then mkdir \"${SRCROOT}/$cachedir\"; fi\n    if [[ -f \"${SRCROOT}/$cachedir/orctlibs.zip\" ]]; then rm \"${SRCROOT}/$cachedir/orctlibs.zip\"; fi\n    curl -L -o \"${SRCROOT}/$cachedir/orctlibs.zip\" \"$liburl\"\n    if [[ -d \"${SRCROOT}/$cachedir/orctlibs\" ]]; then rm -rf \"${SRCROOT}/$cachedir/orctlibs\"; fi\n    mkdir \"${SRCROOT}/$cachedir/orctlibs\"\n    unzip -uaq -d \"${SRCROOT}/$cachedir/orctlibs\" \"${SRCROOT}/$cachedir/orctlibs.zip\"\nfi\n\nif [[ $outdated -eq 0 ]] || [[ ! -d \"${SRCROOT}/lib\" ]]; then\n    if [[ -d \"${SRCROOT}/lib\" ]]; then rm -r \"${SRCROOT}/lib\"; fi\n    cp -Rf \"${SRCROOT}/$cachedir/orctlibs/local\" \"${SRCROOT}/lib\"\nfi\nif [[ $outdated -eq 0 ]] || [[ ! -d \"${SRCROOT}/libxc\" ]]; then\n    if [[ -d \"${SRCROOT}/libxc\" ]]; then rm -r \"${SRCROOT}/libxc\"; fi\n    cp -Rf \"${SRCROOT}/$cachedir/orctlibs/glob\" \"${SRCROOT}/libxc\"\nfi\n\nif [[ $outdated -eq 0 ]]; then\n    newsha=$(shasum -a 256 \"${SRCROOT}/$cachedir/orctlibs.zip\" | cut -f1 -d\" \")\n    echo $newsha > \"${SRCROOT}/libversion\"\n    [[ \"$newsha\" == \"$sha256sum\" ]]\nfi";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -1817,6 +1832,7 @@
 				D44272581CC81B3200D84D28 /* demolish_ride_prompt.c in Sources */,
 				D442723E1CC81B3200D84D28 /* posix.c in Sources */,
 				D44271F91CC81B3200D84D28 /* CommandLine.cpp in Sources */,
+				00EFEE721CF1D80B0035213B /* NetworkKey.cpp in Sources */,
 				C686F90B1CDBC3B7009F9BFC /* air_powered_vertical_coaster.c in Sources */,
 				D44272051CC81B3200D84D28 /* String.cpp in Sources */,
 				D442725A1CC81B3200D84D28 /* editor_bottom_toolbar.c in Sources */,
@@ -2125,6 +2141,7 @@
 					"$(SRCROOT)/libxc/include/SDL2",
 					"$(SRCROOT)/libxc/include/libpng16",
 					"$(SRCROOT)/lib/",
+					"$(SRCROOT)/libxc/include/openssl",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/distribution/osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
@@ -2171,6 +2188,7 @@
 					"$(SRCROOT)/libxc/include/SDL2",
 					"$(SRCROOT)/libxc/include/libpng16",
 					"$(SRCROOT)/lib/",
+					"$(SRCROOT)/libxc/include/openssl",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/distribution/osx/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
