@@ -295,7 +295,7 @@ public:
 	NetworkPlayer* player;
 	uint32 ping_time = 0;
 	NetworkKey key;
-	std::string challenge;
+	std::vector<uint8> challenge;
 
 private:
 	char* last_disconnect_reason;
@@ -393,7 +393,7 @@ public:
 	std::vector<std::unique_ptr<NetworkPlayer>> player_list;
 	std::vector<std::unique_ptr<NetworkGroup>> group_list;
 	NetworkKey key;
-	std::string challenge;
+	std::vector<uint8> challenge;
 	std::map<std::string, uint8> key_group_map;
 
 private:
