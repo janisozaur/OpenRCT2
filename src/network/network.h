@@ -115,6 +115,7 @@ extern "C" {
 #include <map>
 #include <SDL.h>
 #include "../core/Json.hpp"
+#include "../core/Nullable.hpp"
 #include "NetworkKey.h"
 
 template <std::size_t size>
@@ -334,9 +335,9 @@ private:
 };
 
 struct KeyMapping {
-	std::string		Hash;
-	std::string		Name;
-	uint8			GroupId;
+	std::string			Hash;
+	std::string			Name;
+	Nullable<uint8>		GroupId;
 };
 
 class Network
