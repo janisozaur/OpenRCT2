@@ -333,6 +333,12 @@ private:
 	std::shared_ptr<int> status;
 };
 
+struct KeyMapping {
+	std::string		Hash;
+	std::string		Name;
+	uint8			GroupId;
+};
+
 class Network
 {
 public:
@@ -397,7 +403,7 @@ public:
 	std::vector<std::unique_ptr<NetworkGroup>> group_list;
 	NetworkKey key;
 	std::vector<uint8> challenge;
-	std::map<std::string, uint8> key_group_map;
+	std::map<std::string, KeyMapping> key_group_map;
 
 private:
 	bool ProcessConnection(NetworkConnection& connection);
@@ -405,12 +411,11 @@ private:
 	void ProcessGameCommandQueue();
 	void AddClient(SOCKET socket);
 	void RemoveClient(std::unique_ptr<NetworkConnection>& connection);
-	NetworkPlayer* AddPlayer(const std::string &keyhash);
+	NetworkPlayer* AddPlayer(const utf8 *name, const std::string &keyhash);
 	std::string MakePlayerNameUnique(const std::string &name);
 	void PrintError();
 	const char* GetMasterServerUrl();
 	std::string GenerateAdvertiseKey();
-	std::map<std::string, uint8> username_count_map;
 
 	struct GameCommand
 	{
