@@ -78,13 +78,9 @@ enum {
 	SHORTCUT_MUTE_SOUND,
 	SHORTCUT_WINDOWED_MODE_TOGGLE,
 	SHORTCUT_SHOW_MULTIPLAYER,
+	SHORTCUT_PAINT_ORIGINAL_TOGGLE,
 
 	SHORTCUT_COUNT
-};
-
-enum {
-	SCREENSHOT_FORMAT_BMP,
-	SCREENSHOT_FORMAT_PNG
 };
 
 enum {
@@ -233,6 +229,7 @@ typedef struct network_configuration {
 	utf8string provider_name;
 	utf8string provider_email;
 	utf8string provider_website;
+	uint8 known_keys_only;
 } network_configuration;
 
 typedef struct notification_configuration {

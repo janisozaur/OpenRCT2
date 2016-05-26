@@ -90,12 +90,6 @@ typedef struct config_section_definition {
 
 #pragma region Enum definitions
 
-config_enum_definition _screenShotFormatEnum[] = {
-	{ "BMP", SCREENSHOT_FORMAT_BMP },
-	{ "PNG", SCREENSHOT_FORMAT_PNG },
-	END_OF_ENUM
-};
-
 config_enum_definition _measurementFormatEnum[] = {
 	{ "IMPERIAL", MEASUREMENT_FORMAT_IMPERIAL },
 	{ "METRIC", MEASUREMENT_FORMAT_METRIC },
@@ -180,7 +174,6 @@ config_property_definition _generalDefinitions[] = {
 	{ offsetof(general_configuration, play_intro),						"play_intro",					CONFIG_VALUE_TYPE_BOOLEAN,		false,							NULL					},
 	{ offsetof(general_configuration, save_plugin_data),				"save_plugin_data",				CONFIG_VALUE_TYPE_BOOLEAN,		false,							NULL					},
 	{ offsetof(general_configuration, debugging_tools),					"debugging_tools",				CONFIG_VALUE_TYPE_BOOLEAN,		false,							NULL					},
-	{ offsetof(general_configuration, screenshot_format),				"screenshot_format",			CONFIG_VALUE_TYPE_UINT8,		SCREENSHOT_FORMAT_PNG,			_screenShotFormatEnum	},
 	{ offsetof(general_configuration, show_height_as_units),			"show_height_as_units",			CONFIG_VALUE_TYPE_BOOLEAN,		false,							NULL					},
 	{ offsetof(general_configuration, temperature_format),				"temperature_format",			CONFIG_VALUE_TYPE_UINT8,		TEMPERATURE_FORMAT_C,			_temperatureFormatEnum	},
 	{ offsetof(general_configuration, window_height),					"window_height",				CONFIG_VALUE_TYPE_SINT32,		-1,								NULL					},
@@ -259,7 +252,8 @@ config_property_definition _networkDefinitions[] = {
 	{ offsetof(network_configuration, master_server_url),				"master_server_url",			CONFIG_VALUE_TYPE_STRING,		{.value_string = NULL },		NULL					},
 	{ offsetof(network_configuration, provider_name),					"provider_name",				CONFIG_VALUE_TYPE_STRING,		{.value_string = NULL },		NULL					},
 	{ offsetof(network_configuration, provider_email),					"provider_email",				CONFIG_VALUE_TYPE_STRING,		{.value_string = NULL },		NULL					},
-	{ offsetof(network_configuration, provider_website),				"provider_website",				CONFIG_VALUE_TYPE_STRING,		{.value_string = NULL },		NULL					}
+	{ offsetof(network_configuration, provider_website),				"provider_website",				CONFIG_VALUE_TYPE_STRING,		{.value_string = NULL },		NULL					},
+	{ offsetof(network_configuration, known_keys_only),					"known_keys_only",				CONFIG_VALUE_TYPE_BOOLEAN,		false,							NULL					},
 };
 
 config_property_definition _notificationsDefinitions[] = {
@@ -895,6 +889,7 @@ static bool config_find_rct2_path(utf8 *resultPath)
 		"C:\\Program Files\\Atari\\RollerCoaster Tycoon 2",
 		"C:\\Program Files (x86)\\Atari\\RollerCoaster Tycoon 2",
 		"C:\\GOG Games\\RollerCoaster Tycoon 2 Triple Thrill Pack",
+		"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Rollercoaster Tycoon 2",
 		gExePath
 	};
 
@@ -1035,7 +1030,8 @@ static const uint16 _defaultShortcutKeys[SHORTCUT_COUNT] = {
 
 	SHORTCUT_UNDEFINED,					// SHORTCUT_SHOW_OPTIONS
 	SHORTCUT_UNDEFINED,					// SHORTCUT_MUTE_SOUND
-	ALT | SDL_SCANCODE_RETURN			// SHORTCUT_WINDOWED_MODE_TOGGLE
+	ALT | SDL_SCANCODE_RETURN,			// SHORTCUT_WINDOWED_MODE_TOGGLE
+	SHORTCUT_UNDEFINED,					// SHORTCUT_PAINT_ORIGINAL_TOGGLE
 };
 
 #define SHORTCUT_FILE_VERSION 1
