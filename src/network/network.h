@@ -118,6 +118,7 @@ extern "C" {
 #include "../core/Json.hpp"
 #include "../core/Nullable.hpp"
 #include "NetworkKey.h"
+#include "NetworkUser.h"
 
 template <std::size_t size>
 struct ByteSwapT { };
@@ -335,12 +336,6 @@ private:
 	std::shared_ptr<int> status;
 };
 
-struct KeyMapping {
-	std::string			Hash;
-	std::string			Name;
-	Nullable<uint8>		GroupId;
-};
-
 class Network
 {
 public:
@@ -375,9 +370,6 @@ public:
 	void SetDefaultGroup(uint8 id);
 	void SaveGroups();
 	void LoadGroups();
-	void SaveKeyMappings();
-	void LoadKeyMappings();
-	void UpdateKeyMappings();
 
 	void Client_Send_TOKEN();
 	void Client_Send_AUTH(const char* name, const char* password, const char *pubkey, const char *sig, size_t sigsize);
@@ -405,7 +397,7 @@ public:
 	std::vector<std::unique_ptr<NetworkGroup>> group_list;
 	NetworkKey key;
 	std::vector<uint8> challenge;
-	std::map<std::string, KeyMapping> key_group_map;
+	NetworkUserManager _userManager;
 
 private:
 	bool ProcessConnection(NetworkConnection& connection);
