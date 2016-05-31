@@ -14,7 +14,7 @@ matrix:
     include:
         - os: linux
           env:
-            - OPENRCT2_CMAKE_OPTS="-DCMAKE_C_COMPILER=gcc-4.8 -DCMAKE_CXX_COMPILER=g++-4.8 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=OpenRCT2" OPENRCT2_MAKE_OPTS="-j2"
+            - OPENRCT2_CMAKE_OPTS="-DCMAKE_C_COMPILER=gcc-4.8 -DCMAKE_CXX_COMPILER=g++-4.8 -DCMAKE_BUILD_TYPE=debug -DCMAKE_CXX_FLAGS=-ggdb3 -DCMAKE_C_FLAGS=-ggdb3 -DCMAKE_EXE_LINKER_FLAGS=-ggdb3 -DCMAKE_INSTALL_PREFIX=OpenRCT2" OPENRCT2_MAKE_OPTS="-j2"
             - secure: "S3u2VCE2Vy8KNXoeh+DhnzjCmgTX0r95uEZrXDU+IKANOOCKn7Dg4OFDZE3LY/i1y2/EUDpnR5yLC38Ks795EUP/sv/OoMl4tjQ20yERjqWh+gcIRrgx7SdVabuAh3t4aBdaLD4Pfnj5avxeCt6rL7yGnj0wdbrbJSBZPsgSnuQ="
           after_success:
             - cd build
