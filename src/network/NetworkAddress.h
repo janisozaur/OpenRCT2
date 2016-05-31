@@ -18,8 +18,8 @@
 
 #include <memory>
 #include <SDL_mutex.h>
-#include "NetworkTypes.h"
 #include "../common.h"
+#include "NetworkTypes.h"
 
 class NetworkAddress final
 {
