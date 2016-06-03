@@ -150,6 +150,9 @@ void reset_sprite_spatial_index()
 			uint16 nextSpriteId = gSpriteSpatialIndex[index];
 			gSpriteSpatialIndex[index] = spr->unknown.sprite_index;
 			spr->unknown.next_in_quadrant = nextSpriteId;
+			if (nextSpriteId == gSpriteSpatialIndex[index]) {
+				int i = *(int *)NULL;
+			}
 		}
 	}
 }

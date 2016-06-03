@@ -40,7 +40,7 @@ if (${env:CODE-SIGN-KEY-OPENRCT2.ORG.PFX.PASSWORD} -ne $null)
 # Enable pushing builds to OpenRCT2.org if token environment variable is set
 $pushBuilds = $false
 $installer  = $false
-$symbols    = $false
+$symbols    = $true
 if (${env:OPENRCT2.ORG_TOKEN} -ne $null)
 {
     $installer  = $true
