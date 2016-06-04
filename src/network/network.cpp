@@ -101,6 +101,8 @@ static void network_get_keymap_path(utf8 *buffer, size_t bufferSize);
 
 Network::Network()
 {
+	log_warning("NetworkPacket = %u", sizeof(NetworkPacket));
+	log_warning("NetworkPlayer = %u", sizeof(NetworkPlayer));
 	wsa_initialized = false;
 	mode = NETWORK_MODE_NONE;
 	status = NETWORK_STATUS_NONE;

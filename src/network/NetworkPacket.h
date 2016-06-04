@@ -21,6 +21,7 @@
 #include "NetworkTypes.h"
 #include "../common.h"
 
+#pragma pack(push, 1)
 class NetworkPacket
 {
 public:
@@ -69,3 +70,4 @@ public:
         return *this;
     }
 };
+#pragma pack(pop)
