@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 {
 	core_init();
 
-	sint32 run_game = cmdline_run(argv, argc);
+	sint32 run_game = cmdline_run((const char **)argv, argc);
 	if (run_game == 1)
 	{
 		openrct2_launch();
