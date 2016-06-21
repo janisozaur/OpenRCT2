@@ -130,8 +130,9 @@ int object_load_file(int groupIndex, const rct_object_entry *entry, int* chunkSi
 		}
 	}
 
+	int chunkSizeTemp = *chunkSize;
 	if (RCT2_GLOBAL(0x9ADAFD, uint8) != 0) {
-		chunk = object_load(objectType, chunk, groupIndex, chunkSize);
+		chunk = object_load(objectType, chunk, groupIndex, &chunkSizeTemp);
 	}
 
 	chunk_list[groupIndex] = chunk;
@@ -139,7 +140,7 @@ int object_load_file(int groupIndex, const rct_object_entry *entry, int* chunkSi
 	rct_object_entry_extended* extended_entry = &object_entry_groups[objectType].entries[groupIndex];
 
 	memcpy(extended_entry, &openedEntry, sizeof(rct_object_entry));
-	extended_entry->chunk_size = *chunkSize;
+	extended_entry->chunk_size = chunkSizeTemp;
 
 	gLastLoadedObjectChunkData = chunk;
 
