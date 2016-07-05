@@ -80,6 +80,8 @@ struct paint_struct {
 assert_struct_size(paint_struct, 0x34);
 #endif
 
+extern paint_struct * pss_F1AD28;
+
 typedef struct paint_string_struct paint_string_struct;
 
 /* size 0x1E */
