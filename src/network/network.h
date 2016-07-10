@@ -242,6 +242,19 @@ namespace Convert
 	uint16 NetworkToHost(uint16 value);
 }
 
+interface INetworkGroupManager;
+interface INetworkPlayerList;
+interface INetworkServer;
+
+namespace Network2
+{
+    INetworkGroupManager *  GetGroupManager();
+    INetworkPlayerList *    GetPlayerList();
+    INetworkServer *        GetServer();
+}
+
+
+
 #endif // __cplusplus
 #else /* DISABLE_NETWORK */
 #define NETWORK_STREAM_ID "Multiplayer disabled"
