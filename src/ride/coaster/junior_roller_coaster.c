@@ -325,6 +325,20 @@ enum {
 	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SE_NE_PART_2 = 28128,
 	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NW_SW_PART_2_2 = 28129,
 	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SE_NE_PART_0_2 = 28130,
+	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_SW_SE_PART_0 = 28131,
+	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_SW_SE_PART_1 = 28132,
+	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_SW_SE_PART_2 = 28133,
+	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_NW_SW_PART_0 = 28134,
+	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_NW_SW_PART_1 = 28135,
+	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_NW_SW_PART_2 = 28136,
+	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_NE_NW_PART_0 = 28137,
+	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_NE_NW_PART_1 = 28138,
+	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_NE_NW_PART_2 = 28139,
+	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_SE_NE_PART_0 = 28140,
+	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_SE_NE_PART_1 = 28141,
+	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_SE_NE_PART_2 = 28142,
+	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_NW_SW_PART_2_2 = 28143,
+	SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_SE_NE_PART_0_2 = 28144,
 	SPR_JUNIOR_RC_STATION_SW_NE = 28189,
 	SPR_JUNIOR_RC_STATION_NW_SE = 28190,
 	SPR_JUNIOR_RC_STATION_SW_NE_BRAKED = 28191,
@@ -847,38 +861,49 @@ static const uint32 junior_rc_track_pieces_right_quarter_turn_3_tiles_25_deg_dow
 	}
 };
 
-static const uint32 junior_rc_track_pieces_right_half_banked_helix_up_small_tiles[4][6][2] = {
+static const uint32 junior_rc_track_pieces_right_half_banked_helix_up_small_quarter_tiles[4][3][2] = {
 	{
 		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SW_SE_PART_0},
 		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SW_SE_PART_1},
 		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SW_SE_PART_2},
+	},
+	{
 		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NW_SW_PART_0},
 		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NW_SW_PART_1},
 		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NW_SW_PART_2, SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NW_SW_PART_2_2}
 	},
 	{
-		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NW_SW_PART_0},
-		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NW_SW_PART_1},
-		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NW_SW_PART_2, SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NW_SW_PART_2_2},
-		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NE_NW_PART_0},
+		0, {SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NE_NW_PART_0},
 		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NE_NW_PART_1},
-		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NE_NW_PART_2}
-	},
-	{
-		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NE_NW_PART_0},
-		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NE_NW_PART_1},
-		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NE_NW_PART_2},
-		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SE_NE_PART_0, SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SE_NE_PART_0_2},
-		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SE_NE_PART_1},
-		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SE_NE_PART_2} 
+		0, {SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_NE_NW_PART_2}
 	},
 	{
 		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SE_NE_PART_0, SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SE_NE_PART_0_2},
 		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SE_NE_PART_1},
-		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SE_NE_PART_2},
-		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SW_SE_PART_0},
-		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SW_SE_PART_1},
-		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SW_SE_PART_2}
+		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_UP_SMALL_SE_NE_PART_2}
+	}
+};
+
+static const uint32 junior_rc_track_pieces_right_half_banked_helix_down_small_quarter_tiles[4][3][2] = {
+	{
+		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_SW_SE_PART_0},
+		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_SW_SE_PART_1},
+		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_SW_SE_PART_2},
+	},
+	{
+		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_NW_SW_PART_0},
+		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_NW_SW_PART_1},
+		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_NW_SW_PART_2, SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_NW_SW_PART_2_2}
+	},
+	{
+		0, {SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_NE_NW_PART_0},
+		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_NE_NW_PART_1},
+		0, {SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_NE_NW_PART_2}
+	},
+	{
+		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_SE_NE_PART_0, SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_SE_NE_PART_0_2},
+		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_SE_NE_PART_1},
+		{SPR_JUNIOR_RC_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL_SE_NE_PART_2}
 	}
 };
 
@@ -1985,8 +2010,116 @@ void junior_rc_left_quarter_turn_3_tiles_25_deg_down_paint_setup(uint8 rideIndex
 void junior_rc_right_half_banked_helix_up_small_paint_setup(uint8 rideIndex, uint8 trackSequence, uint8 direction, int height, rct_map_element * mapElement)
 {
 	const sint8 thickness[2] = { 1, 26 };
-	track_paint_util_right_helix_up_small_tiles_paint(thickness, height, direction, trackSequence, RCT2_GLOBAL(0x00F44198, uint32), junior_rc_track_pieces_right_half_banked_helix_up_small_tiles, NULL, defaultRightHelixUpSmallBoundLengths, defaultRightHelixUpSmallBoundOffsets, get_current_rotation());
+
+	if (trackSequence > 3) {
+		trackSequence -= 4;
+		direction++;
+		direction &= 3;
+	}
+	track_paint_util_right_helix_up_small_quarter_tiles_paint(thickness, height, direction, trackSequence, RCT2_GLOBAL(0x00F44198, uint32), junior_rc_track_pieces_right_half_banked_helix_up_small_quarter_tiles, NULL, defaultRightHelixUpSmallQuarterBoundLengths, defaultRightHelixUpSmallQuarterBoundOffsets, get_current_rotation());
+
+	if (trackSequence == 0) {
+		metal_a_supports_paint_setup(direction & 1 ? 2 : 1, 4, 2, height, RCT2_GLOBAL(0x00F4419C, uint32));
+	}
+	else if ( trackSequence == 3) {
+		metal_a_supports_paint_setup(direction & 1 ? 1 : 2, 4, 6, height, RCT2_GLOBAL(0x00F4419C, uint32));
+	}
+
+	if (direction == 0 && trackSequence == 0) {
+		paint_util_push_tunnel_left(height, TUNNEL_0);
+	}
+
+	if (direction == 0 && trackSequence == 3) {
+		paint_util_push_tunnel_right(height + 8, TUNNEL_0);
+	}
+
+	if (direction == 1 && trackSequence == 3) {
+		paint_util_push_tunnel_left(height + 8, TUNNEL_0);
+	}
+
+	if (direction == 3 && trackSequence == 0) {
+		paint_util_push_tunnel_right(height, TUNNEL_0);
+	}
+
+	int blockedSegments = 0;
+	switch (trackSequence) {
+		case 0: blockedSegments = SEGMENT_D0 | SEGMENT_C4 | SEGMENT_CC | SEGMENT_BC | SEGMENT_D4; break;
+		case 2: blockedSegments = SEGMENT_D0 | SEGMENT_C4 | SEGMENT_C0 | SEGMENT_D4; break;
+		case 3: blockedSegments = SEGMENT_D0 | SEGMENT_D4 | SEGMENT_C4 | SEGMENT_C8 | SEGMENT_B8 ; break;
+	}
+	paint_util_set_segment_support_height(paint_util_rotate_segments(blockedSegments, direction), 0xFFFF, 0);
+	paint_util_set_general_support_height(height + 32, 0x20);
 }
+
+/** rct2: 0x008AB110, 0x0052BD80, 0x0052BFD4, 0x0052C23B, 0x0052C450 */
+void junior_rc_right_half_banked_helix_down_small_paint_setup(uint8 rideIndex, uint8 trackSequence, uint8 direction, int height, rct_map_element * mapElement)
+{
+	const sint8 thickness[2] = { 1, 26 };
+
+	if (trackSequence > 3) {
+		trackSequence -= 4;
+		direction++;
+		direction &= 3;
+	}
+	track_paint_util_right_helix_up_small_quarter_tiles_paint(thickness, height, direction, trackSequence, RCT2_GLOBAL(0x00F44198, uint32), junior_rc_track_pieces_right_half_banked_helix_down_small_quarter_tiles, NULL, defaultRightHelixUpSmallQuarterBoundLengths, defaultRightHelixUpSmallQuarterBoundOffsets, get_current_rotation());
+
+	if (trackSequence == 0) {
+		metal_a_supports_paint_setup(direction & 1 ? 2 : 1, 4, 6, height, RCT2_GLOBAL(0x00F4419C, uint32));
+	}
+	else if ( trackSequence == 3) {
+		metal_a_supports_paint_setup(direction & 1 ? 1 : 2, 4, 2, height, RCT2_GLOBAL(0x00F4419C, uint32));
+	}
+
+	if (direction == 0 && trackSequence == 0) {
+		paint_util_push_tunnel_left(height, TUNNEL_0);
+	}
+
+	if (direction == 0 && trackSequence == 3) {
+		paint_util_push_tunnel_right(height + 8, TUNNEL_0);
+	}
+
+	if (direction == 1 && trackSequence == 3) {
+		paint_util_push_tunnel_left(height + 8, TUNNEL_0);
+	}
+
+	if (direction == 3 && trackSequence == 0) {
+		paint_util_push_tunnel_right(height, TUNNEL_0);
+	}
+
+	int blockedSegments = 0;
+	switch (trackSequence) {
+		case 0: blockedSegments = SEGMENT_D0 | SEGMENT_C4 | SEGMENT_CC | SEGMENT_BC | SEGMENT_D4; break;
+		case 2: blockedSegments = SEGMENT_D0 | SEGMENT_C4 | SEGMENT_C0 | SEGMENT_D4; break;
+		case 3: blockedSegments = SEGMENT_D0 | SEGMENT_D4 | SEGMENT_C4 | SEGMENT_C8 | SEGMENT_B8 ; break;
+	}
+	paint_util_set_segment_support_height(paint_util_rotate_segments(blockedSegments, direction), 0xFFFF, 0);
+	paint_util_set_general_support_height(height + 32, 0x20);
+}
+
+/** rct2: 0x008AB0E0 */
+void junior_rc_left_half_banked_helix_up_small_paint_setup(uint8 rideIndex, uint8 trackSequence, uint8 direction, int height, rct_map_element * mapElement)
+{
+	if (trackSequence > 3) {
+		trackSequence -= 4;
+		direction--;
+		direction &= 3;
+	}
+	trackSequence = left_quarter_turn_3_tiles_to_right_turn_map[trackSequence];
+	junior_rc_right_half_banked_helix_down_small_paint_setup(rideIndex, trackSequence, (direction + 1) % 4, height, mapElement);
+}
+
+/** rct2: 0x008AB100 */
+void junior_rc_left_half_banked_helix_down_small_paint_setup(uint8 rideIndex, uint8 trackSequence, uint8 direction, int height, rct_map_element * mapElement)
+{
+	if (trackSequence > 3) {
+		trackSequence -= 4;
+		direction--;
+		direction &= 3;
+	}
+	trackSequence = left_quarter_turn_3_tiles_to_right_turn_map[trackSequence];
+	junior_rc_right_half_banked_helix_up_small_paint_setup(rideIndex, trackSequence, (direction + 1) % 4, height, mapElement);
+}
+
 /* 0x008AAA0C */
 TRACK_PAINT_FUNCTION get_track_paint_function_junior_rc(int trackType, int direction) {
 	switch (trackType) {
@@ -2081,11 +2214,13 @@ TRACK_PAINT_FUNCTION get_track_paint_function_junior_rc(int trackType, int direc
 		return junior_rc_right_quarter_turn_3_tiles_25_deg_down_paint_setup;
 
 	case TRACK_ELEM_LEFT_HALF_BANKED_HELIX_UP_SMALL:
-		return NULL;
+		return junior_rc_left_half_banked_helix_up_small_paint_setup;
 	case TRACK_ELEM_RIGHT_HALF_BANKED_HELIX_UP_SMALL:
 		return junior_rc_right_half_banked_helix_up_small_paint_setup;
 	case TRACK_ELEM_LEFT_HALF_BANKED_HELIX_DOWN_SMALL:
+		return junior_rc_left_half_banked_helix_down_small_paint_setup;
 	case TRACK_ELEM_RIGHT_HALF_BANKED_HELIX_DOWN_SMALL:
+		return junior_rc_right_half_banked_helix_down_small_paint_setup;
 	case TRACK_ELEM_LEFT_HALF_BANKED_HELIX_UP_LARGE:
 	case TRACK_ELEM_RIGHT_HALF_BANKED_HELIX_UP_LARGE:
 	case TRACK_ELEM_LEFT_HALF_BANKED_HELIX_DOWN_LARGE:
