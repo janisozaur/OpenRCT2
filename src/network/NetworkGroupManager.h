@@ -16,22 +16,13 @@
 
 #pragma once
 
-#include <string>
-#include <jansson.h>
-
 #include "../common.h"
-#include "../core/Nullable.hpp"
 
-class NetworkUser
+class NetworkGroup;
+
+interface INetworkGroupManager
 {
-public:
-    std::string         Hash;
-    std::string         Name;
-    Nullable<uint8>     GroupId;
-    bool                Remove;
+    virtual ~INetworkGroupManager() { }
 
-    static NetworkUser * FromJson(json_t * json);
-
-    json_t * ToJson() const;
-    json_t * ToJson(json_t * json) const;
+    virtual NetworkGroup * GetGroupByHash(const char * hash) abstract;
 };

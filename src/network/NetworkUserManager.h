@@ -17,21 +17,29 @@
 #pragma once
 
 #include <string>
-#include <jansson.h>
-
 #include "../common.h"
-#include "../core/Nullable.hpp"
 
-class NetworkUser
+class NetworkUser;
+
+interface INetworkUserManager
 {
-public:
-    std::string         Hash;
-    std::string         Name;
-    Nullable<uint8>     GroupId;
-    bool                Remove;
+    virtual ~INetworkUserManager() { }
 
-    static NetworkUser * FromJson(json_t * json);
+    virtual void Load() abstract;
 
-    json_t * ToJson() const;
-    json_t * ToJson(json_t * json) const;
+    /**
+     * @brief NetworkUserManager::Save
+     * Reads mappings from JSON, updates them in-place and saves JSON.
+     *
+     * Useful for retaining custom entries in JSON file.
+     */
+    virtual void Save();
+
+    virtual void UnsetUsersOfGroup(uint8 groupId) abstract;
+    virtual void RemoveUser(const std::string &hash) abstract;
+
+    virtual NetworkUser * GetUserByHash(const std::string &hash) abstract;
+    virtual const NetworkUser * GetUserByHash(const std::string &hash) const abstract;
+    virtual const NetworkUser * GetUserByName(const std::string &name) const abstract;
+    virtual NetworkUser * GetOrAddUser(const std::string &hash) abstract;
 };

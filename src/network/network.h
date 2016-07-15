@@ -75,6 +75,7 @@ extern "C" {
 #include "NetworkPacket.h"
 #include "NetworkPlayer.h"
 #include "NetworkUser.h"
+#include "NetworkUserManager.h"
 #include "TcpSocket.h"
 
 class Network
@@ -143,7 +144,7 @@ public:
 	std::vector<std::unique_ptr<NetworkGroup>> group_list;
 	NetworkKey key;
 	std::vector<uint8> challenge;
-	NetworkUserManager _userManager;
+	INetworkUserManager * _userManager;
 
 	std::string ServerName;
 	std::string ServerDescription;
@@ -242,15 +243,17 @@ namespace Convert
 	uint16 NetworkToHost(uint16 value);
 }
 
+interface INetworkServer;
 interface INetworkGroupManager;
 interface INetworkPlayerList;
-interface INetworkServer;
+interface INetworkUserManager;
 
 namespace Network2
 {
+    INetworkServer *        GetServer();
     INetworkGroupManager *  GetGroupManager();
     INetworkPlayerList *    GetPlayerList();
-    INetworkServer *        GetServer();
+    INetworkUserManager *   GetUserManager();
 }
 
 

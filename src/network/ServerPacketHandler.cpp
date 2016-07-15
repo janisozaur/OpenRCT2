@@ -21,7 +21,9 @@
 #include "NetworkAction.h"
 #include "NetworkConnection.h"
 #include "NetworkGroup.h"
+#include "NetworkGroupManager.h"
 #include "NetworkPacket.h"
+#include "NetworkPlayerList.h"
 
 extern "C"
 {
@@ -266,7 +268,8 @@ private:
         log_verbose("Signature verification ok. Hash %s", hash.c_str());
 
         // If the server only allows whitelisted keys, check the key is whitelisted
-        if (gConfigNetwork.known_keys_only && _userManager.GetUserByHash(hash) == nullptr)
+        NetworkUserManager * userManager = Network2::GetUserManager();
+        if (gConfigNetwork.known_keys_only && userManager->GetUserByHash(hash) == nullptr)
         {
             return NETWORK_AUTH_UNKNOWN_KEY_DISALLOWED;
         }
@@ -274,7 +277,7 @@ private:
         // Check password
         std::string playerHash = sender->Key.PublicKeyHash();
         INetworkGroupManager * groupManager = Network2::GetGroupManager();
-        const NetworkGroup * group = groupManager->GetGroupByHash(playerHash);
+        const NetworkGroup * group = groupManager->GetGroupByHash(playerHash.c_str());
         size_t actionIndex = NetworkActions::FindCommandByPermissionName("PERMISSION_PASSWORDLESS_LOGIN");
         bool passwordless = group->CanPerformAction(actionIndex);
         if (!passwordless)

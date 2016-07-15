@@ -118,6 +118,7 @@
     <ClCompile Include="src\network\NetworkPacket.cpp" />
     <ClCompile Include="src\network\NetworkPlayer.cpp" />
     <ClCompile Include="src\network\NetworkUser.cpp" />
+    <ClCompile Include="src\network\NetworkUserManager.cpp" />
     <ClCompile Include="src\network\ServerPacketHandler.cpp" />
     <ClCompile Include="src\network\TcpSocket.cpp" />
     <ClCompile Include="src\network\twitch.cpp" />
@@ -433,10 +434,13 @@
     <ClInclude Include="src\network\NetworkAction.h" />
     <ClInclude Include="src\network\NetworkConnection.h" />
     <ClInclude Include="src\network\NetworkGroup.h" />
+    <ClInclude Include="src\network\NetworkGroupManager.h" />
     <ClInclude Include="src\network\NetworkPacket.h" />
     <ClInclude Include="src\network\NetworkPlayer.h" />
+    <ClInclude Include="src\network\NetworkPlayerList.h" />
     <ClInclude Include="src\network\NetworkTypes.h" />
     <ClInclude Include="src\network\NetworkUser.h" />
+    <ClInclude Include="src\network\NetworkUserManager.h" />
     <ClInclude Include="src\network\TcpSocket.h" />
     <ClInclude Include="src\network\twitch.h" />
     <ClInclude Include="src\network\network.h" />
