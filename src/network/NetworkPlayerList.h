@@ -22,5 +22,6 @@ interface INetworkPlayerList
 {
     virtual ~INetworkPlayerList() { }
 
+    virtual uint32 GetCount() abstract;
     virtual bool IsFull() abstract;
 };

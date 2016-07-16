@@ -24,6 +24,7 @@
 #include "NetworkGroupManager.h"
 #include "NetworkPacket.h"
 #include "NetworkPlayerList.h"
+#include "NetworkServer.h"
 
 extern "C"
 {
@@ -66,7 +67,7 @@ public:
     {
         if (sender->Player != nullptr)
         {
-            INetworkGroupManager groupManager = Network2::GetGroupManager();
+            INetworkGroupManager * groupManager = Network2::GetGroupManager();
             NetworkGroup * group = groupManager->GetGroupById(sender->Player->group);
             if (group != nullptr && group->CanPerformCommand(-1))
             {
@@ -76,8 +77,7 @@ public:
                     INetworkServer * server = Network2::GetServer();
 
                     const char * formatted = FormatChat(sender->Player, text);
-                    chat_history_add(formatted);
-                    server->SendChat(formatted);
+                    server->BroadcastMessage(formatted);
                 }
             }
         }
@@ -96,11 +96,11 @@ public:
 
         // Check if player's group permission allows command to run
         INetworkServer * server = Network2::GetServer();
-        INetworkGroupManager groupManager = Network2::GetGroupManager();
+        INetworkGroupManager * groupManager = Network2::GetGroupManager();
         NetworkGroup * group = groupManager->GetGroupById(sender->Player->group);
         if (group == nullptr || !group->CanPerformCommand(commandCommand))
         {
-            server->SendShowError(sender, STR_CANT_DO_THIS, STR_PERMISSION_DENIED);
+            server->SendErrorMessage(sender, STR_CANT_DO_THIS, STR_PERMISSION_DENIED);
             return;
         }
 
@@ -115,7 +115,7 @@ public:
             {
                 if (!(group->CanPerformCommand(-2)))
                 {
-                    server->SendShowError(sender, STR_CANT_DO_THIS, STR_CANT_DO_THIS);
+                    server->SendErrorMessage(sender, STR_CANT_DO_THIS, STR_CANT_DO_THIS);
                     return;
                 }
             }
@@ -141,7 +141,7 @@ public:
         sender->Player->last_action = NetworkActions::FindCommand(commandCommand);
         sender->Player->last_action_time = SDL_GetTicks();
         sender->Player->AddMoneySpent(cost);
-        server->SendGameCommand(args[0], args[1], args[2], args[3], args[4], args[5], args[6], sender->Player->id, callback);
+        server->SendGameCommand(sender->Player->id, args, callback);
     }
 
     void Handle_TICK(NetworkConnection * sender, NetworkPacket * packet) override
@@ -268,35 +268,34 @@ private:
         log_verbose("Signature verification ok. Hash %s", hash.c_str());
 
         // If the server only allows whitelisted keys, check the key is whitelisted
-        NetworkUserManager * userManager = Network2::GetUserManager();
+        INetworkUserManager * userManager = Network2::GetUserManager();
         if (gConfigNetwork.known_keys_only && userManager->GetUserByHash(hash) == nullptr)
         {
             return NETWORK_AUTH_UNKNOWN_KEY_DISALLOWED;
         }
 
         // Check password
-        std::string playerHash = sender->Key.PublicKeyHash();
+        INetworkServer * server = Network2::GetServer();
         INetworkGroupManager * groupManager = Network2::GetGroupManager();
+        std::string playerHash = sender->Key.PublicKeyHash();
         const NetworkGroup * group = groupManager->GetGroupByHash(playerHash.c_str());
         size_t actionIndex = NetworkActions::FindCommandByPermissionName("PERMISSION_PASSWORDLESS_LOGIN");
         bool passwordless = group->CanPerformAction(actionIndex);
         if (!passwordless)
         {
-            const std::string &password = Network::password;
-            if (String::IsNullOrEmpty(password) && password.size() > 0)
+            if (String::IsNullOrEmpty(password) && server->HasPassword())
             {
                 return NETWORK_AUTH_REQUIREPASSWORD;
             }
-            else if (!String::Equals(password, password.c_str()))
+            else if (server->CheckPassword(password))
             {
                 return NETWORK_AUTH_BADPASSWORD;
             }
         }
 
         // Authentication successful
-        INetworkServer * server = Network2::GetServer();
         sender->AuthStatus = NETWORK_AUTH_OK;
-        server->AcceptPlayer(name, playerHash, sender);
+        server->AcceptPlayer(sender, name, playerHash.c_str());
         return NETWORK_AUTH_OK;
     }
 };

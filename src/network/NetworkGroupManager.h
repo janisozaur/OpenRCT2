@@ -25,4 +25,5 @@ interface INetworkGroupManager
     virtual ~INetworkGroupManager() { }
 
     virtual NetworkGroup * GetGroupByHash(const char * hash) abstract;
+	virtual NetworkGroup * GetGroupById(uint8 id) abstract;
 };
