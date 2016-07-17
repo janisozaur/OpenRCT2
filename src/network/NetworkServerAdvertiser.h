@@ -18,13 +18,19 @@
 
 #include "../common.h"
 
-interface INetworkPlayerList
+enum ADVERTISE_STATUS
 {
-    virtual ~INetworkPlayerList() { }
-
-    virtual uint32 GetCount() const abstract;
-    virtual bool IsFull() const abstract;
-
-    virtual void Clear() abstract;
-    virtual void Remove(NetworkPlayer * player) abstract;
+    ADVERTISE_STATUS_DISABLED,
+    ADVERTISE_STATUS_UNREGISTERED,
+    ADVERTISE_STATUS_REGISTERED,
 };
+
+interface INetworkServerAdvertiser
+{
+    virtual ~INetworkServerAdvertiser() { }
+
+    virtual ADVERTISE_STATUS    GetStatus() abstract;
+    virtual void                Update() abstract;
+};
+
+INetworkServerAdvertiser * CreateServerAdvertiser(uint16 port);
