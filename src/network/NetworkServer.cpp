@@ -21,6 +21,7 @@
 #include "../core/String.hpp"
 #include "network.h"
 #include "NetworkConnection.h"
+#include "NetworkGroupManager.h"
 #include "NetworkPlayerList.h"
 #include "NetworkServer.h"
 #include "NetworkServerAdvertiser.h"
@@ -70,7 +71,17 @@ private:
     uint32 _lastPingTime;
 
 public:
-    virtual ~NetworkServer() { }
+    NetworkServer()
+    {
+        _groupManager = CreateGroupManager();
+        _userManager = CreateUserManager();
+        _playerList = CreatePlayerList(_groupManager, _userManager);
+    }
+
+    virtual ~NetworkServer()
+    {
+        delete _playerList;
+    }
 
     bool Begin(uint16 port, const char * address)
     {
@@ -218,7 +229,11 @@ public:
 
     void AcceptPlayer(NetworkConnection * client, const utf8 * name, const char * hash) override
     {
-
+        NetworkPlayer * player = _playerList->CreatePlayer(name, hash);
+        if (player != nullptr)
+        {
+            client->Player = player;
+        }
     }
 
     void SendToken(NetworkConnection * client) override

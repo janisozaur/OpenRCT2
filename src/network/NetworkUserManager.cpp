@@ -212,4 +212,9 @@ private:
     }
 };
 
+INetworkUserManager * CreateUserManager()
+{
+    return new NetworkUserManager();
+}
+
 #endif // DISABLE_NETWORK

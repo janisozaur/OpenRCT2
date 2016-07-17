@@ -43,3 +43,5 @@ interface INetworkUserManager
     virtual const NetworkUser * GetUserByName(const std::string &name) const abstract;
     virtual NetworkUser * GetOrAddUser(const std::string &hash) abstract;
 };
+
+INetworkUserManager * CreateUserManager();

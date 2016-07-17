@@ -18,13 +18,20 @@
 
 #include "../common.h"
 
+class NetworkConnection;
+class NetworkPlayer;
+
 interface INetworkPlayerList
 {
     virtual ~INetworkPlayerList() { }
 
-    virtual uint32 GetCount() const abstract;
-    virtual bool IsFull() const abstract;
+    virtual bool            IsFull() const abstract;
+    virtual uint32          GetCount() const abstract;
+    virtual NetworkPlayer * GetPlayerById(uint8 id) const abstract;
 
-    virtual void Clear() abstract;
-    virtual void Remove(NetworkPlayer * player) abstract;
+    virtual NetworkPlayer * CreatePlayer(const utf8 * name, const char * hash) abstract;
+    virtual void            Clear() abstract;
+    virtual void            Remove(NetworkPlayer * player) abstract;
 };
+
+INetworkPlayerList * CreatePlayerList(INetworkGroupManager * groupManager, INetworkUserManager * userManager);
