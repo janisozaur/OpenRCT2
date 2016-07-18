@@ -114,6 +114,7 @@
     <ClCompile Include="src\network\NetworkAction.cpp" />
     <ClCompile Include="src\network\NetworkConnection.cpp" />
     <ClCompile Include="src\network\NetworkGroup.cpp" />
+    <ClCompile Include="src\network\NetworkGroupManager.cpp" />
     <ClCompile Include="src\network\NetworkKey.cpp" />
     <ClCompile Include="src\network\NetworkPacket.cpp" />
     <ClCompile Include="src\network\NetworkPlayer.cpp" />

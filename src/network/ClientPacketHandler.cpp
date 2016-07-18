@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef DISABLE_NETWORK
+
 #include "IPacketHandler.h"
 #include "NetworkConnection.h"
 #include "NetworkPacket.h"
@@ -88,3 +90,5 @@ public:
     void Handle_EVENT(NetworkConnection * sender, NetworkPacket * packet) override { }
     void Handle_TOKEN(NetworkConnection * sender, NetworkPacket * packet) override { }
 };
+
+#endif // DISABLE_NETWORK

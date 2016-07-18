@@ -45,7 +45,8 @@ private:
     uint16 _listeningAddress;
     bool   _advertise;
 
-    uint16 _status;
+    uint16  _status;
+    uint8   _hostPlayerId;
 
     utf8 * _name;
     utf8 * _description;
@@ -116,13 +117,13 @@ public:
         _providerWebsite = gConfigNetwork.provider_website;
 
         cheats_reset();
-        LoadGroups();
+        _groupManager->Load();
         BeginChatLog();
 
-        NetworkPlayer * hostPlayer = AddPlayer(gConfigNetwork.player_name, "");
+        NetworkPlayer * hostPlayer = _playerList->CreatePlayer(gConfigNetwork.player_name, "");
         hostPlayer->flags |= NETWORK_PLAYER_FLAG_ISSERVER;
         hostPlayer->group = 0;
-        player_id = hostPlayer->id;
+        _hostPlayerId = hostPlayer->id;
 
         Console::WriteLine("Ready for clients...");
         network_chat_show_connected_message();
@@ -135,12 +136,6 @@ public:
             Guard::Assert(_advertiser == nullptr, GUARD_LINE);
             _advertiser = CreateServerAdvertiser(port);
         }
-
-#ifndef DISABLE_HTTP
-        if (gConfigNetwork.advertise) {
-            advertise_status = ADVERTISE_STATUS_UNREGISTERED;
-        }
-#endif
     }
 
     bool Initialise()
@@ -427,6 +422,28 @@ private:
         json_decref(obj);
 
         return jsonResult;
+    }
+
+    void SendEventPlayerDisconnected(const utf8 * playerName, const utf8 * reason)
+    {
+        std::unique_ptr<NetworkPacket> packet = std::move(NetworkPacket::Allocate());
+        *packet << (uint32)NETWORK_COMMAND_EVENT;
+        *packet << (uint16)SERVER_EVENT_PLAYER_DISCONNECTED;
+        packet->WriteString(playerName);
+        packet->WriteString(reason);
+        SendPacketToAllClients(*packet);
+    }
+
+    void SendPlayerListToClients()
+    {
+        std::unique_ptr<NetworkPacket> packet = std::move(NetworkPacket::Allocate());
+        *packet << (uint32)NETWORK_COMMAND_PLAYERLIST << (uint8)_playerList.GetCount();
+        for (int i = 0; i < _playerList.GetCount(); i++)
+        {
+            NetworkPlayer * player = _playerList->GetPlayerByIndex(i);
+            player->Write(*packet);
+        }
+        SendPacketToAllClients(*packet);
     }
 };
 

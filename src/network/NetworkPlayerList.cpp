@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef DISABLE_NETWORK
+
 #include <vector>
 #include "../core/String.hpp"
 #include "NetworkGroupManager.h"
@@ -129,3 +131,5 @@ INetworkPlayerList * CreatePlayerList(INetworkGroupManager * groupManager, INetw
 {
     return new NetworkPlayerList(groupManager, userManager);
 }
+
+#endif // DISABLE_NETWORK

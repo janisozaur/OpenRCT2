@@ -27,6 +27,11 @@ interface INetworkGroupManager
     virtual NetworkGroup * GetGroupByHash(const char * hash) const abstract;
     virtual NetworkGroup * GetGroupById(uint8 id) const abstract;
     virtual uint8          GetDefaultGroupId() const abstract;
+
+    virtual void            SetDefaultGroupId(uint8 groupId) abstract;
+    virtual NetworkGroup *  CreateGroup(const utf8 * name) abstract;
+    virtual void            Load() abstract;
+    virtual void            Save() abstract;
 };
 
 INetworkGroupManager * CreateGroupManager();

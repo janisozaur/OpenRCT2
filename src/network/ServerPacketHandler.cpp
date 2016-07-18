@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef DISABLE_NETWORK
+
 #include "../core/Math.hpp"
 #include "../core/String.hpp"
 #include "IPacketHandler.h"
@@ -299,3 +301,5 @@ private:
         return NETWORK_AUTH_OK;
     }
 };
+
+#endif // DISABLE_NETWORK
