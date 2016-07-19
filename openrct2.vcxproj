@@ -111,8 +111,10 @@
     <ClCompile Include="src\network\ClientPacketHandler.cpp" />
     <ClCompile Include="src\network\http.cpp" />
     <ClCompile Include="src\network\network.cpp" />
+    <ClCompile Include="src\network\Network2.cpp" />
     <ClCompile Include="src\network\NetworkAction.cpp" />
     <ClCompile Include="src\network\NetworkConnection.cpp" />
+    <ClCompile Include="src\network\NetworkCWrappers.cpp" />
     <ClCompile Include="src\network\NetworkGroup.cpp" />
     <ClCompile Include="src\network\NetworkGroupManager.cpp" />
     <ClCompile Include="src\network\NetworkKey.cpp" />
@@ -435,6 +437,7 @@
     <ClInclude Include="src\management\research.h" />
     <ClInclude Include="src\network\http.h" />
     <ClInclude Include="src\network\IPacketHandler.h" />
+    <ClInclude Include="src\network\Network2.h" />
     <ClInclude Include="src\network\NetworkAction.h" />
     <ClInclude Include="src\network\NetworkConnection.h" />
     <ClInclude Include="src\network\NetworkGroup.h" />

@@ -25,6 +25,8 @@ interface INetworkServer
 {
     virtual ~INetworkServer() { }
 
+    virtual void Update() abstract;
+
     virtual bool HasPassword() const abstract;
     virtual bool CheckPassword(const utf8 * password) const abstract;
 

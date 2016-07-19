@@ -48,15 +48,15 @@ private:
     uint16  _status;
     uint8   _hostPlayerId;
 
-    utf8 * _name;
-    utf8 * _description;
-    utf8 * _password;
-    uint32 _maxPlayers;
+    std::string _name;
+    std::string _description;
+    std::string _password;
+    uint32      _maxPlayers;
 
     // Provider details
-    utf8 * _providerName;
-    utf8 * _providerEmail;
-    utf8 * _providerWebsite;
+    std::string _providerName;
+    std::string _providerEmail;
+    std::string _providerWebsite;
 
     ITcpSocket * _listeningSocket = nullptr;
 
@@ -110,11 +110,11 @@ public:
         }
 
         // Copy details from user config
-        _name = gConfigNetwork.server_name;
-        _description = gConfigNetwork.server_description;
-        _providerName = gConfigNetwork.provider_name;
-        _providerEmail = gConfigNetwork.provider_email;
-        _providerWebsite = gConfigNetwork.provider_website;
+        _name = std::string(gConfigNetwork.server_name);
+        _description = std::string(gConfigNetwork.server_description);
+        _providerName = std::string(gConfigNetwork.provider_name);
+        _providerEmail = std::string(gConfigNetwork.provider_email);
+        _providerWebsite = std::string(gConfigNetwork.provider_website);
 
         cheats_reset();
         _groupManager->Load();
@@ -136,35 +136,6 @@ public:
             Guard::Assert(_advertiser == nullptr, GUARD_LINE);
             _advertiser = CreateServerAdvertiser(port);
         }
-    }
-
-    bool Initialise()
-    {
-#ifdef __WINDOWS__
-        if (!wsa_initialized) {
-            log_verbose("Initialising WSA");
-            WSADATA wsa_data;
-            if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != 0) {
-                log_error("Unable to initialise winsock.");
-                return false;
-            }
-            wsa_initialized = true;
-        }
-#endif
-
-        _status = NETWORK_STATUS_READY;
-
-        Memory::Free(_name);
-        Memory::Free(_description);
-        Memory::Free(_providerName);
-        Memory::Free(_providerEmail); 
-        Memory::Free(_providerWebsite);
-
-        _name = nullptr;
-        _description = nullptr;
-        _providerName = nullptr;
-        _providerEmail = nullptr;
-        _providerWebsite = nullptr;
     }
 
     void Close()
@@ -190,13 +161,6 @@ public:
         _gameCommandQueue.clear();
         _playerList->Clear();
         _groupManager->Clear();
-
-#ifdef __WINDOWS__
-        if (wsa_initialized) {
-            WSACleanup();
-            wsa_initialized = false;
-        }
-#endif
 
         CloseChatLog();
         gfx_invalidate_screen();
@@ -391,8 +355,8 @@ private:
             chat_history_add(text);
 
             // Give all the clients the updated player list
-            Server_Send_EVENT_PLAYER_DISCONNECTED(playerName, disconnectReason);
-            Server_Send_PLAYERLIST();
+            SendEventPlayerDisconnected(playerName, disconnectReason);
+            SendPlayerListToClients();
         }
 
         _clients.remove(client);
