@@ -97,7 +97,6 @@ void network_chat_show_connected_message();
 static void network_get_keys_directory(utf8 *buffer, size_t bufferSize);
 static void network_get_private_key_path(utf8 *buffer, size_t bufferSize, const utf8 * playerName);
 static void network_get_public_key_path(utf8 *buffer, size_t bufferSize, const utf8 * playerName, const utf8 * hash);
-static void network_get_keymap_path(utf8 *buffer, size_t bufferSize);
 
 Network::Network()
 {

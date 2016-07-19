@@ -25,6 +25,7 @@
 #include "network.h"
 #include "Network2.h"
 #include "NetworkServer.h"
+#include "NetworkClient.h"
 
 #ifndef DISABLE_NETWORK
 
@@ -33,7 +34,51 @@ namespace Network2
 #ifdef __WINDOWS__
     static bool _wsaInitialised = false;
 #endif
-    static NETWORK_MODE _mode = NETWORK_MODE_NONE;
+    static INetworkContext *    _context = nullptr;
+    static NETWORK_MODE         _mode = NETWORK_MODE_NONE;
+
+    INetworkClient * GetClient()
+    {
+        if (_mode == NETWORK_MODE_CLIENT)
+        {
+            INetworkClient * client = static_cast<INetworkClient *>(_context);
+            return client;
+        }
+    }
+
+    INetworkContext * GetContext()
+    {
+        return _context;
+    }
+
+    INetworkGroupManager * GetGroupManager()
+    {
+        return nullptr;
+    }
+
+    INetworkPlayerList * GetPlayerList()
+    {
+        return nullptr;
+    }
+
+    INetworkServer * GetServer()
+    {
+        if (_mode == NETWORK_MODE_SERVER)
+        {
+            INetworkServer * server = static_cast<INetworkServer *>(_context);
+            return server;
+        }
+    }
+
+    INetworkUserManager * GetUserManager()
+    {
+        return nullptr;
+    }
+
+    NETWORK_MODE GetMode()
+    {
+        return _mode;
+    }
 
     bool Initialise()
     {
@@ -81,6 +126,32 @@ namespace Network2
             break;
         }
         }
+    }
+
+    INetworkServer * BeginServer(uint16 port)
+    {
+        Guard::Assert(_mode == NETWORK_MODE_NONE, GUARD_LINE);
+
+        INetworkServer * server = CreateServer();
+        if (!server->Begin(nullptr, port))
+        {
+            delete server;
+            server = nullptr;
+        }
+        return server;
+    }
+
+    INetworkClient * BeginClient(const char * host, uint16 port)
+    {
+        Guard::Assert(_mode == NETWORK_MODE_NONE, GUARD_LINE);
+
+        INetworkClient * client = CreateClient();
+        if (!client->Begin(host, port))
+        {
+            delete client;
+            client = nullptr;
+        }
+        return client;
     }
 }
 

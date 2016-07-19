@@ -399,7 +399,8 @@ static rct_xy16 window_multiplayer_information_get_size()
 	int numLines, fontSpriteBase;
 
 	gCurrentFontSpriteBase = FONT_SPRITE_BASE_MEDIUM;
-	utf8 * buffer = _strdup(network_get_server_description());
+	NetworkServerInfo serverInfo = network_get_server_info();
+	utf8 * buffer = _strdup(serverInfo.Description);
 	gfx_wrap_string(buffer, width, &numLines, &fontSpriteBase);
 	free(buffer);
 
@@ -444,35 +445,31 @@ static void window_multiplayer_information_paint(rct_window *w, rct_drawpixelinf
 		int y = 50;
 		int width = w->width - 6;
 
-		const utf8 * name = network_get_server_name();
+		NetworkServerInfo serverInfo = network_get_server_info();
 		{
-			gfx_draw_string_left_wrapped(dpi, (void*)&name, x, y, width, STR_STRING, w->colours[1]);
+			gfx_draw_string_left_wrapped(dpi, (void*)&serverInfo.Name, x, y, width, STR_STRING, w->colours[1]);
 			y += 11;
 		}
 		y += 3;
 
-		const utf8 * description = network_get_server_description();
-		if (!str_is_null_or_empty(description)) {
-			gfx_draw_string_left_wrapped(dpi, (void*)&description, x, y, width, STR_STRING, w->colours[1]);
+		if (!str_is_null_or_empty(serverInfo.Description)) {
+			gfx_draw_string_left_wrapped(dpi, (void*)&serverInfo.Description, x, y, width, STR_STRING, w->colours[1]);
 			y += 11;
 		}
 		y += 8;
 
-		const utf8 * providerName = network_get_server_provider_name();
-		if (!str_is_null_or_empty(providerName)) {
-			gfx_draw_string_left(dpi, STR_PROVIDER_NAME, (void*)&providerName, 0, x, y);
+		if (!str_is_null_or_empty(serverInfo.Provider.Name)) {
+			gfx_draw_string_left(dpi, STR_PROVIDER_NAME, (void*)&serverInfo.Provider.Name, 0, x, y);
 			y += 11;
 		}
 
-		const utf8 * providerEmail = network_get_server_provider_email();
-		if (!str_is_null_or_empty(providerEmail)) {
-			gfx_draw_string_left(dpi, STR_PROVIDER_EMAIL, (void*)&providerEmail, 0, x, y);
+		if (!str_is_null_or_empty(serverInfo.Provider.Email)) {
+			gfx_draw_string_left(dpi, STR_PROVIDER_EMAIL, (void*)&serverInfo.Provider.Email, 0, x, y);
 			y += 11;
 		}
 
-		const utf8 * providerWebsite = network_get_server_provider_website();
-		if (!str_is_null_or_empty(providerWebsite)) {
-			gfx_draw_string_left(dpi, STR_PROVIDER_WEBSITE, (void*)&providerWebsite, 0, x, y);
+		if (!str_is_null_or_empty(serverInfo.Provider.Website)) {
+			gfx_draw_string_left(dpi, STR_PROVIDER_WEBSITE, (void*)&serverInfo.Provider.Website, 0, x, y);
 		}
 	}
 }

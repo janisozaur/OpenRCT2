@@ -19,7 +19,7 @@
 #include "../core/Math.hpp"
 #include "../core/String.hpp"
 #include "IPacketHandler.h"
-#include "network.h"
+#include "Network2.h"
 #include "NetworkAction.h"
 #include "NetworkConnection.h"
 #include "NetworkGroup.h"
@@ -54,8 +54,9 @@ public:
         (*packet) >> sigsize;
         const char * signature = (const char *)packet->Read(sigsize);
 
-        NETWORK_AUTH response = GetAuthenticationResponse(sender, gameVersion, name, password, pubkey, signature, sigsize);
         INetworkServer * server = Network2::GetServer();
+        NETWORK_AUTH response =
+            server->GetAuthenticationResponse(sender, gameVersion, name, password, pubkey, signature, sigsize);
         sender->AuthStatus = response;
         server->SendAuthenticationResponse(sender, response);
     }
@@ -210,95 +211,6 @@ public:
 
         INetworkServer * server = Network2::GetServer();
         server->SendToken(sender);
-    }
-
-private:
-    NETWORK_AUTH GetAuthenticationResponse(NetworkConnection * sender,
-                                           const char * gameVersion,
-                                           const char * name,
-                                           const char * password,
-                                           const char * pubkey,
-                                           const char * signature,
-                                           size_t signatureSize)
-    {
-        // Check if there are too many players
-        INetworkPlayerList * networkPlayerList = Network2::GetPlayerList();
-        if (networkPlayerList->IsFull()) // gConfigNetwork.maxplayers <= player_list.size()
-        {
-            return NETWORK_AUTH_FULL;
-        }
-
-        // Check if the game version matches
-        if (!String::Equals(gameVersion, NETWORK_STREAM_ID))
-        {
-            return NETWORK_AUTH_BADVERSION;
-        }
-
-        // Check name
-        if (String::IsNullOrEmpty(name))
-        {
-            return NETWORK_AUTH_BADNAME;
-        }
-
-        // Check if user supplied a key and signature
-        if (pubkey == nullptr || signature == nullptr)
-        {
-            return NETWORK_AUTH_VERIFICATIONFAILURE;
-        }
-
-        // Verify the user's key
-        SDL_RWops * pubkey_rw = SDL_RWFromConstMem(pubkey, strlen(pubkey));
-        if (pubkey_rw == nullptr)
-        {
-            log_verbose("Signature verification failed, invalid data!");
-            return NETWORK_AUTH_VERIFICATIONFAILURE;
-        }
-
-        sender->Key.LoadPublic(pubkey_rw);
-        SDL_RWclose(pubkey_rw);
-        bool verified = sender->Key.Verify(sender->Challenge.data(),
-                                            sender->Challenge.size(),
-                                            signature,
-                                            signatureSize);
-        std::string hash = sender->Key.PublicKeyHash();
-
-        if (!verified)
-        {
-            log_verbose("Signature verification failed!");
-            return NETWORK_AUTH_VERIFICATIONFAILURE;
-        }
-        log_verbose("Signature verification ok. Hash %s", hash.c_str());
-
-        // If the server only allows whitelisted keys, check the key is whitelisted
-        INetworkUserManager * userManager = Network2::GetUserManager();
-        if (gConfigNetwork.known_keys_only && userManager->GetUserByHash(hash) == nullptr)
-        {
-            return NETWORK_AUTH_UNKNOWN_KEY_DISALLOWED;
-        }
-
-        // Check password
-        INetworkServer * server = Network2::GetServer();
-        INetworkGroupManager * groupManager = Network2::GetGroupManager();
-        std::string playerHash = sender->Key.PublicKeyHash();
-        const NetworkGroup * group = groupManager->GetGroupByHash(playerHash.c_str());
-        size_t actionIndex = NetworkActions::FindCommandByPermissionName("PERMISSION_PASSWORDLESS_LOGIN");
-        bool passwordless = group->CanPerformAction(actionIndex);
-        if (!passwordless)
-        {
-            if (String::IsNullOrEmpty(password) && server->HasPassword())
-            {
-                return NETWORK_AUTH_REQUIREPASSWORD;
-            }
-            else if (server->CheckPassword(password))
-            {
-                return NETWORK_AUTH_BADPASSWORD;
-            }
-        }
-
-        // Authentication successful
-        sender->AuthStatus = NETWORK_AUTH_OK;
-        server->AcceptPlayer(sender, name, playerHash.c_str());
-        return NETWORK_AUTH_OK;
     }
 };
 

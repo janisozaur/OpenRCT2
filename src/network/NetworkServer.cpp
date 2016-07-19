@@ -20,6 +20,8 @@
 #include "../core/Memory.hpp"
 #include "../core/String.hpp"
 #include "network.h"
+#include "NetworkAction.h"
+#include "NetworkChat.h"
 #include "NetworkConnection.h"
 #include "NetworkGroupManager.h"
 #include "NetworkPlayerList.h"
@@ -64,6 +66,7 @@ private:
     std::multiset<GameCommand> _gameCommandQueue;
 
     INetworkServerAdvertiser *  _advertiser;
+    INetworkChat *              _chat;
     INetworkGroupManager *      _groupManager;
     INetworkPlayerList *        _playerList;
     INetworkUserManager *       _userManager;
@@ -74,6 +77,7 @@ private:
 public:
     NetworkServer()
     {
+        _chat = CreateChat();
         _groupManager = CreateGroupManager();
         _userManager = CreateUserManager();
         _playerList = CreatePlayerList(_groupManager, _userManager);
@@ -84,13 +88,9 @@ public:
         delete _playerList;
     }
 
-    bool Begin(uint16 port, const char * address)
+    bool Begin(const char * address, uint16 port)
     {
         Close();
-        if (!Initialise())
-        {
-            return false;
-        }
 
         _userManager->Load();
 
@@ -118,7 +118,7 @@ public:
 
         cheats_reset();
         _groupManager->Load();
-        BeginChatLog();
+        _chat->StartLogging();
 
         NetworkPlayer * hostPlayer = _playerList->CreatePlayer(gConfigNetwork.player_name, "");
         hostPlayer->flags |= NETWORK_PLAYER_FLAG_ISSERVER;
@@ -161,8 +161,7 @@ public:
         _gameCommandQueue.clear();
         _playerList->Clear();
         _groupManager->Clear();
-
-        CloseChatLog();
+        _chat->StopLogging();
         gfx_invalidate_screen();
     }
 
@@ -174,16 +173,116 @@ public:
         AcceptNewClients();
     }
 
+    NetworkServerInfo GetServerInfo() const override
+    {
+        NetworkServerInfo info;
+        info.Name = _name.c_str();
+        info.Description = _description.c_str();
+        info.Provider.Name = _providerName.c_str();
+        info.Provider.Email = _providerEmail.c_str();
+        info.Provider.Website = _providerWebsite.c_str();
+        return info;
+    }
+
+    INetworkChat * GetNetworkChat() const override
+    {
+        return _chat;
+    }
+
     bool HasPassword() const override
     {
-        bool hasPassword = !String::IsNullOrEmpty(_password);
+        bool hasPassword = !_password.empty();
         return hasPassword;
     }
 
     bool CheckPassword(const utf8 * password) const override
     {
-        bool matches = String::Equals(_password, password);
+        bool matches = String::Equals(_password.c_str(), password);
         return matches;
+    }
+
+    NETWORK_AUTH GetAuthenticationResponse(NetworkConnection * sender,
+                                           const char * gameVersion,
+                                           const char * name,
+                                           const char * password,
+                                           const char * pubkey,
+                                           const char * signature,
+                                           size_t signatureSize)
+    {
+        // Check if there are too many players
+        if (_playerList->IsFull()) // gConfigNetwork.maxplayers <= player_list.size()
+        {
+            return NETWORK_AUTH_FULL;
+        }
+
+        // Check if the game version matches
+        if (!String::Equals(gameVersion, NETWORK_STREAM_ID))
+        {
+            return NETWORK_AUTH_BADVERSION;
+        }
+
+        // Check name
+        if (String::IsNullOrEmpty(name))
+        {
+            return NETWORK_AUTH_BADNAME;
+        }
+
+        // Check if user supplied a key and signature
+        if (pubkey == nullptr || signature == nullptr)
+        {
+            return NETWORK_AUTH_VERIFICATIONFAILURE;
+        }
+
+        // Verify the user's key
+        SDL_RWops * pubkey_rw = SDL_RWFromConstMem(pubkey, strlen(pubkey));
+        if (pubkey_rw == nullptr)
+        {
+            log_verbose("Signature verification failed, invalid data!");
+            return NETWORK_AUTH_VERIFICATIONFAILURE;
+        }
+
+        sender->Key.LoadPublic(pubkey_rw);
+        SDL_RWclose(pubkey_rw);
+        bool verified = sender->Key.Verify(sender->Challenge.data(),
+                                            sender->Challenge.size(),
+                                            signature,
+                                            signatureSize);
+        std::string hash = sender->Key.PublicKeyHash();
+
+        if (!verified)
+        {
+            log_verbose("Signature verification failed!");
+            return NETWORK_AUTH_VERIFICATIONFAILURE;
+        }
+        log_verbose("Signature verification ok. Hash %s", hash.c_str());
+
+        // If the server only allows whitelisted keys, check the key is whitelisted
+        if (gConfigNetwork.known_keys_only && _userManager->GetUserByHash(hash) == nullptr)
+        {
+            return NETWORK_AUTH_UNKNOWN_KEY_DISALLOWED;
+        }
+
+        // Check password
+        std::string playerHash = sender->Key.PublicKeyHash();
+        const NetworkGroup * group = _groupManager->GetGroupByHash(playerHash.c_str());
+        size_t actionIndex = NetworkActions::FindCommandByPermissionName("PERMISSION_PASSWORDLESS_LOGIN");
+        bool passwordless = group->CanPerformAction(actionIndex);
+        if (!passwordless)
+        {
+            if (String::IsNullOrEmpty(password) && HasPassword())
+            {
+                return NETWORK_AUTH_REQUIREPASSWORD;
+            }
+            else if (CheckPassword(password))
+            {
+                return NETWORK_AUTH_BADPASSWORD;
+            }
+        }
+
+        // Authentication successful
+        sender->AuthStatus = NETWORK_AUTH_OK;
+        AcceptPlayer(sender, name, playerHash.c_str());
+        return NETWORK_AUTH_OK;
     }
 
     void AcceptPlayer(NetworkConnection * client, const utf8 * name, const char * hash) override
@@ -295,12 +394,15 @@ private:
     void ProcessClients()
     {
         auto it = _clients.begin();
-        while (it != _clients.end()) {
+        while (it != _clients.end())
+        {
             if (!ProcessConnection(*(*it)))
             {
                 RemoveClient((*it));
                 it = _clients.begin();
-            } else {
+            }
+            else
+            {
                 it++;
             }
         }
@@ -367,19 +469,19 @@ private:
         char * jsonResult;
 
         json_t* obj = json_object();
-        json_object_set_new(obj, "name", json_string(_name));
+        json_object_set_new(obj, "name", json_string(_name.c_str()));
         json_object_set_new(obj, "requiresPassword", json_boolean(HasPassword()));
         json_object_set_new(obj, "version", json_string(NETWORK_STREAM_ID));
         json_object_set_new(obj, "players", json_integer(_playerList->GetCount()));
         json_object_set_new(obj, "maxPlayers", json_integer(_maxPlayers));
-        json_object_set_new(obj, "description", json_string(_description));
+        json_object_set_new(obj, "description", json_string(_description.c_str()));
         json_object_set_new(obj, "dedicated", json_boolean(gOpenRCT2Headless));
 
         // Provider details
         json_t* jsonProvider = json_object();
-        json_object_set_new(jsonProvider, "name", json_string(_providerName));
-        json_object_set_new(jsonProvider, "email", json_string(_providerEmail));
-        json_object_set_new(jsonProvider, "website", json_string(_providerWebsite));
+        json_object_set_new(jsonProvider, "name", json_string(_providerName.c_str()));
+        json_object_set_new(jsonProvider, "email", json_string(_providerEmail.c_str()));
+        json_object_set_new(jsonProvider, "website", json_string(_providerWebsite.c_str()));
         json_object_set_new(obj, "provider", jsonProvider);
 
         jsonResult = json_dumps(obj, 0);
@@ -401,8 +503,8 @@ private:
     void SendPlayerListToClients()
     {
         std::unique_ptr<NetworkPacket> packet = std::move(NetworkPacket::Allocate());
-        *packet << (uint32)NETWORK_COMMAND_PLAYERLIST << (uint8)_playerList.GetCount();
-        for (int i = 0; i < _playerList.GetCount(); i++)
+        *packet << (uint32)NETWORK_COMMAND_PLAYERLIST << (uint8)_playerList->GetCount();
+        for (uint32 i = 0; i < _playerList->GetCount(); i++)
         {
             NetworkPlayer * player = _playerList->GetPlayerByIndex(i);
             player->Write(*packet);
@@ -410,5 +512,10 @@ private:
         SendPacketToAllClients(*packet);
     }
 };
+
+INetworkServer * CreateServer()
+{
+    return new NetworkServer();
+}
 
 #endif // DISABLE_NETWORK

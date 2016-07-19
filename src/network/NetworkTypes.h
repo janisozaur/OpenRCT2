@@ -60,6 +60,47 @@ enum NETWORK_COMMAND
     NETWORK_COMMAND_INVALID = -1
 };
 
+typedef struct NetworkServerProviderInfo
+{
+    const utf8 * Name;
+    const utf8 * Email;
+    const utf8 * Website;
+} NetworkServerProviderInfo;
+
+typedef struct NetworkServerInfo
+{
+    const utf8 * Name;
+    const utf8 * Description;
+    NetworkServerProviderInfo Provider;
+} NetworkServerInfo;
+
+typedef struct GameCommand
+{
+    GameCommand(uint32 t, uint32* args, uint8 p, uint8 cb)
+    {
+        tick = t;
+        eax = args[0];
+        ebx = args[1];
+        ecx = args[2];
+        edx = args[3];
+        esi = args[4];
+        edi = args[5];
+        ebp = args[6];
+        playerid = p;
+        callback = cb;
+    }
+
+    uint32 tick;
+    uint32 eax, ebx, ecx, edx, esi, edi, ebp;
+    uint8 playerid;
+    uint8 callback;
+
+    bool operator <(const GameCommand &comp) const
+    {
+        return tick < comp.tick;
+    }
+} GameCommand;
+
 #ifdef __cplusplus
 
 template <size_t size>

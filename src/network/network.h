@@ -243,21 +243,6 @@ namespace Convert
 	uint16 NetworkToHost(uint16 value);
 }
 
-interface INetworkServer;
-interface INetworkGroupManager;
-interface INetworkPlayerList;
-interface INetworkUserManager;
-
-namespace Network2
-{
-    INetworkServer *        GetServer();
-    INetworkGroupManager *  GetGroupManager();
-    INetworkPlayerList *    GetPlayerList();
-    INetworkUserManager *   GetUserManager();
-}
-
-
-
 #endif // __cplusplus
 #else /* DISABLE_NETWORK */
 #define NETWORK_STREAM_ID "Multiplayer disabled"
@@ -316,11 +301,7 @@ void network_set_password(const char* password);
 
 void network_print_error();
 void network_append_chat_log(const utf8 *text);
-const utf8 * network_get_server_name();
-const utf8 * network_get_server_description();
-const utf8 * network_get_server_provider_name();
-const utf8 * network_get_server_provider_email();
-const utf8 * network_get_server_provider_website();
+NetworkServerInfo network_get_server_info();
 
 #ifdef __cplusplus
 }

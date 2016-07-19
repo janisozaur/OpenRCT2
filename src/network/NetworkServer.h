@@ -17,19 +17,27 @@
 #pragma once
 
 #include "../common.h"
+#include "NetworkContext.h"
 #include "NetworkTypes.h"
 
 class NetworkConnection;
 
-interface INetworkServer
+interface INetworkServer : public INetworkContext
 {
     virtual ~INetworkServer() { }
 
-    virtual void Update() abstract;
+    virtual bool Begin(const char * address, uint16 port) abstract;
 
     virtual bool HasPassword() const abstract;
     virtual bool CheckPassword(const utf8 * password) const abstract;
 
+    virtual NETWORK_AUTH GetAuthenticationResponse(NetworkConnection * sender,
+                                                   const char * gameVersion,
+                                                   const char * name,
+                                                   const char * password,
+                                                   const char * pubkey,
+                                                   const char * signature,
+                                                   size_t signatureSize) abstract;
     virtual void AcceptPlayer(NetworkConnection * client, const utf8 * name, const char * hash) abstract;
 
     virtual void SendToken(NetworkConnection * client) abstract;
@@ -41,3 +49,5 @@ interface INetworkServer
 
     virtual void BroadcastMessage(const utf8 * message) abstract;
 };
+
+INetworkServer * CreateServer();

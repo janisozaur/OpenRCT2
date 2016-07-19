@@ -16,6 +16,13 @@
 
 #include "../common.h"
 
+interface INetworkClient;
+interface INetworkContext;
+interface INetworkGroupManager;
+interface INetworkPlayerList;
+interface INetworkServer;
+interface INetworkUserManager;
+
 enum NETWORK_MODE
 {
     NETWORK_MODE_NONE,
@@ -25,7 +32,25 @@ enum NETWORK_MODE
 
 namespace Network2
 {
+    INetworkClient *        GetClient();
+    INetworkContext *       GetContext();
+    INetworkGroupManager *  GetGroupManager();
+    INetworkPlayerList *    GetPlayerList();
+    INetworkServer *        GetServer();
+    INetworkUserManager *   GetUserManager();
+
+    NETWORK_MODE GetMode();
+
     bool Initialise();
     void Dispose();
     void Update();
+
+    INetworkServer * BeginServer(uint16 port);
+    INetworkClient * BeginClient(const char * host, uint16 port);
 }
+
+// This define specifies which version of network stream current build uses.
+// It is used for making sure only compatible builds get connected, even within
+// single OpenRCT2 version.
+#define NETWORK_STREAM_VERSION  "11"
+#define NETWORK_STREAM_ID       (OPENRCT2_VERSION "-" NETWORK_STREAM_VERSION)

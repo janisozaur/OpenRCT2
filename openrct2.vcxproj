@@ -113,6 +113,7 @@
     <ClCompile Include="src\network\network.cpp" />
     <ClCompile Include="src\network\Network2.cpp" />
     <ClCompile Include="src\network\NetworkAction.cpp" />
+    <ClCompile Include="src\network\NetworkChat.cpp" />
     <ClCompile Include="src\network\NetworkConnection.cpp" />
     <ClCompile Include="src\network\NetworkCWrappers.cpp" />
     <ClCompile Include="src\network\NetworkGroup.cpp" />
@@ -439,7 +440,10 @@
     <ClInclude Include="src\network\IPacketHandler.h" />
     <ClInclude Include="src\network\Network2.h" />
     <ClInclude Include="src\network\NetworkAction.h" />
+    <ClInclude Include="src\network\NetworkChat.h" />
+    <ClInclude Include="src\network\NetworkClient.h" />
     <ClInclude Include="src\network\NetworkConnection.h" />
+    <ClInclude Include="src\network\NetworkContext.h" />
     <ClInclude Include="src\network\NetworkGroup.h" />
     <ClInclude Include="src\network\NetworkGroupManager.h" />
     <ClInclude Include="src\network\NetworkPacket.h" />

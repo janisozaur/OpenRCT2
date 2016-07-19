@@ -37,22 +37,31 @@ void network_close()
 
 int network_begin_server(int port)
 {
-	return gNetwork.BeginServer(port);
+    INetworkServer * server = Network2::BeginServer(port);
+    return server != nullptr;
+}
+
+int network_begin_client(const char * host, int port)
+{
+    INetworkClient * client = Network2::BeginClient(host, port);
+    return client != nullptr;
 }
 
 void network_shutdown_client()
 {
-	gNetwork.ShutdownClient();
-}
+    INetworkClient * client = Network2::GetClient();
+    if (client != nullptr)
+    {
+        client->Close();
 
-int network_begin_client(const char *host, int port)
-{
-	return gNetwork.BeginClient(host, port);
+        // Double check if we can just delete it here
+        delete client;
+    }
 }
 
 int network_get_mode()
 {
-	return gNetwork.GetMode();
+    return Network2::GetMode();
 }
 
 int network_get_status()
@@ -496,17 +505,11 @@ static void network_get_public_key_path(utf8 *buffer, size_t bufferSize, const u
 	String::Append(buffer, bufferSize, ".pubkey");
 }
 
-static void network_get_keymap_path(utf8 *buffer, size_t bufferSize)
+NetworkServerInfo network_get_server_info()
 {
-	platform_get_user_directory(buffer, NULL);
-	Path::Append(buffer, bufferSize, "keymappings.json");
+    INetworkContext * context = Network2::GetContext();
+    return context->GetServerInfo();
 }
-
-const utf8 * network_get_server_name() { return gNetwork.ServerName.c_str(); }
-const utf8 * network_get_server_description() { return gNetwork.ServerDescription.c_str(); }
-const utf8 * network_get_server_provider_name() { return gNetwork.ServerProviderName.c_str(); }
-const utf8 * network_get_server_provider_email() { return gNetwork.ServerProviderEmail.c_str(); }
-const utf8 * network_get_server_provider_website() { return gNetwork.ServerProviderWebsite.c_str(); }
 
 #else
 
@@ -554,10 +557,6 @@ void network_set_password(const char* password) {}
 uint8 network_get_current_player_id() { return 0; }
 int network_get_current_player_group_index() { return 0; }
 void network_append_chat_log(const utf8 *text) { }
-const utf8 * network_get_server_name() { return nullptr; }
-const utf8 * network_get_server_description() { return nullptr; }
-const utf8 * network_get_server_provider_name() { return nullptr; }
-const utf8 * network_get_server_provider_email() { return nullptr; }
-const utf8 * network_get_server_provider_website() { return nullptr; }
+NetworkServerInfo network_get_server_info() { return { 0 }; }
 
 #endif /* DISABLE_NETWORK */
