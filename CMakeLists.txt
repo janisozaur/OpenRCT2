@@ -20,7 +20,7 @@ cmake_minimum_required(VERSION 2.6)
 set (PROJECT openrct2)
 # OpenRCT2 resource directory
 set (ORCT2_RESOURCE_DIR ${CMAKE_INSTALL_PREFIX}/share/${PROJECT}/)
-
+w
 project(${PROJECT})
 
 if (CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
@@ -157,7 +157,7 @@ endif (APPLE)
 
 # set necessary flags to compile code as is
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TARGET_M} -std=gnu99 -fno-pie -fstrict-aliasing -Werror -Wundef -Wmissing-declarations")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TARGET_M} -std=gnu++11 -fno-pie -fstrict-aliasing -Werror -Wundef -Wmissing-declarations")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TARGET_M} -std=gnu++11 -fno-pie -fstrict-aliasing -Werror -Wundef -Wmissing-declarations -Weffc++")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${TARGET_M}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS}")
 
