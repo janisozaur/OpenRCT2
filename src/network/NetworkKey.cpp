@@ -16,13 +16,20 @@
 
 #ifndef DISABLE_NETWORK
 
-#include "NetworkKey.h"
-#include "../diagnostic.h"
-
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include <vector>
+
+#include "../diagnostic.h"
+#include "../core/Path.hpp"
+#include "../core/String.hpp"
+#include "NetworkKey.h"
+
+extern "C"
+{
+    #include "../platform/platform.h"
+}
 
 #define KEY_TYPE EVP_PKEY_RSA
 
@@ -441,6 +448,27 @@ bool NetworkKey::Verify(const uint8 * md, const size_t len, const char * sig, co
         log_error("Signature is invalid");
         return false;
     }
+}
+
+void NetworkKey::GetKeysDirectory(utf8 * buffer, size_t bufferSize)
+{
+    platform_get_user_directory(buffer, "keys");
+}
+
+void NetworkKey::GetPrivateKeyPath(utf8 * buffer, size_t bufferSize, const utf8 * playerName)
+{
+    GetKeysDirectory(buffer, bufferSize);
+    Path::Append(buffer, bufferSize, playerName);
+    String::Append(buffer, bufferSize, ".privkey");
+}
+
+void NetworkKey::GetPublicKeyPath(utf8 * buffer, size_t bufferSize, const utf8 * playerName, const utf8 * hash)
+{
+    GetKeysDirectory(buffer, bufferSize);
+    Path::Append(buffer, bufferSize, playerName);
+    String::Append(buffer, bufferSize, "-");
+    String::Append(buffer, bufferSize, hash);
+    String::Append(buffer, bufferSize, ".pubkey");
 }
 
 #endif // DISABLE_NETWORK

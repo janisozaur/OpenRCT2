@@ -18,6 +18,7 @@
 
 #include "../common.h"
 
+interface INetworkUserManager;
 class NetworkConnection;
 class NetworkPlayer;
 
@@ -29,10 +30,15 @@ interface INetworkPlayerList
     virtual uint32          GetCount() const abstract;
     virtual NetworkPlayer * GetPlayerByIndex(uint32 index) const abstract;
     virtual NetworkPlayer * GetPlayerById(uint8 id) const abstract;
+};
+
+interface INetworkPlayerManager : public INetworkPlayerList
+{
+    virtual ~INetworkPlayerManager() { }
 
     virtual NetworkPlayer * CreatePlayer(const utf8 * name, const char * hash) abstract;
     virtual void            Clear() abstract;
     virtual void            Remove(NetworkPlayer * player) abstract;
 };
 
-INetworkPlayerList * CreatePlayerList(INetworkGroupManager * groupManager, INetworkUserManager * userManager);
+INetworkPlayerManager * CreatePlayerManager(INetworkGroupManager * groupManager, INetworkUserManager * userManager);

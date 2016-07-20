@@ -20,11 +20,11 @@
 #include "../core/String.hpp"
 #include "NetworkGroupManager.h"
 #include "NetworkPlayer.h"
-#include "NetworkPlayerList.h"
+#include "NetworkPlayerManager.h"
 #include "NetworkUser.h"
 #include "NetworkUserManager.h"
 
-class NetworkPlayerList : public INetworkPlayerList
+class NetworkPlayerManager : public INetworkPlayerManager
 {
 private:
     INetworkGroupManager *          _groupManager;
@@ -33,13 +33,13 @@ private:
     std::vector<NetworkPlayer *>    _players;
 
 public:
-    NetworkPlayerList(INetworkGroupManager * groupManager, INetworkUserManager * userManager)
+    NetworkPlayerManager(INetworkGroupManager * groupManager, INetworkUserManager * userManager)
     {
         _groupManager = groupManager;
         _userManager = userManager;
     }
 
-    virtual ~NetworkPlayerList() { }
+    virtual ~NetworkPlayerManager() { }
 
     uint32 GetCount() const override
     {
@@ -49,6 +49,24 @@ public:
     bool IsFull() const override
     {
         return _players.size() >= _maxPlayers;
+    }
+
+    NetworkPlayer * GetPlayerById(uint8 id) const
+    {
+        for (auto player : _players)
+        {
+            if (id == player->id)
+            {
+                return player;
+            }
+        }
+        return nullptr;
+    }
+
+    NetworkPlayer * GetPlayerByIndex(uint32 index) const
+    {
+        if (index >= _players.size()) return nullptr;
+        return _players[index];
     }
 
     NetworkPlayer * CreatePlayer(const utf8 * name, const char * hash) override
@@ -100,18 +118,6 @@ public:
         }
     }
 
-    NetworkPlayer * GetPlayerById(uint8 id) const
-    {
-        for (auto player : _players)
-        {
-            if (id == player->id)
-            {
-                return player;
-            }
-        }
-        return nullptr;
-    }
-
 private:
     bool TryGetNextPlayerId(uint8 * outId) const
     {
@@ -127,9 +133,9 @@ private:
     }
 };
 
-INetworkPlayerList * CreatePlayerList(INetworkGroupManager * groupManager, INetworkUserManager * userManager)
+INetworkPlayerManager * CreatePlayerManager(INetworkGroupManager * groupManager, INetworkUserManager * userManager)
 {
-    return new NetworkPlayerList(groupManager, userManager);
+    return new NetworkPlayerManager(groupManager, userManager);
 }
 
 #endif // DISABLE_NETWORK

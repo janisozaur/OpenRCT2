@@ -114,6 +114,7 @@
     <ClCompile Include="src\network\Network2.cpp" />
     <ClCompile Include="src\network\NetworkAction.cpp" />
     <ClCompile Include="src\network\NetworkChat.cpp" />
+    <ClCompile Include="src\network\NetworkClient.cpp" />
     <ClCompile Include="src\network\NetworkConnection.cpp" />
     <ClCompile Include="src\network\NetworkCWrappers.cpp" />
     <ClCompile Include="src\network\NetworkGroup.cpp" />
@@ -121,7 +122,7 @@
     <ClCompile Include="src\network\NetworkKey.cpp" />
     <ClCompile Include="src\network\NetworkPacket.cpp" />
     <ClCompile Include="src\network\NetworkPlayer.cpp" />
-    <ClCompile Include="src\network\NetworkPlayerList.cpp" />
+    <ClCompile Include="src\network\NetworkPlayerManager.cpp" />
     <ClCompile Include="src\network\NetworkServer.cpp" />
     <ClCompile Include="src\network\NetworkServerAdvertiser.cpp" />
     <ClCompile Include="src\network\NetworkUser.cpp" />
@@ -448,7 +449,7 @@
     <ClInclude Include="src\network\NetworkGroupManager.h" />
     <ClInclude Include="src\network\NetworkPacket.h" />
     <ClInclude Include="src\network\NetworkPlayer.h" />
-    <ClInclude Include="src\network\NetworkPlayerList.h" />
+    <ClInclude Include="src\network\NetworkPlayerManager.h" />
     <ClInclude Include="src\network\NetworkServer.h" />
     <ClInclude Include="src\network\NetworkServerAdvertiser.h" />
     <ClInclude Include="src\network\NetworkTypes.h" />

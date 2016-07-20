@@ -21,6 +21,7 @@
 
 interface INetworkChat;
 interface INetworkGroupManager;
+interface INetworkPlayerList;
 
 interface INetworkContext
 {

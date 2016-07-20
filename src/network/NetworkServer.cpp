@@ -16,23 +16,29 @@
 
 #ifndef DISABLE_NETWORK
 
+#include <set>
 #include "../core/Console.hpp"
+#include "../core/Json.hpp"
 #include "../core/Memory.hpp"
 #include "../core/String.hpp"
-#include "network.h"
+#include "Network2.h"
 #include "NetworkAction.h"
 #include "NetworkChat.h"
 #include "NetworkConnection.h"
+#include "NetworkGroup.h"
 #include "NetworkGroupManager.h"
 #include "NetworkPacketHandler.h"
-#include "NetworkPlayerList.h"
+#include "NetworkPlayer.h"
+#include "NetworkPlayerManager.h"
 #include "NetworkServer.h"
 #include "NetworkServerAdvertiser.h"
+#include "NetworkUserManager.h"
 
 extern "C"
 {
     #include "../cheats.h"
     #include "../config.h"
+    #include "../game.h"
     #include "../interface/chat.h"
     #include "../localisation/localisation.h"
     #include "../openrct2.h"
@@ -48,7 +54,6 @@ private:
     uint16 _listeningAddress;
     bool   _advertise;
 
-    uint16  _status;
     uint8   _hostPlayerId;
 
     std::string _name;
@@ -70,7 +75,7 @@ private:
     INetworkChat *              _chat;
     INetworkGroupManager *      _groupManager;
     INetworkPacketHandler *     _packetHandler;
-    INetworkPlayerList *        _playerList;
+    INetworkPlayerManager *     _playerManager;
     INetworkUserManager *       _userManager;
 
     uint32 _lastTickTime;
@@ -82,12 +87,12 @@ public:
         _chat = CreateChat();
         _groupManager = CreateGroupManager();
         _userManager = CreateUserManager();
-        _playerList = CreatePlayerList(_groupManager, _userManager);
+        _playerManager = CreatePlayerManager(_groupManager, _userManager);
     }
 
     virtual ~NetworkServer()
     {
-        delete _playerList;
+        delete _playerManager;
     }
 
     bool Begin(const char * address, uint16 port)
@@ -122,7 +127,7 @@ public:
         _groupManager->Load();
         _chat->StartLogging();
 
-        NetworkPlayer * hostPlayer = _playerList->CreatePlayer(gConfigNetwork.player_name, "");
+        NetworkPlayer * hostPlayer = _playerManager->CreatePlayer(gConfigNetwork.player_name, "");
         hostPlayer->flags |= NETWORK_PLAYER_FLAG_ISSERVER;
         hostPlayer->group = 0;
         _hostPlayerId = hostPlayer->id;
@@ -130,7 +135,6 @@ public:
         Console::WriteLine("Ready for clients...");
         _chat->ShowChatHelp();
 
-        _status = NETWORK_STATUS_CONNECTED;
         _listeningPort = port;
 
         if (_advertise)
@@ -138,18 +142,12 @@ public:
             Guard::Assert(_advertiser == nullptr, GUARD_LINE);
             _advertiser = CreateServerAdvertiser(port);
         }
+
+        return true;
     }
 
     void Close()
     {
-        if (_status == NETWORK_STATUS_NONE)
-        {
-            // Already closed. This prevents a call in ~Network() to gfx_invalidate_screen()
-            // which may no longer be valid on Linux and would cause a segfault.
-            return;
-        }
-        _status = NETWORK_STATUS_NONE;
-        
         delete _advertiser;
         _advertiser = nullptr;
 
@@ -161,7 +159,7 @@ public:
         _clients.clear();
 
         _gameCommandQueue.clear();
-        _playerList->Clear();
+        _playerManager->Clear();
         _groupManager->Clear();
         _chat->StopLogging();
         gfx_invalidate_screen();
@@ -191,6 +189,16 @@ public:
         return _chat;
     }
 
+    INetworkGroupManager * GetGroupManager() const override
+    {
+        return _groupManager;
+    }
+
+    INetworkPlayerList * GetPlayerList() const override
+    {
+        return _playerManager;
+    }
+
     bool HasPassword() const override
     {
         bool hasPassword = !_password.empty();
@@ -212,7 +220,7 @@ public:
                                            size_t signatureSize)
     {
         // Check if there are too many players
-        if (_playerList->IsFull()) // gConfigNetwork.maxplayers <= player_list.size()
+        if (_playerManager->IsFull()) // gConfigNetwork.maxplayers <= player_list.size()
         {
             return NETWORK_AUTH_FULL;
         }
@@ -289,7 +297,7 @@ public:
 
     void AcceptPlayer(NetworkConnection * client, const utf8 * name, const char * hash) override
     {
-        NetworkPlayer * player = _playerList->CreatePlayer(name, hash);
+        NetworkPlayer * player = _playerManager->CreatePlayer(name, hash);
         if (player != nullptr)
         {
             client->Player = player;
@@ -511,7 +519,7 @@ private:
         NetworkPlayer * player = client->Player;
         if (player != nullptr)
         {
-            _playerList->Remove(player);
+            _playerManager->Remove(player);
 
             const utf8 * playerName = player->name.c_str();
             const utf8 * disconnectReason = client->GetLastDisconnectReason();
@@ -541,7 +549,7 @@ private:
         json_object_set_new(obj, "name", json_string(_name.c_str()));
         json_object_set_new(obj, "requiresPassword", json_boolean(HasPassword()));
         json_object_set_new(obj, "version", json_string(NETWORK_STREAM_ID));
-        json_object_set_new(obj, "players", json_integer(_playerList->GetCount()));
+        json_object_set_new(obj, "players", json_integer(_playerManager->GetCount()));
         json_object_set_new(obj, "maxPlayers", json_integer(_maxPlayers));
         json_object_set_new(obj, "description", json_string(_description.c_str()));
         json_object_set_new(obj, "dedicated", json_boolean(gOpenRCT2Headless));
@@ -582,10 +590,10 @@ private:
     void SendPingListToClients()
     {
         std::unique_ptr<NetworkPacket> packet = std::move(NetworkPacket::Allocate());
-        *packet << (uint32)NETWORK_COMMAND_PINGLIST << (uint8)_playerList->GetCount();
-        for (uint32 i = 0; i < _playerList->GetCount(); i++)
+        *packet << (uint32)NETWORK_COMMAND_PINGLIST << (uint8)_playerManager->GetCount();
+        for (uint32 i = 0; i < _playerManager->GetCount(); i++)
         {
-            NetworkPlayer * player = _playerList->GetPlayerByIndex(i);
+            NetworkPlayer * player = _playerManager->GetPlayerByIndex(i);
             *packet << player->id << player->ping;
         }
         SendPacketToAllClients(*packet);
@@ -604,10 +612,10 @@ private:
     void SendPlayerListToClients()
     {
         std::unique_ptr<NetworkPacket> packet = std::move(NetworkPacket::Allocate());
-        *packet << (uint32)NETWORK_COMMAND_PLAYERLIST << (uint8)_playerList->GetCount();
-        for (uint32 i = 0; i < _playerList->GetCount(); i++)
+        *packet << (uint32)NETWORK_COMMAND_PLAYERLIST << (uint8)_playerManager->GetCount();
+        for (uint32 i = 0; i < _playerManager->GetCount(); i++)
         {
-            NetworkPlayer * player = _playerList->GetPlayerByIndex(i);
+            NetworkPlayer * player = _playerManager->GetPlayerByIndex(i);
             player->Write(*packet);
         }
         SendPacketToAllClients(*packet);

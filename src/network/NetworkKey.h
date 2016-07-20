@@ -42,6 +42,11 @@ public:
     void Unload();
     bool Sign(const uint8 * md, const size_t len, char ** signature, size_t * out_size);
     bool Verify(const uint8 * md, const size_t len, const char * sig, const size_t siglen);
+
+    static void GetKeysDirectory(utf8 * buffer, size_t bufferSize);
+    static void GetPrivateKeyPath(utf8 * buffer, size_t bufferSize, const utf8 * playerName);
+    static void GetPublicKeyPath(utf8 * buffer, size_t bufferSize, const utf8 * playerName, const utf8 * hash);
+
 private:
     NetworkKey (const NetworkKey &) = delete;
     EVP_PKEY_CTX * _ctx = nullptr;
