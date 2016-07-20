@@ -16,9 +16,9 @@
 
 #ifndef DISABLE_NETWORK
 
-#include "IPacketHandler.h"
 #include "NetworkConnection.h"
 #include "NetworkPacket.h"
+#include "NetworkPacketHandler.h"
 
 extern "C"
 {
@@ -39,7 +39,7 @@ static rct_string_id GetAuthStringId(NETWORK_AUTH auth)
 }
 
 
-class ClientPacketHandler : IPacketHandler
+class ClientPacketHandler : INetworkPacketHandler
 {
 public:
     void Handle_AUTH(NetworkConnection * sender, NetworkPacket * packet) override
@@ -59,10 +59,12 @@ public:
             break;
 
         case NETWORK_AUTH_BADVERSION:
+        {
             const char * version = packet->ReadString();
             sender->SetLastDisconnectReason(STR_MULTIPLAYER_INCORRECT_SOFTWARE_VERSION, &version);
             sender->Socket->Disconnect();
             break;
+        }
         case NETWORK_AUTH_BADNAME:
         case NETWORK_AUTH_BADPASSWORD:
         case NETWORK_AUTH_FULL:

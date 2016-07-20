@@ -30,6 +30,7 @@ interface INetworkGroupManager
 
     virtual void            SetDefaultGroupId(uint8 groupId) abstract;
     virtual NetworkGroup *  CreateGroup(const utf8 * name) abstract;
+    virtual void            Clear() abstract;
     virtual void            Load() abstract;
     virtual void            Save() abstract;
 };

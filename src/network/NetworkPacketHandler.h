@@ -17,13 +17,14 @@
 #pragma once
 
 #include "../common.h"
+#include "NetworkTypes.h"
 
 class NetworkConnection;
 class NetworkPacket;
 
-interface IPacketHandler
+interface INetworkPacketHandler
 {
-    virtual ~IPacketHandler() { }
+    virtual ~INetworkPacketHandler() { }
 
     virtual void Handle_AUTH                (NetworkConnection * sender, NetworkPacket * packet) abstract;
     virtual void Handle_MAP                 (NetworkConnection * sender, NetworkPacket * packet) abstract;
@@ -39,4 +40,27 @@ interface IPacketHandler
     virtual void Handle_GROUPLIST           (NetworkConnection * sender, NetworkPacket * packet) abstract;
     virtual void Handle_EVENT               (NetworkConnection * sender, NetworkPacket * packet) abstract;
     virtual void Handle_TOKEN               (NetworkConnection * sender, NetworkPacket * packet) abstract;
+
+    void HandlePacket(NetworkConnection * sender, NetworkPacket * packet)
+    {
+        uint32 command;
+        (*packet) >> command;
+
+        switch (command) {
+        case NETWORK_COMMAND_AUTH:              Handle_AUTH(sender, packet);                break;
+        case NETWORK_COMMAND_MAP:               Handle_MAP(sender, packet);                 break;
+        case NETWORK_COMMAND_CHAT:              Handle_CHAT(sender, packet);                break;
+        case NETWORK_COMMAND_GAMECMD:           Handle_GAMECMD(sender, packet);             break;
+        case NETWORK_COMMAND_TICK:              Handle_TICK(sender, packet);                break;
+        case NETWORK_COMMAND_PLAYERLIST:        Handle_PLAYERLIST(sender, packet);          break;
+        case NETWORK_COMMAND_PING:              Handle_PING(sender, packet);                break;
+        case NETWORK_COMMAND_PINGLIST:          Handle_PINGLIST(sender, packet);            break;
+        case NETWORK_COMMAND_SETDISCONNECTMSG:  Handle_SETDISCONNECTMSG(sender, packet);    break;
+        case NETWORK_COMMAND_GAMEINFO:          Handle_GAMEINFO(sender, packet);            break;
+        case NETWORK_COMMAND_SHOWERROR:         Handle_SHOWERROR(sender, packet);           break;
+        case NETWORK_COMMAND_GROUPLIST:         Handle_GROUPLIST(sender, packet);           break;
+        case NETWORK_COMMAND_EVENT:             Handle_EVENT(sender, packet);               break;
+        case NETWORK_COMMAND_TOKEN:             Handle_TOKEN(sender, packet);               break;
+        };
+    }
 };

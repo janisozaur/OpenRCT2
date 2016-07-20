@@ -18,12 +18,17 @@
 
 #include "../common.h"
 
+class NetworkPlayer;
+
 interface INetworkChat
 {
     virtual ~INetworkChat() { }
 
     virtual void StartLogging() abstract;
     virtual void StopLogging() abstract;
+    virtual void ShowMessage(const utf8 * text) abstract;
+    virtual void ShowMessage(NetworkPlayer * player, const utf8 * text) abstract;
+    virtual void ShowChatHelp() abstract;
 };
 
-INetworkChat * CreateChat();
+INetworkChat *  CreateChat();

@@ -60,6 +60,12 @@ enum NETWORK_COMMAND
     NETWORK_COMMAND_INVALID = -1
 };
 
+enum SERVER_EVENT_PLAYER
+{
+    SERVER_EVENT_PLAYER_JOINED,
+    SERVER_EVENT_PLAYER_DISCONNECTED,
+};
+
 typedef struct NetworkServerProviderInfo
 {
     const utf8 * Name;
@@ -74,7 +80,9 @@ typedef struct NetworkServerInfo
     NetworkServerProviderInfo Provider;
 } NetworkServerInfo;
 
-typedef struct GameCommand
+#ifdef __cplusplus
+
+struct GameCommand
 {
     GameCommand(uint32 t, uint32* args, uint8 p, uint8 cb)
     {
@@ -99,9 +107,7 @@ typedef struct GameCommand
     {
         return tick < comp.tick;
     }
-} GameCommand;
-
-#ifdef __cplusplus
+};
 
 template <size_t size>
 struct ByteSwapT { };

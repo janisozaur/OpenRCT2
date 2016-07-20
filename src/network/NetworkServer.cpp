@@ -24,6 +24,7 @@
 #include "NetworkChat.h"
 #include "NetworkConnection.h"
 #include "NetworkGroupManager.h"
+#include "NetworkPacketHandler.h"
 #include "NetworkPlayerList.h"
 #include "NetworkServer.h"
 #include "NetworkServerAdvertiser.h"
@@ -68,6 +69,7 @@ private:
     INetworkServerAdvertiser *  _advertiser;
     INetworkChat *              _chat;
     INetworkGroupManager *      _groupManager;
+    INetworkPacketHandler *     _packetHandler;
     INetworkPlayerList *        _playerList;
     INetworkUserManager *       _userManager;
 
@@ -126,7 +128,7 @@ public:
         _hostPlayerId = hostPlayer->id;
 
         Console::WriteLine("Ready for clients...");
-        network_chat_show_connected_message();
+        _chat->ShowChatHelp();
 
         _status = NETWORK_STATUS_CONNECTED;
         _listeningPort = port;
@@ -244,9 +246,9 @@ public:
         sender->Key.LoadPublic(pubkey_rw);
         SDL_RWclose(pubkey_rw);
         bool verified = sender->Key.Verify(sender->Challenge.data(),
-                                            sender->Challenge.size(),
-                                            signature,
-                                            signatureSize);
+                                           sender->Challenge.size(),
+                                           signature,
+                                           signatureSize);
         std::string hash = sender->Key.PublicKeyHash();
 
         if (!verified)
@@ -396,7 +398,8 @@ private:
         auto it = _clients.begin();
         while (it != _clients.end())
         {
-            if (!ProcessConnection(*(*it)))
+            NetworkConnection &connection = *(*it);
+            if (!ProcessConnection(&connection))
             {
                 RemoveClient((*it));
                 it = _clients.begin();
@@ -408,16 +411,82 @@ private:
         }
     }
 
+    bool ProcessConnection(NetworkConnection * connection)
+    {
+        int packetStatus;
+        do
+        {
+            packetStatus = connection->ReadPacket();
+            switch (packetStatus) {
+            case NETWORK_READPACKET_DISCONNECTED:
+                // closed connection or network error
+                if (!connection->GetLastDisconnectReason())
+                {
+                    connection->SetLastDisconnectReason(STR_MULTIPLAYER_CONNECTION_CLOSED);
+                }
+                return false;
+            case NETWORK_READPACKET_SUCCESS:
+                // done reading in packet
+                ProcessPacket(connection, &connection->InboundPacket);
+                if (connection->Socket == nullptr)
+                {
+                    return false;
+                }
+                break;
+            case NETWORK_READPACKET_MORE_DATA:
+                // more data required to be read
+                break;
+            case NETWORK_READPACKET_NO_DATA:
+                // could not read anything from socket
+                break;
+            }
+        }
+        while (packetStatus == NETWORK_READPACKET_MORE_DATA ||
+               packetStatus == NETWORK_READPACKET_SUCCESS);
+
+        connection->SendQueuedPackets();
+        if (!connection->ReceivedPacketRecently())
+        {
+            if (!connection->GetLastDisconnectReason())
+            {
+                connection->SetLastDisconnectReason(STR_MULTIPLAYER_NO_DATA);
+            }
+            return false;
+        }
+        return true;
+    }
+
+    void ProcessPacket(NetworkConnection * sender, NetworkPacket * packet)
+    {
+        bool handlePacket = true;
+        if (sender->AuthStatus != NETWORK_AUTH_OK)
+        {
+            NETWORK_COMMAND command = (NETWORK_COMMAND)packet->GetCommand();
+            if (CommandRequiresAuthentication(command))
+            {
+                // Ignore as player must be authentication first before sending this
+                handlePacket = false;
+            }
+        }
+
+        if (handlePacket)
+        {
+            _packetHandler->HandlePacket(sender, packet);
+        }
+
+        packet->Clear();
+    }
+
     void PingClients()
     {
         if (SDL_TICKS_PASSED(SDL_GetTicks(), _lastTickTime + TICK_FREQUENCY_MS))
         {
-            Server_Send_TICK();
+            SendTickToClients();
         }
         if (SDL_TICKS_PASSED(SDL_GetTicks(), _lastPingTime + PING_FREQUENCY_MS))
         {
-            Server_Send_PING();
-            Server_Send_PINGLIST();
+            SendPingToClients();
+            SendPingListToClients();
         }
     }
 
@@ -490,6 +559,38 @@ private:
         return jsonResult;
     }
 
+    void SendTickToClients()
+    {
+        _lastTickTime = SDL_GetTicks();
+        std::unique_ptr<NetworkPacket> packet = std::move(NetworkPacket::Allocate());
+        *packet << (uint32)NETWORK_COMMAND_TICK << (uint32)gCurrentTicks << (uint32)gScenarioSrand0;
+        SendPacketToAllClients(*packet);
+    }
+
+    void SendPingToClients()
+    {
+        _lastPingTime = SDL_GetTicks();
+        std::unique_ptr<NetworkPacket> packet = std::move(NetworkPacket::Allocate());
+        *packet << (uint32)NETWORK_COMMAND_PING;
+        for (auto it = _clients.begin(); it != _clients.end(); it++)
+        {
+            (*it)->PingTime = SDL_GetTicks();
+        }
+        SendPacketToAllClients(*packet, true);
+    }
+
+    void SendPingListToClients()
+    {
+        std::unique_ptr<NetworkPacket> packet = std::move(NetworkPacket::Allocate());
+        *packet << (uint32)NETWORK_COMMAND_PINGLIST << (uint8)_playerList->GetCount();
+        for (uint32 i = 0; i < _playerList->GetCount(); i++)
+        {
+            NetworkPlayer * player = _playerList->GetPlayerByIndex(i);
+            *packet << player->id << player->ping;
+        }
+        SendPacketToAllClients(*packet);
+    }
+
     void SendEventPlayerDisconnected(const utf8 * playerName, const utf8 * reason)
     {
         std::unique_ptr<NetworkPacket> packet = std::move(NetworkPacket::Allocate());
@@ -510,6 +611,19 @@ private:
             player->Write(*packet);
         }
         SendPacketToAllClients(*packet);
+    }
+
+    static bool CommandRequiresAuthentication(NETWORK_COMMAND command)
+    {
+        switch (command) {
+        case NETWORK_COMMAND_PING:
+        case NETWORK_COMMAND_AUTH:
+        case NETWORK_COMMAND_TOKEN:
+        case NETWORK_COMMAND_GAMEINFO:
+            return false;
+        default:
+            return true;
+        }
     }
 };
 

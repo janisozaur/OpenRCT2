@@ -16,14 +16,19 @@
 
 #include <time.h>
 #include <string>
+#include "../core/Memory.hpp"
 #include "../core/Path.hpp"
 #include "../core/String.hpp"
+#include "../core/StringBuilder.hpp"
 #include "../platform/platform.h"
 #include "NetworkChat.h"
+#include "NetworkPlayer.h"
 
 extern "C"
 {
     #include "../config.h"
+    #include "../interface/chat.h"
+    #include "../interface/keyboard_shortcut.h"
     #include "../localisation/localisation.h"
 }
 
@@ -73,6 +78,46 @@ public:
         }
     }
 
+    void ShowMessage(const utf8 * text) override
+    {
+        chat_history_add(text);
+    }
+
+    void ShowMessage(NetworkPlayer * sender, const utf8 * text)
+    {
+        auto sb = StringBuilder();
+    
+        sb.Append(FORMAT_OUTLINE);
+        if (sender != nullptr)
+        {
+            sb.Append(FORMAT_BABYBLUE);
+            sb.Append(sender->name.c_str());
+            sb.Append(": ");
+        }
+        sb.Append(FORMAT_WHITE);
+        sb.Append(text);
+    
+        // Remove non-font format codes, like string arguments
+        utf8 * formattedString = sb.StealString();
+        utf8_remove_format_codes(formattedString, true);
+        ShowMessage(formattedString);
+        Memory::Free(formattedString);
+    }
+
+    void ShowChatHelp() override
+    {
+        // Get shortcut key for opening chat window
+        char * templateString = (char *)language_get_string(STR_SHORTCUT_KEY_UNKNOWN);
+        uint16 openChatShortcut = gShortcutKeys[SHORTCUT_OPEN_CHAT_WINDOW];
+        keyboard_shortcut_format_string(templateString, openChatShortcut);
+
+        utf8 buffer[256];
+        NetworkPlayer server;
+        server.name = "Server";
+        format_string(buffer, STR_MULTIPLAYER_CONNECTED_CHAT_HINT, &templateString);
+        ShowMessage(&server, buffer);
+    }
+
 private:
     void GetLogTimestamp(utf8 * buffer, size_t bufferSize)
     {
@@ -101,3 +146,8 @@ private:
         return tmInfo;
     }
 };
+
+INetworkChat * CreateChat()
+{
+    return new NetworkChat();
+}

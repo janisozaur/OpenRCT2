@@ -122,6 +122,24 @@ public:
     }
 
     /**
+     * Returns the current string buffer and removes the string builder as its owner.
+     * Caller is now responsible for freeing the string.
+     */
+    utf8 * StealString()
+    {
+        utf8 * result = _buffer;
+        if (result != nullptr)
+        {
+            // Reduce memory footprint, resize to string length
+            Memory::ReallocateArray(result, _length + 1);
+
+            _buffer = nullptr;
+            Reset();
+        }
+        return result;
+    }
+
+    /**
      * Returns the current string buffer as a new fire-and-forget string.
      */
     utf8 * GetString() const

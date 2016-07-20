@@ -18,23 +18,26 @@
 
 #include "../core/Math.hpp"
 #include "../core/String.hpp"
-#include "IPacketHandler.h"
 #include "Network2.h"
 #include "NetworkAction.h"
 #include "NetworkConnection.h"
 #include "NetworkGroup.h"
 #include "NetworkGroupManager.h"
 #include "NetworkPacket.h"
+#include "NetworkPacketHandler.h"
+#include "NetworkPlayer.h"
 #include "NetworkPlayerList.h"
 #include "NetworkServer.h"
 
 extern "C"
 {
     #include "../config.h"
+    #include "../game.h"
     #include "../interface/window.h"
+    #include "../localisation/string_ids.h"
 }
 
-class ServerPacketHandler : IPacketHandler
+class ServerPacketHandler : public INetworkPacketHandler
 {
 public:
     void Handle_AUTH(NetworkConnection * sender, NetworkPacket * packet) override

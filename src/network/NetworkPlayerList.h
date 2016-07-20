@@ -27,6 +27,7 @@ interface INetworkPlayerList
 
     virtual bool            IsFull() const abstract;
     virtual uint32          GetCount() const abstract;
+    virtual NetworkPlayer * GetPlayerByIndex(uint32 index) const abstract;
     virtual NetworkPlayer * GetPlayerById(uint8 id) const abstract;
 
     virtual NetworkPlayer * CreatePlayer(const utf8 * name, const char * hash) abstract;
