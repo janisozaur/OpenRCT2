@@ -39,6 +39,11 @@ private:
 public:
     virtual ~NetworkGroupManager() { }
 
+    uint32 GetCount() const override
+    {
+        return _groups.size();
+    }
+
     NetworkGroup * GetGroupByHash(const char * hash) const override
     {
 
@@ -54,6 +59,12 @@ public:
             }
         }
         return nullptr;
+    }
+
+    NetworkGroup * GetGroupByIndex(uint32 index) const override
+    {
+        if (index >= _groups.size()) return nullptr;
+        return _groups[index];
     }
 
     uint8 GetDefaultGroupId() const override

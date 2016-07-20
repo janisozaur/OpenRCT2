@@ -18,6 +18,9 @@
 
 #include "network.h"
 #include "Network2.h"
+#include "NetworkAction.h"
+#include "NetworkGroupManager.h"
+#include "NetworkPlayerList.h"
 #include "NetworkServer.h"
 
 int network_init()
@@ -86,124 +89,166 @@ uint8 network_get_current_player_id()
 
 int network_get_num_players()
 {
-	return gNetwork.player_list.size();
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    return playerList->GetCount();
 }
 
-const char* network_get_player_name(unsigned int index)
+const char * network_get_player_name(unsigned int index)
 {
-	return (const char*)gNetwork.player_list[index]->name.c_str();
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerByIndex(index);
+    return player->name.c_str();
 }
 
 uint32 network_get_player_flags(unsigned int index)
 {
-	return gNetwork.player_list[index]->flags;
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerByIndex(index);
+    return player->flags;
 }
 
 int network_get_player_ping(unsigned int index)
 {
-	return gNetwork.player_list[index]->ping;
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerByIndex(index);
+    return player->ping;
 }
 
 int network_get_player_id(unsigned int index)
 {
-	return gNetwork.player_list[index]->id;
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerByIndex(index);
+    return player->id;
 }
 
 money32 network_get_player_money_spent(unsigned int index)
 {
-	return gNetwork.player_list[index]->money_spent;
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerByIndex(index);
+    return player->money_spent;
 }
 
 void network_add_player_money_spent(unsigned int index, money32 cost)
 {
-	gNetwork.player_list[index]->AddMoneySpent(cost);
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerByIndex(index);
+    player->AddMoneySpent(cost);
 }
 
 int network_get_player_last_action(unsigned int index, int time)
 {
-	if (time && SDL_TICKS_PASSED(SDL_GetTicks(), gNetwork.player_list[index]->last_action_time + time)) {
-		return -999;
-	}
-	return gNetwork.player_list[index]->last_action;
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerByIndex(index);
+
+    if (time && SDL_TICKS_PASSED(SDL_GetTicks(), player->last_action_time + time))
+    {
+        return -999;
+    }
+    return player->last_action;
 }
 
 void network_set_player_last_action(unsigned int index, int command)
 {
-	gNetwork.player_list[index]->last_action = NetworkActions::FindCommand(command);
-	gNetwork.player_list[index]->last_action_time = SDL_GetTicks();
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerByIndex(index);
+    player->last_action = NetworkActions::FindCommand(command);
+    player->last_action_time = SDL_GetTicks();
 }
 
 rct_xyz16 network_get_player_last_action_coord(unsigned int index)
 {
-	return gNetwork.player_list[index]->last_action_coord;
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerByIndex(index);
+    return player->last_action_coord;
 }
 
 void network_set_player_last_action_coord(unsigned int index, rct_xyz16 coord)
 {
-	if (index < gNetwork.player_list.size()) {
-		gNetwork.player_list[index]->last_action_coord = coord;
-	}
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerByIndex(index);
+    player->last_action_coord = coord;
 }
 
 unsigned int network_get_player_commands_ran(unsigned int index)
 {
-	return gNetwork.player_list[index]->commands_ran;
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerByIndex(index);
+    return player->commands_ran;
 }
 
 int network_get_player_index(uint8 id)
 {
-	auto it = gNetwork.GetPlayerIteratorByID(id);
-	if(it == gNetwork.player_list.end()){
-		return -1;
-	}
-	return gNetwork.GetPlayerIteratorByID(id) - gNetwork.player_list.begin();
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+
+    for (uint32 i = 0; i < playerList->GetCount(); i++)
+    {
+        NetworkPlayer * player = playerList->GetPlayerByIndex(i);
+        if (player->id == id)
+        {
+            return (int)i;
+        }
+    }
+    return -1;
 }
 
 uint8 network_get_player_group(unsigned int index)
 {
-	return gNetwork.player_list[index]->group;
-}
-
-void network_set_player_group(unsigned int index, unsigned int groupindex)
-{
-	gNetwork.player_list[index]->group = gNetwork.group_list[groupindex]->Id;
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerByIndex(index);
+    return player->group;
 }
 
 int network_get_group_index(uint8 id)
 {
-	auto it = gNetwork.GetGroupIteratorByID(id);
-	if(it == gNetwork.group_list.end()){
-		return -1;
-	}
-	return gNetwork.GetGroupIteratorByID(id) - gNetwork.group_list.begin();
+    INetworkContext * context = Network2::GetContext();
+    INetworkGroupManager * groupManager = context->GetGroupManager();
+
+    for (uint32 i = 0; i < groupManager->GetCount(); i++)
+    {
+        NetworkGroup * group = groupManager->GetGroupById(i);
+        if (group->Id == id)
+        {
+            return (int)i;
+        }
+    }
+    return -1;
 }
 
 uint8 network_get_group_id(unsigned int index)
 {
-	return gNetwork.group_list[index]->Id;
+    INetworkContext * context = Network2::GetContext();
+    INetworkGroupManager * groupManager = context->GetGroupManager();
+    NetworkGroup * group = groupManager->GetGroupByIndex(index);
+    return group->Id;
 }
 
 int network_get_num_groups()
 {
-	return gNetwork.group_list.size();
+    INetworkContext * context = Network2::GetContext();
+    INetworkGroupManager * groupManager = context->GetGroupManager();
+    return groupManager->GetCount();
 }
 
-const char* network_get_group_name(unsigned int index)
+const char * network_get_group_name(unsigned int index)
 {
-	return gNetwork.group_list[index]->GetName().c_str();
-}
-
-void network_chat_show_connected_message()
-{
-	// TODO: How does this work? 2525 is '???'
-	char *templateString = (char*)language_get_string(STR_SHORTCUT_KEY_UNKNOWN);
-	keyboard_shortcut_format_string(templateString, gShortcutKeys[SHORTCUT_OPEN_CHAT_WINDOW]);
-	utf8 buffer[256];
-	NetworkPlayer server;
-	server.name = "Server";
-	format_string(buffer, STR_MULTIPLAYER_CONNECTED_CHAT_HINT, &templateString);
-	const char *formatted = Network::FormatChat(&server, buffer);
-	chat_history_add(formatted);
+    INetworkContext * context = Network2::GetContext();
+    INetworkGroupManager * groupManager = context->GetGroupManager();
+    NetworkGroup * group = groupManager->GetGroupByIndex(index);
+    return group->GetName().c_str();
 }
 
 void game_command_set_player_group(int* eax, int* ebx, int* ecx, int* edx, int* esi, int* edi, int* ebp)
@@ -395,32 +440,44 @@ void game_command_kick_player(int *eax, int *ebx, int *ecx, int *edx, int *esi, 
 
 uint8 network_get_default_group()
 {
-	return gNetwork.GetDefaultGroup();
+    INetworkContext * context = Network2::GetContext();
+    INetworkGroupManager * groupManager = context->GetGroupManager();
+    return groupManager->GetDefaultGroupId();
 }
 
 int network_get_num_actions()
 {
-	return NetworkActions::Actions.size();
+    return NetworkActions::Actions.size();
 }
 
 rct_string_id network_get_action_name_string_id(unsigned int index)
 {
-	return NetworkActions::Actions[index].Name;
+    return NetworkActions::Actions[index].Name;
 }
 
 int network_can_perform_action(unsigned int groupindex, unsigned int index)
 {
-	return gNetwork.group_list[groupindex]->CanPerformAction(index);
+    INetworkContext * context = Network2::GetContext();
+    INetworkGroupManager * groupManager = context->GetGroupManager();
+    NetworkGroup * group = groupManager->GetGroupByIndex(groupindex);
+    return group->CanPerformAction(index);
 }
 
 int network_can_perform_command(unsigned int groupindex, unsigned int index) 
 {
-	return gNetwork.group_list[groupindex]->CanPerformCommand(index);
+    INetworkContext * context = Network2::GetContext();
+    INetworkGroupManager * groupManager = context->GetGroupManager();
+    NetworkGroup * group = groupManager->GetGroupByIndex(groupindex);
+    return group->CanPerformCommand(index);
 }
 
 int network_get_current_player_group_index()
 {
-	return network_get_group_index(gNetwork.GetPlayerByID(gNetwork.GetPlayerID())->group);
+    uint8 playerId = network_get_current_player_id();
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerById(playerId);
+    return network_get_group_index(player->group);
 }
 
 void network_send_map()
@@ -536,7 +593,6 @@ void network_set_player_last_action_coord(unsigned int index, rct_xyz16 coord) {
 unsigned int network_get_player_commands_ran(unsigned int index) { return 0; }
 int network_get_player_index(uint8 id) { return -1; }
 uint8 network_get_player_group(unsigned int index) { return 0; }
-void network_set_player_group(unsigned int index, unsigned int groupindex) { }
 int network_get_group_index(uint8 id) { return -1; }
 uint8 network_get_group_id(unsigned int index) { return 0; }
 int network_get_num_groups() { return 0; }

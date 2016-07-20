@@ -20,6 +20,7 @@
 #include "NetworkTypes.h"
 
 interface INetworkChat;
+interface INetworkGroupManager;
 
 interface INetworkContext
 {
@@ -27,7 +28,9 @@ interface INetworkContext
     
     virtual NetworkServerInfo GetServerInfo() const abstract;
 
-    virtual INetworkChat * GetNetworkChat() const abstract;
+    virtual INetworkChat *          GetNetworkChat() const abstract;
+    virtual INetworkGroupManager *  GetGroupManager() const abstract;
+    virtual INetworkPlayerList *    GetPlayerList() const abstract;
 
     virtual void Update() abstract;
     virtual void Close() abstract;
