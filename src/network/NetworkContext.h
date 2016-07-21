@@ -35,4 +35,6 @@ interface INetworkContext
 
     virtual void Update() abstract;
     virtual void Close() abstract;
+
+    virtual void SendChatMessage(const utf8 * text);
 };

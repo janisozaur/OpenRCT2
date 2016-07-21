@@ -41,4 +41,5 @@ interface INetworkPlayerManager : public INetworkPlayerList
     virtual void            Remove(NetworkPlayer * player) abstract;
 };
 
+INetworkPlayerList *    CreatePlayerList(INetworkGroupManager * groupManager);
 INetworkPlayerManager * CreatePlayerManager(INetworkGroupManager * groupManager, INetworkUserManager * userManager);

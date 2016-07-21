@@ -32,6 +32,8 @@ interface INetworkClient : public INetworkContext
     virtual ~INetworkClient() { }
 
     virtual bool Begin(const char * host, uint16 port) abstract;
+    virtual void HandleChallenge(const char * challenge, size_t challengeSize) abstract;
+    virtual void SendPassword(const utf8 * password) abstract;
 };
 
 INetworkClient * CreateClient();

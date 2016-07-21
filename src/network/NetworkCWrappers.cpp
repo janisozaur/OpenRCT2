@@ -19,8 +19,9 @@
 #include "network.h"
 #include "Network2.h"
 #include "NetworkAction.h"
+#include "NetworkClient.h"
 #include "NetworkGroupManager.h"
-#include "NetworkPlayerList.h"
+#include "NetworkPlayerManager.h"
 #include "NetworkServer.h"
 
 int network_init()
@@ -485,17 +486,10 @@ void network_send_map()
 	gNetwork.Server_Send_MAP();
 }
 
-void network_send_chat(const char* text)
+void network_send_chat(const char * text)
 {
-	if (gNetwork.GetMode() == NETWORK_MODE_CLIENT) {
-		gNetwork.Client_Send_CHAT(text);
-	} else
-	if (gNetwork.GetMode() == NETWORK_MODE_SERVER) {
-		NetworkPlayer* player = gNetwork.GetPlayerByID(gNetwork.GetPlayerID());
-		const char* formatted = gNetwork.FormatChat(player, text);
-		chat_history_add(formatted);
-		gNetwork.Server_Send_CHAT(formatted);
-	}
+    INetworkContext * context = Network2::GetContext();
+    context->SendChatMessage(text);
 }
 
 void network_send_gamecmd(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32 esi, uint32 edi, uint32 ebp, uint8 callback)
@@ -510,25 +504,10 @@ void network_send_gamecmd(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32
 	}
 }
 
-void network_send_password(const char* password)
+void network_send_password(const char * password)
 {
-	utf8 keyPath[MAX_PATH];
-	network_get_private_key_path(keyPath, sizeof(keyPath), gConfigNetwork.player_name);
-	if (!platform_file_exists(keyPath)) {
-		log_error("Private key %s missing! Restart the game to generate it.", keyPath);
-		return;
-	}
-	SDL_RWops *privkey = SDL_RWFromFile(keyPath, "rb");
-	gNetwork.key.LoadPrivate(privkey);
-	const std::string pubkey = gNetwork.key.PublicKeyString();
-	size_t sigsize;
-	char *signature;
-	gNetwork.key.Sign(gNetwork.challenge.data(), gNetwork.challenge.size(), &signature, &sigsize);
-	// Don't keep private key in memory. There's no need and it may get leaked
-	// when process dump gets collected at some point in future.
-	gNetwork.key.Unload();
-	gNetwork.Client_Send_AUTH(gConfigNetwork.player_name, password, pubkey.c_str(), signature, sigsize);
-	delete [] signature;
+    INetworkClient * client = Network2::GetClient();
+    client->SendPassword(password);
 }
 
 void network_set_password(const char* password)
@@ -539,27 +518,6 @@ void network_set_password(const char* password)
 void network_append_chat_log(const utf8 *text)
 {
 	gNetwork.AppendChatLog(text);
-}
-
-static void network_get_keys_directory(utf8 *buffer, size_t bufferSize)
-{
-	platform_get_user_directory(buffer, "keys");
-}
-
-static void network_get_private_key_path(utf8 *buffer, size_t bufferSize, const utf8 * playerName)
-{
-	network_get_keys_directory(buffer, bufferSize);
-	Path::Append(buffer, bufferSize, playerName);
-	String::Append(buffer, bufferSize, ".privkey");
-}
-
-static void network_get_public_key_path(utf8 *buffer, size_t bufferSize, const utf8 * playerName, const utf8 * hash)
-{
-	network_get_keys_directory(buffer, bufferSize);
-	Path::Append(buffer, bufferSize, playerName);
-	String::Append(buffer, bufferSize, "-");
-	String::Append(buffer, bufferSize, hash);
-	String::Append(buffer, bufferSize, ".pubkey");
 }
 
 NetworkServerInfo network_get_server_info()

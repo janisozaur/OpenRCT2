@@ -95,7 +95,7 @@ public:
         delete _playerManager;
     }
 
-    bool Begin(const char * address, uint16 port)
+    bool Begin(const char * address, uint16 port) override
     {
         Close();
 
@@ -146,7 +146,7 @@ public:
         return true;
     }
 
-    void Close()
+    void Close() override
     {
         delete _advertiser;
         _advertiser = nullptr;
@@ -165,12 +165,23 @@ public:
         gfx_invalidate_screen();
     }
 
-    void Update()
+    void Update() override
     {
         ProcessClients();
         PingClients();
         Advertise();
         AcceptNewClients();
+    }
+
+    void SendChatMessage(const utf8 * text) override
+    {
+        NetworkPlayer * player = _playerManager->GetPlayerById(_hostPlayerId);
+        _chat->ShowMessage(player, text);
+
+        std::unique_ptr<NetworkPacket> packet = std::move(NetworkPacket::Allocate());
+        *packet << (uint32)NETWORK_COMMAND_CHAT;
+        packet->WriteString(text);
+        SendPacketToAllClients(*packet);
     }
 
     NetworkServerInfo GetServerInfo() const override
