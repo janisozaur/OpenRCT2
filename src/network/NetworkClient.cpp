@@ -48,6 +48,8 @@ private:
 
     NetworkServerInfo       _serverInfo;
 
+    uint8                   _playerId;
+
 public:
     NetworkClient()
     {
@@ -79,6 +81,11 @@ public:
     NetworkServerInfo GetServerInfo() const override
     {
         return _serverInfo;
+    }
+
+    uint8 GetPlayerId() const override
+    {
+        return _playerId;
     }
 
     bool Begin(const char * host, uint16 port) override

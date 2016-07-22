@@ -33,8 +33,11 @@ interface INetworkContext
     virtual INetworkGroupManager *  GetGroupManager() const abstract;
     virtual INetworkPlayerList *    GetPlayerList() const abstract;
 
+    virtual uint8 GetPlayerId() const abstract;
+
     virtual void Update() abstract;
     virtual void Close() abstract;
 
-    virtual void SendChatMessage(const utf8 * text);
+    virtual void SendChatMessage(const utf8 * text) abstract;
+    virtual void SendGameCommand(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32 esi, uint32 edi, uint32 ebp, uint8 callbackId) abstract;
 };

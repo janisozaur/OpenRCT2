@@ -31,6 +31,10 @@ interface INetworkClient : public INetworkContext
 {
     virtual ~INetworkClient() { }
 
+    virtual NETWORK_AUTH            GetAuthStatus() const abstract;
+    virtual NETWORK_CLIENT_STATUS   GetConnectionStatus() const abstract;
+    virtual uint32                  GetServerTick() const abstract;
+
     virtual bool Begin(const char * host, uint16 port) abstract;
     virtual void HandleChallenge(const char * challenge, size_t challengeSize) abstract;
     virtual void SendPassword(const utf8 * password) abstract;

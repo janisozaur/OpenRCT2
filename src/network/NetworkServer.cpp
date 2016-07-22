@@ -210,6 +210,16 @@ public:
         return _playerManager;
     }
 
+    uint8 GetPlayerId() const override
+    {
+        return _hostPlayerId;
+    }
+
+    void SetPassword(const utf8 * password) override
+    {
+        _password = std::string(password);
+    }
+
     bool HasPassword() const override
     {
         bool hasPassword = !_password.empty();

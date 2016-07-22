@@ -70,22 +70,26 @@ int network_get_mode()
 
 int network_get_status()
 {
-	return gNetwork.GetStatus();
+    INetworkClient * client = Network2::GetClient();
+    return client->GetConnectionStatus();
 }
 
 int network_get_authstatus()
 {
-	return gNetwork.GetAuthStatus();
+    INetworkClient * client = Network2::GetClient();
+    return client->GetAuthStatus();
 }
 
 uint32 network_get_server_tick()
 {
-	return gNetwork.GetServerTick();
+    INetworkClient * client = Network2::GetClient();
+    return client->GetServerTick();
 }
 
 uint8 network_get_current_player_id()
 {
-	return gNetwork.GetPlayerID();
+    INetworkContext * context = Network2::GetContext();
+    return context->GetPlayerId();
 }
 
 int network_get_num_players()
@@ -250,6 +254,84 @@ const char * network_get_group_name(unsigned int index)
     INetworkGroupManager * groupManager = context->GetGroupManager();
     NetworkGroup * group = groupManager->GetGroupByIndex(index);
     return group->GetName().c_str();
+}
+
+uint8 network_get_default_group()
+{
+    INetworkContext * context = Network2::GetContext();
+    INetworkGroupManager * groupManager = context->GetGroupManager();
+    return groupManager->GetDefaultGroupId();
+}
+
+int network_get_num_actions()
+{
+    return NetworkActions::Actions.size();
+}
+
+rct_string_id network_get_action_name_string_id(unsigned int index)
+{
+    return NetworkActions::Actions[index].Name;
+}
+
+int network_can_perform_action(unsigned int groupindex, unsigned int index)
+{
+    INetworkContext * context = Network2::GetContext();
+    INetworkGroupManager * groupManager = context->GetGroupManager();
+    NetworkGroup * group = groupManager->GetGroupByIndex(groupindex);
+    return group->CanPerformAction(index);
+}
+
+int network_can_perform_command(unsigned int groupindex, unsigned int index) 
+{
+    INetworkContext * context = Network2::GetContext();
+    INetworkGroupManager * groupManager = context->GetGroupManager();
+    NetworkGroup * group = groupManager->GetGroupByIndex(groupindex);
+    return group->CanPerformCommand(index);
+}
+
+int network_get_current_player_group_index()
+{
+    uint8 playerId = network_get_current_player_id();
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerById(playerId);
+    return network_get_group_index(player->group);
+}
+
+void network_send_map()
+{
+    INetworkServer * server = Network2::GetServer();
+    server->BroadcastMap();
+}
+
+void network_send_chat(const char * text)
+{
+    INetworkContext * context = Network2::GetContext();
+    context->SendChatMessage(text);
+}
+
+void network_send_gamecmd(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32 esi, uint32 edi, uint32 ebp, uint8 callback)
+{
+    INetworkContext * context = Network2::GetContext();
+    context->SendGameCommand(eax, ebx, ecx, edx, esi, edi, ebp, callback);
+}
+
+void network_send_password(const char * password)
+{
+    INetworkClient * client = Network2::GetClient();
+    client->SendPassword(password);
+}
+
+void network_set_password(const char * password)
+{
+    INetworkServer * server = Network2::GetServer();
+    server->SetPassword(password);
+}
+
+NetworkServerInfo network_get_server_info()
+{
+    INetworkContext * context = Network2::GetContext();
+    return context->GetServerInfo();
 }
 
 void game_command_set_player_group(int* eax, int* ebx, int* ecx, int* edx, int* esi, int* edi, int* ebp)
@@ -439,93 +521,6 @@ void game_command_kick_player(int *eax, int *ebx, int *ecx, int *edx, int *esi, 
 	*ebx = 0;
 }
 
-uint8 network_get_default_group()
-{
-    INetworkContext * context = Network2::GetContext();
-    INetworkGroupManager * groupManager = context->GetGroupManager();
-    return groupManager->GetDefaultGroupId();
-}
-
-int network_get_num_actions()
-{
-    return NetworkActions::Actions.size();
-}
-
-rct_string_id network_get_action_name_string_id(unsigned int index)
-{
-    return NetworkActions::Actions[index].Name;
-}
-
-int network_can_perform_action(unsigned int groupindex, unsigned int index)
-{
-    INetworkContext * context = Network2::GetContext();
-    INetworkGroupManager * groupManager = context->GetGroupManager();
-    NetworkGroup * group = groupManager->GetGroupByIndex(groupindex);
-    return group->CanPerformAction(index);
-}
-
-int network_can_perform_command(unsigned int groupindex, unsigned int index) 
-{
-    INetworkContext * context = Network2::GetContext();
-    INetworkGroupManager * groupManager = context->GetGroupManager();
-    NetworkGroup * group = groupManager->GetGroupByIndex(groupindex);
-    return group->CanPerformCommand(index);
-}
-
-int network_get_current_player_group_index()
-{
-    uint8 playerId = network_get_current_player_id();
-    INetworkContext * context = Network2::GetContext();
-    INetworkPlayerList * playerList = context->GetPlayerList();
-    NetworkPlayer * player = playerList->GetPlayerById(playerId);
-    return network_get_group_index(player->group);
-}
-
-void network_send_map()
-{
-	gNetwork.Server_Send_MAP();
-}
-
-void network_send_chat(const char * text)
-{
-    INetworkContext * context = Network2::GetContext();
-    context->SendChatMessage(text);
-}
-
-void network_send_gamecmd(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32 esi, uint32 edi, uint32 ebp, uint8 callback)
-{
-	switch (gNetwork.GetMode()) {
-	case NETWORK_MODE_SERVER:
-		gNetwork.Server_Send_GAMECMD(eax, ebx, ecx, edx, esi, edi, ebp, gNetwork.GetPlayerID(), callback);
-		break;
-	case NETWORK_MODE_CLIENT:
-		gNetwork.Client_Send_GAMECMD(eax, ebx, ecx, edx, esi, edi, ebp, callback);
-		break;
-	}
-}
-
-void network_send_password(const char * password)
-{
-    INetworkClient * client = Network2::GetClient();
-    client->SendPassword(password);
-}
-
-void network_set_password(const char* password)
-{
-	gNetwork.SetPassword(password);
-}
-
-void network_append_chat_log(const utf8 *text)
-{
-	gNetwork.AppendChatLog(text);
-}
-
-NetworkServerInfo network_get_server_info()
-{
-    INetworkContext * context = Network2::GetContext();
-    return context->GetServerInfo();
-}
-
 #else
 
 int network_get_mode() { return NETWORK_MODE_NONE; }
@@ -570,7 +565,6 @@ void network_shutdown_client() {}
 void network_set_password(const char* password) {}
 uint8 network_get_current_player_id() { return 0; }
 int network_get_current_player_group_index() { return 0; }
-void network_append_chat_log(const utf8 *text) { }
 NetworkServerInfo network_get_server_info() { return { 0 }; }
 
 #endif /* DISABLE_NETWORK */

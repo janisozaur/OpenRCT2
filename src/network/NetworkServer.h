@@ -28,6 +28,7 @@ interface INetworkServer : public INetworkContext
 
     virtual bool Begin(const char * address, uint16 port) abstract;
 
+    virtual void SetPassword(const utf8 * password) abstract;
     virtual bool HasPassword() const abstract;
     virtual bool CheckPassword(const utf8 * password) const abstract;
 
@@ -48,6 +49,7 @@ interface INetworkServer : public INetworkContext
     virtual void SendGameInformation(NetworkConnection * client);
 
     virtual void BroadcastMessage(const utf8 * message) abstract;
+    virtual void BroadcastMap() abstract;
 };
 
 INetworkServer * CreateServer();
