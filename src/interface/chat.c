@@ -76,7 +76,10 @@ void chat_update()
 
 void chat_draw(rct_drawpixelinfo * dpi)
 {
-	if (network_get_mode() == NETWORK_MODE_NONE || network_get_status() != NETWORK_STATUS_CONNECTED || network_get_authstatus() != NETWORK_AUTH_OK) {
+	if (network_get_mode() == NETWORK_MODE_NONE ||
+		network_get_status() != NETWORK_CLIENT_STATUS_CONNECTED ||
+		network_get_authstatus() != NETWORK_AUTH_OK
+	) {
 		gChatOpen = false;
 		return;
 	}

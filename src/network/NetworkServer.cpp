@@ -330,6 +330,30 @@ public:
         }
     }
 
+    void KickPlayer(uint8 playerId) override
+    {
+        for (auto it = _clients.begin(); it != _clients.end(); it++)
+        {
+            NetworkConnection * client = it->get();
+            if (client->Player->id == playerId)
+            {
+                // Disconnect the client gracefully
+                client->SetLastDisconnectReason(STR_MULTIPLAYER_KICKED);
+                char str_disconnect_msg[256];
+                format_string(str_disconnect_msg, STR_MULTIPLAYER_KICKED_REASON, NULL);
+
+                std::unique_ptr<NetworkPacket> packet = std::move(NetworkPacket::Allocate());
+                *packet << (uint32)NETWORK_COMMAND_SETDISCONNECTMSG;
+                packet->WriteString(str_disconnect_msg);
+                client->QueuePacket(std::move(packet));
+
+                client->Socket->Disconnect();
+                client->SendQueuedPackets();
+                break;
+            }
+        }
+    }
+
     void SendToken(NetworkConnection * client) override
     {
         uint32 challengeDataSize = (uint32)client->Challenge.size();

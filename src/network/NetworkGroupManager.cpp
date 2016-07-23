@@ -85,6 +85,24 @@ public:
         auto group = new NetworkGroup();
         group->SetName(std::string(name));
         _groups.push_back(group);
+        return group;
+    }
+
+    void RemoveGroup(uint8 groupId) override
+    {
+        for (auto it = _groups.begin(); it != _groups.end(); it++)
+        {
+            NetworkGroup * group = *it;
+            if (group->Id == groupId)
+            {
+                _groups.erase(it);
+            }
+        }
+    }
+
+    void Clear() override
+    {
+
     }
 
     void CreateDefaultGroups()

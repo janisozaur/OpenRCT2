@@ -18,14 +18,7 @@
 
 #include "../common.h"
 #include "NetworkContext.h"
-
-enum NETWORK_CLIENT_STATUS
-{
-    NETWORK_CLIENT_STATUS_NONE,
-    NETWORK_CLIENT_STATUS_READY,
-    NETWORK_CLIENT_STATUS_CONNECTING,
-    NETWORK_CLIENT_STATUS_CONNECTED,
-};
+#include "NetworkTypes.h"
 
 interface INetworkClient : public INetworkContext
 {

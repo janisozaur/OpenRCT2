@@ -15,6 +15,9 @@
 #pragma endregion
 
 #include "../common.h"
+#include "NetworkTypes.h"
+
+#ifdef __cplusplus
 
 interface INetworkClient;
 interface INetworkContext;
@@ -22,13 +25,6 @@ interface INetworkGroupManager;
 interface INetworkPlayerList;
 interface INetworkServer;
 interface INetworkUserManager;
-
-enum NETWORK_MODE
-{
-    NETWORK_MODE_NONE,
-    NETWORK_MODE_CLIENT,
-    NETWORK_MODE_SERVER,
-};
 
 namespace Network2
 {
@@ -49,8 +45,26 @@ namespace Network2
     INetworkClient * BeginClient(const char * host, uint16 port);
 }
 
+namespace Convert
+{
+    uint16 HostToNetwork(uint16 value);
+    uint16 NetworkToHost(uint16 value);
+}
+
+#endif // __cplusplus
+
+#ifndef DISABLE_NETWORK
+
 // This define specifies which version of network stream current build uses.
 // It is used for making sure only compatible builds get connected, even within
 // single OpenRCT2 version.
 #define NETWORK_STREAM_VERSION  "11"
 #define NETWORK_STREAM_ID       (OPENRCT2_VERSION "-" NETWORK_STREAM_VERSION)
+
+#else
+
+#define NETWORK_STREAM_ID "Multiplayer disabled"
+
+#endif
+
+#define NETWORK_DEFAULT_PORT    11753

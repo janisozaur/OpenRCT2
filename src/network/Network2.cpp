@@ -39,11 +39,12 @@ namespace Network2
 
     INetworkClient * GetClient()
     {
+        INetworkClient * client = nullptr;
         if (_mode == NETWORK_MODE_CLIENT)
         {
-            INetworkClient * client = static_cast<INetworkClient *>(_context);
-            return client;
+            client = static_cast<INetworkClient *>(_context);
         }
+        return client;
     }
 
     INetworkContext * GetContext()
@@ -63,11 +64,13 @@ namespace Network2
 
     INetworkServer * GetServer()
     {
+        INetworkServer * server = nullptr;
         if (_mode == NETWORK_MODE_SERVER)
         {
-            INetworkServer * server = static_cast<INetworkServer *>(_context);
+            server = static_cast<INetworkServer *>(_context);
             return server;
         }
+        return server;
     }
 
     INetworkUserManager * GetUserManager()
@@ -95,6 +98,7 @@ namespace Network2
             _wsaInitialised = true;
         }
 #endif
+        return true;
     }
 
     void Dispose()

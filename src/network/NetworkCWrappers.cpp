@@ -42,7 +42,7 @@ extern "C"
 
 int network_init()
 {
-    Network2::Initialise();
+    return Network2::Initialise();
 }
 
 void network_update()
@@ -458,6 +458,14 @@ void game_command_modify_groups(int *eax, int *ebx, int *ecx, int *edx, int *esi
         {
             INetworkGroupManager * groupManager = context->GetGroupManager();
             groupManager->RemoveGroup(groupId);
+
+            if (network_get_mode() == NETWORK_MODE_SERVER)
+            {
+                auto server = static_cast<INetworkServer *>(context);
+                INetworkUserManager * userManager = server->GetUserManager();
+                userManager->UnsetUsersOfGroup(groupId);
+                userManager->Save();
+            }
         }
         break;
     }
@@ -573,7 +581,7 @@ void game_command_modify_groups(int *eax, int *ebx, int *ecx, int *edx, int *esi
         {
             INetworkGroupManager * groupManager = Network2::GetContext()
                                                           ->GetGroupManager();
-            groupManager->SetDefaultGroup(groupId);
+            groupManager->SetDefaultGroupId(groupId);
         }
         break;
     }

@@ -26,7 +26,7 @@
 #include "NetworkPacket.h"
 #include "NetworkPacketHandler.h"
 #include "NetworkPlayer.h"
-#include "NetworkPlayerList.h"
+#include "NetworkPlayerManager.h"
 #include "NetworkServer.h"
 
 extern "C"

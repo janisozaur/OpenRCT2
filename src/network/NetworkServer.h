@@ -43,6 +43,7 @@ interface INetworkServer : public INetworkContext
                                                    const char * signature,
                                                    size_t signatureSize) abstract;
     virtual void AcceptPlayer(NetworkConnection * client, const utf8 * name, const char * hash) abstract;
+    virtual void KickPlayer(uint8 playerId) abstract;
 
     virtual void SendToken(NetworkConnection * client) abstract;
     virtual void SendAuthenticationResponse(NetworkConnection * client, NETWORK_AUTH response) abstract;
