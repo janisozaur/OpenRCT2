@@ -210,6 +210,11 @@ public:
         return _playerManager;
     }
 
+    INetworkUserManager * GetUserManager() const override
+    {
+        return _userManager;
+    }
+
     uint8 GetPlayerId() const override
     {
         return _hostPlayerId;

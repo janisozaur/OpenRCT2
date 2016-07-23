@@ -20,11 +20,14 @@
 #include "NetworkContext.h"
 #include "NetworkTypes.h"
 
+interface INetworkUserManager;
 class NetworkConnection;
 
 interface INetworkServer : public INetworkContext
 {
     virtual ~INetworkServer() { }
+
+    virtual INetworkUserManager * GetUserManager() const abstract;
 
     virtual bool Begin(const char * address, uint16 port) abstract;
 

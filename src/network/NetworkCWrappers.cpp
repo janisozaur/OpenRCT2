@@ -16,13 +16,29 @@
 
 #ifndef DISABLE_NETWORK
 
-#include "network.h"
+#include "../core/Math.hpp"
+#include "../core/String.hpp"
+#include "../core/Util.hpp"
 #include "Network2.h"
 #include "NetworkAction.h"
 #include "NetworkClient.h"
+#include "NetworkGroup.h"
 #include "NetworkGroupManager.h"
+#include "NetworkPlayer.h"
 #include "NetworkPlayerManager.h"
 #include "NetworkServer.h"
+#include "NetworkUser.h"
+#include "NetworkUserManager.h"
+
+extern "C"
+{
+    #include "../game.h"
+    #include "../interface/window.h"
+    #include "../localisation/localisation.h"
+}
+
+extern "C"
+{
 
 int network_init()
 {
@@ -334,191 +350,279 @@ NetworkServerInfo network_get_server_info()
     return context->GetServerInfo();
 }
 
-void game_command_set_player_group(int* eax, int* ebx, int* ecx, int* edx, int* esi, int* edi, int* ebp)
+money32 game_command_set_player_group_2(uint8 playerId, uint8 groupId, uint8 flags)
 {
-	uint8 playerid = (uint8)*ecx;
-	uint8 groupid = (uint8)*edx;
-	NetworkPlayer* player = gNetwork.GetPlayerByID(playerid);
-	NetworkGroup* fromgroup = gNetwork.GetGroupByID(game_command_playerid);
-	if (!player) {
-		*ebx = MONEY32_UNDEFINED;
-		return;
-	}
-	if (!gNetwork.GetGroupByID(groupid)) {
-		*ebx = MONEY32_UNDEFINED;
-		return;
-	}
-	if (player->flags & NETWORK_PLAYER_FLAG_ISSERVER) {
-		gGameCommandErrorTitle = STR_CANT_CHANGE_GROUP_THAT_THE_HOST_BELONGS_TO;
-		*ebx = MONEY32_UNDEFINED;
-		return;
-	}
-	if (groupid == 0 && fromgroup && fromgroup->Id != 0) {
-		gGameCommandErrorTitle = STR_CANT_SET_TO_THIS_GROUP;
-		*ebx = MONEY32_UNDEFINED;
-		return;
-	}
-	if (*ebx & GAME_COMMAND_FLAG_APPLY) {
-		player->group = groupid;
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerById(playerId);
+    if (player != nullptr)
+    {
+        return MONEY32_UNDEFINED;
+    }
 
-		if (network_get_mode() == NETWORK_MODE_SERVER) {
-			// Add or update saved user
-			NetworkUserManager *userManager = &gNetwork._userManager;
-			NetworkUser *networkUser = userManager->GetOrAddUser(player->keyhash);
-			networkUser->GroupId = groupid;
-			networkUser->Name = player->name;
-			userManager->Save();
-		}
+    INetworkGroupManager * groupManager = context->GetGroupManager();
+    NetworkGroup * fromGroup = groupManager->GetGroupById(game_command_playerid);
+    if (!groupManager->GetGroupById(groupId))
+    {
+        return MONEY32_UNDEFINED;
+    }
 
-		window_invalidate_by_number(WC_PLAYER, playerid);
-	}
-	*ebx = 0;
+    if (player->flags & NETWORK_PLAYER_FLAG_ISSERVER)
+    {
+        gGameCommandErrorTitle = STR_CANT_CHANGE_GROUP_THAT_THE_HOST_BELONGS_TO;
+        return MONEY32_UNDEFINED;
+    }
+
+    if (groupId == 0 && fromGroup && fromGroup->Id != 0)
+    {
+        gGameCommandErrorTitle = STR_CANT_SET_TO_THIS_GROUP;
+        return MONEY32_UNDEFINED;
+    }
+
+    if (flags & GAME_COMMAND_FLAG_APPLY)
+    {
+        player->group = groupId;
+
+        if (network_get_mode() == NETWORK_MODE_SERVER)
+        {
+            // Add or update saved user
+            INetworkServer * server = static_cast<INetworkServer *>(context);
+            INetworkUserManager * userManager = server->GetUserManager();
+            NetworkUser * networkUser = userManager->GetOrAddUser(player->keyhash);
+            networkUser->GroupId = groupId;
+            networkUser->Name = player->name;
+            userManager->Save();
+        }
+
+        window_invalidate_by_number(WC_PLAYER, playerId);
+    }
+
+    return 0;
+}
+
+void game_command_set_player_group(int * eax, int * ebx, int * ecx, int * edx, int * esi, int * edi, int * ebp)
+{
+    uint8 playerId = *ecx & 0xFF;
+    uint8 groupId = *edx & 0xFF;
+    uint8 flags = *ebx & 0xFF;
+    *ebx = game_command_set_player_group_2(playerId, groupId, flags);
 }
 
 void game_command_modify_groups(int *eax, int *ebx, int *ecx, int *edx, int *esi, int *edi, int *ebp)
 {
-	uint8 action = (uint8)*eax;
-	uint8 groupid = (uint8)(*eax >> 8);
-	uint8 nameChunkIndex = (uint8)(*eax >> 16);
+    uint8 action = *eax & 0xFF;
+    uint8 groupId = (*eax >> 8) & 0xFF;
+    uint8 nameChunkIndex = (*eax >> 16) & 0xFF;
 
-	char oldName[128];
-	static char newName[128];
+    char oldName[128];
+    static char newName[128];
 
-	switch (action)
-	{
-	case 0:{ // add group
-		if (*ebx & GAME_COMMAND_FLAG_APPLY) {
-			NetworkGroup* newgroup = gNetwork.AddGroup();
-			if (!newgroup) {
-				*ebx = MONEY32_UNDEFINED;
-				return;
-			}
-		}
-	}break;
-	case 1:{ // remove group
-		if (groupid == 0) {
-			gGameCommandErrorTitle = STR_THIS_GROUP_CANNOT_BE_MODIFIED;
-			*ebx = MONEY32_UNDEFINED;
-			return;
-		}
-		for (auto it = gNetwork.player_list.begin(); it != gNetwork.player_list.end(); it++) {
-			if((*it)->group == groupid) {
-				gGameCommandErrorTitle = STR_CANT_REMOVE_GROUP_THAT_PLAYERS_BELONG_TO;
-				*ebx = MONEY32_UNDEFINED;
-				return;
-			}
-		}
-		if (*ebx & GAME_COMMAND_FLAG_APPLY) {
-			gNetwork.RemoveGroup(groupid);
-		}
-	}break;
-	case 2:{ // set permissions
-		int index = *ecx;
-		bool all = *edx & 1;
-		bool allvalue = (*edx >> 1) & 1;
-		if (groupid == 0) { // cant change admin group permissions
-			gGameCommandErrorTitle = STR_THIS_GROUP_CANNOT_BE_MODIFIED;
-			*ebx = MONEY32_UNDEFINED;
-			return;
-		}
-		NetworkGroup* mygroup = nullptr;
-		NetworkPlayer* player = gNetwork.GetPlayerByID(game_command_playerid);
-		if (player && !all) {
-			mygroup = gNetwork.GetGroupByID(player->group);
-			if (!mygroup || (mygroup && !mygroup->CanPerformAction(index))) {
-				gGameCommandErrorTitle = STR_CANT_MODIFY_PERMISSION_THAT_YOU_DO_NOT_HAVE_YOURSELF;
-				*ebx = MONEY32_UNDEFINED;
-				return;
-			}
-		}
-		if (*ebx & GAME_COMMAND_FLAG_APPLY) {
-			NetworkGroup* group = gNetwork.GetGroupByID(groupid);
-			if (group) {
-				if (all) {
-					if (mygroup) {
-						if (allvalue) {
-							group->ActionsAllowed = mygroup->ActionsAllowed;
-						} else {
-							group->ActionsAllowed.fill(0x00);
-						}
-					}
-				} else {
-					group->ToggleActionPermission(index);
-				}
-			}
-		}
-	}break;
-	case 3:{ // set group name
-		size_t nameChunkOffset = nameChunkIndex - 1;
-		if (nameChunkIndex == 0)
-			nameChunkOffset = 2;
-		nameChunkOffset *= 12;
-		nameChunkOffset = (std::min)(nameChunkOffset, Util::CountOf(newName) - 12);
-		RCT2_GLOBAL(newName + nameChunkOffset + 0, uint32) = *edx;
-		RCT2_GLOBAL(newName + nameChunkOffset + 4, uint32) = *ebp;
-		RCT2_GLOBAL(newName + nameChunkOffset + 8, uint32) = *edi;
+    switch (action) {
+    case 0: // add group
+    {
+        if (*ebx & GAME_COMMAND_FLAG_APPLY)
+        {
+            INetworkGroupManager * groupManager = Network2::GetContext()
+                                                          ->GetGroupManager();
+            NetworkGroup * newGroup = groupManager->CreateGroup("???");
+            if (newGroup != nullptr)
+            {
+                *ebx = MONEY32_UNDEFINED;
+                return;
+            }
+        }
+        break;
+    }
+    case 1: // remove group
+    {
+        if (groupId == 0)
+        {
+            gGameCommandErrorTitle = STR_THIS_GROUP_CANNOT_BE_MODIFIED;
+            *ebx = MONEY32_UNDEFINED;
+            return;
+        }
 
-		if (nameChunkIndex != 0) {
-			*ebx = 0;
-			return;
-		}
+        INetworkContext * context = Network2::GetContext();
+        INetworkPlayerList * playerList = context->GetPlayerList();
+        for (uint32 i = 0; i < playerList->GetCount(); i++)
+        {
+            NetworkPlayer * player = playerList->GetPlayerByIndex(i);
+            if (player->group == groupId)
+            {
+                gGameCommandErrorTitle = STR_CANT_REMOVE_GROUP_THAT_PLAYERS_BELONG_TO;
+                *ebx = MONEY32_UNDEFINED;
+                return;
+            }
+        }
+        if (*ebx & GAME_COMMAND_FLAG_APPLY)
+        {
+            INetworkGroupManager * groupManager = context->GetGroupManager();
+            groupManager->RemoveGroup(groupId);
+        }
+        break;
+    }
+    case 2: // set permissions
+    {
+        int index = *ecx;
+        bool all = *edx & 1;
+        bool allvalue = (*edx >> 1) & 1;
+        if (groupId == 0)
+        {
+            // cant change admin group permissions
+            gGameCommandErrorTitle = STR_THIS_GROUP_CANNOT_BE_MODIFIED;
+            *ebx = MONEY32_UNDEFINED;
+            return;
+        }
 
-		if (strcmp(oldName, newName) == 0) {
-			*ebx = 0;
-			return;
-		}
+        INetworkContext * context = Network2::GetContext();
+        INetworkPlayerList * playerList = Network2::GetPlayerList();
+        NetworkPlayer * player = playerList->GetPlayerById(game_command_playerid);
+        INetworkGroupManager * groupManager = context->GetGroupManager();
+        NetworkGroup * mygroup = nullptr;
+        if (player != nullptr && !all)
+        {
+            mygroup = groupManager->GetGroupById(player->group);
+            if (mygroup == nullptr || (mygroup != nullptr && !mygroup->CanPerformAction(index)))
+            {
+                gGameCommandErrorTitle = STR_CANT_MODIFY_PERMISSION_THAT_YOU_DO_NOT_HAVE_YOURSELF;
+                *ebx = MONEY32_UNDEFINED;
+                return;
+            }
+        }
+        if (*ebx & GAME_COMMAND_FLAG_APPLY)
+        {
+            NetworkGroup * group = groupManager->GetGroupById(groupId);
+            if (group != nullptr)
+            {
+                if (all)
+                {
+                    if (mygroup != nullptr)
+                    {
+                        if (allvalue)
+                        {
+                            group->ActionsAllowed = mygroup->ActionsAllowed;
+                        }
+                        else
+                        {
+                            group->ActionsAllowed.fill(0x00);
+                        }
+                    }
+                }
+                else
+                {
+                    group->ToggleActionPermission(index);
+                }
+            }
+        }
+        break;
+    }
+    case 3: // set group name
+    {
+        size_t nameChunkOffset = nameChunkIndex - 1;
+        if (nameChunkIndex == 0)
+        {
+            nameChunkOffset = 2;
+        }
+        nameChunkOffset *= 12;
+        nameChunkOffset = Math::Min(nameChunkOffset, Util::CountOf(newName) - 12);
+        RCT2_GLOBAL(newName + nameChunkOffset + 0, uint32) = *edx;
+        RCT2_GLOBAL(newName + nameChunkOffset + 4, uint32) = *ebp;
+        RCT2_GLOBAL(newName + nameChunkOffset + 8, uint32) = *edi;
 
-		if (newName[0] == 0) {
-			gGameCommandErrorTitle = STR_CANT_RENAME_GROUP;
-			gGameCommandErrorText = STR_INVALID_GROUP_NAME;
-			*ebx = MONEY32_UNDEFINED;
-			return;
-		}
+        if (nameChunkIndex != 0)
+        {
+            *ebx = 0;
+            return;
+        }
 
-		if (*ebx & GAME_COMMAND_FLAG_APPLY) {
-			NetworkGroup* group = gNetwork.GetGroupByID(groupid);
-			if (group) {
-				group->SetName(newName);
-			}
-		}
-	}break;
-	case 4:{ // set default group
-		if (groupid == 0) {
-			gGameCommandErrorTitle = STR_CANT_SET_TO_THIS_GROUP;
-			*ebx = MONEY32_UNDEFINED;
-			return;
-		}
-		if (*ebx & GAME_COMMAND_FLAG_APPLY) {
-			gNetwork.SetDefaultGroup(groupid);
-		}
-	}break;
-	}
+        if (String::Equals(oldName, newName) == 0)
+        {
+            *ebx = 0;
+            return;
+        }
 
-	gNetwork.SaveGroups();
+        if (newName[0] == '\0')
+        {
+            gGameCommandErrorTitle = STR_CANT_RENAME_GROUP;
+            gGameCommandErrorText = STR_INVALID_GROUP_NAME;
+            *ebx = MONEY32_UNDEFINED;
+            return;
+        }
 
-	*ebx = 0;
+        if (*ebx & GAME_COMMAND_FLAG_APPLY)
+        {
+            INetworkGroupManager * groupManager = Network2::GetContext()
+                                                          ->GetGroupManager();
+            NetworkGroup * group = groupManager->GetGroupById(groupId);
+            if (group != nullptr)
+            {
+                group->SetName(newName);
+            }
+        }
+        break;
+    }
+    case 4: // set default group
+    {
+        if (groupId == 0)
+        {
+            gGameCommandErrorTitle = STR_CANT_SET_TO_THIS_GROUP;
+            *ebx = MONEY32_UNDEFINED;
+            return;
+        }
+        if (*ebx & GAME_COMMAND_FLAG_APPLY)
+        {
+            INetworkGroupManager * groupManager = Network2::GetContext()
+                                                          ->GetGroupManager();
+            groupManager->SetDefaultGroup(groupId);
+        }
+        break;
+    }
+    }
+
+    {
+        INetworkGroupManager * groupManager = Network2::GetContext()
+            ->GetGroupManager();
+        groupManager->Save();
+    }
+
+    *ebx = 0;
 }
 
-void game_command_kick_player(int *eax, int *ebx, int *ecx, int *edx, int *esi, int *edi, int *ebp)
+money32 game_command_kick_player_2(uint8 playerId, uint8 flags)
 {
-	uint8 playerid = (uint8)*eax;
-	NetworkPlayer* player = gNetwork.GetPlayerByID(playerid);
-	if (player && player->flags & NETWORK_PLAYER_FLAG_ISSERVER) {
-		gGameCommandErrorTitle = STR_CANT_KICK_THE_HOST;
-		*ebx = MONEY32_UNDEFINED;
-		return;
-	}
-	if (*ebx & GAME_COMMAND_FLAG_APPLY) {
-		if (gNetwork.GetMode() == NETWORK_MODE_SERVER) {
-			gNetwork.KickPlayer(playerid);
+    INetworkContext * context = Network2::GetContext();
+    INetworkPlayerList * playerList = context->GetPlayerList();
+    NetworkPlayer * player = playerList->GetPlayerById(playerId);
+    if (player != nullptr && player->flags & NETWORK_PLAYER_FLAG_ISSERVER)
+    {
+        gGameCommandErrorTitle = STR_CANT_KICK_THE_HOST;
+        return MONEY32_UNDEFINED;
+    }
 
-			NetworkUserManager * networkUserManager = &gNetwork._userManager;
-			networkUserManager->Load();
-			networkUserManager->RemoveUser(player->keyhash);
-			networkUserManager->Save();
-		}
-	}
-	*ebx = 0;
+    if (flags & GAME_COMMAND_FLAG_APPLY)
+    {
+        if (network_get_mode() == NETWORK_MODE_SERVER)
+        {
+            INetworkServer * server = static_cast<INetworkServer *>(context);
+            server->KickPlayer(playerId);
+
+            INetworkUserManager * networkUserManager = server->GetUserManager();
+            networkUserManager->Load();
+            networkUserManager->RemoveUser(player->keyhash);
+            networkUserManager->Save();
+        }
+    }
+
+    return 0;
+}
+
+void game_command_kick_player(int * eax, int * ebx, int * ecx, int * edx, int * esi, int * edi, int * ebp)
+{
+    uint8 playerId = *eax & 0xFF;
+    uint8 flags = *ebx & 0xFF;
+    *ebx = game_command_kick_player_2(playerId, flags);
+}
+
 }
 
 #else
@@ -566,5 +670,7 @@ void network_set_password(const char* password) {}
 uint8 network_get_current_player_id() { return 0; }
 int network_get_current_player_group_index() { return 0; }
 NetworkServerInfo network_get_server_info() { return { 0 }; }
+
+}
 
 #endif /* DISABLE_NETWORK */
