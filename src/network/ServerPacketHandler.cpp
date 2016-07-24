@@ -81,9 +81,7 @@ public:
                 if (!String::IsNullOrEmpty(text))
                 {
                     INetworkServer * server = Network2::GetServer();
-
-                    const char * formatted = FormatChat(sender->Player, text);
-                    server->BroadcastMessage(formatted);
+                    server->BroadcastMessage(sender->Player->id, text);
                 }
             }
         }

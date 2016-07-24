@@ -31,6 +31,16 @@ interface INetworkClient : public INetworkContext
     virtual bool Begin(const char * host, uint16 port) abstract;
     virtual void HandleChallenge(const char * challenge, size_t challengeSize) abstract;
     virtual void SendPassword(const utf8 * password) abstract;
+
+    virtual void ReceiveMap(size_t totalDataSize, size_t offset, void * dataChunk, size_t dataChunkSize) abstract;
+    virtual void ReceiveChatMessage(const utf8 * message) abstract;
+    virtual void RecieveGameCommand(const GameCommand * gameCommand) abstract;
+    virtual void RecieveTick(uint32 tick, uint32 srand0) abstract;
+    virtual void RecieveServerInfo(const char * json) abstract;
+
+    virtual void RequestGameInfo() abstract;
+
+    virtual void SendPing() abstract;
 };
 
 INetworkClient * CreateClient();

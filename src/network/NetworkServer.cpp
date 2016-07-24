@@ -32,6 +32,7 @@
 #include "NetworkPlayerManager.h"
 #include "NetworkServer.h"
 #include "NetworkServerAdvertiser.h"
+#include "NetworkUser.h"
 #include "NetworkUserManager.h"
 
 extern "C"
@@ -300,7 +301,9 @@ public:
 
         // Check password
         std::string playerHash = sender->Key.PublicKeyHash();
-        const NetworkGroup * group = _groupManager->GetGroupByHash(playerHash.c_str());
+        NetworkUser * playerUser = _userManager->GetUserByHash(playerHash);
+        uint8 playerGroupId = playerUser->GroupId.GetValueOrDefault(_groupManager->GetDefaultGroupId());
+        const NetworkGroup * group = _groupManager->GetGroupById(playerGroupId);
         size_t actionIndex = NetworkActions::FindCommandByPermissionName("PERMISSION_PASSWORDLESS_LOGIN");
         bool passwordless = group->CanPerformAction(actionIndex);
         if (!passwordless)
@@ -399,6 +402,12 @@ public:
         client->QueuePacket(std::move(packet));
     }
 
+    void SendGameCommand(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32 esi, uint32 edi, uint32 ebp, uint8 callbackId) override
+    {
+        uint32 args[] = { eax, ebx, ecx, edx, esi, edi, ebp };
+        SendGameCommand(_hostPlayerId, args, callbackId);
+    }
+
     void SendGameCommand(uint8 playerId, uint32 * args, uint8 callbackId) override
     {
         std::unique_ptr<NetworkPacket> packet = std::move(NetworkPacket::Allocate());
@@ -428,9 +437,23 @@ public:
         Memory::Free(gameInfoJson);
     }
 
-    void BroadcastMessage(const utf8 * message) override
+    void BroadcastMessage(uint8 playerId, const utf8 * message) override
     {
-        chat_history_add(message);
+        NetworkPlayer * player = _playerManager->GetPlayerById(playerId);
+        if (player != nullptr)
+        {
+            _chat->ShowMessage(player, message);
+
+            std::unique_ptr<NetworkPacket> packet = std::move(NetworkPacket::Allocate());
+            *packet << (uint32)NETWORK_COMMAND_CHAT;
+            packet->WriteString(message);
+            SendPacketToAllClients(*packet);
+        }
+    }
+
+    void BroadcastMap() override
+    {
+
     }
 
 private:

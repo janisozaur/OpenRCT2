@@ -52,7 +52,7 @@ interface INetworkServer : public INetworkContext
     virtual void SendGameCommand(uint8 playerId, uint32 * args, uint8 callbackId) abstract;
     virtual void SendGameInformation(NetworkConnection * client);
 
-    virtual void BroadcastMessage(const utf8 * message) abstract;
+    virtual void BroadcastMessage(uint8 playerId, const utf8 * message) abstract;
     virtual void BroadcastMap() abstract;
 };
 

@@ -81,6 +81,11 @@ enum NETWORK_MODE
     NETWORK_MODE_SERVER
 };
 
+enum NETWORK_PLAYER_FLAG
+{
+    NETWORK_PLAYER_FLAG_ISSERVER = 1 << 0,
+};
+
 typedef struct NetworkServerProviderInfo
 {
     const utf8 * Name;

@@ -67,4 +67,5 @@ namespace Convert
 
 #endif
 
-#define NETWORK_DEFAULT_PORT    11753
+#define NETWORK_DEFAULT_PORT        11753
+#define SV6_HEADER_ZLIB_COMPRESSED  "open2_sv6_zlib"

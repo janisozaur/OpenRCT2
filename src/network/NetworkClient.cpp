@@ -14,8 +14,12 @@
  *****************************************************************************/
 #pragma endregion
 
+#include <set>
 #include "../core/Console.hpp"
 #include "../core/Guard.hpp"
+#include "../core/Json.hpp"
+#include "../core/Memory.hpp"
+#include "../core/String.hpp"
 #include "Network2.h"
 #include "NetworkChat.h"
 #include "NetworkClient.h"
@@ -29,8 +33,11 @@
 extern "C"
 {
     #include "../config.h"
+    #include "../game.h"
+    #include "../interface/window.h"
     #include "../localisation/localisation.h"
     #include "../platform/platform.h"
+    #include "../util/util.h"
 }
 
 class NetworkClient : public INetworkClient
@@ -41,6 +48,13 @@ private:
     NetworkConnection *     _serverConnection;
     NetworkKey              _key;
     std::vector<uint8>      _challenge;
+    std::vector<uint8>      _mapBuffer;
+
+    uint32                      _serverTick;
+    uint32                      _serverSrand0;
+    uint32                      _serverSrand0Tick;
+    bool                        _desynchronised;
+    std::multiset<GameCommand>  _gameCommandQueue;
 
     INetworkChat *          _chat;
     INetworkGroupManager *  _groupManager;
@@ -61,6 +75,21 @@ public:
     virtual ~NetworkClient()
     {
         delete _chat;
+    }
+
+    NETWORK_AUTH GetAuthStatus() const override
+    {
+        return _serverConnection->AuthStatus;
+    }
+
+    NETWORK_CLIENT_STATUS GetConnectionStatus() const override
+    {
+        return _status;
+    }
+
+    uint32 GetServerTick() const override
+    {
+        return _serverTick;
     }
 
     INetworkChat * GetNetworkChat() const override
@@ -170,6 +199,107 @@ public:
         delete[] signature;
     }
 
+    void RequestGameInfo() override
+    {
+        log_verbose("requesting gameinfo");
+        std::unique_ptr<NetworkPacket> packet = std::move(NetworkPacket::Allocate());
+        *packet << (uint32)NETWORK_COMMAND_GAMEINFO;
+        _serverConnection->QueuePacket(std::move(packet));
+    }
+
+    void ReceiveMap(size_t totalDataSize, size_t offset, void * dataChunk, size_t dataChunkSize) override
+    {
+        char str_downloading_map[256];
+        unsigned int downloading_map_args[2] = { (offset + dataChunkSize) / 1024, totalDataSize / 1024 };
+        format_string(str_downloading_map, STR_MULTIPLAYER_DOWNLOADING_MAP, downloading_map_args);
+        window_network_status_open(str_downloading_map, []() -> void
+        {
+            INetworkContext * context = Network2::GetContext();
+            if (context != nullptr)
+            {
+                context->Close();
+            }
+        });
+
+        if (totalDataSize > _mapBuffer.size())
+        {
+            _mapBuffer.resize(totalDataSize);
+        }
+
+        Memory::Copy<void>(_mapBuffer.data() + offset, dataChunk, dataChunkSize);
+
+        if (offset + dataChunkSize == totalDataSize)
+        {
+            window_network_status_close();
+            ProcessMap(_mapBuffer.data(), _mapBuffer.size());
+
+            // Discard map buffer data (free the memory)
+            _mapBuffer.resize(0);
+        }
+    }
+
+    void ReceiveChatMessage(const utf8 * message) override
+    {
+        _chat->ShowMessage(message);
+    }
+    
+    void RecieveGameCommand(const GameCommand * gameCommand) override
+    {
+        _gameCommandQueue.insert(*gameCommand);
+    }
+
+    void RecieveTick(uint32 tick, uint32 srand0) override
+    {
+        _serverTick = tick;
+        if (_serverSrand0Tick == 0)
+        {
+            _serverSrand0 = srand0;
+            _serverSrand0Tick = tick;
+        }
+    }
+
+    void RecieveServerInfo(const char * json) override
+    {
+        json_error_t error;
+        json_t * root = json_loads(json, 0, &error);
+        if (root == nullptr)
+        {
+            Console::Error::WriteLine("Recieved invalid ServerInfo json.");
+        }
+        else
+        {
+            _serverInfo.Name = json_string_value(json_object_get(root, "name"));
+            _serverInfo.Description = json_string_value(json_object_get(root, "description"));
+
+            json_t * jsonProvider = json_object_get(root, "provider");
+            if (jsonProvider != nullptr)
+            {
+                _serverInfo.Provider.Name = json_string_value(json_object_get(jsonProvider, "name"));
+                _serverInfo.Provider.Email = json_string_value(json_object_get(jsonProvider, "email"));
+                _serverInfo.Provider.Website = json_string_value(json_object_get(jsonProvider, "website"));
+            }
+
+            json_decref(root);
+        }
+    }
+
+    void SendPing() override
+    {
+        std::unique_ptr<NetworkPacket> packet = std::move(NetworkPacket::Allocate());
+        *packet << (uint32)NETWORK_COMMAND_PING;
+        _serverConnection->QueuePacket(std::move(packet));
+    }
+
+    void SendChatMessage(const utf8 * text) override
+    {
+
+    }
+
+    void SendGameCommand(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32 esi, uint32 edi, uint32 ebp, uint8 callbackId) override
+    {
+
+    }
+
 private:
     bool SetupUserKey()
     {
@@ -273,6 +403,59 @@ private:
             result = false;
         }
         return result;
+    }
+
+    void ProcessMap(const void * mapData, size_t mapDataSize)
+    {
+        // Check if zlib compressed
+        if (String::Equals((utf8 *)mapData, SV6_HEADER_ZLIB_COMPRESSED))
+        {
+            log_verbose("Received zlib-compressed sv6 map");
+
+            size_t headerSize = String::SizeOf(SV6_HEADER_ZLIB_COMPRESSED) + 1;
+            const void * bufferBody = (const void *)((uintptr_t)mapData + headerSize);
+            size_t bufferBodySize = mapDataSize - headerSize;
+
+            size_t sv6DataSize;
+            uint8 * sv6Data = util_zlib_inflate((unsigned char *)bufferBody, bufferBodySize, &sv6DataSize);
+            if (sv6Data == nullptr)
+            {
+                Console::Error::WriteLine("Failed to decompress map data sent from server.");
+                Close();
+            }
+            else
+            {
+                LoadMap(sv6Data, sv6DataSize);
+                Memory::Free(sv6Data);
+            }
+        }
+        else
+        {
+            log_verbose("Assuming received map is in plain sv6 format");
+            LoadMap(mapData, mapDataSize);
+        }
+    }
+
+    void LoadMap(const void * sv6Data, size_t sv6DataSize)
+    {
+        SDL_RWops * rw = SDL_RWFromMem((void *)sv6Data, sv6DataSize);
+        if (game_load_network(rw))
+        {
+            game_load_init();
+            _gameCommandQueue.clear();
+            _serverTick = gCurrentTicks;
+            _serverSrand0Tick = 0;
+            _desynchronised = false;
+
+            // Notify user that they are now online and which shortcut key enables chat
+            _chat->ShowChatHelp();
+        }
+        else
+        {
+            // Something went wrong, game is not loaded. Return to main screen.
+            game_do_command(0, GAME_COMMAND_FLAG_APPLY, 0, 0, GAME_COMMAND_LOAD_OR_QUIT, 1, 0);
+        }
+        SDL_RWclose(rw);
     }
 };
 

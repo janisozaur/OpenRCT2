@@ -21,6 +21,7 @@
 #include "NetworkGroupManager.h"
 #include "NetworkPlayer.h"
 #include "NetworkPlayerManager.h"
+#include "NetworkTypes.h"
 #include "NetworkUser.h"
 #include "NetworkUserManager.h"
 
@@ -69,6 +70,44 @@ public:
         return _players[index];
     }
 
+    void UpdatePlayers(NetworkPlayer * players, size_t count) override
+    {
+        std::vector<uint8> ids;
+
+        for (unsigned int i = 0; i < count; i++)
+        {
+            NetworkPlayer * player = &players[i];
+
+            ids.push_back(player->id);
+            if (!GetPlayerById(player->id))
+            {
+                NetworkPlayer * newPlayer = CreatePlayer("", "");
+                if (newPlayer != nullptr)
+                {
+                    *newPlayer = *player;
+                    if (player->flags & NETWORK_PLAYER_FLAG_ISSERVER)
+                    {
+                        // server_connection.Player = player;
+                    }
+                }
+            }
+        }
+
+        // Remove any players that are not in new list
+        auto it = _players.begin();
+        while (it != _players.end())
+        {
+            if (std::find(ids.begin(), ids.end(), (*it)->id) == ids.end())
+            {
+                it = _players.erase(it);
+            }
+            else
+            {
+                it++;
+            }
+        }
+    }
+
     NetworkPlayer * CreatePlayer(const utf8 * name, const char * hash) override
     {
         NetworkPlayer * player = nullptr;
@@ -90,7 +129,8 @@ public:
                 player->group = _groupManager->GetDefaultGroupId();
                 if (!String::IsNullOrEmpty(name))
                 {
-                    player->SetName(MakePlayerNameUnique(std::string(name)));
+                    std::string uniquePlayerName = MakePlayerNameUnique(std::string(name));
+                    player->SetName(uniquePlayerName);
                 }
             }
             else
@@ -130,6 +170,47 @@ private:
             }
         }
         return false;
+    }
+
+    std::string MakePlayerNameUnique(const std::string &name)
+    {
+        // Note: Player names are case-insensitive
+
+        std::string new_name = name.substr(0, 31);
+        int counter = 1;
+        bool unique;
+        do
+        {
+            unique = true;
+
+            // Check if there is already a player with this name in the server
+            for (const auto &player : _players)
+            {
+                if (String::Equals(player->name.c_str(), new_name.c_str(), true))
+                {
+                    unique = false;
+                    break;
+                }
+            }
+
+            if (unique)
+            {
+                // Check if there is already a registered player with this name
+                if (_userManager->GetUserByName(new_name) != nullptr)
+                {
+                    unique = false;
+                }
+            }
+
+            if (!unique)
+            {
+                // Increment name counter
+                counter++;
+                new_name = name.substr(0, 31) + " #" + std::to_string(counter);
+            }
+        }
+        while (!unique);
+        return new_name;
     }
 };
 

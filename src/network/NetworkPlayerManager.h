@@ -30,6 +30,8 @@ interface INetworkPlayerList
     virtual uint32          GetCount() const abstract;
     virtual NetworkPlayer * GetPlayerByIndex(uint32 index) const abstract;
     virtual NetworkPlayer * GetPlayerById(uint8 id) const abstract;
+
+    virtual void            UpdatePlayers(NetworkPlayer * players, size_t count) abstract;
 };
 
 interface INetworkPlayerManager : public INetworkPlayerList

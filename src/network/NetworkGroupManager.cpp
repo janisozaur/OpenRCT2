@@ -44,11 +44,6 @@ public:
         return _groups.size();
     }
 
-    NetworkGroup * GetGroupByHash(const char * hash) const override
-    {
-
-    }
-
     NetworkGroup * GetGroupById(uint8 id) const override
     {
         for (auto group : _groups)

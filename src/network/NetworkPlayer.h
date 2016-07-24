@@ -49,8 +49,3 @@ public:
     void Write(NetworkPacket &packet);
     void AddMoneySpent(money32 cost);
 };
-
-enum NETWORK_PLAYER_FLAG
-{
-    NETWORK_PLAYER_FLAG_ISSERVER = 1 << 0,
-};

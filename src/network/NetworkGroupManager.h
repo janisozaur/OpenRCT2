@@ -25,11 +25,11 @@ interface INetworkGroupManager
     virtual ~INetworkGroupManager() { }
 
     virtual uint32          GetCount() const abstract;
-    virtual NetworkGroup *  GetGroupByHash(const char * hash) const abstract;
     virtual NetworkGroup *  GetGroupById(uint8 id) const abstract;
     virtual NetworkGroup *  GetGroupByIndex(uint32 index) const abstract;
     virtual uint8           GetDefaultGroupId() const abstract;
 
+    virtual void            UpdateGroups(NetworkGroup * groups, size_t numGroups);
     virtual void            SetDefaultGroupId(uint8 groupId) abstract;
     virtual NetworkGroup *  CreateGroup(const utf8 * name) abstract;
     virtual void            RemoveGroup(uint8 groupId) abstract;
