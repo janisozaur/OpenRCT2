@@ -368,11 +368,13 @@ void S6Importer::Import()
     map_update_tile_pointers();
     if (network_get_mode() == NETWORK_MODE_CLIENT)
     {
+        reset_all_sprite_quadrant_placements();
         reset_sprite_spatial_index();
         game_do_command(0, GAME_COMMAND_FLAG_APPLY, 0, 0, GAME_COMMAND_RESET_SPRITES, 0, 0);
     }
     else
     {
+        reset_all_sprite_quadrant_placements();
         reset_sprite_spatial_index();
     }
     game_convert_strings_to_utf8();

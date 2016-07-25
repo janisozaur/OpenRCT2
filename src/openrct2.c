@@ -332,6 +332,8 @@ void openrct2_launch()
 	exit(gExitCode);
 }
 
+EVP_MD_CTX *gHashCTX;
+
 void openrct2_dispose()
 {
 	network_close();
@@ -340,6 +342,7 @@ void openrct2_dispose()
 	rct2_dispose();
 	config_release();
 	platform_free();
+	EVP_MD_CTX_destroy(gHashCTX);
 }
 
 /**
@@ -414,7 +417,7 @@ static void openrct2_loop()
 				if (!sprite_should_tween(get_sprite(i)))
 					continue;
 
-				sprite_move(
+				sprite_move_interframe(
 					_spritelocations2[i].x + (sint16)((_spritelocations1[i].x - _spritelocations2[i].x) * nudge),
 					_spritelocations2[i].y + (sint16)((_spritelocations1[i].y - _spritelocations2[i].y) * nudge),
 					_spritelocations2[i].z + (sint16)((_spritelocations1[i].z - _spritelocations2[i].z) * nudge),
@@ -437,7 +440,7 @@ static void openrct2_loop()
 					continue;
 
 				invalidate_sprite_2(get_sprite(i));
-				sprite_move(_spritelocations2[i].x, _spritelocations2[i].y, _spritelocations2[i].z, get_sprite(i));
+				sprite_move_interframe(_spritelocations2[i].x, _spritelocations2[i].y, _spritelocations2[i].z, get_sprite(i));
 			}
 			network_update();
 		} else {
@@ -463,15 +466,12 @@ static void openrct2_loop()
 	} while (!_finished);
 }
 
-EVP_MD_CTX *gHashCTX;
-
 /**
  * Causes the OpenRCT2 game loop to finish.
  */
 void openrct2_finish()
 {
 	_finished = 1;
-	EVP_MD_CTX_destroy(gHashCTX);
 }
 
 void openrct2_reset_object_tween_locations()
