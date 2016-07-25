@@ -18,10 +18,14 @@
 
 #include "../common.h"
 
-#include "../localisation/localisation.h"
 #include "Math.hpp"
 #include "Memory.hpp"
 #include "String.hpp"
+
+extern "C"
+{
+    #include "../localisation/localisation.h"
+}
 
 /**
  * Class for constructing strings efficiently. A buffer is automatically allocated and reallocated when characters or strings

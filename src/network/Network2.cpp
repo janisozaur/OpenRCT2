@@ -14,9 +14,13 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef DISABLE_NETWORK
+
 #include <SDL_platform.h>
 
 #ifdef __WINDOWS__
+    #pragma comment(lib, "Ws2_32.lib")
+
     // winsock2 must be included before windows.h
     #include <winsock2.h>
 #endif
@@ -26,8 +30,6 @@
 #include "Network2.h"
 #include "NetworkServer.h"
 #include "NetworkClient.h"
-
-#ifndef DISABLE_NETWORK
 
 namespace Network2
 {
@@ -156,6 +158,19 @@ namespace Network2
             client = nullptr;
         }
         return client;
+    }
+}
+
+namespace Convert
+{
+    uint16 HostToNetwork(uint16 value)
+    {
+        return htons(value);
+    }
+
+    uint16 NetworkToHost(uint16 value)
+    {
+        return ntohs(value);
     }
 }
 

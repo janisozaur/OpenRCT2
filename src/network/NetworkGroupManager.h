@@ -29,7 +29,7 @@ interface INetworkGroupManager
     virtual NetworkGroup *  GetGroupByIndex(uint32 index) const abstract;
     virtual uint8           GetDefaultGroupId() const abstract;
 
-    virtual void            UpdateGroups(NetworkGroup * groups, size_t numGroups);
+    virtual void            UpdateGroups(const NetworkGroup * groups, size_t numGroups) abstract;
     virtual void            SetDefaultGroupId(uint8 groupId) abstract;
     virtual NetworkGroup *  CreateGroup(const utf8 * name) abstract;
     virtual void            RemoveGroup(uint8 groupId) abstract;

@@ -20,7 +20,6 @@
 #include "../core/Path.hpp"
 #include "../core/String.hpp"
 #include "../core/StringBuilder.hpp"
-#include "../platform/platform.h"
 #include "NetworkChat.h"
 #include "NetworkPlayer.h"
 
@@ -30,6 +29,7 @@ extern "C"
     #include "../interface/chat.h"
     #include "../interface/keyboard_shortcut.h"
     #include "../localisation/localisation.h"
+    #include "../platform/platform.h"
 }
 
 class NetworkChat : public INetworkChat

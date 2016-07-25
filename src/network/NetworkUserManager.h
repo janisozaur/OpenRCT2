@@ -33,7 +33,7 @@ interface INetworkUserManager
      *
      * Useful for retaining custom entries in JSON file.
      */
-    virtual void Save();
+    virtual void Save() abstract;
 
     virtual void UnsetUsersOfGroup(uint8 groupId) abstract;
     virtual void RemoveUser(const std::string &hash) abstract;

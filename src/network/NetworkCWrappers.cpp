@@ -105,6 +105,10 @@ uint32 network_get_server_tick()
 uint8 network_get_current_player_id()
 {
     INetworkContext * context = Network2::GetContext();
+    if (context == nullptr)
+    {
+        return -1;
+    }
     return context->GetPlayerId();
 }
 

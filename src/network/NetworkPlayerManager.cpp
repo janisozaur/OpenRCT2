@@ -214,6 +214,11 @@ private:
     }
 };
 
+INetworkPlayerList * CreatePlayerList(INetworkGroupManager * groupManager)
+{
+    return nullptr;
+}
+
 INetworkPlayerManager * CreatePlayerManager(INetworkGroupManager * groupManager, INetworkUserManager * userManager)
 {
     return new NetworkPlayerManager(groupManager, userManager);

@@ -50,7 +50,7 @@ interface INetworkServer : public INetworkContext
 
     virtual void SendErrorMessage(NetworkConnection * client, rct_string_id title, rct_string_id message) abstract;
     virtual void SendGameCommand(uint8 playerId, uint32 * args, uint8 callbackId) abstract;
-    virtual void SendGameInformation(NetworkConnection * client);
+    virtual void SendGameInformation(NetworkConnection * client) abstract;
 
     virtual void BroadcastMessage(uint8 playerId, const utf8 * message) abstract;
     virtual void BroadcastMap() abstract;

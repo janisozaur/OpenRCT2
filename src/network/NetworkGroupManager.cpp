@@ -23,9 +23,13 @@
 #include "../core/Json.hpp"
 #include "../core/Path.hpp"
 #include "../core/String.hpp"
-#include "../platform/platform.h"
 #include "NetworkGroup.h"
 #include "NetworkGroupManager.h"
+
+extern "C"
+{
+    #include "../platform/platform.h"
+}
 
 constexpr const utf8 * GROUPS_FILENAME = "groups.json";
 
@@ -65,6 +69,16 @@ public:
     uint8 GetDefaultGroupId() const override
     {
         return _defaultGroupId;
+    }
+
+    void UpdateGroups(const NetworkGroup * groups, size_t numGroups) override
+    {
+        _groups.clear();
+        for (size_t i = 0; i < numGroups; i++)
+        {
+            auto group = new NetworkGroup(groups[i]);
+            _groups.push_back(group);
+        }
     }
 
     void SetDefaultGroupId(uint8 groupId) override
