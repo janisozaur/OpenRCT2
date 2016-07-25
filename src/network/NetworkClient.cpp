@@ -43,26 +43,26 @@ extern "C"
 class NetworkClient : public INetworkClient
 {
 private:
-    NETWORK_CLIENT_STATUS   _status;
-    SOCKET_STATUS           _lastConnectStatus;
-    NetworkConnection *     _serverConnection;
+    NETWORK_CLIENT_STATUS   _status = NETWORK_CLIENT_STATUS_NONE;
+    SOCKET_STATUS           _lastConnectStatus = SOCKET_STATUS_CLOSED;
+    NetworkConnection *     _serverConnection = nullptr;
     NetworkKey              _key;
     std::vector<uint8>      _challenge;
     std::vector<uint8>      _mapBuffer;
 
-    uint32                      _serverTick;
-    uint32                      _serverSrand0;
-    uint32                      _serverSrand0Tick;
-    bool                        _desynchronised;
+    uint32                      _serverTick = 0;
+    uint32                      _serverSrand0 = 0;
+    uint32                      _serverSrand0Tick = 0;
+    bool                        _desynchronised = false;
     std::multiset<GameCommand>  _gameCommandQueue;
 
-    INetworkChat *          _chat;
-    INetworkGroupManager *  _groupManager;
-    INetworkPlayerList *    _playerList;
+    INetworkChat *          _chat           = nullptr;
+    INetworkGroupManager *  _groupManager   = nullptr;
+    INetworkPlayerList *    _playerList     = nullptr;
 
-    NetworkServerInfo       _serverInfo;
+    NetworkServerInfo       _serverInfo = { nullptr };
 
-    uint8                   _playerId;
+    uint8                   _playerId = 255;
 
 public:
     NetworkClient()
@@ -121,6 +121,9 @@ public:
     {
         Close();
 
+        Guard::Assert(Network2::GetMode() == NETWORK_MODE_NONE, GUARD_LINE);
+        Network2::SetMode(NETWORK_MODE_CLIENT);
+
         Guard::Assert(_serverConnection == nullptr);
         _serverConnection = new NetworkConnection();
         _serverConnection->Socket = CreateTcpSocket();
@@ -139,7 +142,7 @@ public:
 
     void Close() override
     {
-
+        Network2::SetMode(NETWORK_MODE_NONE);
     }
 
     void Update() override

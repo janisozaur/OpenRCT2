@@ -36,6 +36,7 @@ namespace Network2
     INetworkUserManager *   GetUserManager();
 
     NETWORK_MODE GetMode();
+    void SetMode(NETWORK_MODE mode);
 
     bool Initialise();
     void Dispose();

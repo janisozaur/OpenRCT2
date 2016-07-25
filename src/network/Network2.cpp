@@ -85,6 +85,11 @@ namespace Network2
         return _mode;
     }
 
+    void SetMode(NETWORK_MODE mode)
+    {
+        _mode = mode;
+    }
+
     bool Initialise()
     {
 #ifdef __WINDOWS__
@@ -144,6 +149,8 @@ namespace Network2
             delete server;
             server = nullptr;
         }
+
+        _context = server;
         return server;
     }
 
@@ -157,6 +164,8 @@ namespace Network2
             delete client;
             client = nullptr;
         }
+
+        _context = client;
         return client;
     }
 }

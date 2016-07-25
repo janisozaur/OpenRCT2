@@ -216,7 +216,7 @@ private:
 
 INetworkPlayerList * CreatePlayerList(INetworkGroupManager * groupManager)
 {
-    return nullptr;
+    return new NetworkPlayerManager(groupManager, nullptr);
 }
 
 INetworkPlayerManager * CreatePlayerManager(INetworkGroupManager * groupManager, INetworkUserManager * userManager)

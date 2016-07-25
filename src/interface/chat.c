@@ -40,6 +40,7 @@ int _chatBottom;
 static const char* chat_history_get(unsigned int index);
 static uint32 chat_history_get_time(unsigned int index);
 static void chat_clear_input();
+static bool chat_should_close();
 
 void chat_open()
 {
@@ -76,10 +77,7 @@ void chat_update()
 
 void chat_draw(rct_drawpixelinfo * dpi)
 {
-	if (network_get_mode() == NETWORK_MODE_NONE ||
-		network_get_status() != NETWORK_CLIENT_STATUS_CONNECTED ||
-		network_get_authstatus() != NETWORK_AUTH_OK
-	) {
+	if (chat_should_close()) {
 		gChatOpen = false;
 		return;
 	}
@@ -159,4 +157,16 @@ static uint32 chat_history_get_time(unsigned int index)
 static void chat_clear_input()
 {
 	_chatCurrentLine[0] = 0;
+}
+
+static bool chat_should_close()
+{
+	enum NETWORK_MODE mode = network_get_mode();
+	if (mode == NETWORK_MODE_NONE) return true;
+	if (mode == NETWORK_MODE_CLIENT)
+	{
+		if (network_get_status() != NETWORK_CLIENT_STATUS_CONNECTED) return true;
+		if (network_get_authstatus() != NETWORK_AUTH_OK) return true;
+	}
+	return false;
 }

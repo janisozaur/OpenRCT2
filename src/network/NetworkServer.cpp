@@ -51,16 +51,16 @@ constexpr uint32 PING_FREQUENCY_MS = 3000;
 class NetworkServer : public INetworkServer
 {
 private:
-    uint16 _listeningPort;
-    uint16 _listeningAddress;
-    bool   _advertise;
+    uint16 _listeningPort = 0;
+    uint16 _listeningAddress = 0;
+    bool   _advertise = false;
 
-    uint8   _hostPlayerId;
+    uint8   _hostPlayerId = 255;
 
     std::string _name;
     std::string _description;
     std::string _password;
-    uint32      _maxPlayers;
+    uint32      _maxPlayers = 32;
 
     // Provider details
     std::string _providerName;
@@ -72,15 +72,15 @@ private:
     std::list<std::unique_ptr<NetworkConnection>> _clients;
     std::multiset<GameCommand> _gameCommandQueue;
 
-    INetworkServerAdvertiser *  _advertiser;
-    INetworkChat *              _chat;
-    INetworkGroupManager *      _groupManager;
-    INetworkPacketHandler *     _packetHandler;
-    INetworkPlayerManager *     _playerManager;
-    INetworkUserManager *       _userManager;
+    INetworkServerAdvertiser *  _advertiser     = nullptr;
+    INetworkChat *              _chat           = nullptr;
+    INetworkGroupManager *      _groupManager   = nullptr;
+    INetworkPacketHandler *     _packetHandler  = nullptr;
+    INetworkPlayerManager *     _playerManager  = nullptr;
+    INetworkUserManager *       _userManager    = nullptr;
 
-    uint32 _lastTickTime;
-    uint32 _lastPingTime;
+    uint32 _lastTickTime = 0;
+    uint32 _lastPingTime = 0;
 
 public:
     NetworkServer()
@@ -99,6 +99,9 @@ public:
     bool Begin(const char * address, uint16 port) override
     {
         Close();
+
+        Guard::Assert(Network2::GetMode() == NETWORK_MODE_NONE, GUARD_LINE);
+        Network2::SetMode(NETWORK_MODE_SERVER);
 
         _userManager->Load();
 
@@ -164,6 +167,8 @@ public:
         _groupManager->Clear();
         _chat->StopLogging();
         gfx_invalidate_screen();
+
+        Network2::SetMode(NETWORK_MODE_NONE);
     }
 
     void Update() override

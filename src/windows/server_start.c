@@ -151,9 +151,9 @@ static void window_server_start_close(rct_window *w)
 
 static void window_server_start_scenarioselect_callback(const utf8 *path)
 {
-	network_set_password(_password);
 	if (scenario_load_and_play_from_path(path)) {
 		network_begin_server(gConfigNetwork.default_port);
+		network_set_password(_password);
 	} else {
 		title_load();
 	}
