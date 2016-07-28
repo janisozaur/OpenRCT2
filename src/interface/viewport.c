@@ -684,11 +684,6 @@ void viewport_paint(rct_viewport* viewport, rct_drawpixelinfo* dpi, int left, in
 	left &= bitmask;
 	top &= bitmask;
 
-	RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_X, sint16) = left;
-	RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_Y, sint16) = top;
-	RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_WIDTH, uint16) = width;
-	RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_HEIGHT, uint16) = height;
-
 	width >>= viewport->zoom;
 
 	RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_PITCH, uint16) = (dpi->width + dpi->pitch) - width;
@@ -702,27 +697,26 @@ void viewport_paint(rct_viewport* viewport, rct_drawpixelinfo* dpi, int left, in
 	y += viewport->y;
 
 	uint8* bits_pointer = x - dpi->x + (y - dpi->y)*(dpi->width + dpi->pitch) + dpi->bits;
-	RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_BITS_PTR, uint8*) = bits_pointer;
 
 	rct_drawpixelinfo* dpi2 = RCT2_ADDRESS(RCT2_ADDRESS_VIEWPORT_DPI, rct_drawpixelinfo);
-	dpi2->y = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_Y, sint16);
-	dpi2->height = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_HEIGHT, uint16);
+	dpi2->y = (sint16)top;
+	dpi2->height = (uint16)height;
 	dpi2->zoom_level = (uint8)RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_ZOOM, uint16);
 
 	//Splits the screen into 32 pixel columns and renders them.
-	for (x = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_X, sint16) & 0xFFFFFFE0;
-		x < RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_X, sint16) + RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_WIDTH, uint16);
+	for (x = ((sint16)left) & 0xFFFFFFE0;
+		x < ((sint16)left) + ((uint16)width);
 		x += 32){
 
-		int start_x = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_X, sint16);
-		int width_col = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_WIDTH, uint16);
-		bits_pointer = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_BITS_PTR, uint8*);
+		int start_x = (sint16)left;
+		int width_col = ((uint16)width);
+		uint8 *bits_pointer_local = bits_pointer;
 		int pitch = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_PITCH, uint16);
 		int zoom = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_ZOOM, uint16);
 		if (x >= start_x){
 			int left_pitch = x - start_x;
 			width_col -= left_pitch;
-			bits_pointer += left_pitch >> zoom;
+			bits_pointer_local += left_pitch >> zoom;
 			pitch += left_pitch >> zoom;
 			start_x = x;
 		}
@@ -736,7 +730,7 @@ void viewport_paint(rct_viewport* viewport, rct_drawpixelinfo* dpi, int left, in
 		width_col = paint_right - start_x;
 		dpi2->x = start_x;
 		dpi2->width = width_col;
-		dpi2->bits = bits_pointer;
+		dpi2->bits = bits_pointer_local;
 		dpi2->pitch = pitch;
 
 		if (gCurrentViewportFlags & (VIEWPORT_FLAG_HIDE_VERTICAL | VIEWPORT_FLAG_HIDE_BASE | VIEWPORT_FLAG_UNDERGROUND_INSIDE)){
@@ -1369,13 +1363,11 @@ void get_map_coordinates_from_pos(int screenX, int screenY, int flags, sint16 *x
 			RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_ZOOM, uint16_t) = myviewport->zoom;
 			screenX &= (0xFFFF << myviewport->zoom) & 0xFFFF;
 			screenY &= (0xFFFF << myviewport->zoom) & 0xFFFF;
-			RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_X, int16_t) = screenX;
-			RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_Y, int16_t) = screenY;
 			rct_drawpixelinfo* dpi = RCT2_ADDRESS(RCT2_ADDRESS_VIEWPORT_DPI, rct_drawpixelinfo);
-			dpi->y = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_Y, int16_t);
+			dpi->y = (sint16)screenY;
 			dpi->height = 1;
 			dpi->zoom_level = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_ZOOM, uint16_t);
-			dpi->x = RCT2_GLOBAL(RCT2_ADDRESS_VIEWPORT_PAINT_X, int16_t);
+			dpi->x = (sint16)screenX;
 			dpi->width = 1;
 			RCT2_GLOBAL(0xEE7880, uint32_t) = 0xF1A4CC;
 			unk_140E9A8 = dpi;
