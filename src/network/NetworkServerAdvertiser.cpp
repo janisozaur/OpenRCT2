@@ -89,6 +89,9 @@ public:
                 SendHeartbeat();
             }
             break;
+        // exhaust enum values to satisfy clang
+        case ADVERTISE_STATUS_DISABLED:
+            break;
         }
     }
 

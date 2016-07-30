@@ -53,7 +53,7 @@ public:
         return _players.size() >= _maxPlayers;
     }
 
-    NetworkPlayer * GetPlayerById(uint8 id) const
+    NetworkPlayer * GetPlayerById(uint8 id) const override
     {
         for (auto player : _players)
         {
@@ -65,7 +65,7 @@ public:
         return nullptr;
     }
 
-    NetworkPlayer * GetPlayerByIndex(uint32 index) const
+    NetworkPlayer * GetPlayerByIndex(uint32 index) const override
     {
         if (index >= _players.size()) return nullptr;
         return _players[index];

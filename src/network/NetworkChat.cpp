@@ -83,7 +83,7 @@ public:
         chat_history_add(text);
     }
 
-    void ShowMessage(NetworkPlayer * sender, const utf8 * text)
+    void ShowMessage(NetworkPlayer * sender, const utf8 * text) override
     {
         auto sb = StringBuilder();
     

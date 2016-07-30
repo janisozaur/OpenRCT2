@@ -140,6 +140,9 @@ namespace Network2
             networkClient->Update();
             break;
         }
+        // Exhaust all enum values to satisfy clang
+        case NETWORK_MODE_NONE:
+            break;
         }
     }
 

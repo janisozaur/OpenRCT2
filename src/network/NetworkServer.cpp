@@ -249,7 +249,7 @@ public:
                                            const char * password,
                                            const char * pubkey,
                                            const char * signature,
-                                           size_t signatureSize)
+                                           size_t signatureSize) override
     {
         // Check if there are too many players
         if (_playerManager->IsFull()) // gConfigNetwork.maxplayers <= player_list.size()
@@ -430,7 +430,7 @@ public:
         SendPacketToAllClients(*packet);
     }
 
-    void SendGameInformation(NetworkConnection * client)
+    void SendGameInformation(NetworkConnection * client) override
     {
         char * gameInfoJson = GetGameInformationAsJson();
 
