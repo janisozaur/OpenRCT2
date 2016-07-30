@@ -17,6 +17,7 @@
 #ifndef DISABLE_NETWORK
 
 #include <vector>
+#include <algorithm>
 #include "../core/String.hpp"
 #include "NetworkGroupManager.h"
 #include "NetworkPlayer.h"

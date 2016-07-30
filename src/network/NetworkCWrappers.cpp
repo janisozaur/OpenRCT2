@@ -19,6 +19,7 @@
 #include "../core/Math.hpp"
 #include "../core/String.hpp"
 #include "../core/Util.hpp"
+#include "network.h"
 #include "Network2.h"
 #include "NetworkAction.h"
 #include "NetworkClient.h"
@@ -354,7 +355,7 @@ NetworkServerInfo network_get_server_info()
     return context->GetServerInfo();
 }
 
-money32 game_command_set_player_group_2(uint8 playerId, uint8 groupId, uint8 flags)
+static money32 game_command_set_player_group_2(uint8 playerId, uint8 groupId, uint8 flags)
 {
     INetworkContext * context = Network2::GetContext();
     INetworkPlayerList * playerList = context->GetPlayerList();
@@ -600,7 +601,7 @@ void game_command_modify_groups(int *eax, int *ebx, int *ecx, int *edx, int *esi
     *ebx = 0;
 }
 
-money32 game_command_kick_player_2(uint8 playerId, uint8 flags)
+static money32 game_command_kick_player_2(uint8 playerId, uint8 flags)
 {
     INetworkContext * context = Network2::GetContext();
     INetworkPlayerList * playerList = context->GetPlayerList();

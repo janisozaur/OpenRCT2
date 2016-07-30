@@ -25,6 +25,10 @@
     #include <winsock2.h>
 #endif
 
+#ifdef __LINUX__
+    #include <arpa/inet.h>
+#endif
+
 #include "../core/Guard.hpp"
 #include "network.h"
 #include "Network2.h"

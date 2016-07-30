@@ -254,4 +254,4 @@ INetworkServerAdvertiser * CreateServerAdvertiser(uint16 port)
     return new NetworkServerAdvertiser(port);
 }
 
-#endif DISABLE_NETWORK
+#endif // DISABLE_NETWORK
