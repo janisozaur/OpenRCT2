@@ -2,7 +2,7 @@ language: c
 
 before_install:
     - if [[ $TRAVIS_OS_NAME == "linux" ]]; then bash scripts/linux/install.sh; fi
-    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then brew update ; brew install cmake jansson libpng openssl speex sdl2 sdl2_ttf ; brew link --force openssl || true; fi
+    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then brew update ; brew upgrade ; brew install cmake jansson libpng openssl speex sdl2 sdl2_ttf; fi
 
 sudo: required
 dist: trusty
