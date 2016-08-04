@@ -48,7 +48,7 @@ matrix:
 
 script:
     - if [[ $TRAVIS_OS_NAME == "linux" ]]; then bash scripts/linux/build.sh ; fi
-    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then mkdir build ; cd build ; cmake ../ -DFORCE64=on ; make ; otool -l ./openrct2 ; xcrun size -x -l -m ./openrct2 ; fi
+    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then mkdir build ; cd build ; cmake ../ -DFORCE64=on ; make ; echo XXXXX otool ; otool -l ./openrct2 ; echo XXXXX size ; xcrun size -x -l -m ./openrct2 ; echo XXXXX otool ; otool -l /bin/bash ; echo XXXXX size ; xcrun size -x -l -m /bin/bash ; fi
 
 notifications:
     on_failure: change
