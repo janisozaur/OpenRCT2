@@ -2612,33 +2612,6 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/libxc/lib",
 				);
-				OTHER_LDFLAGS = (
-					"-sectcreate",
-					rct2_text,
-					__text,
-					"$(DERIVED_FILE_DIR)/openrct2_text",
-					"-segaddr",
-					rct2_text,
-					0x401000,
-					"-segprot",
-					rct2_text,
-					rwx,
-					rx,
-					"-sectcreate",
-					rct2_data,
-					__data,
-					"$(DERIVED_FILE_DIR)/openrct2_data",
-					"-segaddr",
-					rct2_data,
-					0x8a4000,
-					"-segprot",
-					rct2_data,
-					rw,
-					rw,
-					"-segaddr",
-					__TEXT,
-					0x2000000,
-				);
 				PRODUCT_BUNDLE_IDENTIFIER = website.openrct2.OpenRCT2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -2660,33 +2633,6 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/libxc/lib",
-				);
-				OTHER_LDFLAGS = (
-					"-sectcreate",
-					rct2_text,
-					__text,
-					"$(DERIVED_FILE_DIR)/openrct2_text",
-					"-segaddr",
-					rct2_text,
-					0x401000,
-					"-segprot",
-					rct2_text,
-					rwx,
-					rx,
-					"-sectcreate",
-					rct2_data,
-					__data,
-					"$(DERIVED_FILE_DIR)/openrct2_data",
-					"-segaddr",
-					rct2_data,
-					0x8a4000,
-					"-segprot",
-					rct2_data,
-					rw,
-					rw,
-					"-segaddr",
-					__TEXT,
-					0x2000000,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = website.openrct2.OpenRCT2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
