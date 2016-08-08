@@ -282,6 +282,10 @@ typedef struct rct_window {
 		rct_research_item* research_item;
 		rct_object_entry* object_entry;
 		scenario_index_entry* highlighted_scenario;
+		struct {
+			uint16 var_494;
+			uint16 var_496;
+		};
 	};
 	uint8 var_498[0x14];
 	sint16 selected_tab;			// 0x4AC
@@ -529,8 +533,11 @@ extern rct_window * gWindowNextSlot;
 // rct2: 0x00F635EE
 extern ride_list_item _window_track_list_item;
 
+extern uint16 gWindowUpdateTicks;
 extern uint8 gToolbarDirtyFlags;
 extern uint16 gWindowMapFlashingFlags;
+
+extern colour_t gCurrentWindowColours[4];
 
 void window_dispatch_update_all();
 void window_update_all_viewports();
@@ -574,6 +581,8 @@ rct_window *window_get_main();
 void window_scroll_to_viewport(rct_window *w);
 void window_scroll_to_location(rct_window *w, int x, int y, int z);
 void window_rotate_camera(rct_window *w, int direction);
+void window_viewport_get_map_coords_by_cursor(rct_window *w, sint16 *map_x, sint16 *map_y, sint16 *offset_x, sint16 *offset_y);
+void window_viewport_centre_tile_around_cursor(rct_window *w, sint16 map_x, sint16 map_y, sint16 offset_x, sint16 offset_y);
 void window_zoom_set(rct_window *w, int zoomLevel);
 void window_zoom_in(rct_window *w);
 void window_zoom_out(rct_window *w);
@@ -684,7 +693,7 @@ void window_themes_open();
 void window_title_editor_open(int tab);
 void window_title_command_editor_open(int command, bool insert);
 void window_tile_inspector_open();
-void window_text_input_open(rct_window* call_w, int call_widget, rct_string_id title, rct_string_id description, rct_string_id existing_text, uint32 existing_args, int maxLength);
+void window_text_input_open(rct_window* call_w, int call_widget, rct_string_id title, rct_string_id description, rct_string_id existing_text, uintptr_t existing_args, int maxLength);
 void window_text_input_raw_open(rct_window* call_w, int call_widget, rct_string_id title, rct_string_id description, utf8string existing_text, int maxLength);
 rct_window *window_mapgen_open();
 rct_window *window_loadsave_open(int type, char *defaultName);
@@ -746,7 +755,7 @@ void textinput_cancel();
 void window_move_and_snap(rct_window *w, int newWindowX, int newWindowY, int snapProximity);
 int window_can_resize(rct_window *w);
 
-void window_start_textbox(rct_window *call_w, int call_widget, rct_string_id existing_text, uint32 existing_args, int maxLength);
+void window_start_textbox(rct_window *call_w, int call_widget, rct_string_id existing_text, char *existing_args, int maxLength);
 void window_cancel_textbox();
 void window_update_textbox_caret();
 void window_update_textbox();

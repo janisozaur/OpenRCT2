@@ -18,6 +18,7 @@
 #include "../../paint/paint.h"
 #include "../../paint/supports.h"
 #include "../track_paint.h"
+#include "../track.h"
 
 /** rct2: 0x01428010 */
 static const uint32 swinging_inverter_ship_base_sprite_offset[] = {
@@ -61,7 +62,7 @@ static const uint32 swinging_inverter_ship_frame_sprites[] = {
 
 static void paint_swinging_inverter_ship_structure(rct_ride * ride, uint8 direction, sint8 axisOffset, uint16 height)
 {
-	rct_map_element * savedMapElement = RCT2_GLOBAL(0x009DE578, rct_map_element*);
+	rct_map_element * savedMapElement = g_currently_drawn_item;
 
 	rct_ride_entry * rideType = get_ride_entry(ride->subtype);
 	rct_vehicle * vehicle = NULL;
@@ -74,7 +75,7 @@ static void paint_swinging_inverter_ship_structure(rct_ride * ride, uint8 direct
 		vehicle = GET_VEHICLE(ride->vehicles[0]);
 
 		gPaintInteractionType = VIEWPORT_INTERACTION_ITEM_SPRITE;
-		RCT2_GLOBAL(0x009DE578, rct_vehicle*) = vehicle;
+		g_currently_drawn_item = vehicle;
 	}
 
 	uint32 vehicleImageId = rideType->vehicles[0].base_image_id + swinging_inverter_ship_base_sprite_offset[direction];
@@ -111,7 +112,7 @@ static void paint_swinging_inverter_ship_structure(rct_ride * ride, uint8 direct
 		sub_98199C(vehicleImageId, xOffset, yOffset, boundBox.length_x, boundBox.length_y, 127, height, boundBox.offset_x, boundBox.offset_y, height, get_current_rotation());
 	}
 
-	RCT2_GLOBAL(0x009DE578, rct_map_element*) = savedMapElement;
+	g_currently_drawn_item = savedMapElement;
 	gPaintInteractionType = VIEWPORT_INTERACTION_ITEM_RIDE;
 }
 
@@ -173,7 +174,7 @@ static void paint_swinging_inverter_ship(uint8 rideIndex, uint8 trackSequence, u
  */
 TRACK_PAINT_FUNCTION get_track_paint_function_swinging_inverter_ship(int trackType, int direction)
 {
-	if (trackType != 119) {
+	if (trackType != FLAT_TRACK_ELEM_1_X_4_B) {
 		return NULL;
 	}
 

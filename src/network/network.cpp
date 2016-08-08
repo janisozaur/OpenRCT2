@@ -1022,6 +1022,13 @@ void Network::Server_Send_MAP(NetworkConnection* connection)
 		header = (unsigned char *)_strdup("open2_sv6_zlib");
 		size_t header_len = strlen((char *)header) + 1; // account for null terminator
 		header = (unsigned char *)realloc(header, header_len + out_size);
+		if (header == nullptr) {
+			log_error("Failed to allocate %u bytes.", header_len + out_size);
+			connection->SetLastDisconnectReason(STR_MULTIPLAYER_CONNECTION_CLOSED);
+			connection->Socket->Disconnect();
+			free(compressed);
+			return;
+		}
 		memcpy(&header[header_len], compressed, out_size);
 		out_size += header_len;
 		free(compressed);
@@ -1029,6 +1036,12 @@ void Network::Server_Send_MAP(NetworkConnection* connection)
 	} else {
 		log_warning("Failed to compress the data, falling back to non-compressed sv6.");
 		header = (unsigned char *)malloc(size);
+		if (header == nullptr) {
+			log_error("Failed to allocate %u bytes.", size);
+			connection->SetLastDisconnectReason(STR_MULTIPLAYER_CONNECTION_CLOSED);
+			connection->Socket->Disconnect();
+			return;
+		}
 		out_size = size;
 		memcpy(header, &buffer[0], size);
 	}
@@ -1508,9 +1521,6 @@ void Network::Server_Client_Joined(const char* name, const std::string &keyhash,
 		format_string(text, STR_MULTIPLAYER_PLAYER_HAS_JOINED_THE_GAME, &player_name);
 		chat_history_add(text);
 		Server_Send_MAP(&connection);
-		// This is needed to synchronise calls to reset sprite order across clients,
-		// otherwise connected clients will fall out of sync in simulation.
-		game_do_command(0, GAME_COMMAND_FLAG_APPLY, 0, 0, GAME_COMMAND_RESET_SPRITES, 0, 0);
 		gNetwork.Server_Send_EVENT_PLAYER_JOINED(player_name);
 		Server_Send_GROUPLIST(connection);
 		Server_Send_PLAYERLIST();

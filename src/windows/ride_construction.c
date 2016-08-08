@@ -495,7 +495,7 @@ static void loc_6C7502(int al);
 static void ride_construction_set_brakes_speed(int brakesSpeed);
 static void ride_construction_tooldown_entrance_exit(int screenX, int screenY);
 
-uint8 *_currentPossibleRideConfigurations = (uint8*)0x00F4407C;
+uint8 *_currentPossibleRideConfigurations = RCT2_ADDRESS(0x00F4407C, uint8);
 
 static const rct_string_id RideConstructionSeatAngleRotationStrings[] = {
 	STR_RIDE_CONSTRUCTION_SEAT_ROTATION_ANGLE_NEG_180,
@@ -524,7 +524,7 @@ static bool is_track_enabled(int trackFlagIndex)
 static int ride_get_alternative_type(rct_ride *ride)
 {
 	return _currentTrackCovered & 2 ?
-		RCT2_ADDRESS(0x0097D4F5, uint8)[ride->type * 8] :
+		RideData4[ride->type].alternate_type :
 		ride->type;
 }
 
@@ -573,7 +573,7 @@ rct_window *window_ride_construction_open()
 	if (ride->type == RIDE_TYPE_AIR_POWERED_VERTICAL_COASTER)
 		RCT2_GLOBAL(0x00F440CE, uint8) = 30;
 
-	_currentTrackCurve = RCT2_ADDRESS(0x0097CC68, uint8)[ride->type * 2] | 0x100;
+	_currentTrackCurve = RideConstructionDefaultTrackType[ride->type] | 0x100;
 	_currentTrackSlopeEnd = 0;
 	_currentTrackBankEnd = 0;
 	_currentTrackLiftHill = 0;
@@ -1327,7 +1327,7 @@ static void window_ride_construction_mousedown(int widgetIndex, rct_window *w, r
 		break;
 	case WIDX_SLOPE_DOWN_STEEP:
 		sub_6C9627();
-		rideType = _currentTrackCovered & 2 ? RCT2_ADDRESS(0x0097D4F5, uint8)[ride->type * 8] : ride->type;
+		rideType = _currentTrackCovered & 2 ? RideData4[ride->type].alternate_type : ride->type;
 		if (is_track_enabled(TRACK_HELIX_SMALL)) {
 			if (_currentTrackCurve == 1 && _currentTrackBankEnd == TRACK_BANK_LEFT) {
 				_currentTrackCurve = 349;
@@ -1425,7 +1425,7 @@ static void window_ride_construction_mousedown(int widgetIndex, rct_window *w, r
 		break;
 	case WIDX_SLOPE_UP_STEEP:
 		sub_6C9627();
-		rideType = _currentTrackCovered & 2 ? RCT2_ADDRESS(0x0097D4F5, uint8)[ride->type * 8] : ride->type;
+		rideType = _currentTrackCovered & 2 ? RideData4[ride->type].alternate_type : ride->type;
 		if (is_track_enabled(TRACK_HELIX_SMALL)) {
 			if (_currentTrackCurve == 1 && _currentTrackBankEnd == TRACK_BANK_LEFT) {
 				_currentTrackCurve = 347;
@@ -1507,11 +1507,11 @@ static void window_ride_construction_mousedown(int widgetIndex, rct_window *w, r
 			_currentTrackPrice = MONEY32_UNDEFINED;
 			sub_6C84CE();
 		} else {
-			uint8 *brakesSpeedPtr = (uint8*)0x00F440CD;
+			uint8 *brakesSpeedPtr = RCT2_ADDRESS(0x00F440CD, uint8);
 			uint8 maxBrakesSpeed = 30;
 			if (RCT2_GLOBAL(0x00F440D3, uint8) != 1) {
-				brakesSpeedPtr = (uint8*)0x00F440CE;
-				maxBrakesSpeed = RCT2_GLOBAL(RCT2_ADDRESS_RIDE_FLAGS + 6 + (ride->type * 8), uint8);
+				brakesSpeedPtr = RCT2_ADDRESS(0x00F440CE, uint8);
+				maxBrakesSpeed = RideProperties[ride->type].max_brakes_speed;
 			}
 			uint8 brakesSpeed = *brakesSpeedPtr + 2;
 			if (brakesSpeed <= maxBrakesSpeed) {
@@ -1531,9 +1531,9 @@ static void window_ride_construction_mousedown(int widgetIndex, rct_window *w, r
 			_currentTrackPrice = MONEY32_UNDEFINED;
 			sub_6C84CE();
 		} else {
-			uint8 *brakesSpeedPtr = (uint8*)0x00F440CD;
+			uint8 *brakesSpeedPtr = RCT2_ADDRESS(0x00F440CD, uint8);
 			if (RCT2_GLOBAL(0x00F440D3, uint8) != 1) {
-				brakesSpeedPtr = (uint8*)0x00F440CE;
+				brakesSpeedPtr = RCT2_ADDRESS(0x00F440CE, uint8);
 			}
 			uint8 brakesSpeed = *brakesSpeedPtr - 2;
 			if (brakesSpeed >= 2) {
@@ -2247,8 +2247,8 @@ static void window_ride_construction_draw_track_piece(
 	z = 1024 + z;
 
 	short bx = ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_FLAT_RIDE) ?
-		RCT2_GLOBAL(0x009984A2 + trackType * 8, sint8) :
-		RCT2_GLOBAL(0x00997CA2 + trackType * 8, sint8);
+		FlatRideTrackDefinitions[trackType].special :
+		TrackDefinitions[trackType].special;
 
 	z -= bx;
 	int start_x = x;
@@ -2589,7 +2589,10 @@ static bool sub_6CA2DF(int *_trackType, int *_trackDirection, int *_rideIndex, i
 
 	if (ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_TRACK_ELEMENTS_HAVE_TWO_VARIETIES) && _currentTrackCovered & 1) {
 		if (ride->type != RIDE_TYPE_WATER_COASTER || trackType == TRACK_ELEM_FLAT || trackType == TRACK_ELEM_LEFT_QUARTER_TURN_5_TILES || trackType == TRACK_ELEM_RIGHT_QUARTER_TURN_5_TILES) {
-			trackType = RCT2_GLOBAL(0x00993D1C + trackType, uint8);
+			sint16 alternativeType = AlternativeTrackTypes[trackType];
+			if (alternativeType > -1) {
+				trackType = (uint8) alternativeType;
+			}
 			edxRS16 &= 0xFFFE; // unsets 0x1
 		}
 	}
@@ -2689,7 +2692,7 @@ static void window_ride_construction_update_enabled_track_pieces()
 	if (rideEntry == NULL)
 		return;
 
-	int rideType = _currentTrackCovered & 2 ? RCT2_ADDRESS(0x0097D4F5, uint8)[ride->type * 8] : ride->type;
+	int rideType = _currentTrackCovered & 2 ? RideData4[ride->type].alternate_type : ride->type;
 	_enabledRidePieces.a = rideEntry->enabledTrackPiecesA & gResearchedTrackTypesA[rideType];
 	_enabledRidePieces.b = rideEntry->enabledTrackPiecesB & gResearchedTrackTypesB[rideType];
 }
@@ -2896,7 +2899,7 @@ static void window_ride_construction_update_possible_ride_configurations()
 
 	RCT2_GLOBAL(0x00F440D3, uint8) = 0;
 	if (_currentTrackCovered & 2)
-		edi = RCT2_GLOBAL(0x0097D4F5 + (ride->type * 8), uint8);
+		edi = RideData4[ride->type].alternate_type;
 	else
 		edi = ride->type;
 
@@ -2904,8 +2907,8 @@ static void window_ride_construction_update_possible_ride_configurations()
 	_numCurrentPossibleSpecialTrackPieces = 0;
 	for (trackType = 0; trackType < 256; trackType++) {
 		edx = ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_FLAT_RIDE) ?
-			gFlatRideTrackDefinitions[trackType].type :
-			gTrackDefinitions[trackType].type;
+			FlatRideTrackDefinitions[trackType].type :
+			TrackDefinitions[trackType].type;
 
 		if (edx == 0)
 			continue;
@@ -2921,19 +2924,19 @@ static void window_ride_construction_update_possible_ride_configurations()
 		int slope, bank;
 		if (_rideConstructionState == RIDE_CONSTRUCTION_STATE_FRONT || _rideConstructionState == RIDE_CONSTRUCTION_STATE_PLACE) {
 			if (ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_FLAT_RIDE)) {
-				slope = gFlatRideTrackDefinitions[trackType].vangle_start;
-				bank = gFlatRideTrackDefinitions[trackType].bank_start;
+				slope = FlatRideTrackDefinitions[trackType].vangle_start;
+				bank = FlatRideTrackDefinitions[trackType].bank_start;
 			} else {
-				slope = gTrackDefinitions[trackType].vangle_start;
-				bank = gTrackDefinitions[trackType].bank_start;
+				slope = TrackDefinitions[trackType].vangle_start;
+				bank = TrackDefinitions[trackType].bank_start;
 			}
 		} else if (_rideConstructionState == RIDE_CONSTRUCTION_STATE_BACK) {
 			if (ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_FLAT_RIDE)) {
-				slope = gFlatRideTrackDefinitions[trackType].vangle_end;
-				bank = gFlatRideTrackDefinitions[trackType].bank_end;
+				slope = FlatRideTrackDefinitions[trackType].vangle_end;
+				bank = FlatRideTrackDefinitions[trackType].bank_end;
 			} else {
-				slope = gTrackDefinitions[trackType].vangle_end;
-				bank = gTrackDefinitions[trackType].bank_end;
+				slope = TrackDefinitions[trackType].vangle_end;
+				bank = TrackDefinitions[trackType].bank_end;
 			}
 		} else {
 			continue;
@@ -2941,8 +2944,8 @@ static void window_ride_construction_update_possible_ride_configurations()
 
 		if (!ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_FLAT_RIDE)) {
 			if (
-				gTrackDefinitions[trackType].type == TRACK_HELIX_SMALL ||
-				gTrackDefinitions[trackType].type == TRACK_HELIX_LARGE
+				TrackDefinitions[trackType].type == TRACK_HELIX_SMALL ||
+				TrackDefinitions[trackType].type == TRACK_HELIX_LARGE
 			) {
 				if (bank != _previousTrackBankEnd) {
 					if (_previousTrackBankEnd != TRACK_BANK_NONE)
@@ -3279,7 +3282,7 @@ static void window_ride_construction_update_widgets(rct_window *w)
 	window_ride_construction_widgets[WIDX_SEAT_ROTATION_ANGLE_SPINNER_UP].type = 0;
 	window_ride_construction_widgets[WIDX_SEAT_ROTATION_ANGLE_SPINNER_DOWN].type = 0;
 	if (
-		(rideType == RIDE_TYPE_MULTI_DIMENSION_ROLLER_COASTER || rideType == RIDE_TYPE_38) &&
+		(rideType == RIDE_TYPE_MULTI_DIMENSION_ROLLER_COASTER || rideType == RIDE_TYPE_MULTI_DIMENSION_ROLLER_COASTER_ALT) &&
 		RCT2_GLOBAL(0x00F440D0, uint8) != 99 &&
 		_currentTrackCurve != 355
 	) {

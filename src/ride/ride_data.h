@@ -76,7 +76,7 @@ typedef struct rct_ride_data_4 {
 	uint8 price_secondary;
 	uint16 flags;
 	uint8 default_music;
-	uint8 var_3;
+	uint8 alternate_type;
 	uint8 pad[2];
 } rct_ride_data_4;
 
@@ -121,6 +121,13 @@ enum {
 	RIDE_TYPE_FLAG4_15 = (1 << 15),
 };
 
+typedef struct rct_shop_item_stats {
+	uint16 cost;
+	uint16 base_value;
+	uint16 hot_value;
+	uint16 cold_value;
+} rct_shop_item_stats;
+
 extern const bool hasRunningTrack[0x60];
 extern const uint8 initialUpkeepCosts[0x60];
 extern const uint8 costPerTrackPiece[0x60];
@@ -140,6 +147,7 @@ extern const rct_ride_entrance_definition RideEntranceDefinitions[RIDE_ENTRANCE_
 extern const rct_ride_lift_data RideLiftData[91];
 
 extern const rct_ride_data_4 RideData4[91];
+extern const int RidePhotoItems[91];
 extern const ride_cost RideTrackCosts[91];
 extern const rct_ride_data_5 RideData5[91];
 
@@ -153,5 +161,9 @@ extern const uint16 RideFilmLength[3];
 extern const uint16 RideCrookedHouseLength[1];
 
 extern const rating_tuple RideRatings[91];
+
+extern const rct_shop_item_stats ShopItemStats[SHOP_ITEM_COUNT];
+
+extern const uint8 RideConstructionDefaultTrackType[91];
 
 #endif

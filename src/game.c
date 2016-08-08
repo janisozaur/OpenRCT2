@@ -142,7 +142,7 @@ void update_palette_effects()
 		// change palette to lighter colour during lightning
 		int palette = 1532;
 
-		if ((sint32)water_type != -1) {
+		if ((intptr_t)water_type != -1) {
 			palette = water_type->image_id;
 		}
 		rct_g1_element g1_element = g1Elements[palette];
@@ -161,7 +161,7 @@ void update_palette_effects()
 			// change palette back to normal after lightning
 			int palette = 1532;
 
-			if ((sint32)water_type != -1) {
+			if ((intptr_t)water_type != -1) {
 				palette = water_type->image_id;
 			}
 
@@ -188,7 +188,7 @@ void update_palette_effects()
 		uint32 j = gPaletteEffectFrame;
 		j = (((uint16)((~j / 2) * 128) * 15) >> 16);
 		int p = 1533;
-		if ((sint32)water_type != -1) {
+		if ((intptr_t)water_type != -1) {
 			p = water_type->var_06;
 		}
 		rct_g1_element g1_element = g1Elements[q + p];
@@ -207,7 +207,7 @@ void update_palette_effects()
 		}
 
 		p = 1536;
-		if ((sint32)water_type != -1) {
+		if ((intptr_t)water_type != -1) {
 			p = water_type->var_0A;
 		}
 		g1_element = g1Elements[q + p];
@@ -779,7 +779,7 @@ bool game_load_save(const utf8 *path)
 {
 	log_verbose("loading saved game, %s", path);
 
-	safe_strcpy((char*)0x0141EF68, path, MAX_PATH);
+	safe_strcpy(RCT2_ADDRESS(0x0141EF68, char), path, MAX_PATH);
 	safe_strcpy((char*)gRCT2AddressSavedGamesPath2, path, MAX_PATH);
 
 	safe_strcpy(gScenarioSavePath, path, MAX_PATH);
@@ -806,12 +806,12 @@ bool game_load_save(const utf8 *path)
 	SDL_RWclose(rw);
 
 	if (result) {
+		if (network_get_mode() == NETWORK_MODE_CLIENT) {
+			network_close();
+		}
 		game_load_init();
 		if (network_get_mode() == NETWORK_MODE_SERVER) {
 			network_send_map();
-		}
-		if (network_get_mode() == NETWORK_MODE_CLIENT) {
-			network_close();
 		}
 		return true;
 	} else {
@@ -851,10 +851,14 @@ void game_load_init()
 	mainWindow->saved_view_y -= mainWindow->viewport->view_height >> 1;
 	window_invalidate(mainWindow);
 
+	if (network_get_mode() != NETWORK_MODE_CLIENT)
+	{
+		reset_sprite_spatial_index();
+	}
 	reset_all_sprite_quadrant_placements();
 	scenery_set_default_placement_configuration();
 	window_new_ride_init_vars();
-	RCT2_GLOBAL(RCT2_ADDRESS_WINDOW_UPDATE_TICKS, uint16) = 0;
+	gWindowUpdateTicks = 0;
 	if (RCT2_GLOBAL(RCT2_ADDRESS_LOAN_HASH, uint32) == 0)		// this check is not in scenario play
 		finance_update_loan_hash();
 
@@ -864,7 +868,7 @@ void game_load_init()
 
 	gGameSpeed = 1;
 
-	scenario_set_filename((char*)0x0135936C);
+	scenario_set_filename(RCT2_ADDRESS(0x0135936C, char));
 }
 
 /**
@@ -1142,5 +1146,4 @@ GAME_COMMAND_POINTER* new_game_command_table[68] = {
 	game_command_modify_groups,
 	game_command_kick_player,
 	game_command_cheat,
-	game_command_reset_sprites,
 };

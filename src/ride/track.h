@@ -136,7 +136,11 @@ enum {
 
 	TRACK_WATERFALL = 152,
 	TRACK_WHIRLPOOL = 152,
-	TRACK_BRAKE_FOR_DROP = 172
+	TRACK_BRAKE_FOR_DROP = 172,
+	TRACK_190 = 190,
+	TRACK_192 = 192,
+	TRACK_194 = 194,
+	TRACK_MINI_GOLF_HOLE = 195,
 };
 
 enum {
@@ -175,6 +179,7 @@ enum {
 	TRACK_HALF_LOOP_UP = 64,
 	TRACK_HALF_LOOP_DOWN = 192,
 	TRACK_UNKNOWN_VERTICAL_LOOP = 208,
+	TRACK_216 = 216,
 	TRACK_CORKSCREW_DOWN = 224
 };
 
@@ -292,6 +297,7 @@ enum {
 	TRACK_ELEM_BRAKES,
 	TRACK_ELEM_ROTATION_CONTROL_TOGGLE = 100,
 	TRACK_ELEM_INVERTED_90_DEG_UP_TO_FLAT_QUARTER_LOOP,
+	TRACK_ELEM_MAZE = 101,
 	TRACK_ELEM_LEFT_QUARTER_BANKED_HELIX_LARGE_UP,
 	TRACK_ELEM_RIGHT_QUARTER_BANKED_HELIX_LARGE_UP,
 	TRACK_ELEM_LEFT_QUARTER_BANKED_HELIX_LARGE_DOWN,
@@ -448,6 +454,18 @@ enum {
 };
 
 enum {
+	FLAT_TRACK_ELEM_1_X_4_A = 95,
+	FLAT_TRACK_ELEM_2_X_2 = 110,
+	FLAT_TRACK_ELEM_4_X_4 = 111,
+	FLAT_TRACK_ELEM_1_X_5 = 116,
+	FLAT_TRACK_ELEM_1_X_1_A = 118,
+	FLAT_TRACK_ELEM_1_X_4_B = 119,
+	FLAT_TRACK_ELEM_1_X_1_B = 121,
+	FLAT_TRACK_ELEM_1_X_4_C = 122,
+	FLAT_TRACK_ELEM_3_X_3 = 123,
+};
+
+enum {
 	TRACK_ELEMENT_LOCATION_IS_UNDERGROUND = 2,
 };
 
@@ -461,8 +479,8 @@ typedef struct track_circuit_iterator {
 	bool looped;
 } track_circuit_iterator;
 
-extern const rct_trackdefinition *gFlatRideTrackDefinitions;
-extern const rct_trackdefinition *gTrackDefinitions;
+extern const rct_trackdefinition FlatRideTrackDefinitions[256];
+extern const rct_trackdefinition TrackDefinitions[256];
 
 extern uint8 gTrackGroundFlags;
 

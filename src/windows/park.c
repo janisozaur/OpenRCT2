@@ -1771,7 +1771,7 @@ static void window_park_objective_paint(rct_window *w, rct_drawpixelinfo *dpi)
 	// Scenario description
 	x = w->x + window_park_objective_widgets[WIDX_PAGE_BACKGROUND].left + 4;
 	y = w->y + window_park_objective_widgets[WIDX_PAGE_BACKGROUND].top + 7;
-	safe_strcpy((char*)0x009BC677, gScenarioDetails, 256);
+	safe_strcpy(RCT2_ADDRESS(0x009BC677, char), gScenarioDetails, 256);
 	set_format_arg(0, short, STR_PLACEHOLDER);
 	y += gfx_draw_string_left_wrapped(dpi, gCommonFormatArgs, x, y, 222, STR_BLACK_STRING, 0);
 	y += 5;
@@ -2007,7 +2007,7 @@ static void window_park_draw_tab_images(rct_drawpixelinfo *dpi, rct_window *w)
 			sprite_idx += (w->frame_no / 8) % 8;
 		gfx_draw_sprite(dpi, sprite_idx, w->x + w->widgets[WIDX_TAB_3].left, w->y + w->widgets[WIDX_TAB_3].top, 0);
 
-		sprite_idx = g_sprite_entries[0].sprite_image->base_image + 1;
+		sprite_idx = g_sprite_entries[PEEP_SPRITE_TYPE_NORMAL].sprite_image->base_image + 1;
 		if (w->page == WINDOW_PARK_PAGE_GUESTS)
 			sprite_idx += w->var_492 & 0xFFFFFFFC;
 

@@ -31,6 +31,17 @@ rct_gx g2;
 	rct_g1_element *g1Elements = (rct_g1_element*)RCT2_ADDRESS_G1_ELEMENTS;
 #endif
 
+static const uint32 fadeSprites[] = {
+	SPR_NONE,
+	SPR_FADE_1,
+	SPR_FADE_2,
+	SPR_FADE_3,
+	SPR_FADE_4,
+	SPR_FADE_5,
+	SPR_FADE_6,
+	SPR_FADE_7,
+};
+
 static void read_and_convert_gxdat(SDL_RWops *file, size_t count, rct_g1_element *elements)
 {
 	rct_g1_element_32bit *g1Elements32 = calloc(count, sizeof(rct_g1_element_32bit));
@@ -160,7 +171,7 @@ int gfx_load_g2()
 
 			// Fix entry data offsets
 			for (i = 0; i < g2.header.num_entries; i++)
-				g2.elements[i].offset += (int)g2.data;
+				g2.elements[i].offset += (uintptr_t)g2.data;
 
 			// Successful
 			return 1;
@@ -179,9 +190,13 @@ int gfx_load_g2()
  */
 void sub_68371D()
 {
-	unk_9E3CE4[0] = NULL;
-	for (int i = 1; i < 8; i++) {
-		unk_9E3CE4[i] = g1Elements[23199 + i].offset;
+	for (int i = 0; i < countof(fadeSprites); i++) {
+		const uint32 spriteId = fadeSprites[i];
+		if (spriteId == SPR_NONE) {
+			unk_9E3CE4[i] = NULL;
+		} else {
+			unk_9E3CE4[i] = g1Elements[fadeSprites[i]].offset;
+		}
 	}
 }
 
@@ -563,7 +578,7 @@ void FASTCALL gfx_draw_sprite_palette_set_software(rct_drawpixelinfo *dpi, int i
 	source_pointer = g1_source->offset;
 	uint8* new_source_pointer_start = malloc(total_no_pixels);
 	uint8* new_source_pointer = new_source_pointer_start;// 0x9E3D28;
-	int ebx, ecx;
+	intptr_t ebx, ecx;
 	while (total_no_pixels>0){
 		sint8 no_pixels = *source_pointer;
 		if (no_pixels >= 0){
@@ -582,8 +597,8 @@ void FASTCALL gfx_draw_sprite_palette_set_software(rct_drawpixelinfo *dpi, int i
 		eax = (eax & 0xFF00) + *(source_pointer+1);
 		total_no_pixels -= ecx;
 		source_pointer += 2;
-		ebx = (uint32)new_source_pointer - eax;
-		eax = (uint32)source_pointer;
+		ebx = (uintptr_t)new_source_pointer - eax;
+		eax = (uintptr_t)source_pointer;
 		source_pointer = (uint8*)ebx;
 		ebx = eax;
 		eax = 0;

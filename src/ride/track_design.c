@@ -260,7 +260,7 @@ static rct_track_td6 *track_design_open_from_buffer(uint8 *src, size_t srcLength
 
 	td6->var_50 = min(
 		td6->var_50,
-		RCT2_GLOBAL(RCT2_ADDRESS_RIDE_FLAGS + 5 + (td6->type * 8), uint8)
+		RideProperties[td6->type].max_value
 	);
 
 	// Set the element helper pointers
@@ -435,7 +435,7 @@ static void track_design_mirror_ride(rct_track_td6 *td6)
 {
 	rct_td6_track_element *track = td6->track_elements;
 	for (; track->type != 0xFF; track++) {
-		track->type = RCT2_ADDRESS(0x0099EA1C, uint8)[track->type];
+		track->type = TrackElementMirrorMap[track->type];
 	}
 
 	rct_td6_entrance_element *entrance = td6->entrance_elements;
@@ -446,6 +446,11 @@ static void track_design_mirror_ride(rct_track_td6 *td6)
 		}
 	}
 }
+
+/** rct2: 0x00993EDC */
+static const uint8 maze_segment_mirror_map[] = {
+	5, 4, 2, 7, 1, 0, 14, 3, 13, 12, 10, 15, 9, 8, 6, 11
+};
 
 /**
  *
@@ -468,7 +473,7 @@ static void track_design_mirror_maze(rct_track_td6 *td6)
 		uint16 new_entry = 0;
 		for (uint8 position = bitscanforward(maze_entry); position != 0xFF; position = bitscanforward(maze_entry)) {
 			maze_entry &= ~(1 << position);
-			new_entry |= (1 << RCT2_ADDRESS(0x00993EDC, uint8)[position]);
+			new_entry |= (1 << maze_segment_mirror_map[position]);
 		}
 		maze->maze_entry = new_entry;
 	}
@@ -683,12 +688,12 @@ static int track_design_place_scenery(rct_td6_scenery_element *scenery_start, ui
 				if (!find_object_in_entry_group(&scenery->scenery_object, &entry_type, &entry_index)){
 					entry_type = scenery->scenery_object.flags & 0xF;
 					if (entry_type != OBJECT_TYPE_PATHS){
-						byte_F4414E |= 1 << 1;
+						byte_F4414E |= BYTE_F4414E_SCENERY_UNAVAILABLE;
 						continue;
 					}
 
-					if (gScreenFlags&SCREEN_FLAGS_TRACK_DESIGNER){
-						byte_F4414E |= 1 << 1;
+					if (gScreenFlags & SCREEN_FLAGS_TRACK_DESIGNER){
+						byte_F4414E |= BYTE_F4414E_SCENERY_UNAVAILABLE;
 						continue;
 					}
 
@@ -699,12 +704,12 @@ static int track_design_place_scenery(rct_td6_scenery_element *scenery_start, ui
 
 						if (path == (rct_footpath_entry*)-1)
 							continue;
-						if (path->flags & (1 << 2))
+						if (path->flags & FOOTPATH_ENTRY_FLAG_SHOW_ONLY_IN_SCENARIO_EDITOR)
 							continue;
 					}
 
 					if (entry_index == object_entry_group_counts[OBJECT_TYPE_PATHS]){
-						byte_F4414E |= 1 << 1;
+						byte_F4414E |= BYTE_F4414E_SCENERY_UNAVAILABLE;
 						continue;
 					}
 				}
@@ -847,7 +852,7 @@ static int track_design_place_scenery(rct_td6_scenery_element *scenery_start, ui
 					}
 					break;
 				default:
-					byte_F4414E |= 1 << 1;
+					byte_F4414E |= BYTE_F4414E_SCENERY_UNAVAILABLE;
 					continue;
 					break;
 				}
@@ -1350,9 +1355,9 @@ static bool sub_6D2189(rct_track_td6 *td6, money32 *cost, uint8 *rideId, uint8 *
 	z += 16 - word_F44129;
 
 	int operation = PTD_OPERATION_GET_COST;
-	if (byte_F4414E & 2) {
+	if (byte_F4414E & BYTE_F4414E_SCENERY_UNAVAILABLE) {
 		operation |= 0x80;
-		*flags |= 1;
+		*flags |= TRACK_DESIGN_FLAG_SCENERY_UNAVAILABLE;
 	}
 
 	money32 resultCost = sub_6D01B3(td6, operation, rideIndex, mapSize, mapSize, z);
@@ -1360,7 +1365,7 @@ static bool sub_6D2189(rct_track_td6 *td6, money32 *cost, uint8 *rideId, uint8 *
 
 	if (resultCost != MONEY32_UNDEFINED) {
 		if (!find_object_in_entry_group(&td6->vehicle_object, &entry_type, &entry_index)){
-			*flags |= 4;
+			*flags |= TRACK_DESIGN_FLAG_VEHICLE_UNAVAILABLE;
 		}
 
 		_currentTrackPieceDirection = backup_rotation;
@@ -1422,7 +1427,7 @@ static money32 place_track_design(sint16 x, sint16 y, sint16 z, uint8 flags, uin
 	if (!(flags & GAME_COMMAND_FLAG_APPLY)) {
 		byte_F44150 = 0;
 		cost = sub_6D01B3(td6, PTD_OPERATION_1, rideIndex, x, y, z);
-		if (byte_F4414E & (1 << 1)) {
+		if (byte_F4414E & BYTE_F4414E_SCENERY_UNAVAILABLE) {
 			byte_F44150 |= 1 << 7;
 			cost = sub_6D01B3(td6, 0x80 | PTD_OPERATION_1, rideIndex, x, y, z);
 		}
@@ -1577,7 +1582,7 @@ static money32 place_maze_design(uint8 flags, uint8 rideIndex, uint16 mazeEntry,
 	// Calculate price
 	money32 price = 0;
 	if (!(gParkFlags & PARK_FLAGS_NO_MONEY)) {
-		price = RideTrackCosts[ride->type].track_price * RCT2_GLOBAL(0x0099DBC8, money32);
+		price = RideTrackCosts[ride->type].track_price * TrackPricing[TRACK_ELEM_MAZE];
 		price = (price >> 17) * 10;
 	}
 
@@ -1599,7 +1604,7 @@ static money32 place_maze_design(uint8 flags, uint8 rideIndex, uint16 mazeEntry,
 		rct_map_element *mapElement = map_element_insert(fx >> 5, fy >> 5, fz, 15);
 		mapElement->clearance_height = fz + 4;
 		mapElement->type = MAP_ELEMENT_TYPE_TRACK;
-		mapElement->properties.track.type = 101;
+		mapElement->properties.track.type = TRACK_ELEM_MAZE;
 		mapElement->properties.track.ride_index = rideIndex;
 		mapElement->properties.track.maze_entry = mazeEntry;
 		if (flags & GAME_COMMAND_FLAG_GHOST) {

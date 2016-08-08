@@ -846,7 +846,7 @@ static void window_editor_object_selection_mouseup(rct_window *w, int widgetInde
 		break;
 	case WIDX_FILTER_STRING_BUTTON:
 		//window_text_input_open(w, widgetIndex, STR_OBJECT_SEARCH, STR_OBJECT_SEARCH_DESC, STR_STRING, (uint32)_filter_string, 40);
-		window_start_textbox(w, widgetIndex, STR_STRING, (uint32)_filter_string, 40);
+		window_start_textbox(w, widgetIndex, STR_STRING, _filter_string, 40);
 		break;
 	case WIDX_FILTER_CLEAR_BUTTON:
 		memset(_filter_string, 0, sizeof(_filter_string));
@@ -1435,7 +1435,7 @@ static void window_editor_object_selection_scrollpaint(rct_window *w, rct_drawpi
 
 			x = gScreenFlags & SCREEN_FLAGS_TRACK_MANAGER ? 0 : 15;
 
-			char *bufferWithColour = (char*)RCT2_ADDRESS_COMMON_STRING_FORMAT_BUFFER;
+			char *bufferWithColour = RCT2_ADDRESS(RCT2_ADDRESS_COMMON_STRING_FORMAT_BUFFER, char);
 			char *buffer = utf8_write_codepoint(bufferWithColour, colour);
 			if (*listItem->flags & OBJECT_SELECTION_FLAG_6) {
 				colour = w->colours[1] & 0x7F;
@@ -1631,7 +1631,7 @@ static int window_editor_object_selection_select_object(uint8 bh, int flags, con
 		}
 
 		if (bh != 0 && !(flags & (1 << 1))) {
-			object_create_identifier_name((char*)0x009BC95A, &item->ObjectEntry);
+			object_create_identifier_name(RCT2_ADDRESS(0x009BC95A, char), &item->ObjectEntry);
 			set_format_arg(0, uint32, 0x009BC95A);
 			set_object_selection_error(bh, STR_OBJECT_SELECTION_ERR_SHOULD_SELECT_X_FIRST);
 			return 0;
@@ -1694,7 +1694,7 @@ static void window_editor_object_selection_manage_tracks()
 	gS6Info->editor_step = EDITOR_STEP_TRACK_DESIGNS_MANAGER;
 
 	int entry_index = 0;
-	for (; ((int)object_entry_groups[0].chunks[entry_index]) == -1; ++entry_index);
+	for (; ((intptr_t)object_entry_groups[0].chunks[entry_index]) == -1; ++entry_index);
 
 	rct_ride_entry* ride_entry = get_ride_entry(entry_index);
 	uint8* ride_type_array = &ride_entry->ride_type[0];

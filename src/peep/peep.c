@@ -350,6 +350,168 @@ static const ride_rating NauseaMaximumThresholds[] = {
 	300, 600, 800, 1000
 };
 
+// Has to use signed types
+static const rct_xy16 _97e1bc_21[64] = {
+	{  56,   8 },
+	{   8,   8 },
+	{   8,  32 },
+	{  32,  32 },
+	{   8,   8 },
+	{   8,   8 },
+	{   8,  32 },
+	{  32,  32 },
+	{   8,  32 },
+	{   8,  32 },
+	{   8,  32 },
+	{  32,  32 },
+	{   8,  56 },
+	{   8,  32 },
+	{   8,  32 },
+	{  32,  32 },
+	{  56,  24 },
+	{  32,  24 },
+	{  32,  24 },
+	{  32,   0 },
+	{  56, -24 },
+	{  56,  24 },
+	{  32,  24 },
+	{  32,   0 },
+	{   8,  24 },
+	{  32,  24 },
+	{  32,  24 },
+	{  32,   0 },
+	{  32,  24 },
+	{  32,  24 },
+	{  32,  24 },
+	{  32,   0 },
+	{  24,   0 },
+	{  24,   0 },
+	{  24,   0 },
+	{   0,   0 },
+	{  24, -24 },
+	{  24,   0 },
+	{  24,   0 },
+	{   0,   0 },
+	{ -24, -24 },
+	{  24, -24 },
+	{  24,   0 },
+	{   0,   0 },
+	{  24,  24 },
+	{  24,   0 },
+	{  24,   0 },
+	{   0,   0 },
+	{  24,   8 },
+	{   0,   8 },
+	{   0,   8 },
+	{   0,  32 },
+	{   0,   8 },
+	{   0,   8 },
+	{   0,   8 },
+	{   0,  32 },
+	{ -24,   8 },
+	{   0,   8 },
+	{   0,   8 },
+	{   0,  32 },
+	{ -24,  56 },
+	{ -24,   8 },
+	{   0,   8 },
+	{   0,  32 },
+};
+
+static const rct_xy16 * _97e1bc[91] = {
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	_97e1bc_21, // RIDE_TYPE_SPIRAL_SLIDE
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+};
+
 int peep_get_staff_count()
 {
 	uint16 spriteIndex;
@@ -448,21 +610,24 @@ static uint8 peep_assess_surroundings(sint16 center_x, sint16 center_y, sint16 c
 					break;
 				case MAP_ELEMENT_TYPE_TRACK:
 					ride = get_ride(mapElement->properties.track.ride_index);
-					if (ride->type == RIDE_TYPE_MERRY_GO_ROUND &&
-						ride->music_tune_id != 0xFF){
-						nearby_music |= 1;
-						break;
-					}
+					if (ride->lifecycle_flags & RIDE_LIFECYCLE_MUSIC &&
+						ride->status != RIDE_STATUS_CLOSED &&
+						!(ride->lifecycle_flags & (RIDE_LIFECYCLE_BROKEN_DOWN | RIDE_LIFECYCLE_CRASHED))){
 
-					if (ride->music_tune_id == MUSIC_STYLE_ORGAN){
-						nearby_music |= 1;
-						break;
-					}
+						if (ride->type == RIDE_TYPE_MERRY_GO_ROUND){
+							nearby_music |= 1;
+							break;
+						}
 
-					if (ride->type == RIDE_TYPE_DODGEMS &&
-						ride->music_tune_id != 0xFF){
-						// Dodgems drown out music?
-						nearby_music |= 2;
+						if (ride->music == MUSIC_STYLE_ORGAN){
+							nearby_music |= 1;
+							break;
+						}
+
+						if (ride->type == RIDE_TYPE_DODGEMS){
+							// Dodgems drown out music?
+							nearby_music |= 2;
+						}
 					}
 					break;
 				}
@@ -586,7 +751,7 @@ static void sub_68F41A(rct_peep *peep, int index)
 
 		uint8 sprite_type = PEEP_SPRITE_TYPE_23;
 		if (peep->state != PEEP_STATE_PATROLLING)
-			sprite_type = PEEP_SPRITE_TYPE_3;
+			sprite_type = PEEP_SPRITE_TYPE_SECURITY;
 
 		if (peep->sprite_type == sprite_type)
 			return;
@@ -1595,7 +1760,7 @@ static void peep_update_falling(rct_peep* peep){
 						if (peep->item_standard_flags & PEEP_ITEM_BALLOON) {
 							peep->item_standard_flags &= ~PEEP_ITEM_BALLOON;
 
-							if (peep->sprite_type == 19 && peep->x != (sint16)0x8000) {
+							if (peep->sprite_type == PEEP_SPRITE_TYPE_19 && peep->x != (sint16) 0x8000) {
 								create_balloon(peep->x, peep->y, height, peep->balloon_colour, 0);
 								peep->window_invalidate_flags |= PEEP_INVALIDATE_PEEP_INVENTORY;
 								peep_update_sprite_type(peep);
@@ -1731,7 +1896,7 @@ static void peep_update_sitting(rct_peep* peep){
 			return;
 		}
 
-		if (peep->sprite_type == 0x15){
+		if (peep->sprite_type == PEEP_SPRITE_TYPE_UMBRELLA) {
 			peep_try_get_up_from_sitting(peep);
 			return;
 		}
@@ -1754,7 +1919,7 @@ static void peep_update_sitting(rct_peep* peep){
 			peep_try_get_up_from_sitting(peep);
 			return;
 		}
-		if (peep->sprite_type == 0x13 || peep->sprite_type == 0x1E){
+		if (peep->sprite_type == PEEP_SPRITE_TYPE_19 || peep->sprite_type == PEEP_SPRITE_TYPE_30) {
 			peep_try_get_up_from_sitting(peep);
 			return;
 		}
@@ -2163,10 +2328,10 @@ static void peep_update_ride_sub_state_1(rct_peep* peep){
 		x *= 32;
 		y *= 32;
 
-		sint8* edx = peep->var_37 * 2 + RCT2_ADDRESS(0x97E1BC, sint8*)[ride->type];
+		const rct_xy16 edx  = _97e1bc[ride->type][peep->var_37];
 
-		x += edx[0];
-		y += edx[1];
+		x += edx.x;
+		y += edx.y;
 
 		peep->destination_x = x;
 		peep->destination_y = y;
@@ -2850,7 +3015,7 @@ static void peep_update_ride_sub_state_9(rct_peep* peep){
 	}
 
 	if (ride->lifecycle_flags & RIDE_LIFECYCLE_ON_RIDE_PHOTO){
-		uint8 secondaryItem = RCT2_ADDRESS(0x0097D7CB, uint8)[ride->type * 4];
+		uint8 secondaryItem = RidePhotoItems[ride->type];
 		if (sub_69AF1E(peep, peep->current_ride, secondaryItem, ride->price_secondary)) {
 			ride->no_secondary_items_sold++;
 		}
@@ -3071,10 +3236,10 @@ static void peep_update_ride_sub_state_14(rct_peep* peep){
 
 			x *= 32;
 			y *= 32;
-			sint8* edx = peep->var_37 * 2 + RCT2_ADDRESS(0x97E1BC, sint8*)[ride->type];
 
-			x += edx[0];
-			y += edx[1];
+			const rct_xy16 edx  = _97e1bc[ride->type][peep->var_37];
+			x += edx.x;
+			y += edx.y;
 
 			peep->destination_x = x;
 			peep->destination_y = y;
@@ -3089,10 +3254,10 @@ static void peep_update_ride_sub_state_14(rct_peep* peep){
 
 	x *= 32;
 	y *= 32;
-	sint8* edx = peep->var_37 * 2 + RCT2_ADDRESS(0x97E1BC, sint8*)[ride->type];
 
-	x += edx[0];
-	y += edx[1];
+	const rct_xy16 edx  = _97e1bc[ride->type][peep->var_37];
+	x += edx.x;
+	y += edx.y;
 
 	peep->destination_x = x;
 	peep->destination_y = y;
@@ -3175,10 +3340,10 @@ static void peep_update_ride_sub_state_15(rct_peep* peep){
 
 	x *= 32;
 	y *= 32;
-	sint8* edx = peep->var_37 * 2 + RCT2_ADDRESS(0x97E1BC, sint8*)[ride->type];
 
-	x += edx[0];
-	y += edx[1];
+	const rct_xy16 edx  = _97e1bc[ride->type][peep->var_37];
+	x += edx.x;
+	y += edx.y;
 
 	peep->destination_x = x;
 	peep->destination_y = y;
@@ -3213,10 +3378,10 @@ static void peep_update_ride_sub_state_16(rct_peep* peep){
 
 		x *= 32;
 		y *= 32;
-		sint8* edx = peep->var_37 * 2 + RCT2_ADDRESS(0x97E1BC, sint8*)[ride->type];
 
-		x += edx[0];
-		y += edx[1];
+		const rct_xy16 edx  = _97e1bc[ride->type][peep->var_37];
+		x += edx.x;
+		y += edx.y;
 
 		peep->destination_x = x;
 		peep->destination_y = y;
@@ -4277,7 +4442,7 @@ static void peep_update_queuing(rct_peep* peep){
 
 	sub_693C9E(peep);
 	if (peep->action < 0xFE)return;
-	if (peep->sprite_type == 0){
+	if (peep->sprite_type == PEEP_SPRITE_TYPE_NORMAL) {
 		if (peep->time_in_queue >= 2000 && (0xFFFF & scenario_rand()) <= 119){
 			// Eat Food/Look at watch
 			peep->action = PEEP_ACTION_EAT_FOOD;
@@ -6295,7 +6460,7 @@ rct_peep *peep_generate(int x, int y, int z)
 
 	move_sprite_to_list((rct_sprite*)peep, SPRITE_LIST_PEEP * 2);
 
-	peep->sprite_identifier = 1;
+	peep->sprite_identifier = SPRITE_IDENTIFIER_PEEP;
 	peep->sprite_type = PEEP_SPRITE_TYPE_NORMAL;
 	peep->outside_of_park = 1;
 	peep->state = PEEP_STATE_FALLING;
@@ -10235,7 +10400,7 @@ static void peep_pick_ride_to_go_on(rct_peep *peep)
 	}
 
 	// Filter the considered rides
-	uint8 *potentialRides = (uint8*)0x00F1ADBC;
+	uint8 *potentialRides = RCT2_ADDRESS(0x00F1ADBC, uint8);
 	uint8 *nextPotentialRide = potentialRides;
 	int numPotentialRides = 0;
 	for (int i = 0; i < MAX_RIDES; i++) {
@@ -10344,7 +10509,7 @@ static void peep_head_for_nearest_ride_type(rct_peep *peep, int rideType)
 	}
 
 	// Filter the considered rides
-	uint8 *potentialRides = (uint8*)0x00F1ADBC;
+	uint8 *potentialRides = RCT2_ADDRESS(0x00F1ADBC, uint8);
 	uint8 *nextPotentialRide = potentialRides;
 	int numPotentialRides = 0;
 	for (int i = 0; i < MAX_RIDES; i++) {
@@ -10456,7 +10621,7 @@ static void peep_head_for_nearest_ride_with_flags(rct_peep *peep, int rideTypeFl
 	}
 
 	// Filter the considered rides
-	uint8 *potentialRides = (uint8*)0x00F1ADBC;
+	uint8 *potentialRides = RCT2_ADDRESS(0x00F1ADBC, uint8);
 	uint8 *nextPotentialRide = potentialRides;
 	int numPotentialRides = 0;
 	for (int i = 0; i < MAX_RIDES; i++) {

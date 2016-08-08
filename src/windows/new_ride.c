@@ -33,6 +33,7 @@
 #include "../world/scenery.h"
 #include "../ride/ride_data.h"
 #include "../sprites.h"
+#include "../ride/track_data.h"
 
 #define _window_new_ride_current_tab RCT2_GLOBAL(RCT2_ADDRESS_WINDOW_RIDE_LIST_SELECTED_TAB, uint8)
 
@@ -297,7 +298,7 @@ void window_new_ride_init_vars() {
 static void window_new_ride_populate_list()
 {
 	uint8 currentCategory = _window_new_ride_current_tab;
-	ride_list_item *nextListItem = (ride_list_item*)0x00F43523;
+	ride_list_item *nextListItem = RCT2_ADDRESS(0x00F43523, ride_list_item);
 
 	// For each ride type in the view order list
 	for (int i = 0; i < countof(RideTypeViewOrder); i++) {
@@ -391,7 +392,7 @@ static void window_new_ride_scroll_to_focused_ride(rct_window *w)
 	rct_widget *listWidget = &window_new_ride_widgets[WIDX_RIDE_LIST];
 	int focusRideType = RCT2_ADDRESS(RCT2_ADDRESS_WINDOW_RIDE_LIST_HIGHLIGHTED_ITEM, uint16)[_window_new_ride_current_tab];
 	int count = 0, row = 0;
-	ride_list_item *listItem = (ride_list_item*)0x00F43523;
+	ride_list_item *listItem = RCT2_ADDRESS(0x00F43523, ride_list_item);
 	while (listItem->type != 255 || listItem->entry_index != 255) {
 		if (listItem->type == focusRideType) {
 			row = count / 5;
@@ -489,7 +490,7 @@ void window_new_ride_focus(ride_list_item rideItem)
 	else
 		window_new_ride_set_page(w, gRideCategories[rideType->ride_type[0]]);
 
-	ride_list_item *listItem = (ride_list_item*)0x00F43523;
+	ride_list_item *listItem = RCT2_ADDRESS(0x00F43523, ride_list_item);
 	while (listItem->type != RIDE_TYPE_NULL) {
 		if (listItem->type == rideItem.type && listItem->entry_index == rideItem.entry_index) {
 			RCT2_GLOBAL(RCT2_ADDRESS_WINDOW_RIDE_LIST_HIGHLIGHTED_ITEM, uint8) = rideItem.type;
@@ -667,7 +668,7 @@ static void window_new_ride_update(rct_window *w)
  */
 static void window_new_ride_scrollgetsize(rct_window *w, int scrollIndex, int *width, int *height)
 {
-	ride_list_item *listItem = (ride_list_item*)0x00F43523;
+	ride_list_item *listItem = RCT2_ADDRESS(0x00F43523, ride_list_item);
 
 	int count = 0;
 	while (listItem->type != 255 || listItem->entry_index != 255) {
@@ -783,7 +784,7 @@ static void window_new_ride_scrollpaint(rct_window *w, rct_drawpixelinfo *dpi, i
 
 	int x = 1;
 	int y = 1;
-	ride_list_item *listItem = (ride_list_item*)0x00F43523;
+	ride_list_item *listItem = RCT2_ADDRESS(0x00F43523, ride_list_item);
 	while (listItem->type != 255 || listItem->entry_index != 255) {
 		rct_ride_entry *rideEntry;
 		// Draw flat button rectangle
@@ -835,7 +836,7 @@ static ride_list_item window_new_ride_scroll_get_ride_list_item_at(rct_window *w
 
 	int index = column + (row * 5);
 
-	ride_list_item *listItem = (ride_list_item*)0x00F43523;
+	ride_list_item *listItem = RCT2_ADDRESS(0x00F43523, ride_list_item);
 	while (listItem->type != 255 || listItem->entry_index != 255) {
 		if (index-- == 0)
 			return *listItem;
@@ -909,12 +910,12 @@ static void window_new_ride_paint_ride_information(rct_window *w, rct_drawpixeli
 	// Price
 	if (!(gParkFlags & PARK_FLAGS_NO_MONEY)) {
 		// Get price of ride
-		int unk2 = RCT2_GLOBAL(0x0097CC68 + (item.type * 2), uint8);
+		int unk2 = RideConstructionDefaultTrackType[item.type];
 		money32 price = RideTrackCosts[item.type].track_price;
 		if (ride_type_has_flag(item.type, RIDE_TYPE_FLAG_FLAT_RIDE)) {
-			price *= RCT2_ADDRESS(0x0099DE34, uint32)[unk2];
+			price *= FlatRideTrackPricing[unk2];
 		} else {
-			price *= RCT2_ADDRESS(0x0099DA34, uint32)[unk2];
+			price *= TrackPricing[unk2];
 		}
 		price = (price >> 17) * 10 * RideData5[item.type].price;
 

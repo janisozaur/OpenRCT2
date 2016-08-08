@@ -18,6 +18,7 @@
 #include "../../paint/paint.h"
 #include "../../paint/supports.h"
 #include "../track_paint.h"
+#include "../track.h"
 
 typedef struct rct_crooked_house_bound_box {
 	sint16 offset_x;
@@ -47,7 +48,7 @@ static void sub_88ABA4(uint8 direction, uint8 x_offset, uint8 y_offset, uint32 s
 	//return;
 
 	//  push    dword_9DE578
-	rct_map_element *original_map_element = RCT2_GLOBAL(0x9DE578, rct_map_element*);
+	rct_map_element *original_map_element = g_currently_drawn_item;
 	//    push    edx
 	RCT2_GLOBAL(0x14281B0, uint32) = segment;
 	RCT2_GLOBAL(0x14281B4, uint32) = direction;
@@ -62,7 +63,7 @@ static void sub_88ABA4(uint8 direction, uint8 x_offset, uint8 y_offset, uint32 s
 		if (ride->vehicles[0] != (uint16)-1) {
 			rct_sprite *sprite = get_sprite(ride->vehicles[0]);
 			gPaintInteractionType = VIEWPORT_INTERACTION_ITEM_SPRITE;
-			RCT2_GLOBAL(0x9DE578, rct_sprite *) = sprite;
+			g_currently_drawn_item = sprite;
 		}
 	}
 
@@ -121,7 +122,7 @@ static void paint_crooked_house(uint8 rideIndex, uint8 trackSequence, uint8 dire
 }
 
 TRACK_PAINT_FUNCTION get_track_paint_function_crooked_house(int trackType, int direction) {
-	if (trackType != 123) {
+	if (trackType != FLAT_TRACK_ELEM_3_X_3) {
 		return NULL;
 	}
 

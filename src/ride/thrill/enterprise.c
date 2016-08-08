@@ -19,13 +19,14 @@
 #include "../track_paint.h"
 #include "../../paint/supports.h"
 #include "../../paint/paint.h"
+#include "../track.h"
 
 /** rct2: 0x008A2ABC */
 static void paint_enterprise_structure(rct_ride * ride, sint8 xOffset, sint8 yOffset, uint16 height, rct_map_element * mapElement)
 {
 	height += 7;
 
-	rct_map_element * savedMapElement = RCT2_GLOBAL(0x009DE578, rct_map_element*);
+	rct_map_element * savedMapElement = g_currently_drawn_item;
 	rct_ride_entry * rideType = get_ride_entry(ride->subtype);
 	rct_vehicle * vehicle = NULL;
 
@@ -35,7 +36,7 @@ static void paint_enterprise_structure(rct_ride * ride, sint8 xOffset, sint8 yOf
 	    && ride->vehicles[0] != SPRITE_INDEX_NULL) {
 		gPaintInteractionType = VIEWPORT_INTERACTION_ITEM_SPRITE;
 		vehicle = GET_VEHICLE(ride->vehicles[0]);
-		RCT2_GLOBAL(0x009DE578, rct_vehicle*) = vehicle;
+		g_currently_drawn_item = vehicle;
 	}
 
 	uint32 imageOffset = (get_current_rotation() + map_element_get_direction(mapElement)) % 4;
@@ -69,7 +70,7 @@ static void paint_enterprise_structure(rct_ride * ride, sint8 xOffset, sint8 yOf
 		}
 	}
 
-	RCT2_GLOBAL(0x009DE578, rct_map_element*) = savedMapElement;
+	g_currently_drawn_item = savedMapElement;
 	gPaintInteractionType = VIEWPORT_INTERACTION_ITEM_RIDE;
 }
 
@@ -123,7 +124,7 @@ static void paint_enterprise(uint8 rideIndex, uint8 trackSequence, uint8 directi
  */
 TRACK_PAINT_FUNCTION get_track_paint_function_enterprise(int trackType, int direction)
 {
-	if (trackType != 111) {
+	if (trackType != FLAT_TRACK_ELEM_4_X_4) {
 		return NULL;
 	}
 

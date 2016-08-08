@@ -4207,6 +4207,18 @@ STR_5895    :Uložit trať
 STR_5896    :Nepodařilo se uložit trať!
 STR_5897    :Limit okna:
 STR_5898    :{BLACK}Nelze načíst trať - soubor neexistuje,{newline}nebo je pravděpodobně poškozen!
+STR_5899    :Přepnout okno debug vykreslování
+STR_5900    :Použít původní vykreslovací kód
+STR_5901    :Zobrazit výšky segmentů
+STR_5902    :Vykreslit okraje (bounding box)
+STR_5903    :Zobrazit okno debug vykreslování
+STR_5904    :Vynulovat datum
+STR_5905    :{SMALLFONT}{BLACK}Nástroj pro vygenerování mapy, který automaticky vytvoří charakteristickou krajinu
+STR_5906    :Přiblížovat na pozici kurzoru
+STR_5907    :{SMALLFONT}{BLACK}Přibližování bude centrovat na ukazatel myši, namísto centrování doprostřed obrazovky.
+STR_5908    :Povolit libovolné změny typu atrakce
+STR_5909    :{SMALLFONT}{BLACK}Povolí libovolné změny typu atrakce. Může způsobit pád aplikace.
+STR_5910    :Použít
 
 
 ###############################################################################

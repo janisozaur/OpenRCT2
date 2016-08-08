@@ -34,7 +34,7 @@
 const int _researchRate[] = { 0, 160, 250, 400 };
 
 // 0x01358844[500]
-rct_research_item *gResearchItems = (rct_research_item*)RCT2_RESEARCH_ITEMS;
+rct_research_item *gResearchItems = RCT2_ADDRESS(RCT2_RESEARCH_ITEMS, rct_research_item);
 
 // 0x00EE787C
 uint8 gResearchUncompletedCategories;
@@ -186,7 +186,7 @@ void research_finish_item(sint32 entryIndex)
 		gResearchedTrackTypesA[base_ride_type] = (RideTypePossibleTrackConfigurations[base_ride_type]         ) & 0xFFFFFFFFULL;
 		gResearchedTrackTypesB[base_ride_type] = (RideTypePossibleTrackConfigurations[base_ride_type] >> 32ULL) & 0xFFFFFFFFULL;
 		if (RideData4[base_ride_type].flags & RIDE_TYPE_FLAG4_3) {
-			ebx = RCT2_GLOBAL(0x0097D4F5 + (base_ride_type * 8), uint8);
+			ebx = RideData4[base_ride_type].alternate_type;
 			gResearchedTrackTypesA[ebx] = (RideTypePossibleTrackConfigurations[ebx]         ) & 0xFFFFFFFFULL;
 			gResearchedTrackTypesB[ebx] = (RideTypePossibleTrackConfigurations[ebx] >> 32ULL) & 0xFFFFFFFFULL;
 		}
@@ -203,7 +203,7 @@ void research_finish_item(sint32 entryIndex)
 					rideEntry2->ride_type[1] == base_ride_type ||
 					rideEntry2->ride_type[2] == base_ride_type
 				) {
-					ride_entry_set_invented(rideEntryIndex);
+					ride_entry_set_invented(i);
 				}
 			}
 		}
@@ -332,7 +332,7 @@ void sub_684AC3(){
 
 	for (int i = 0; i < 19; ++i){
 		rct_scenery_set_entry* scenery_set = get_scenery_group_entry(i);
-		if ((int)scenery_set == -1)continue;
+		if ((intptr_t)scenery_set == -1)continue;
 
 		for (int j = 0; j < scenery_set->entry_count; ++j){
 			uint8 value = scenery_set->scenery_entries[j] & 0x1F;

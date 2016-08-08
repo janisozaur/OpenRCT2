@@ -358,30 +358,22 @@ void ride_update_favourited_stat()
 
 money32 get_shop_item_cost(int shopItem)
 {
-	return shopItem < 32 ?
-		RCT2_GLOBAL(0x00982164 + (shopItem * 8), uint16) :
-		RCT2_GLOBAL(0x00982144 + (shopItem * 8), uint16);
+	return ShopItemStats[shopItem].cost;
 }
 
 money16 get_shop_base_value(int shopItem)
 {
-	return shopItem < 32 ?
-		RCT2_GLOBAL((0x00982164 + 2) + (shopItem * 8), uint16) :
-		RCT2_GLOBAL((0x00982144 + 2) + (shopItem * 8), uint16);
+	return ShopItemStats[shopItem].base_value;
 }
 
 money16 get_shop_cold_value(int shopItem)
 {
-	return shopItem < 32 ?
-		RCT2_GLOBAL((0x00982164 + 4) + (shopItem * 8), uint16) :
-		RCT2_GLOBAL((0x00982144 + 4) + (shopItem * 8), uint16);
+	return ShopItemStats[shopItem].cold_value;
 }
 
 money16 get_shop_hot_value(int shopItem)
 {
-	return shopItem < 32 ?
-		RCT2_GLOBAL((0x00982164 + 6) + (shopItem * 8), uint16) :
-		RCT2_GLOBAL((0x00982144 + 6) + (shopItem * 8), uint16);
+	return ShopItemStats[shopItem].hot_value;
 }
 
 /**
@@ -408,7 +400,7 @@ static money32 ride_calculate_income_per_hour(rct_ride *ride)
 	}
 
 	currentShopItem = ride->lifecycle_flags & RIDE_LIFECYCLE_ON_RIDE_PHOTO ?
-			RCT2_GLOBAL(0x0097D7CB + (ride->type * 4), uint8) :
+					  RidePhotoItems[ride->type] :
 			entry->shop_item_secondary;
 
 	if (currentShopItem != SHOP_ITEM_NONE) {
@@ -1437,7 +1429,7 @@ static void ride_construction_reset_current_piece()
 
 	ride = get_ride(_currentRideIndex);
 	if (!ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_HAS_NO_TRACK) || ride->num_stations == 0) {
-		_currentTrackCurve = RCT2_GLOBAL(0x0097CC68 + (ride->type * 2), uint8) | 0x100;
+		_currentTrackCurve = RideConstructionDefaultTrackType[ride->type] | 0x100;
 		_currentTrackSlopeEnd = 0;
 		_currentTrackBankEnd = 0;
 		_currentTrackLiftHill = 0;
@@ -1497,12 +1489,12 @@ void ride_construction_set_default_next_piece()
 
 		if (ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_FLAT_RIDE)) {
 			curve = gFlatRideTrackCurveChain[trackType].next;
-			bank = gFlatRideTrackDefinitions[trackType].bank_end;
-			slope = gFlatRideTrackDefinitions[trackType].vangle_end;
+			bank = FlatRideTrackDefinitions[trackType].bank_end;
+			slope = FlatRideTrackDefinitions[trackType].vangle_end;
 		} else {
 			curve = gTrackCurveChain[trackType].next;
-			bank = gTrackDefinitions[trackType].bank_end;
-			slope = gTrackDefinitions[trackType].vangle_end;
+			bank = TrackDefinitions[trackType].bank_end;
+			slope = TrackDefinitions[trackType].vangle_end;
 		}
 
 		// Set track curve
@@ -1548,12 +1540,12 @@ void ride_construction_set_default_next_piece()
 
 		if (ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_FLAT_RIDE)) {
 			curve = gFlatRideTrackCurveChain[trackType].previous;
-			bank = gFlatRideTrackDefinitions[trackType].bank_start;
-			slope = gFlatRideTrackDefinitions[trackType].vangle_start;
+			bank = FlatRideTrackDefinitions[trackType].bank_start;
+			slope = FlatRideTrackDefinitions[trackType].vangle_start;
 		} else {
 			curve = gTrackCurveChain[trackType].previous;
-			bank = gTrackDefinitions[trackType].bank_start;
-			slope = gTrackDefinitions[trackType].vangle_start;
+			bank = TrackDefinitions[trackType].bank_start;
+			slope = TrackDefinitions[trackType].vangle_start;
 		}
 
 		// Set track curve
@@ -1890,7 +1882,7 @@ int sub_6CC3FB(int rideIndex)
 
 	ride = get_ride(_currentRideIndex);
 
-	_currentTrackCurve = RCT2_ADDRESS(0x0097CC68, uint8)[ride->type * 2] | 0x100;
+	_currentTrackCurve = RideConstructionDefaultTrackType[ride->type] | 0x100;
 	_currentTrackSlopeEnd = 0;
 	_currentTrackBankEnd = 0;
 	_currentTrackLiftHill = 0;
@@ -2079,6 +2071,31 @@ void ride_update_popularity(rct_ride* ride, uint8 pop_amount){
 	ride->window_invalidate_flags |= RIDE_INVALIDATE_RIDE_CUSTOMER;
 }
 
+/** rct2: 0x0098DDB8, 0x0098DDBA */
+static const rct_xy16 ride_spiral_slide_main_tile_offset[][4] = {
+	{
+		{  32,  32 },
+		{   0,  32 },
+		{   0,   0 },
+		{  32,   0 },
+	}, {
+		{  32,   0 },
+		{   0,   0 },
+		{   0, -32 },
+		{  32, -32 },
+	}, {
+		{   0,   0 },
+		{ -32,   0 },
+		{ -32, -32 },
+		{   0, -32 },
+	}, {
+		{   0,   0 },
+		{   0,  32 },
+		{ -32,  32 },
+		{ -32,   0 },
+	},
+};
+
 /**
  *
  *  rct2: 0x006AC545
@@ -2113,11 +2130,11 @@ static void ride_spiral_slide_update(rct_ride *ride)
 		z = ride->station_heights[i];
 
 		mapElement = ride_get_station_start_track_element(ride, i);
-		int rotation = ((mapElement->type & 3) << 2) | current_rotation;
+		int rotation = map_element_get_direction(mapElement);
 		x *= 32;
 		y *= 32;
-		x += RCT2_GLOBAL(0x0098DDB8 + (rotation * 4), sint16);
-		y += RCT2_GLOBAL(0x0098DDBA + (rotation * 4), sint16);
+		x += ride_spiral_slide_main_tile_offset[rotation][current_rotation].x;
+		y += ride_spiral_slide_main_tile_offset[rotation][current_rotation].y;
 
 		map_invalidate_tile_zoom0(x, y, mapElement->base_height * 8, mapElement->clearance_height * 8);
 	}
@@ -3916,6 +3933,14 @@ static money32 ride_set_setting(uint8 rideIndex, uint8 setting, uint8 value, uin
 			}
 		}
 		break;
+	case RIDE_SETTING_RIDE_TYPE:
+		if (!gCheatsAllowArbitraryRideTypeChanges) {
+			return MONEY32_UNDEFINED;
+		}
+		if (flags & GAME_COMMAND_FLAG_APPLY) {
+			ride->type = value;
+		}
+		break;
 	}
 
 	if (flags & GAME_COMMAND_FLAG_APPLY) {
@@ -4578,8 +4603,8 @@ static rct_vehicle *vehicle_create_car(
 			direction = 4;
 		} else {
 			if (ride_type_has_flag(ride->type, RIDE_TYPE_FLAG_16)) {
-				if (RCT2_GLOBAL(0x0097CC68 + (ride->type * 2), uint8) != 119) {
-					if (RCT2_GLOBAL(0x0097CC68 + (ride->type * 2), uint8) != 95) {
+				if (RideConstructionDefaultTrackType[ride->type] != FLAT_TRACK_ELEM_1_X_4_B) {
+					if (RideConstructionDefaultTrackType[ride->type] != FLAT_TRACK_ELEM_1_X_4_A) {
 						if (ride->type == RIDE_TYPE_ENTERPRISE) {
 							direction += 5;
 						} else {
@@ -6046,7 +6071,7 @@ foundRideEntry:
 	if (RideData4[ride->type].flags & RIDE_TYPE_FLAG4_MUSIC_ON_DEFAULT) {
 		ride->lifecycle_flags |= RIDE_LIFECYCLE_MUSIC;
 	}
-	ride->music = RCT2_ADDRESS(0x0097D4F4, uint8)[ride->type * 8];
+	ride->music = RideData4[ride->type].default_music;
 
 	ride->operation_option = (
 		RCT2_GLOBAL(RCT2_ADDRESS_RIDE_FLAGS + 4 + (ride->type * 8), uint8) +
@@ -6629,7 +6654,7 @@ void game_command_set_ride_price(int *eax, int *ebx, int *ecx, int *edx, int *es
 		else {
 			shop_item = rideEntry->shop_item_secondary;
 			if (shop_item == SHOP_ITEM_NONE) {
-				shop_item = RCT2_GLOBAL(0x0097D7CB + (ride->type * 4), uint8);
+				shop_item = RidePhotoItems[ride->type];
 				if ((ride->lifecycle_flags & RIDE_LIFECYCLE_ON_RIDE_PHOTO) == 0) {
 					ride->price_secondary = price;
 					window_invalidate_by_class(WC_RIDE);

@@ -58,7 +58,7 @@ const rct_string_id ScenarioCategoryStringIds[SCENARIO_CATEGORY_COUNT] = {
 static char _scenarioPath[MAX_PATH];
 const char *_scenarioFileName = "";
 
-rct_s6_info *gS6Info = (rct_s6_info*)0x0141F570;
+rct_s6_info *gS6Info = RCT2_ADDRESS(0x0141F570, rct_s6_info);
 char *gScenarioName = RCT2_ADDRESS(RCT2_ADDRESS_SCENARIO_NAME, char);
 char *gScenarioDetails = RCT2_ADDRESS(RCT2_ADDRESS_SCENARIO_DETAILS, char);
 char *gScenarioCompletedBy = RCT2_ADDRESS(RCT2_ADDRESS_SCENARIO_COMPLETED_BY, char);
@@ -118,6 +118,9 @@ int scenario_load_and_play_from_path(const char *path)
 
 	if (!scenario_load(path))
 		return 0;
+
+	reset_sprite_spatial_index();
+	reset_all_sprite_quadrant_placements();
 
 	int len = strnlen(path, MAX_PATH) + 1;
 	safe_strcpy(_scenarioPath, path, len);
@@ -179,7 +182,7 @@ void scenario_begin()
 	gScenarioSrand0 ^= platform_get_ticks();
 	gScenarioSrand1 ^= platform_get_ticks();
 
-	RCT2_GLOBAL(RCT2_ADDRESS_WINDOW_UPDATE_TICKS, sint16) = 0;
+	gWindowUpdateTicks = 0;
 	gParkFlags &= ~PARK_FLAGS_NO_MONEY;
 	if (gParkFlags & PARK_FLAGS_NO_MONEY_SCENARIO)
 		gParkFlags |= PARK_FLAGS_NO_MONEY;
@@ -218,8 +221,8 @@ void scenario_begin()
 			}
 		} else {
 			rct_stex_entry* stex = g_stexEntries[0];
-			if ((int)stex != -1) {
-				char *buffer = (char*)RCT2_ADDRESS_COMMON_STRING_FORMAT_BUFFER;
+			if ((intptr_t)stex != -1) {
+				char *buffer = RCT2_ADDRESS(RCT2_ADDRESS_COMMON_STRING_FORMAT_BUFFER, char);
 
 				// Set localised park name
 				format_string(buffer, stex->park_name, 0);
@@ -248,7 +251,7 @@ void scenario_begin()
 	strcpy(gRCT2AddressSavedGamesPath2 + strlen(gRCT2AddressSavedGamesPath2), gScenarioSavePath);
 	strcat(gRCT2AddressSavedGamesPath2, ".SV6");
 
-	memset((void*)0x001357848, 0, 56);
+	memset(RCT2_ADDRESS(0x001357848, void), 0, 56);
 	gCurrentExpenditure = 0;
 	gCurrentProfit = 0;
 	gWeeklyProfitAverageDividend = 0;
@@ -256,7 +259,7 @@ void scenario_begin()
 	gScenarioCompletedCompanyValue = MONEY32_UNDEFINED;
 	gTotalAdmissions = 0;
 	gTotalIncomeFromAdmissions = 0;
-	RCT2_GLOBAL(0x013587D8, uint16) = 63;
+	RCT2_GLOBAL(RCT2_ADDRESS_SCENARIO_COMPLETED_BY, uint16) = 63;
 	finance_update_loan_hash();
 	park_reset_history();
 	finance_reset_history();
@@ -267,7 +270,7 @@ void scenario_begin()
 	park_calculate_size();
 	staff_reset_stats();
 	RCT2_GLOBAL(RCT2_ADDRESS_LAST_ENTRANCE_STYLE, uint8) = 0;
-	memset((void*)0x001358102, 0, 20);
+	memset(RCT2_ADDRESS(0x001358102, void), 0, 20);
 	RCT2_GLOBAL(0x00135882E, uint16) = 0;
 
 	// Open park with free entry when there is no money
@@ -453,7 +456,7 @@ static void scenario_week_update()
 
 	rct_water_type* water_type = (rct_water_type*)object_entry_groups[OBJECT_TYPE_WATER].chunks[0];
 
-	if (month <= MONTH_APRIL && (sint32)water_type != -1 && water_type->var_0E & 1) {
+	if (month <= MONTH_APRIL && (intptr_t)water_type != -1 && water_type->var_0E & 1) {
 		// 100 attempts at finding some water to create a few ducks at
 		for (int i = 0; i < 100; i++) {
 			if (scenario_create_ducks())
@@ -666,7 +669,7 @@ int scenario_prepare_for_save()
 	s6Info->entry.flags = 255;
 
 	rct_stex_entry* stex = g_stexEntries[0];
-	if ((int)stex != 0xFFFFFFFF) {
+	if ((intptr_t)stex != -1) {
 		format_string(buffer, stex->scenario_name, NULL);
 		safe_strcpy(s6Info->name, buffer, sizeof(s6Info->name));
 

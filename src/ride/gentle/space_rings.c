@@ -19,6 +19,7 @@
 #include "../track_paint.h"
 #include "../../paint/supports.h"
 #include "../../paint/paint.h"
+#include "../track.h"
 
 enum
 {
@@ -38,7 +39,7 @@ static const uint32 space_rings_fence_sprites[] = {
 /** rct2: 0x00768A3B */
 static void paint_space_rings_structure(rct_ride * ride, uint8 direction,  uint32 segment, int height)
 {
-	rct_map_element * savedMapElement = RCT2_GLOBAL(0x009DE578, rct_map_element*);
+	rct_map_element * savedMapElement = g_currently_drawn_item;
 
 	uint32 vehicleIndex = (segment - direction) & 0x3;
 
@@ -54,7 +55,7 @@ static void paint_space_rings_structure(rct_ride * ride, uint8 direction,  uint3
 		    && ride->vehicles[0] != SPRITE_INDEX_NULL) {
 			gPaintInteractionType = VIEWPORT_INTERACTION_ITEM_SPRITE;
 			vehicle = GET_VEHICLE(ride->vehicles[vehicleIndex]);
-			RCT2_GLOBAL(0x009DE578, rct_vehicle*) = vehicle;
+			g_currently_drawn_item = vehicle;
 			frameNum += (sint8) vehicle->vehicle_sprite_type * 4;
 		}
 
@@ -78,7 +79,7 @@ static void paint_space_rings_structure(rct_ride * ride, uint8 direction,  uint3
 		}
 	}
 
-	RCT2_GLOBAL(0x009DE578, rct_map_element*) = savedMapElement;
+	g_currently_drawn_item = savedMapElement;
 	gPaintInteractionType = VIEWPORT_INTERACTION_ITEM_RIDE;
 }
 
@@ -142,7 +143,7 @@ static void paint_space_rings(uint8 rideIndex, uint8 trackSequence, uint8 direct
  */
 TRACK_PAINT_FUNCTION get_track_paint_function_space_rings(int trackType, int direction)
 {
-	if (trackType != 123) {
+	if (trackType != FLAT_TRACK_ELEM_3_X_3) {
 		return NULL;
 	}
 
