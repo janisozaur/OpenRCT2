@@ -114,4 +114,6 @@ void game_command_cheat(sint32* eax, sint32* ebx, sint32* ecx, sint32* edx, sint
 
 void cheats_reset();
 
+const char* cheats_get_cheat_string(int cheat, int arg);
+
 #endif
