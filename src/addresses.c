@@ -28,8 +28,9 @@
 
 int DISABLE_OPT RCT2_CALLPROC_X(int address, int _eax, int _ebx, int _ecx, int _edx, int _esi, int _edi, int _ebp)
 {
+	log_warning("enter");
 	int result = 0;
-#if defined(PLATFORM_X86) && !defined(NO_RCT2)
+//#if defined(PLATFORM_X86) && !defined(NO_RCT2)
 	#ifdef _MSC_VER
 	__asm {
 		push ebp
@@ -49,31 +50,85 @@ int DISABLE_OPT RCT2_CALLPROC_X(int address, int _eax, int _ebx, int _ecx, int _
 		mov result, eax
 	}
 	#else
+	char *stack = malloc(100) + 100;
+	// ensure stack is a 32 bit address
+	if ((uintptr_t)stack != ((uintptr_t)stack & 0xFFFFFFFF)) {
+		log_error("stack is not 32 bit");
+		return 0;
+	}
 	__asm__ volatile ( "\
 		\n\
-		push %%ebx \n\
-		push %%ebp \n\
+		push %%rbx \n\
+		push %%rbp \n\
+		push %%r8  \n\
+		push %%r9  \n\
+		push %%r10  \n\
+		push %%r11 \n\
 		push %[address] 	\n\
+		mov %[address], %%r9d \n\
+		mov %[stack], %%r8 \n\
+		mov %%r9d, (%%r8) \n\
+		mov %[ebp], %%r9d	\n\
+		mov %%rsp, -8(%%r8) \n\
 		mov %[eax], %%eax 	\n\
 		mov %[ebx], %%ebx 	\n\
 		mov %[ecx], %%ecx 	\n\
 		mov %[edx], %%edx 	\n\
 		mov %[esi], %%esi 	\n\
 		mov %[edi], %%edi 	\n\
-		mov %[ebp], %%ebp 	\n\
-		call *(%%esp) 	\n\
+		mov %%r9d, %%ebp	\n\
+		mov %%rsp, %%r10 \n\
+		mov %%r8, %%rsp \n\
+		subq $8, %%rsp		\n\
+		call .+5 \n\
+		xx: \n\
+		movl    $0x23, 4(%%rsp) \n\
+		addl    $rt - xx, (%%rsp) \n\
+		retf \n\
+		rt: \n\
+		// set up DS \n\
+		// push %%eax \n\
+		.byte 0x50 \n\
+		// mov $0x2b, %%al \n\
+		.byte 0xb0, 0x2b \n\
+		// mov %%al, %%ds \n\
+		.byte 0x8e, 0xd8 \n\
+		// pop %%eax \n\
+		.byte 0x58 \n\
+		// now call the function \n\
+		//call *(%%esp) 	\n\
+		.byte 0xff, 0x54, 0x24, 0x08 \n\
+		// reset DS \n\
+		// xor %%eax, %%eax \n\
+		.byte 0x31, 0xc0 \n\
+		// mov %%eax, %%ds \n\
+		.byte 0x8e, 0xd8 \n\
+		/* call  .+5 */ \n\
+		.byte 0xE8, 0, 0, 0, 0 \n\
+		/* movl    $0x330033, 4(%%esp) */ \n\
+		.byte 0xc7, 0x44, 0x24, 0x04, 0x33, 0, 0x33, 0 \n\
+		/* add   dword ptr [esp], 13 */ \n\
+		.byte 0x83, 4, 0x24, 0xd \n\
+		/* retf */ \n\
+		.byte 0xCB \n\
+		mov %%r10, %%rsp \n\
+		pop %%r11 \n\
+		pop %%r10 \n\
+		pop %%r9  \n\
+		pop %%r8  \n\
 		lahf \n\
-		add $4, %%esp 	\n\
-		pop %%ebp \n\
-		pop %%ebx \n\
+		add $8, %%rsp 	\n\
+		pop %%rbp \n\
+		pop %%rbx \n\
 		/* Load result with flags */ \n\
 		mov %%eax, %[result] \n\
-		" : [address] "+m" (address), [eax] "+m" (_eax), [ebx] "+m" (_ebx), [ecx] "+m" (_ecx), [edx] "+m" (_edx), [esi] "+m" (_esi), [edi] "+m" (_edi), [ebp] "+m" (_ebp), [result] "+m" (result)
+		" : [address] "+m" (address), [eax] "+m" (_eax), [ebx] "+m" (_ebx), [ecx] "+m" (_ecx), [edx] "+m" (_edx), [esi] "+m" (_esi), [edi] "+m" (_edi), [ebp] "+m" (_ebp), [result] "+m" (result), [stack] "+m" (stack)
 		:
 		: "eax","ecx","edx","esi","edi","memory"
 	);
 	#endif
-#endif // PLATFORM_X86
+//#endif // PLATFORM_X86
+	log_warning("exit");
 	// lahf only modifies ah, zero out the rest
 	return result & 0xFF00;
 }
