@@ -5618,7 +5618,6 @@ void game_command_set_ride_name(sint32 *eax, sint32 *ebx, sint32 *ecx, sint32 *e
 	}
 
 	if (*ebx & GAME_COMMAND_FLAG_APPLY) {
-
 		// Log ride rename command if we are in multiplayer and logging is enabled
 		if ((network_get_mode() == NETWORK_MODE_CLIENT || network_get_mode() == NETWORK_MODE_SERVER) && gConfigNetwork.log_server_actions) {
 			// Get player name
