@@ -516,7 +516,7 @@ sint32 game_do_command_p(sint32 command, sint32 *eax, sint32 *ebx, sint32 *ecx, 
 
 		if (command == GAME_COMMAND_CHEAT) {
 			// Get cheat name
-			const char* cheat = cheats_get_cheat_string(*ecx, *edx);			
+			const char* cheat = cheats_get_cheat_string(*ecx, *edx, *edi);
 			char* args[2] = {
 				(char *) player_name,
 				(char *) cheat
