@@ -500,6 +500,10 @@ static void openrct2_get_segment_data_path(char * buffer, size_t bufferSize)
 {
 	platform_get_exe_path(buffer);
 	safe_strcat_path(buffer, "openrct2_data", bufferSize);
+	if (!platform_file_exists(buffer)) {
+		platform_get_openrct_data_path(buffer);
+		safe_strcat_path(buffer, "/openrct2_data", bufferSize);
+	}
 }
 
 /**

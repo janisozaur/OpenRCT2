@@ -81,6 +81,9 @@ option(DISABLE_OPENGL "Disable OpenGL support.")
 option(DISABLE_RCT2 "WIP: Try building without using code and data segments from vanilla.")
 option(USE_MMAP "Use mmap to try loading rct2's data segment into memory.")
 option(LAUNCHPAD_BUILD "Sets some build system options on launchpad.net")
+if (UNIX)
+	option(INSTALL_SEGMENTS "Installs data segment file to openrct2 data path")
+endif()
 
 set(COMMON_COMPILE_OPTIONS "${COMMON_COMPILE_OPTIONS} -fstrict-aliasing -Werror -Wundef -Wmissing-declarations")
 
@@ -354,6 +357,9 @@ list(APPEND DOC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/contributors.md" "${CMAKE_CUR
 install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" --build \"${CMAKE_CURRENT_BINARY_DIR}\" --target g2)")
 install(TARGETS ${PROJECT} RUNTIME DESTINATION bin)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/g2.dat" DESTINATION share/${PROJECT})
+if (INSTALL_SEGMENTS)
+	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/openrct2_data" DESTINATION share/${PROJECT})
+endif()
 install(DIRECTORY data/ DESTINATION share/${PROJECT})
 install(FILES ${DOC_FILES} DESTINATION share/doc/${PROJECT})
 
