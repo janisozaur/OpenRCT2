@@ -53,9 +53,17 @@ typedef struct write_buffer {
     size_t capacity;
 } write_buffer;
 
+#if defined(__ANDROID__)
+static utf8 _caBundlePath[MAX_PATH];
+#endif
+
 void http_init()
 {
     curl_global_init(CURL_GLOBAL_DEFAULT);
+
+#ifdef __ANDROID__
+    String::Set(_caBundlePath, sizeof(_caBundlePath), "/sdcard/cacert.pem");
+#endif
 }
 
 void http_dispose()
@@ -134,6 +142,10 @@ http_response_t *http_request(const http_request_t *request)
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, true);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, true);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, OPENRCT2_USER_AGENT);
+#if defined(__ANDROID__)
+    // On GNU/Linux (and macOS), curl will use the system certs by default
+    curl_easy_setopt(curl, CURLOPT_CAINFO, _caBundlePath);
+#endif
     curl_easy_setopt(curl, CURLOPT_URL, request->url);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &writeBuffer);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, http_request_write_func);

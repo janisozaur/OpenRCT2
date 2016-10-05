@@ -77,6 +77,17 @@ SET(SDL2_ttf_LIB_SRCS "${lib_src_DIR}/sdl-ttf/SDL_ttf.c")
 add_library(SDL2_ttf SHARED ${SDL2_ttf_LIB_SRCS})
 target_link_libraries(SDL2_ttf SDL2 freetype)
 
+set(EXTERNALPROJECT_ARGS
+      -DCMAKE_MAKE_PROGRAM:STRING=${CMAKE_MAKE_PROGRAM}
+      -DANDROID_ABI:STRING=${ANDROID_ABI}
+      -DANDROID_NDK:PATH=${ANDROID_NDK}
+      -DANDROID_NATIVE_API_LEVEL:STRING=${ANDROID_NATIVE_API_LEVEL}
+      -DCMAKE_TOOLCHAIN_FILE:FILEPATH=${CMAKE_TOOLCHAIN_FILE}
+      -DCMAKE_BUILD_TYPE:STRING=Release
+      -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}/contrib
+)
+
+
 # png
 include(ExternalProject)
 ExternalProject_Add(png_ext
@@ -84,14 +95,8 @@ ExternalProject_Add(png_ext
     URL ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng16/libpng-1.6.25.tar.gz
 
     CMAKE_CACHE_ARGS
-      -DCMAKE_MAKE_PROGRAM:STRING=${CMAKE_MAKE_PROGRAM}
-      -DANDROID_ABI:STRING=${ANDROID_ABI}
-      -DANDROID_NDK:PATH=${ANDROID_NDK}
-      -DANDROID_NATIVE_API_LEVEL:STRING=${ANDROID_NATIVE_API_LEVEL}
+      ${EXTERNALPROJECT_ARGS}
       -DANDROID_TOOLCHAIN:STRING=gcc
-      -DCMAKE_TOOLCHAIN_FILE:FILEPATH=${CMAKE_TOOLCHAIN_FILE}
-      -DCMAKE_BUILD_TYPE:STRING=Release
-      -DCMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}/contrib
       -DPNG_SHARED:BOOL=OFF
       -DPNG_STATIC:BOOL=ON
       -DPNG_TESTS:BOOL=OFF
@@ -114,6 +119,30 @@ set_target_properties(png PROPERTIES IMPORTED_LOCATION
 add_dependencies(png png_ext)
 include_directories("${CMAKE_BINARY_DIR}/contrib/include")
 
+set(CURL_ANDROID_IOS_DIR "/tmp/curl-android-ios")
+
+#OpenSSL
+include_directories("${CURL_ANDROID_IOS_DIR}/openssl/include")
+
+add_library(ssl STATIC IMPORTED)
+set_target_properties(ssl PROPERTIES
+    IMPORTED_LOCATION ${CURL_ANDROID_IOS_DIR}/curl-compile-scripts/obj/local/armeabi-v7a/libssl.a
+)
+
+add_library(crypto STATIC IMPORTED)
+set_target_properties(crypto PROPERTIES
+    IMPORTED_LOCATION ${CURL_ANDROID_IOS_DIR}/curl-compile-scripts/obj/local/armeabi-v7a/libcrypto.a
+)
+
+
+# CURL
+add_library(curl STATIC IMPORTED)
+set_target_properties(curl PROPERTIES
+    IMPORTED_LOCATION ${CURL_ANDROID_IOS_DIR}/prebuilt-with-ssl/android/armeabi-v7a/libcurl.a
+)
+include_directories("${CURL_ANDROID_IOS_DIR}/prebuilt-with-ssl/android/include")
+
+
 # speexdsp
 set(SPEEXDSP_ROOT "${lib_src_DIR}/speexdsp")
 add_subdirectory(${CMAKE_SOURCE_DIR}/../speexdsp ${lib_build_DIR}/speexdsp)
@@ -131,7 +160,7 @@ include_directories(${lib_src_DIR}/jansson/src)
 # now build app's shared lib
 include_directories(./ndk_helper
                     ${ANDROID_NDK}/sources/android/cpufeatures)
-add_definitions(-DDISABLE_HTTP -DDISABLE_TWITCH -DDISABLE_NETWORK -DDISABLE_OPENGL -DGL_GLEXT_PROTOTYPES -D__STDC_LIMIT_MACROS -DNO_RCT2)
+add_definitions(-DDISABLE_OPENGL -DGL_GLEXT_PROTOTYPES -DNO_RCT2)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99 -Wno-unknown-pragmas -fno-omit-frame-pointer -fno-pie -fstrict-aliasing -Werror=strict-aliasing -fPIC")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -fexceptions -fno-rtti -Wno-unknown-pragmas -fno-omit-frame-pointer -fno-pie -fstrict-aliasing -Werror=strict-aliasing -fexceptions -fPIC")
 get_filename_component(ORCT2_ROOT "${CMAKE_SOURCE_DIR}/../../../../../" REALPATH)
@@ -142,7 +171,7 @@ add_library(openrct2 SHARED ${ORCT2_SOURCES})
 # add lib dependencies
 target_link_libraries(openrct2
                         android log dl GLESv1_CM GLESv2 z
-                        SDL2 SDL2_ttf png jansson speexdsp
+                        SDL2 SDL2_ttf png jansson speexdsp curl ssl crypto
                       )
 
 # moduleName "main"
