@@ -308,7 +308,6 @@ void game_update()
 	// Always perform autosave check, even when paused
 	scenario_autosave_check();
 
-	network_update();
 	window_dispatch_update_all();
 
 	gGameCommandNestLevel = 0;
@@ -345,7 +344,6 @@ void game_logic_update()
 	///////////////////////////
 	gInUpdateCode = true;
 	///////////////////////////
-	network_update();
 	if (network_get_mode() == NETWORK_MODE_CLIENT && network_get_status() == NETWORK_STATUS_CONNECTED && network_get_authstatus() == NETWORK_AUTH_OK) {
 		if (gCurrentTicks >= network_get_server_tick()) {
 			// don't run past the server
