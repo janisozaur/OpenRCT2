@@ -155,7 +155,10 @@ exitcode_t CommandLine::HandleCommandDefault()
     exitcode_t result = EXITCODE_CONTINUE;
 
 #ifdef __PROVIDE_CONSOLE__
-    if (_provideConsole)
+    HWND consoleWnd = GetConsoleWindow();
+    DWORD dwProcessId;
+    GetWindowThreadProcessId(consoleWnd, &dwProcessId);
+    if (GetCurrentProcessId()==dwProcessId)
     {
         platform_windows_open_console();
     }
