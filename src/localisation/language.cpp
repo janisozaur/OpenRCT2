@@ -291,9 +291,10 @@ static wchar_t convert_specific_language_character_to_unicode(int languageId, wc
     }
 }
 
-static utf8 * convert_multibyte_charset(const char * src, int languageId)
+static utf8 * convert_multibyte_charset(const char * src, const size_t len, int languageId)
 {
     constexpr char CODEPOINT_DOUBLEBYTE = (char)0xFF;
+    assert(String::LengthOf(src) == len);
 
     size_t reservedLength = (String::LengthOf(src) * 4) + 1;
     utf8 * buffer = Memory::Allocate<utf8>(reservedLength);
@@ -335,11 +336,11 @@ static bool rct2_language_is_multibyte_charset(int languageId)
     }
 }
 
-utf8 *rct2_language_string_to_utf8(const char *src, int languageId)
+utf8 *rct2_language_string_to_utf8(const char *src, const size_t len, int languageId)
 {
     if (rct2_language_is_multibyte_charset(languageId))
     {
-        return convert_multibyte_charset(src, languageId);
+        return convert_multibyte_charset(src, len, languageId);
     }
     else
     {
