@@ -25,25 +25,25 @@
 namespace Memory
 {
     template<typename T>
-    T * Allocate()
+    static T * Allocate()
     {
         return (T*)malloc(sizeof(T));
     }
 
     template<typename T>
-    T * Allocate(size_t size)
+    static T * Allocate(size_t size)
     {
         return (T*)malloc(size);
     }
 
     template<typename T>
-    T * AllocateArray(size_t count)
+    static T * AllocateArray(size_t count)
     {
         return (T*)malloc(count * sizeof(T));
     }
 
     template<typename T>
-    T * Reallocate(T * ptr, size_t size)
+    static T * Reallocate(T * ptr, size_t size)
     {
         if (ptr == nullptr)
         {
@@ -56,7 +56,7 @@ namespace Memory
     }
 
     template<typename T>
-    T * ReallocateArray(T * ptr, size_t count)
+    static T * ReallocateArray(T * ptr, size_t count)
     {
         if (ptr == nullptr)
         {
@@ -69,13 +69,13 @@ namespace Memory
     }
 
     template<typename T>
-    void Free(T * ptr)
+    static void Free(T * ptr)
     {
         free((void*)ptr);
     }
 
     template<typename T>
-    T * Copy(T * dst, const T * src, size_t size)
+    static T * Copy(T * dst, const T * src, size_t size)
     {
         if (size == 0) return (T*)dst;
 #ifdef DEBUG
@@ -89,27 +89,27 @@ namespace Memory
     }
 
     template<typename T>
-    T * Move(T * dst, const T * src, size_t size)
+    static T * Move(T * dst, const T * src, size_t size)
     {
         if (size == 0) return (T*)dst;
         return (T*)memmove((void*)dst, (const void*)src, size);
     }
 
     template<typename T>
-    T * Duplicate(const T * src, size_t size)
+    static T * Duplicate(const T * src, size_t size)
     {
         T *result = Allocate<T>(size);
         return Copy(result, src, size);
     }
 
     template<typename T>
-    T * Set(T * dst, uint8 value, size_t size)
+    static T * Set(T * dst, uint8 value, size_t size)
     {
         return (T*)memset((void*)dst, (int)value, size);
     }
 
     template<typename T>
-    T * CopyArray(T * dst, const T * src, size_t count)
+    static T * CopyArray(T * dst, const T * src, size_t count)
     {
         // Use a loop so that copy constructors are called
         // compiler should optimise to memcpy if possible
@@ -122,14 +122,14 @@ namespace Memory
     }
 
     template<typename T>
-    T * DuplicateArray(const T * src, size_t count)
+    static T * DuplicateArray(const T * src, size_t count)
     {
         T * result = AllocateArray<T>(count);
         return CopyArray(result, src, count);
     }
 
     template<typename T>
-    void FreeArray(T * ptr, size_t count)
+    static void FreeArray(T * ptr, size_t count)
     {
         for (size_t i = 0; i < count; i++)
         {
