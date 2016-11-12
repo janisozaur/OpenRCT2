@@ -27,6 +27,11 @@
 #include "../core/String.hpp"
 #include "TitleSequence.h"
 
+// This is a compatibility bit for allowing use of ancient libzip
+// shipped with Trusty, for use on Travis-CI
+typedef struct zip zip_t;
+typedef struct zip_stat zip_stat_t;
+
 static std::vector<utf8 *> GetSaves(zip_t * zip);
 static std::vector<TitleCommand> LegacyScriptRead(utf8 * script, size_t scriptLength, std::vector<utf8 *> saves);
 static void LegacyScriptGetLine(SDL_RWops * file, char * parts);
