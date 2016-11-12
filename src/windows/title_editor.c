@@ -42,6 +42,8 @@ enum {
 	WINDOW_TITLE_EDITOR_TAB_COUNT
 } WINDOW_TITLE_EDITOR_TAB;
 
+#if 0
+
 static void window_title_editor_close(rct_window *w);
 static void window_title_editor_mouseup(rct_window *w, int widgetIndex);
 static void window_title_editor_resize(rct_window *w);
@@ -222,8 +224,11 @@ static void window_title_editor_draw_tab_images(rct_drawpixelinfo *dpi, rct_wind
 	}
 }
 
+#endif
+
 void window_title_editor_open(int tab)
 {
+#if 0
 	rct_window* window;
 
 	// Check if window is already open
@@ -277,9 +282,10 @@ void window_title_editor_open(int tab)
 	window->min_height = WH;
 	window->max_width = 500;
 	window->max_height = 450;
-
+#endif
 }
 
+#if 0
 void window_title_editor_close(rct_window *w)
 {
 	rct_window *command_editor_w, *load_save_w;
@@ -990,3 +996,4 @@ void window_title_editor_scrollpaint(rct_window *w, rct_drawpixelinfo *dpi, int 
 		}
 	}
 }
+#endif

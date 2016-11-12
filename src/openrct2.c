@@ -34,6 +34,7 @@
 #include "platform/platform.h"
 #include "ride/ride.h"
 #include "title.h"
+#include "title/TitleSequenceManager.h"
 #include "util/sawyercoding.h"
 #include "util/util.h"
 #include "version.h"
@@ -260,8 +261,7 @@ bool openrct2_initialise()
 	http_init();
 
 	theme_manager_initialise();
-	title_sequences_set_default();
-	title_sequences_load_presets();
+	title_sequence_manager_scan();
 
 	openrct2_setup_rct2_hooks();
 
