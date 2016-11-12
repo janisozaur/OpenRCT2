@@ -25,6 +25,7 @@
 #include "../interface/themes.h"
 #include "../interface/title_sequences.h"
 #include "../title.h"
+#include "../title/TitleSequence.h"
 #include "../util/util.h"
 #include "dropdown.h"
 
