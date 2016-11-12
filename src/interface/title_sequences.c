@@ -18,6 +18,7 @@
 #include "window.h"
 #include "title_sequences.h"
 #include "../title.h"
+#include "../title/TitleSequence.h"
 #include "../util/util.h"
 
 
