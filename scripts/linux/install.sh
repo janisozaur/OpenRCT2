@@ -173,12 +173,12 @@ elif [[ $(uname) == "Linux" ]]; then
 			"linux")
 				sudo dpkg --add-architecture i386
 				sudo apt-get update
-				sudo apt-get install --no-install-recommends -y --force-yes cmake libsdl2-dev:i386 libsdl2-ttf-dev:i386 gcc-4.8 pkg-config:i386 g++-4.8-multilib gcc-4.8-multilib libjansson-dev:i386 libspeex-dev:i386 libspeexdsp-dev:i386 libcurl4-openssl-dev:i386 libcrypto++-dev:i386 clang libfontconfig1-dev:i386 libfreetype6-dev:i386 libpng-dev:i386
+				sudo apt-get install --no-install-recommends -y --force-yes cmake libsdl2-dev:i386 libsdl2-ttf-dev:i386 gcc-4.8 pkg-config:i386 g++-4.8-multilib gcc-4.8-multilib libjansson-dev:i386 libspeex-dev:i386 libspeexdsp-dev:i386 libcurl4-openssl-dev:i386 libcrypto++-dev:i386 clang libfontconfig1-dev:i386 libfreetype6-dev:i386 libpng-dev:i386 libzip-dev:i386
 				sudo apt-get install -f
 				;;
 			"linux64")
 				sudo apt-get update
-				sudo apt-get install --no-install-recommends -y --force-yes cmake libsdl2-dev libsdl2-ttf-dev gcc-4.8 pkg-config g++ gcc libjansson-dev libspeex-dev libspeexdsp-dev libcurl4-openssl-dev libcrypto++-dev libfontconfig1-dev libfreetype6-dev libpng-dev
+				sudo apt-get install --no-install-recommends -y --force-yes cmake libsdl2-dev libsdl2-ttf-dev gcc-4.8 pkg-config g++ gcc libjansson-dev libspeex-dev libspeexdsp-dev libcurl4-openssl-dev libcrypto++-dev libfontconfig1-dev libfreetype6-dev libpng-dev libzip-dev
 				sudo apt-get install -f
 				;;
 			"windows")
