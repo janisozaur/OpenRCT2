@@ -27,6 +27,7 @@
 #include "dropdown.h"
 #include "../interface/themes.h"
 #include "../cheats.h"
+#include "../rct2.h"
 
 enum {
 	PATH_CONSTRUCTION_MODE_LAND,

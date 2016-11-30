@@ -22,6 +22,7 @@
 #include "../network/network.h"
 #include "../util/util.h"
 #include "../object_list.h"
+#include "../rct2.h"
 #include "footpath.h"
 #include "map.h"
 #include "map_animation.h"

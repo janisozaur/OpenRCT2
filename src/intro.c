@@ -21,6 +21,7 @@
 #include "localisation/localisation.h"
 #include "platform/platform.h"
 #include "sprites.h"
+#include "rct2.h"
 
 #define BACKROUND_COLOUR_DARK		10
 #define BACKROUND_COLOUR_LOGO		245

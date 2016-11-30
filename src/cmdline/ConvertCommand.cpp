@@ -27,6 +27,7 @@ extern "C"
     #include "../game.h"
     #include "../scenario.h"
     #include "../openrct2.h"
+    #include "../rct2.h"
     #include "../interface/window.h"
 }
 

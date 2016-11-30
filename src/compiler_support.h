@@ -14,31 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
-#pragma once
+#ifndef OPENRCT2_COMPILER_SUPPORT_H
+#define OPENRCT2_COMPILER_SUPPORT_H
 
-extern "C"
-{
-    #include "../common.h"
-}
 
-#include <cstdarg>
-
-namespace Console
-{
-    void Write(char c);
-    void Write(const utf8 * str);
-    void WriteSpace(size_t count);
-    void WriteFormat(const utf8 * format, ...);
-    void WriteLine();
-    void WriteLine(const utf8 * format, ...);
-
-    namespace Error
-    {
-        void Write(char c);
-        void Write(const utf8 * str);
-        void WriteFormat(const utf8 * format, ...);
-        void WriteLine();
-        void WriteLine(const utf8 * format, ...);
-        void WriteLine_VA(const utf8 * format, va_list args);
-    }
-}
+#endif //OPENRCT2_COMPILER_SUPPORT_H
