@@ -125,6 +125,8 @@
 		C650B21C1CCABC4400B4D91C /* ConvertCommand.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C650B21B1CCABC4400B4D91C /* ConvertCommand.cpp */; };
 		C6575A371D46AFBA00C3E79F /* debug_paint.c in Sources */ = {isa = PBXBuildFile; fileRef = C6575A361D46AFBA00C3E79F /* debug_paint.c */; };
 		C6834A111DFDE8E300CE933A /* interop.c in Sources */ = {isa = PBXBuildFile; fileRef = C6834A0F1DFDE8E300CE933A /* interop.c */; };
+		C6834A141DFE90B300CE933A /* OpenRCT2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C6834A121DFE90B300CE933A /* OpenRCT2.cpp */; };
+		C6834A171DFE90CB00CE933A /* PlatformEnvironment.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C6834A151DFE90CB00CE933A /* PlatformEnvironment.cpp */; };
 		C686F8AC1CDBC37E009F9BFC /* banner.c in Sources */ = {isa = PBXBuildFile; fileRef = C686F8981CDBC37E009F9BFC /* banner.c */; };
 		C686F8AD1CDBC37E009F9BFC /* entrance.c in Sources */ = {isa = PBXBuildFile; fileRef = C686F8991CDBC37E009F9BFC /* entrance.c */; };
 		C686F8AE1CDBC37E009F9BFC /* fence.c in Sources */ = {isa = PBXBuildFile; fileRef = C686F89A1CDBC37E009F9BFC /* fence.c */; };
@@ -296,7 +298,6 @@
 		D44272341CC81B3200D84D28 /* network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D44271521CC81B3200D84D28 /* network.cpp */; };
 		D44272351CC81B3200D84D28 /* twitch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D44271541CC81B3200D84D28 /* twitch.cpp */; };
 		D44272361CC81B3200D84D28 /* object_list.c in Sources */ = {isa = PBXBuildFile; fileRef = D44271561CC81B3200D84D28 /* object_list.c */; };
-		D44272381CC81B3200D84D28 /* openrct2.c in Sources */ = {isa = PBXBuildFile; fileRef = D44271591CC81B3200D84D28 /* openrct2.c */; };
 		D44272391CC81B3200D84D28 /* peep.c in Sources */ = {isa = PBXBuildFile; fileRef = D442715C1CC81B3200D84D28 /* peep.c */; };
 		D442723A1CC81B3200D84D28 /* staff.c in Sources */ = {isa = PBXBuildFile; fileRef = D442715E1CC81B3200D84D28 /* staff.c */; };
 		D442723B1CC81B3200D84D28 /* crash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D44271611CC81B3200D84D28 /* crash.cpp */; };
@@ -547,6 +548,10 @@
 		C6575A361D46AFBA00C3E79F /* debug_paint.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = debug_paint.c; sourceTree = "<group>"; };
 		C6834A0F1DFDE8E300CE933A /* interop.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = interop.c; sourceTree = "<group>"; usesTabs = 1; };
 		C6834A101DFDE8E300CE933A /* interop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = interop.h; sourceTree = "<group>"; };
+		C6834A121DFE90B300CE933A /* OpenRCT2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OpenRCT2.cpp; sourceTree = "<group>"; };
+		C6834A131DFE90B300CE933A /* OpenRCT2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenRCT2.h; sourceTree = "<group>"; };
+		C6834A151DFE90CB00CE933A /* PlatformEnvironment.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformEnvironment.cpp; sourceTree = "<group>"; };
+		C6834A161DFE90CB00CE933A /* PlatformEnvironment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformEnvironment.h; sourceTree = "<group>"; };
 		C686F8981CDBC37E009F9BFC /* banner.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = banner.c; sourceTree = "<group>"; };
 		C686F8991CDBC37E009F9BFC /* entrance.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = entrance.c; sourceTree = "<group>"; };
 		C686F89A1CDBC37E009F9BFC /* fence.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fence.c; sourceTree = "<group>"; };
@@ -800,8 +805,6 @@
 		D44271551CC81B3200D84D28 /* twitch.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; path = twitch.h; sourceTree = "<group>"; usesTabs = 0; };
 		D44271561CC81B3200D84D28 /* object_list.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = object_list.c; sourceTree = "<group>"; };
 		D44271581CC81B3200D84D28 /* object.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = object.h; sourceTree = "<group>"; };
-		D44271591CC81B3200D84D28 /* openrct2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = openrct2.c; sourceTree = "<group>"; };
-		D442715A1CC81B3200D84D28 /* openrct2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = openrct2.h; sourceTree = "<group>"; };
 		D442715C1CC81B3200D84D28 /* peep.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = peep.c; sourceTree = "<group>"; };
 		D442715D1CC81B3200D84D28 /* peep.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = peep.h; sourceTree = "<group>"; };
 		D442715E1CC81B3200D84D28 /* staff.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = staff.c; sourceTree = "<group>"; };
@@ -1445,45 +1448,47 @@
 				D442718E1CC81B3200D84D28 /* windows */,
 				D44271D81CC81B3200D84D28 /* world */,
 				D44270CD1CC81B3200D84D28 /* addresses.c */,
-				D44270D41CC81B3200D84D28 /* cheats.c */,
-				D44270DC1CC81B3200D84D28 /* cmdline_sprite.c */,
-				D44270DE1CC81B3200D84D28 /* config.c */,
-				D44270FE1CC81B3200D84D28 /* diagnostic.c */,
-				D442710E1CC81B3200D84D28 /* editor.c */,
-				D44271101CC81B3200D84D28 /* game.c */,
-				D44271121CC81B3200D84D28 /* hook.c */,
-				D44271141CC81B3200D84D28 /* image_io.c */,
-				D44271161CC81B3200D84D28 /* input.c */,
-				D44271301CC81B3200D84D28 /* intro.c */,
-				D44271561CC81B3200D84D28 /* object_list.c */,
-				D44271591CC81B3200D84D28 /* openrct2.c */,
-				D44271691CC81B3200D84D28 /* rct1.c */,
-				D442716B1CC81B3200D84D28 /* rct2.c */,
-				D44271831CC81B3200D84D28 /* scenario.c */,
-				D4867B841DAEF6200003B684 /* ScenarioRepository.cpp */,
-				D4867B851DAEF6200003B684 /* ScenarioSources.cpp */,
-				D44271861CC81B3200D84D28 /* title.c */,
-				D4CA88651D4E64C800060C11 /* version.c */,
 				D44270CE1CC81B3200D84D28 /* addresses.h */,
+				D44270D41CC81B3200D84D28 /* cheats.c */,
 				D44270D51CC81B3200D84D28 /* cheats.h */,
+				D44270DC1CC81B3200D84D28 /* cmdline_sprite.c */,
 				D44270DD1CC81B3200D84D28 /* common.h */,
+				D44270DE1CC81B3200D84D28 /* config.c */,
 				D44270DF1CC81B3200D84D28 /* config.h */,
+				D44270FE1CC81B3200D84D28 /* diagnostic.c */,
 				D44270FF1CC81B3200D84D28 /* diagnostic.h */,
+				D442710E1CC81B3200D84D28 /* editor.c */,
 				D442710F1CC81B3200D84D28 /* editor.h */,
+				D44271101CC81B3200D84D28 /* game.c */,
 				D44271111CC81B3200D84D28 /* game.h */,
+				D44271121CC81B3200D84D28 /* hook.c */,
 				D44271131CC81B3200D84D28 /* hook.h */,
+				D44271141CC81B3200D84D28 /* image_io.c */,
 				D44271151CC81B3200D84D28 /* image_io.h */,
+				D44271161CC81B3200D84D28 /* input.c */,
 				D44271171CC81B3200D84D28 /* input.h */,
+				D44271301CC81B3200D84D28 /* intro.c */,
 				D44271311CC81B3200D84D28 /* intro.h */,
+				D44271561CC81B3200D84D28 /* object_list.c */,
 				D44271581CC81B3200D84D28 /* object.h */,
-				D442715A1CC81B3200D84D28 /* openrct2.h */,
+				C6834A121DFE90B300CE933A /* OpenRCT2.cpp */,
+				C6834A131DFE90B300CE933A /* OpenRCT2.h */,
+				C6834A151DFE90CB00CE933A /* PlatformEnvironment.cpp */,
+				C6834A161DFE90CB00CE933A /* PlatformEnvironment.h */,
+				D44271691CC81B3200D84D28 /* rct1.c */,
 				D442716A1CC81B3200D84D28 /* rct1.h */,
+				D442716B1CC81B3200D84D28 /* rct2.c */,
 				D442716C1CC81B3200D84D28 /* rct2.h */,
+				D44271831CC81B3200D84D28 /* scenario.c */,
 				D44271841CC81B3200D84D28 /* scenario.h */,
+				D4867B841DAEF6200003B684 /* ScenarioRepository.cpp */,
 				D4867B881DAEF62B0003B684 /* ScenarioRepository.h */,
+				D4867B851DAEF6200003B684 /* ScenarioSources.cpp */,
 				D4867B891DAEF62B0003B684 /* ScenarioSources.h */,
 				D44271851CC81B3200D84D28 /* sprites.h */,
+				D44271861CC81B3200D84D28 /* title.c */,
 				D44271871CC81B3200D84D28 /* title.h */,
+				D4CA88651D4E64C800060C11 /* version.c */,
 				D442718D1CC81B3200D84D28 /* version.h */,
 			);
 			name = Sources;
@@ -2534,6 +2539,7 @@
 				C686F9381CDBC3B7009F9BFC /* observation_tower.c in Sources */,
 				D44272A41CC81B3200D84D28 /* park.c in Sources */,
 				C686F9391CDBC3B7009F9BFC /* space_rings.c in Sources */,
+				C6834A141DFE90B300CE933A /* OpenRCT2.cpp in Sources */,
 				D464FEEF1D31A6AA00CBABAC /* RideObject.cpp in Sources */,
 				D464FEEA1D31A6AA00CBABAC /* LargeSceneryObject.cpp in Sources */,
 				C686F9371CDBC3B7009F9BFC /* monorail_cycles.c in Sources */,
@@ -2612,7 +2618,6 @@
 				D44272501CC81B3200D84D28 /* title.c in Sources */,
 				D43407DD1D0E14BE00C2B3D4 /* OpenGLFramebuffer.cpp in Sources */,
 				D442721D1CC81B3200D84D28 /* screenshot.c in Sources */,
-				D44272381CC81B3200D84D28 /* openrct2.c in Sources */,
 				C686F92C1CDBC3B7009F9BFC /* circus_show.c in Sources */,
 				D44271FD1CC81B3200D84D28 /* cmdline_sprite.c in Sources */,
 				D464FEEE1D31A6AA00CBABAC /* ObjectRepository.cpp in Sources */,
@@ -2731,6 +2736,7 @@
 				D43407E01D0E14BE00C2B3D4 /* TextureCache.cpp in Sources */,
 				8594C0601D885CF600235E93 /* track_data_old.c in Sources */,
 				D44272951CC81B3200D84D28 /* track_manage.c in Sources */,
+				C6834A171DFE90CB00CE933A /* PlatformEnvironment.cpp in Sources */,
 				D44272851CC81B3200D84D28 /* staff.c in Sources */,
 				D442725F1CC81B3200D84D28 /* editor_scenario_options.c in Sources */,
 				D44272331CC81B3200D84D28 /* http.cpp in Sources */,
