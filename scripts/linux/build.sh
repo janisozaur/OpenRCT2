@@ -20,8 +20,8 @@ if [[ ! -d build ]]; then
 	mkdir -p build
 fi
 
-if [[ $TARGET != "ubuntu_i686" && $TARGET != "docker32" && $SYSTEM != "Darwin" ]]; then
-	sha256sum=f124c954bbd0b58c93e5fba46902806bd3637d3a1c5fb8e4b67441052f182df2
+if [[ $TARGET != "ubuntu_amd64" && $TARGET != "ubuntu_i686" && $TARGET != "docker32" && $SYSTEM != "Darwin" ]]; then
+	sha256sum=44cb8244a2db6d6814bcf9e5b2b9f9d939e961a8964fa0e8ce5d20a2dd25d7d5
 	libVFile="./libversion"
 	libdir="./lib"
 	currentversion=0
