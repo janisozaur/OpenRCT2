@@ -902,7 +902,8 @@ static bool config_find_rct2_path(utf8 *resultPath)
 	log_verbose("searching common installation locations.");
 
 	const utf8 *searchLocations[] = {
-		"C:\\Program Files\\Infogrames\\RollerCoaster Tycoon 2",
+		"/rct2data"
+		/*"C:\\Program Files\\Infogrames\\RollerCoaster Tycoon 2",
 		"C:\\Program Files (x86)\\Infogrames\\RollerCoaster Tycoon 2",
 		"C:\\Program Files\\Infogrames Interactive\\RollerCoaster Tycoon 2",
 		"C:\\Program Files (x86)\\Infogrames Interactive\\RollerCoaster Tycoon 2",
@@ -913,7 +914,7 @@ static bool config_find_rct2_path(utf8 *resultPath)
 		"C:\\Program Files (x86)\\GalaxyClient\\Games\\RollerCoaster Tycoon 2 Triple Thrill Pack",
 		"C:\\Program Files\\Steam\\steamapps\\common\\Rollercoaster Tycoon 2",
 		"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Rollercoaster Tycoon 2",
-		gExePath
+		gExePath*/
 	};
 
 	for (i = 0; i < countof(searchLocations); i++) {

@@ -30,9 +30,23 @@ const char * _level_strings[] = {
 	"INFO"
 };
 
+extern void nocashPrint(const char* txt);
+
 void diagnostic_log(int diagnosticLevel, const char *format, ...)
 {
-	FILE *stream;
+	va_list args;
+	va_start(args, format);
+
+	char* res;
+	if (vasprintf(&res, format, args) >= 0)
+	{
+		nocashPrint(res);
+		free(res);
+	}
+
+	va_end(args);
+
+	/*FILE *stream;
 	va_list args;
 
 	if (!_log_levels[diagnosticLevel])
@@ -49,12 +63,24 @@ void diagnostic_log(int diagnosticLevel, const char *format, ...)
 	va_end(args);
 
 	// Line terminator
-	fprintf(stream, "\n");
+	fprintf(stream, "\n");*/
 }
 
 void diagnostic_log_with_location(int diagnosticLevel, const char *file, const char *function, int line, const char *format, ...)
 {
-	FILE *stream;
+	va_list args;
+	va_start(args, format);
+
+	char* res;
+	if (vasprintf(&res, format, args) >= 0)
+	{
+		nocashPrint(res);
+		free(res);
+	}
+
+	va_end(args);
+
+	/*FILE *stream;
 	va_list args;
 
 	if (!_log_levels[diagnosticLevel])
@@ -74,5 +100,5 @@ void diagnostic_log_with_location(int diagnosticLevel, const char *file, const c
 	va_end(args);
 
 	// Line terminator
-	fprintf(stream, "\n");
+	fprintf(stream, "\n");*/
 }

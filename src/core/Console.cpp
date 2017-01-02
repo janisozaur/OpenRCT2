@@ -21,6 +21,9 @@ extern "C"
 
 #include "Console.hpp"
 
+
+extern "C" void nocashPrint(const char* txt);
+
 namespace Console
 {
     void Write(char c)
@@ -43,11 +46,22 @@ namespace Console
 
     void WriteFormat(const utf8 * format, ...)
     {
-        va_list args;
+        /*va_list args;
 
         va_start(args, format);
         vfprintf(stdout, format, args);
-        va_end(args);
+        va_end(args);*/
+		va_list args;
+		va_start(args, format);
+
+		char* res;
+		if (vasprintf(&res, format, args) >= 0)
+		{
+			nocashPrint(res);
+			free(res);
+		}
+
+		va_end(args);
     }
 
     void WriteLine()
@@ -57,12 +71,23 @@ namespace Console
 
     void WriteLine(const utf8 * format, ...)
     {
-        va_list args;
+        /*va_list args;
 
         va_start(args, format);
         vfprintf(stdout, format, args);
         puts("");
-        va_end(args);
+        va_end(args);*/
+		va_list args;
+		va_start(args, format);
+
+		char* res;
+		if (vasprintf(&res, format, args) >= 0)
+		{
+			nocashPrint(res);
+			free(res);
+		}
+
+		va_end(args);
     }
 
     namespace Error
@@ -79,11 +104,22 @@ namespace Console
 
         void WriteFormat(const utf8 * format, ...)
         {
-            va_list args;
+            /*va_list args;
 
             va_start(args, format);
             vfprintf(stderr, format, args);
-            va_end(args);
+            va_end(args);*/
+			va_list args;
+			va_start(args, format);
+
+			char* res;
+			if (vasprintf(&res, format, args) >= 0)
+			{
+				nocashPrint(res);
+				free(res);
+			}
+
+			va_end(args);
         }
 
         void WriteLine()
@@ -101,8 +137,14 @@ namespace Console
 
         void WriteLine_VA(const utf8 * format, va_list args)
         {
-            vfprintf(stdout, format, args);
-            puts("");
+			char* res;
+			if (vasprintf(&res, format, args) >= 0)
+			{
+				nocashPrint(res);
+				free(res);
+			}
+            //vfprintf(stdout, format, args);
+            //puts("");
         }
     }
 }

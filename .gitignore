@@ -1,5 +1,8 @@
 # OPENRCT2
 
+*.elf
+*.nds
+
 sdl
 
 # Compiled dll

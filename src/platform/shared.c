@@ -131,7 +131,7 @@ void platform_update_fullscreen_resolutions()
 
 void platform_get_closest_resolution(int inWidth, int inHeight, int *outWidth, int *outHeight)
 {
-	int closestWidth = 640, closestHeight = 480;
+	/*int closestWidth = 640, closestHeight = 480;
 
 	int closestAreaDiff = -1;
 	int destinationArea = inWidth * inHeight;
@@ -156,10 +156,10 @@ void platform_get_closest_resolution(int inWidth, int inHeight, int *outWidth, i
 	if (closestAreaDiff != -1) {
 		*outWidth = closestWidth;
 		*outHeight = closestHeight;
-	} else {
-		*outWidth = 640;
-		*outHeight = 480;
-	}
+	} else {*/
+	*outWidth = 256;// 640;
+	*outHeight = 192 * 2;//480;
+	//}
 }
 
 void platform_draw()

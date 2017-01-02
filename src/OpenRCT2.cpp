@@ -151,8 +151,11 @@ extern "C"
         // }
 
         IObjectRepository * objRepo = CreateObjectRepository(OpenRCT2::_env);
+		Console::WriteLine("CreateObjectRepository done");
         ITrackDesignRepository * tdRepo = CreateTrackDesignRepository(OpenRCT2::_env);
+		Console::WriteLine("CreateTrackDesignRepository done");
         CreateScenarioRepository(OpenRCT2::_env);
+		Console::WriteLine("CreateScenarioRepository done");
 
         if (!language_open(gConfigGeneral.language))
         {
@@ -168,13 +171,16 @@ extern "C"
         //      still open the game window and draw a progress screen for the creation
         //      of the object cache.
         objRepo->LoadOrConstruct();
+		Console::WriteLine("objRepo->LoadOrConstruct() done");
 
         // TODO Like objects, this can take a while if there are a lot of track designs
         //      its also really something really we might want to do in the background
         //      as its not required until the player wants to place a new ride.
         tdRepo->Scan();
+		Console::WriteLine("tdRepo->Scan() done");
 
         TitleSequenceManager::Scan();
+		Console::WriteLine("TitleSequenceManager::Scan() done");
 
         if (!gOpenRCT2Headless)
         {
@@ -184,6 +190,7 @@ extern "C"
 
         //http_init();
         theme_manager_initialise();
+		Console::WriteLine("theme_manager_initialise() done");
 
         rct2_interop_setup_hooks();
 

@@ -52,6 +52,7 @@ utf8 _openrctDataDirectoryPath[MAX_PATH] = { 0 };
 int main(int argc, const char **argv)
 {
 	defaultExceptionHandler();
+	fatInitDefault();
 	core_init();
 
 	//int run_game = cmdline_run(argv, argc);

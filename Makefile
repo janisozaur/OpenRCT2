@@ -28,16 +28,16 @@ INCLUDES	:=	include $(SOURCES)
 ARCH	:=	-mthumb -mthumb-interwork
 
 CFLAGS	:=	-g -Wall -Os -fstrict-aliasing -Wundef -Wmissing-declarations -Winit-self -Wall -Wno-unknown-pragmas -Wno-unused-function -Wno-missing-braces -Wno-comment \
- 		-march=armv5te -mtune=arm946e-s -fomit-frame-pointer\
+ 		-march=armv5te -mtune=arm946e-s -fomit-frame-pointer -ffunction-sections -fdata-sections \
 		-ffast-math \
 		$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM9 -D__NDS__ -DDISABLE_OPENGL -DDISABLE_NETWORK -DDISABLE_HTTP -DDISABLE_TWITCH -DDEBUG -DNO_RCT2
+CFLAGS	+=	$(INCLUDE) -DARM9 -D__NDS__ -DDISABLE_OPENGL -DDISABLE_NETWORK -DDISABLE_HTTP -DDISABLE_TWITCH -DDEBUG=3 -DNO_RCT2
 CXXFLAGS	:= $(CFLAGS) -std=gnu++11 -Wnon-virtual-dtor #-fno-rtti -fno-exceptions
 CFLAGS += -std=gnu99
 
 ASFLAGS	:=	-g $(ARCH) -march=armv5te -mtune=arm946e-s $(INCLUDE)
-LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map) -ffunction-sections -fdata-sections -Wl,--gc-sections
+LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map) -Wl,--gc-sections
 
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project (order is important)
