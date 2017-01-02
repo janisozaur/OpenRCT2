@@ -22,7 +22,7 @@
 #include "../localisation/localisation.h"
 #include "../platform/platform.h"
 #include "util.h"
-#include "zlib.h"
+//#include "zlib.h"
 
 int squaredmetres_to_squaredfeet(int squaredMetres)
 {
@@ -457,7 +457,8 @@ uint32 util_rand() {
  */
 unsigned char *util_zlib_inflate(unsigned char *data, size_t data_in_size, size_t *data_out_size)
 {
-	int ret = Z_OK;
+	return NULL;
+	/*int ret = Z_OK;
 	uLongf out_size = (uLong)*data_out_size;
 	if (out_size == 0)
 	{
@@ -487,7 +488,7 @@ unsigned char *util_zlib_inflate(unsigned char *data, size_t data_in_size, size_
 	} while (ret != Z_OK);
 	buffer = realloc(buffer, out_size);
 	*data_out_size = out_size;
-	return buffer;
+	return buffer;*/
 }
 
 /**
@@ -500,7 +501,8 @@ unsigned char *util_zlib_inflate(unsigned char *data, size_t data_in_size, size_
  */
 unsigned char *util_zlib_deflate(unsigned char *data, size_t data_in_size, size_t *data_out_size)
 {
-	int ret = Z_OK;
+	return NULL;
+	/*int ret = Z_OK;
 	uLongf out_size = (uLongf)*data_out_size;
 	uLong buffer_size = compressBound((uLong)data_in_size);
 	unsigned char *buffer = malloc(buffer_size);
@@ -519,5 +521,5 @@ unsigned char *util_zlib_deflate(unsigned char *data, size_t data_in_size, size_
 	} while (ret != Z_OK);
 	*data_out_size = out_size;
 	buffer = realloc(buffer, *data_out_size);
-	return buffer;
+	return buffer;*/
 }

@@ -130,7 +130,7 @@ void chat_draw(rct_drawpixelinfo * dpi)
 	int stringHeight = 0;
 
 	// Draw chat history
-	for (int i = 0; i < CHAT_HISTORY_SIZE; i++, y -= stringHeight) {
+	/*for (int i = 0; i < CHAT_HISTORY_SIZE; i++, y -= stringHeight) {
 		if (!gChatOpen && SDL_TICKS_PASSED(SDL_GetTicks(), chat_history_get_time(i) + 10000)) {
 			break;
 		}
@@ -143,7 +143,7 @@ void chat_draw(rct_drawpixelinfo * dpi)
 		if ((y - stringHeight) < 50) {
 			break;
 		}
-	}
+	}*/
 
 	// Draw current chat input
 	if (gChatOpen) {

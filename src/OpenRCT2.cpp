@@ -182,7 +182,7 @@ extern "C"
             audio_populate_devices();
         }
 
-        http_init();
+        //http_init();
         theme_manager_initialise();
 
         rct2_interop_setup_hooks();
@@ -306,8 +306,8 @@ extern "C"
 
     void openrct2_dispose()
     {
-        network_close();
-        http_dispose();
+        //network_close();
+        //http_dispose();
         language_close_all();
         rct2_dispose();
         config_release();
@@ -337,8 +337,8 @@ namespace OpenRCT2
         platform_get_user_directory(userPath, NULL, sizeof(userPath));
         if (!platform_ensure_directory_exists(userPath))
         {
-            Console::Error::WriteLine("Could not create user directory (do you have write access to your documents folder?)");
-            return nullptr;
+            //Console::Error::WriteLine("Could not create user directory (do you have write access to your documents folder?)");
+            //return nullptr;
         }
         openrct2_set_exe_path();
 

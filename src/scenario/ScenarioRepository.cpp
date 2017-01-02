@@ -132,7 +132,7 @@ public:
         _env = env;
     }
 
-    virtual ~ScenarioRepository()
+    virtual ~ScenarioRepository() throw()
     {
         ClearHighscores();
     }

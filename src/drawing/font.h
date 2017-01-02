@@ -17,7 +17,7 @@
 #ifndef _DRAWING_FONT_H_
 #define _DRAWING_FONT_H_
 
-#include <SDL_ttf.h>
+//#include <SDL_ttf.h>
 #include "../common.h"
 
 enum {
@@ -46,7 +46,8 @@ typedef struct TTFFontDescriptor {
 	int offset_x;
 	int offset_y;
 	int line_height;
-	TTF_Font *font;
+	void* font;
+	//TTF_Font *font;
 } TTFFontDescriptor;
 
 typedef struct  TTFFontSetDescriptor {

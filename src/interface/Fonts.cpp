@@ -91,7 +91,7 @@ const language_descriptor LanguagesDescriptors[LANGUAGE_COUNT] = {
 
 static void LoadSpriteFont()
 {
-    ttf_dispose();
+    //ttf_dispose();
     gUseTrueTypeFont   = false;
     gCurrentTTFFontSet = nullptr;
 }
@@ -101,14 +101,14 @@ static bool LoadFont(TTFFontSetDescriptor * font)
     gUseTrueTypeFont   = true;
     gCurrentTTFFontSet = font;
 
-    ttf_dispose();
-    bool fontInitialised = ttf_initialise();
-    return fontInitialised;
+    //ttf_dispose();
+    //bool fontInitialised = ttf_initialise();
+	return false;//fontInitialised;
 }
 
 static bool LoadCustomConfigFont()
 {
-    static TTFFontSetDescriptor TTFFontCustom = { {
+    /*static TTFFontSetDescriptor TTFFontCustom = { {
         { gConfigFonts.file_name, gConfigFonts.font_name, gConfigFonts.size_tiny, gConfigFonts.x_offset, gConfigFonts.y_offset,
           gConfigFonts.height_tiny, nullptr },
         { gConfigFonts.file_name, gConfigFonts.font_name, gConfigFonts.size_small, gConfigFonts.x_offset, gConfigFonts.y_offset,
@@ -124,13 +124,14 @@ static bool LoadCustomConfigFont()
     gCurrentTTFFontSet = &TTFFontCustom;
 
     bool fontInitialised = ttf_initialise();
-    return fontInitialised;
+    return fontInitialised;*/
+	return false;
 }
 
 void TryLoadFonts()
 {
     TTFFontSetDescriptor * font = LanguagesDescriptors[gCurrentLanguage].font;
-    if (font != FONT_OPENRCT2_SPRITE)
+    /*if (font != FONT_OPENRCT2_SPRITE)
     {
         if (!String::IsNullOrEmpty(gConfigFonts.file_name))
         {
@@ -152,6 +153,6 @@ void TryLoadFonts()
             return;
         }
         Console::Error::WriteLine("Unable to initialise prefered TrueType font -- Falling back to sprite font.");
-    }
+    }*/
     LoadSpriteFont();
 }

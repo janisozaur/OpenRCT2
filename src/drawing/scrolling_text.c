@@ -1447,11 +1447,11 @@ int scrolling_text_setup(rct_string_id stringId, uint16 scroll, uint16 scrolling
 	const sint16* scrollingModePositions = _scrollPositions[scrollingMode];
 
 	memset(scrollText->bitmap, 0, 320 * 8);
-	if (gUseTrueTypeFont) {
-		scrolling_text_set_bitmap_for_ttf(scrollString, scroll, scrollText->bitmap, scrollingModePositions);
-	} else {
+	//if (gUseTrueTypeFont) {
+	//	scrolling_text_set_bitmap_for_ttf(scrollString, scroll, scrollText->bitmap, scrollingModePositions);
+	//} else {
 		scrolling_text_set_bitmap_for_sprite(scrollString, scroll, scrollText->bitmap, scrollingModePositions);
-	}
+	//}
 
 	uint32 imageId = SPR_SCROLLING_TEXT_START + scrollIndex;
 	drawing_engine_invalidate_image(imageId);
@@ -1509,7 +1509,7 @@ void scrolling_text_set_bitmap_for_sprite(utf8 *text, int scroll, uint8 *bitmap,
 
 void scrolling_text_set_bitmap_for_ttf(utf8 *text, int scroll, uint8 *bitmap, const sint16 *scrollPositionOffsets)
 {
-	TTFFontDescriptor *fontDesc = ttf_get_font_from_sprite_base(FONT_SPRITE_BASE_TINY);
+	/*TTFFontDescriptor *fontDesc = ttf_get_font_from_sprite_base(FONT_SPRITE_BASE_TINY);
 	if (fontDesc->font == NULL) {
 		scrolling_text_set_bitmap_for_sprite(text, scroll, bitmap, scrollPositionOffsets);
 		return;
@@ -1582,5 +1582,5 @@ void scrolling_text_set_bitmap_for_ttf(utf8 *text, int scroll, uint8 *bitmap, co
 		if (x >= width) x = 0;
 	}
 
-	if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);
+	if (SDL_MUSTLOCK(surface)) SDL_UnlockSurface(surface);*/
 }

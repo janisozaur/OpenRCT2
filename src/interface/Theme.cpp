@@ -15,7 +15,7 @@
 #pragma endregion
 
 #include <vector>
-#include <jansson.h>
+//#include <jansson.h>
 
 extern "C"
 {
@@ -25,7 +25,7 @@ extern "C"
     #include "window.h"
 }
 
-#include "../core/Json.hpp"
+//#include "../core/Json.hpp"
 #include "../core/Math.hpp"
 #include "../core/Memory.hpp"
 #include "../core/Path.hpp"
@@ -52,8 +52,8 @@ struct UIThemeWindowEntry
     WindowTheme     Theme;
 
 
-           json_t *           ToJson() const;
-    static UIThemeWindowEntry FromJson(const WindowThemeDesc * wtDesc, const json_t * json);
+    //       json_t *           ToJson() const;
+    //static UIThemeWindowEntry FromJson(const WindowThemeDesc * wtDesc, const json_t * json);
 };
 
 /**
@@ -75,10 +75,10 @@ public:
     void                       SetEntry(const UIThemeWindowEntry * entry);
     void                       RemoveEntry(rct_windowclass windowClass);
 
-    json_t * ToJson() const;
+    //json_t * ToJson() const;
     bool     WriteToFile(const utf8 * path) const;
 
-    static UITheme * FromJson(const json_t * json);
+    //static UITheme * FromJson(const json_t * json);
     static UITheme * FromFile(const utf8 * path);
     static UITheme   CreatePredefined(const utf8 * name, const UIThemeWindowEntry * entries, uint8 flags);
 };
@@ -247,12 +247,12 @@ static const WindowThemeDesc * GetWindowThemeDescriptor(const utf8 * windowClass
 
 static void ThrowThemeLoadException()
 {
-    throw Exception("Invalid JSON UI theme entry.");
+    //throw Exception("Invalid JSON UI theme entry.");
 }
 
 #pragma region UIThemeEntry
 
-json_t * UIThemeWindowEntry::ToJson() const
+/*json_t * UIThemeWindowEntry::ToJson() const
 {
     const WindowThemeDesc * wtDesc = GetWindowThemeDescriptor(WindowClass);
 
@@ -289,7 +289,7 @@ UIThemeWindowEntry UIThemeWindowEntry::FromJson(const WindowThemeDesc * wtDesc, 
     }
 
     return result;
-}
+}*/
 
 #pragma endregion
 
@@ -361,7 +361,7 @@ void UITheme::RemoveEntry(rct_windowclass windowClass)
     }
 }
 
-json_t * UITheme::ToJson() const
+/*json_t * UITheme::ToJson() const
 {
     // Create entries
     json_t * jsonEntries = json_object();
@@ -383,11 +383,11 @@ json_t * UITheme::ToJson() const
                         json_boolean(Flags & UITHEME_FLAG_USE_ALTERNATIVE_SCENARIO_SELECT_FONT));
 
     return jsonTheme;
-}
+}*/
 
 bool UITheme::WriteToFile(const utf8 * path) const
 {
-    json_t * jsonTheme = ToJson();
+    /*json_t * jsonTheme = ToJson();
     bool     result;
     try
     {
@@ -401,10 +401,11 @@ bool UITheme::WriteToFile(const utf8 * path) const
     }
 
     json_decref(jsonTheme);
-    return result;
+    return result;*/
+	return false;
 }
 
-UITheme * UITheme::FromJson(const json_t * json)
+/*UITheme * UITheme::FromJson(const json_t * json)
 {
     const char * themeName = json_string_value(json_object_get(json, "name"));
     if (themeName == nullptr)
@@ -450,11 +451,11 @@ UITheme * UITheme::FromJson(const json_t * json)
         delete result;
         throw;
     }
-}
+}*/
 
 UITheme * UITheme::FromFile(const utf8 * path)
 {
-    json_t  * json = nullptr;
+    /*json_t  * json = nullptr;
     UITheme * result = nullptr;
     try
     {
@@ -468,7 +469,8 @@ UITheme * UITheme::FromFile(const utf8 * path)
     }
 
     json_decref(json);
-    return result;
+    return result;*/
+	return NULL;
 }
 
 UITheme UITheme::CreatePredefined(const utf8 * name, const UIThemeWindowEntry * entries, uint8 flags)

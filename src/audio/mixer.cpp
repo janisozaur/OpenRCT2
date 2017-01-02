@@ -356,7 +356,7 @@ Channel::Channel()
 Channel::~Channel()
 {
 	if (resampler) {
-		speex_resampler_destroy(resampler);
+		//speex_resampler_destroy(resampler);
 		resampler = 0;
 	}
 	if (deletesourceondone) {
@@ -645,16 +645,16 @@ void Mixer::MixChannel(Channel& channel, uint8* data, int length)
 					int in_len = (int)((double)lengthloaded / samplesize);
 					int out_len = samples;
 					if (!channel.resampler) {
-						channel.resampler = speex_resampler_init(format.channels, format.freq, format.freq, 0, 0);
+						//channel.resampler = speex_resampler_init(format.channels, format.freq, format.freq, 0, 0);
 					}
 					if (readfromstream == toread) {
 						// use buffer lengths for conversion ratio so that it fits exactly
-						speex_resampler_set_rate(channel.resampler, in_len, samples - samplesloaded);
+						//speex_resampler_set_rate(channel.resampler, in_len, samples - samplesloaded);
 					} else {
 						// reached end of stream so we cant use buffer length as resampling ratio
-						speex_resampler_set_rate(channel.resampler, format.freq, (int)(format.freq * (1 / rate)));
+						//speex_resampler_set_rate(channel.resampler, format.freq, (int)(format.freq * (1 / rate)));
 					}
-					speex_resampler_process_interleaved_int(channel.resampler, (const spx_int16_t*)tomix, (spx_uint32_t*)&in_len, (spx_int16_t*)effectbuffer, (spx_uint32_t*)&out_len);
+					//speex_resampler_process_interleaved_int(channel.resampler, (const spx_int16_t*)tomix, (spx_uint32_t*)&in_len, (spx_int16_t*)effectbuffer, (spx_uint32_t*)&out_len);
 					effectbufferloaded = true;
 					tomix = effectbuffer;
 					lengthloaded = (out_len * samplesize);

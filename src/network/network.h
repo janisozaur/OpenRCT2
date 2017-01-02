@@ -43,7 +43,7 @@ extern "C" {
 #include "../game.h"
 #include "../platform/platform.h"
 #include "../localisation/string_ids.h"
-#include <openssl/evp.h>
+//#include <openssl/evp.h>
 #ifdef __cplusplus
 }
 #endif // __cplusplus

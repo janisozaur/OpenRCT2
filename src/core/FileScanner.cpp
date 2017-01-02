@@ -102,7 +102,7 @@ public:
         Reset();
     }
 
-    ~FileScannerBase() override
+    ~FileScannerBase() throw() override
     {
         Memory::Free(_rootPath);
         for (size_t i = 0; i < _numPatterns; i++)

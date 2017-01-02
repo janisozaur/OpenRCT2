@@ -14,7 +14,7 @@
  *****************************************************************************/
 #pragma endregion
 
-#if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__)) || defined(__FreeBSD__)
+#if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__)) || defined(__FreeBSD__) || defined(__NDS__)
 
 #include <dirent.h>
 #include <errno.h>
@@ -34,7 +34,7 @@
 #include <dirent.h>
 #include <sys/time.h>
 #include <time.h>
-#include <fts.h>
+//#include <fts.h>
 #include <sys/file.h>
 
 // The name of the mutex used to prevent multiple instances of the game from running
@@ -51,13 +51,14 @@ utf8 _openrctDataDirectoryPath[MAX_PATH] = { 0 };
  */
 int main(int argc, const char **argv)
 {
+	defaultExceptionHandler();
 	core_init();
 
-	int run_game = cmdline_run(argv, argc);
-	if (run_game == 1)
-	{
+	//int run_game = cmdline_run(argv, argc);
+	//if (run_game == 1)
+	//{
 		openrct2_launch();
-	}
+	//}
 
 	exit(gExitCode);
 	return gExitCode;
@@ -167,9 +168,10 @@ bool platform_original_game_data_exists(const utf8 *path)
 
 static mode_t getumask()
 {
-	mode_t mask = umask(0);
-	umask(mask);
-	return 0777 & ~mask; // Keep in mind 0777 is octal
+	//mode_t mask = umask(0);
+	//umask(mask);
+	//return 0777 & ~mask; // Keep in mind 0777 is octal
+	return 777;
 }
 
 bool platform_ensure_directory_exists(const utf8 *path)
@@ -208,7 +210,7 @@ bool platform_ensure_directory_exists(const utf8 *path)
 
 bool platform_directory_delete(const utf8 *path)
 {
-	log_verbose("Recursively deleting directory %s", path);
+	/*log_verbose("Recursively deleting directory %s", path);
 
 	FTS *ftsp;
 	FTSENT *p, *chp;
@@ -258,12 +260,13 @@ bool platform_directory_delete(const utf8 *path)
 	free(ourPath);
 	fts_close(ftsp);
 
-	return true;
+	return true;*/
+	return false;
 }
 
 bool platform_lock_single_instance()
 {
-	char pidFilePath[MAX_PATH];
+	/*char pidFilePath[MAX_PATH];
 
 	safe_strcpy(pidFilePath, _userDataDirectoryPath, sizeof(pidFilePath));
 	safe_strcat_path(pidFilePath, SINGLE_INSTANCE_MUTEX_NAME, sizeof(pidFilePath));
@@ -285,7 +288,7 @@ bool platform_lock_single_instance()
 		}
 		log_error("flock returned an uncatched errno: %d", errno);
 		return false;
-	}
+	}*/
 	return true;
 }
 
@@ -304,7 +307,7 @@ char *g_file_pattern;
 
 static int winfilter(const struct dirent *d)
 {
-	int entry_length = strnlen(d->d_name, MAX_PATH);
+	/*int entry_length = strnlen(d->d_name, MAX_PATH);
 	char *name_upper = malloc(entry_length + 1);
 	if (name_upper == NULL)
 	{
@@ -319,12 +322,13 @@ static int winfilter(const struct dirent *d)
 	bool match = fnmatch(g_file_pattern, name_upper, FNM_PATHNAME) == 0;
 	//log_verbose("trying matching filename %s, result = %d", name_upper, match);
 	free(name_upper);
-	return match;
+	return match;*/
+	return 0;
 }
 
 int platform_enumerate_files_begin(const utf8 *pattern)
 {
-	char npattern[MAX_PATH];
+	/*char npattern[MAX_PATH];
 	platform_utf8_to_multibyte(pattern, npattern, MAX_PATH);
 	enumerate_file_info *enumFileInfo;
 	log_verbose("begin file search, pattern: %s", npattern);
@@ -387,14 +391,14 @@ int platform_enumerate_files_begin(const utf8 *pattern)
 
 	free(dir_name);
 	free(g_file_pattern);
-	g_file_pattern = NULL;
+	g_file_pattern = NULL;*/
 	return -1;
 }
 
 bool platform_enumerate_files_next(int handle, file_info *outFileInfo)
 {
 
-	if (handle < 0)
+	/*if (handle < 0)
 	{
 		return false;
 	}
@@ -424,7 +428,8 @@ bool platform_enumerate_files_next(int handle, file_info *outFileInfo)
 		return true;
 	} else {
 		return false;
-	}
+	}*/
+	return false;
 }
 
 void platform_enumerate_files_end(int handle)
@@ -466,7 +471,7 @@ static int dirfilter(const struct dirent *d)
 
 int platform_enumerate_directories_begin(const utf8 *directory)
 {
-	char npattern[MAX_PATH];
+	/*char npattern[MAX_PATH];
 	int length = platform_utf8_to_multibyte(directory, npattern, MAX_PATH) + 1;
 	enumerate_file_info *enumFileInfo;
 	log_verbose("begin directory listing, path: %s", npattern);
@@ -505,14 +510,14 @@ int platform_enumerate_directories_begin(const utf8 *directory)
 			enumFileInfo->active = 1;
 			return i;
 		}
-	}
+	}*/
 
 	return -1;
 }
 
 bool platform_enumerate_directories_next(int handle, utf8 *path)
 {
-	if (handle < 0)
+	/*if (handle < 0)
 	{
 		return false;
 	}
@@ -543,7 +548,8 @@ bool platform_enumerate_directories_next(int handle, utf8 *path)
 		return true;
 	} else {
 		return false;
-	}
+	}*/
+	return false;
 }
 
 void platform_enumerate_directories_end(int handle)
@@ -666,8 +672,8 @@ static wchar_t *regular_to_wchar(const char* src)
  */
 void platform_resolve_user_data_path()
 {
-
-	if (gCustomUserDataPath[0] != 0) {
+	safe_strcpy(_userDataDirectoryPath, "/usr_data", MAX_PATH);
+	/*if (gCustomUserDataPath[0] != 0) {
 		if (!platform_ensure_directory_exists(gCustomUserDataPath)) {
 			log_error("Failed to create directory \"%s\", make sure you have permissions.", gCustomUserDataPath);
 			return;
@@ -704,7 +710,7 @@ void platform_resolve_user_data_path()
 	free(w_buffer);
 	safe_strcpy(_userDataDirectoryPath, path, MAX_PATH);
 	free(path);
-	log_verbose("User data path resolved to: %s", _userDataDirectoryPath);
+	log_verbose("User data path resolved to: %s", _userDataDirectoryPath);*/
 }
 
 void platform_get_openrct_data_path(utf8 *outPath, size_t outSize)
@@ -720,7 +726,8 @@ void platform_get_openrct_data_path(utf8 *outPath, size_t outSize)
  */
 void platform_resolve_openrct_data_path()
 {
-	if (gCustomOpenrctDataPath[0] != 0) {
+	safe_strcpy(_openrctDataDirectoryPath, "/openrct2", MAX_PATH);
+	/*if (gCustomOpenrctDataPath[0] != 0) {
 		// NOTE: second argument to `realpath` is meant to either be NULL or `PATH_MAX`-sized buffer,
 		// since our `MAX_PATH` macro is set to some other value, pass NULL to have `realpath` return
 		// a `malloc`ed buffer.
@@ -751,12 +758,13 @@ void platform_resolve_openrct_data_path()
 	}
 
 	platform_posix_sub_resolve_openrct_data_path(_openrctDataDirectoryPath, sizeof(_openrctDataDirectoryPath));
-	log_verbose("Trying to use OpenRCT2 data in %s", _openrctDataDirectoryPath);
+	log_verbose("Trying to use OpenRCT2 data in %s", _openrctDataDirectoryPath);*/
 }
 
 void platform_get_user_directory(utf8 *outPath, const utf8 *subDirectory, size_t outSize)
 {
-	char buffer[MAX_PATH];
+	safe_strcpy(_userDataDirectoryPath, "/usr_dir", MAX_PATH);
+	/*char buffer[MAX_PATH];
 	safe_strcpy(buffer, _userDataDirectoryPath, sizeof(buffer));
 	if (subDirectory != NULL && subDirectory[0] != 0) {
 		log_verbose("adding subDirectory '%s'", subDirectory);
@@ -770,7 +778,7 @@ void platform_get_user_directory(utf8 *outPath, const utf8 *subDirectory, size_t
 	free(w_buffer);
 	safe_strcpy(outPath, path, outSize);
 	free(path);
-	log_verbose("outPath + subDirectory = '%s'", buffer);
+	log_verbose("outPath + subDirectory = '%s'", buffer);*/
 }
 
 time_t platform_file_get_modified_time(const utf8* path){
@@ -783,7 +791,7 @@ time_t platform_file_get_modified_time(const utf8* path){
 
 uint8 platform_get_locale_temperature_format(){
 	// LC_MEASUREMENT is GNU specific.
-	#ifdef LC_MEASUREMENT
+	/*#ifdef LC_MEASUREMENT
 	const char *langstring = setlocale(LC_MEASUREMENT, "");
 	#else
 	const char *langstring = setlocale(LC_ALL, "");
@@ -797,7 +805,7 @@ uint8 platform_get_locale_temperature_format(){
 		{
 			return TEMPERATURE_FORMAT_F;
 		}
-	}
+	}*/
 	return TEMPERATURE_FORMAT_C;
 }
 
@@ -816,13 +824,13 @@ datetime64 platform_get_datetime_now_utc()
 }
 
 utf8* platform_get_username() {
-	struct passwd* pw = getpwuid(getuid());
+	/*struct passwd* pw = getpwuid(getuid());
 
 	if (pw) {
 		return pw->pw_name;
-	} else {
+	} else {*/
 		return NULL;
-	}
+	//}
 }
 
 void platform_init_window_icon()

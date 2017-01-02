@@ -269,7 +269,7 @@ void platform_update_palette(const uint8* colours, int start_index, int num_colo
 		gPalette[i].r = r;
 		gPalette[i].g = g;
 		gPalette[i].b = b;
-		gPalette[i].a = 0;
+		//gPalette[i].a = 0;
 		colours += 4;
 		if (gBufferTextureFormat != NULL) {
 			gPaletteHWMapped[i] = SDL_MapRGB(gBufferTextureFormat, gPalette[i].r, gPalette[i].g, gPalette[i].b);
@@ -570,7 +570,7 @@ void platform_init()
 	// Set the highest palette entry to white.
 	// This fixes a bug with the TT:rainbow road due to the
 	// image not using the correct white palette entry.
-	gPalette[255].a = 0;
+	//gPalette[255].a = 0;
 	gPalette[255].r = 255;
 	gPalette[255].g = 255;
 	gPalette[255].b = 255;

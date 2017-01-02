@@ -7919,14 +7919,14 @@ loc_6DBE7F:
 	return false;
 }
 
-extern const uint8 mini_golf_peep_animation_lengths[];
+//extern const uint8 mini_golf_peep_animation_lengths[];
 
 /**
  *  rct2: 0x006DC3A7
  *
  *
  */
-static int vehicle_update_track_motion_mini_golf(rct_vehicle *vehicle, int* outStation) {
+/*static int vehicle_update_track_motion_mini_golf(rct_vehicle *vehicle, int* outStation) {
 	registers regs = { 0 };
 
 	rct_ride *ride = get_ride(vehicle->ride);
@@ -8556,7 +8556,7 @@ loc_6DD069:
 
 	if (outStation != NULL) *outStation = regs.ebx;
 	return regs.eax;
-}
+}*/
 
 /**
  *
@@ -8571,7 +8571,7 @@ int vehicle_update_track_motion(rct_vehicle *vehicle, int *outStation)
 	rct_ride_entry_vehicle *vehicleEntry = vehicle_get_vehicle_entry(vehicle);
 
 	if (vehicleEntry->flags_a & VEHICLE_ENTRY_FLAG_A_MINI_GOLF) {
-		return vehicle_update_track_motion_mini_golf(vehicle, outStation);
+		return 0;//vehicle_update_track_motion_mini_golf(vehicle, outStation);
 	}
 
 	_vehicleF64E2C = 0;

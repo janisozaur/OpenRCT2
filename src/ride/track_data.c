@@ -6240,7 +6240,7 @@ const track_curve_chain gFlatRideTrackCurveChain[256] = {
 	{ 0, 57088 },
 };
 
-const TRACK_PAINT_FUNCTION_GETTER RideTypeTrackPaintFunctions[91] = {
+const TRACK_PAINT_FUNCTION_GETTER RideTypeTrackPaintFunctions[91];/* = {
 	get_track_paint_function_spiral_rc,						// RIDE_TYPE_SPIRAL_ROLLER_COASTER
 	get_track_paint_function_stand_up_rc,						// RIDE_TYPE_STAND_UP_ROLLER_COASTER
 	get_track_paint_function_suspended_swinging_rc,						// RIDE_TYPE_SUSPENDED_SWINGING_COASTER
@@ -6332,7 +6332,7 @@ const TRACK_PAINT_FUNCTION_GETTER RideTypeTrackPaintFunctions[91] = {
 	get_track_paint_function_mine_ride,						// RIDE_TYPE_MINE_RIDE
 	0,						// RIDE_TYPE_59
 	get_track_paint_function_lim_launched_rc,						// RIDE_TYPE_LIM_LAUNCHED_ROLLER_COASTER
-};
+};*/
 
 const track_descriptor gTrackDescriptors[142] = {
 	{	true,	TRACK_SLOPE_DOWN_60,	TRACK_BANK_NONE,	TRACK_CURVE_NONE,				TRACK_SLOPE_DOWN_60,	TRACK_BANK_NONE,	TRACK_ELEM_DIAG_60_DEG_DOWN										},
@@ -6479,7 +6479,7 @@ const track_descriptor gTrackDescriptors[142] = {
 	{	false,	TRACK_SLOPE_UP_90,		TRACK_BANK_NONE,	TRACK_CURVE_RIGHT_SMALL,		TRACK_SLOPE_UP_90,		TRACK_BANK_NONE,	TRACK_ELEM_RIGHT_QUARTER_TURN_1_TILE_90_DEG_UP					},
 };
 
-const rct_vehicle_info_list TrackVehicleInfo_8BE57A = {
+/*const rct_vehicle_info_list TrackVehicleInfo_8BE57A = {
 	32, {
 	{     31,   16,    0,  0,  0,  0 }, {     30,   16,    0,  0,  0,  0 }, {     29,   16,    0,  0,  0,  0 }, {     28,   16,    0,  0,  0,  0 }, {     27,   16,    0,  0,  0,  0 },
 	{     26,   16,    0,  0,  0,  0 }, {     25,   16,    0,  0,  0,  0 }, {     24,   16,    0,  0,  0,  0 }, {     23,   16,    0,  0,  0,  0 }, {     22,   16,    0,  0,  0,  0 },
@@ -30836,10 +30836,10 @@ const rct_vehicle_info_list *TrackVehicleInfoList_8BAD28[] = {
 	&TrackVehicleInfo_90C4D2, &TrackVehicleInfo_90C8D6, &TrackVehicleInfo_90CCDA, &TrackVehicleInfo_90D0DE, &TrackVehicleInfo_90D4E2, &TrackVehicleInfo_90D7B4,
 	&TrackVehicleInfo_90DA86, &TrackVehicleInfo_90DD58, &TrackVehicleInfo_908EC2, &TrackVehicleInfo_909974, &TrackVehicleInfo_90A426, &TrackVehicleInfo_90AED8,
 	&TrackVehicleInfo_8BE57A, &TrackVehicleInfo_8BE69C, &TrackVehicleInfo_8BE7BE, &TrackVehicleInfo_8BE8E0,
-};
+};*/
 
 // rct2: 0x008B8F30
-const rct_vehicle_info_list **gTrackVehicleInfo[17] = {
+const rct_vehicle_info_list **gTrackVehicleInfo[17];/* = {
 	TrackVehicleInfoList_8B8F98,
 	TrackVehicleInfoList_8BBAB8,
 	TrackVehicleInfoList_8BC588,
@@ -30857,7 +30857,7 @@ const rct_vehicle_info_list **gTrackVehicleInfo[17] = {
 	TrackVehicleInfoList_937530,
 	TrackVehicleInfoList_8B9F98,
 	TrackVehicleInfoList_8BAD28,
-};
+};*/
 
 /** rct2: 0x00993D1C */
 const sint16 AlternativeTrackTypes[256] = {

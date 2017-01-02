@@ -125,11 +125,11 @@ int font_get_size_from_sprite_base(uint16 spriteBase)
 int font_get_line_height(int fontSpriteBase)
 {
 	int fontSize = font_get_size_from_sprite_base(fontSpriteBase);
-	if (gUseTrueTypeFont) {
-		return gCurrentTTFFontSet->size[fontSize].line_height;
-	} else {
+	//if (gUseTrueTypeFont) {
+	//	return gCurrentTTFFontSet->size[fontSize].line_height;
+	//} else {
 		return SpriteFontLineHeight[fontSize];
-	}
+	//}
 }
 
 int font_get_line_height_small(int fontSpriteBase)
@@ -190,7 +190,8 @@ bool font_supports_string_sprite(const utf8 *text)
 
 bool font_supports_string_ttf(const utf8 *text, int fontSize)
 {
-	const utf8 *src = text;
+	return false;
+	/*const utf8 *src = text;
 	const TTF_Font *font = gCurrentTTFFontSet->size[fontSize].font;
 	if (font == NULL) {
 		return false;
@@ -203,14 +204,14 @@ bool font_supports_string_ttf(const utf8 *text, int fontSize)
 			return false;
 		}
 	}
-	return true;
+	return true;*/
 }
 
 bool font_supports_string(const utf8 *text, int fontSize)
 {
-	if (gUseTrueTypeFont) {
-		return font_supports_string_ttf(text, fontSize);
-	} else {
+	//if (gUseTrueTypeFont) {
+	//	return font_supports_string_ttf(text, fontSize);
+	//} else {
 		return font_supports_string_sprite(text);
-	}
+	//}
 }

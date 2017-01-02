@@ -28,7 +28,7 @@
 #include "../core/Path.hpp"
 #include "../core/String.hpp"
 #include "../core/StringBuilder.hpp"
-#include "../core/Zip.h"
+//#include "../core/Zip.h"
 #include "TitleSequence.h"
 
 #ifndef MAX_PATH
@@ -36,7 +36,7 @@
 #endif
 
 static std::vector<utf8 *> GetSaves(const utf8 * path);
-static std::vector<utf8 *> GetSaves(IZipArchive * zip);
+//static std::vector<utf8 *> GetSaves(IZipArchive * zip);
 static std::vector<TitleCommand> LegacyScriptRead(utf8 * script, size_t scriptLength, std::vector<utf8 *> saves);
 static void LegacyScriptGetLine(SDL_RWops * file, char * parts);
 static void * ReadScriptFile(const utf8 * path, size_t * outSize);
@@ -61,7 +61,7 @@ extern "C"
         log_verbose("Loading title sequence: %s", path);
 
         const utf8 * ext = Path::GetExtension(path);
-        if (String::Equals(ext, TITLE_SEQUENCE_EXTENSION))
+        /*if (String::Equals(ext, TITLE_SEQUENCE_EXTENSION))
         {
             IZipArchive * zip = Zip::TryOpen(path, ZIP_ACCESS_READ);
             if (zip == nullptr)
@@ -84,7 +84,7 @@ extern "C"
             delete zip;
         }
         else
-        {
+        {*/
             utf8 scriptPath[MAX_PATH];
             String::Set(scriptPath, sizeof(scriptPath), path);
             Path::Append(scriptPath, sizeof(scriptPath), "script.txt");
@@ -97,7 +97,7 @@ extern "C"
 
             saves = GetSaves(path);
             isZip = false;
-        }
+        //}
 
         std::vector<TitleCommand> commands = LegacyScriptRead(script, scriptLength, saves);
 
@@ -134,7 +134,7 @@ extern "C"
         if (index <= seq->NumSaves)
         {
             const utf8 * filename = seq->Saves[index];
-            if (seq->IsZip)
+            /*if (seq->IsZip)
             {
                 IZipArchive * zip = Zip::TryOpen(seq->Path, ZIP_ACCESS_READ);
                 if (zip != nullptr)
@@ -147,7 +147,7 @@ extern "C"
                 }
             }
             else
-            {
+            {*/
                 utf8 absolutePath[MAX_PATH];
                 String::Set(absolutePath, sizeof(absolutePath), seq->Path);
                 Path::Append(absolutePath, sizeof(absolutePath), filename);
@@ -156,7 +156,7 @@ extern "C"
                 handle->Data = nullptr;
                 handle->RWOps = SDL_RWFromFile(absolutePath, "rb");
                 handle->IsScenario = String::Equals(Path::GetExtension(filename), ".sc6", true);
-            }
+            //}
         }
         return handle;
     }
@@ -175,7 +175,7 @@ extern "C"
     {
         bool success = false;
         utf8 * script = LegacyScriptWrite(seq);
-        if (seq->IsZip)
+        /*if (seq->IsZip)
         {
             IZipArchive * zip = Zip::TryOpen(seq->Path, ZIP_ACCESS_WRITE);
             zip->SetFileData("script.txt", script, String::SizeOf(script));
@@ -183,7 +183,7 @@ extern "C"
             success = true;
         }
         else
-        {
+        {*/
             utf8 scriptPath[MAX_PATH];
             String::Set(scriptPath, sizeof(scriptPath), seq->Path);
             Path::Append(scriptPath, sizeof(scriptPath), "script.txt");
@@ -197,7 +197,7 @@ extern "C"
             catch (Exception)
             {
             }
-        }
+        //}
 
         Memory::Free(script);
         return success;
@@ -224,7 +224,7 @@ extern "C"
         }
         seq->Saves[index] = String::Duplicate(name);
 
-        if (seq->IsZip)
+        /*if (seq->IsZip)
         {
             try
             {
@@ -247,7 +247,7 @@ extern "C"
             }
         }
         else
-        {
+        {*/
             // Determine destination path
             utf8 dstPath[MAX_PATH];
             String::Set(dstPath, sizeof(dstPath), seq->Path);
@@ -257,7 +257,7 @@ extern "C"
                 Console::Error::WriteLine("Unable to copy '%s' to '%s'", path, dstPath);
                 return false;
             }
-        }
+       // }
         return true;
     }
 
@@ -266,7 +266,7 @@ extern "C"
         Guard::Assert(index < seq->NumSaves, GUARD_LINE);
 
         utf8 * oldRelativePath = seq->Saves[index];
-        if (seq->IsZip)
+        /*if (seq->IsZip)
         {
             IZipArchive * zip = Zip::TryOpen(seq->Path, ZIP_ACCESS_WRITE);
             if (zip == nullptr)
@@ -278,7 +278,7 @@ extern "C"
             delete zip;
         }
         else
-        {
+        {*/
             utf8 srcPath[MAX_PATH];
             utf8 dstPath[MAX_PATH];
             String::Set(srcPath, sizeof(srcPath), seq->Path);
@@ -290,7 +290,7 @@ extern "C"
                 Console::Error::WriteLine("Unable to move '%s' to '%s'", srcPath, dstPath);
                 return false;
             }
-        }
+     //   }
 
         Memory::Free(seq->Saves[index]);
         seq->Saves[index] = String::Duplicate(name);
@@ -303,7 +303,7 @@ extern "C"
 
         // Delete park file
         utf8 * relativePath = seq->Saves[index];
-        if (seq->IsZip)
+        /*if (seq->IsZip)
         {
             IZipArchive * zip = Zip::TryOpen(seq->Path, ZIP_ACCESS_WRITE);
             if (zip == nullptr)
@@ -315,7 +315,7 @@ extern "C"
             delete zip;
         }
         else
-        {
+        {*/
             utf8 absolutePath[MAX_PATH];
             String::Set(absolutePath, sizeof(absolutePath), seq->Path);
             Path::Append(absolutePath, sizeof(absolutePath), relativePath);
@@ -324,7 +324,7 @@ extern "C"
                 Console::Error::WriteLine("Unable to delete '%s'", absolutePath);
                 return false;
             }
-        }
+        //}
 
         // Remove from sequence
         Memory::Free(relativePath);
@@ -374,7 +374,7 @@ static std::vector<utf8 *> GetSaves(const utf8 * directory)
     return saves;
 }
 
-static std::vector<utf8 *> GetSaves(IZipArchive * zip)
+/*static std::vector<utf8 *> GetSaves(IZipArchive * zip)
 {
     std::vector<utf8 *> saves;
     size_t numFiles = zip->GetNumFiles();
@@ -389,7 +389,7 @@ static std::vector<utf8 *> GetSaves(IZipArchive * zip)
         }
     }
     return saves;
-}
+}*/
 
 static std::vector<TitleCommand> LegacyScriptRead(utf8 * script, size_t scriptLength, std::vector<utf8 *> saves)
 {

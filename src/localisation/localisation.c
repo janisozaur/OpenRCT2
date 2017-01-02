@@ -1223,7 +1223,7 @@ utf8 *win1252_to_utf8_alloc(const char *src, size_t srcMaxSize)
 
 int win1252_to_utf8(utf8string dst, const char *src, size_t srcLength, size_t maxBufferLength)
 {
-#ifdef __WINDOWS__
+	/*#ifdef __WINDOWS__
 	utf16 stackBuffer[256];
 	utf16 *heapBuffer = NULL;
 	utf16 *intermediateBuffer = stackBuffer;
@@ -1293,5 +1293,6 @@ int win1252_to_utf8(utf8string dst, const char *src, size_t srcLength, size_t ma
 	free(buffer_orig);
 #endif // __WINDOWS__
 
-	return result;
+	return result;*/
+	return 0;
 }

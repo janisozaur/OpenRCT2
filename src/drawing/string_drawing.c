@@ -40,7 +40,8 @@ static bool _ttfInitialised = false;
 
 typedef struct ttf_cache_entry {
 	SDL_Surface *surface;
-	TTF_Font *font;
+	//TTF_Font *font;
+	void* font;
 	utf8 *text;
 	uint32 lastUseTick;
 } ttf_cache_entry;
@@ -52,7 +53,8 @@ static int _ttfSurfaceCacheMissCount = 0;
 
 typedef struct ttf_getwidth_cache_entry {
 	uint32 width;
-	TTF_Font *font;
+	//TTF_Font *font;
+	void* font;
 	utf8 *text;
 	uint32 lastUseTick;
 } ttf_getwidth_cache_entry;
@@ -644,7 +646,7 @@ int string_get_height_raw(char *buffer)
 
 /**
  *
- *  rct2: 0x006C1F57
+ *  rct2: 0x006C1F75
  *
  * colour   : al
  * format   : bx
@@ -702,7 +704,7 @@ void gfx_draw_string_centred_wrapped_partial(rct_drawpixelinfo *dpi, int x, int 
 	}
 }
 
-static uint32 _ttf_surface_cache_hash(TTF_Font *font, const utf8 *text)
+/*static uint32 _ttf_surface_cache_hash(TTF_Font *font, const utf8 *text)
 {
 	uint32 hash = (uint32)((((uintptr_t)font * 23) ^ 0xAAAAAAAA) & 0xFFFFFFFF);
 	for (const utf8 *ch = text; *ch != 0; ch++) {
@@ -891,7 +893,7 @@ void ttf_dispose()
 TTFFontDescriptor *ttf_get_font_from_sprite_base(uint16 spriteBase)
 {
 	return &gCurrentTTFFontSet->size[font_get_size_from_sprite_base(spriteBase)];
-}
+}*/
 
 typedef struct text_draw_info {
 	int startX;
@@ -935,7 +937,7 @@ static void ttf_draw_string_raw_sprite(rct_drawpixelinfo *dpi, const utf8 *text,
 	};
 }
 
-static void ttf_draw_string_raw_ttf(rct_drawpixelinfo *dpi, const utf8 *text, text_draw_info *info)
+/*static void ttf_draw_string_raw_ttf(rct_drawpixelinfo *dpi, const utf8 *text, text_draw_info *info)
 {
 	if (!_ttfInitialised && !ttf_initialise())
 		return;
@@ -1037,15 +1039,15 @@ static void ttf_draw_string_raw_ttf(rct_drawpixelinfo *dpi, const utf8 *text, te
 			SDL_UnlockSurface(surface);
 		}
 	}
-}
+}*/
 
 static void ttf_draw_string_raw(rct_drawpixelinfo *dpi, const utf8 *text, text_draw_info *info)
 {
-	if (info->flags & TEXT_DRAW_FLAG_TTF) {
-		ttf_draw_string_raw_ttf(dpi, text, info);
-	} else {
+	//if (info->flags & TEXT_DRAW_FLAG_TTF) {
+	//	ttf_draw_string_raw_ttf(dpi, text, info);
+	//} else {
 		ttf_draw_string_raw_sprite(dpi, text, info);
-	}
+	//}
 }
 
 static const utf8 *ttf_process_format_code(rct_drawpixelinfo *dpi, const utf8 *text, text_draw_info *info)

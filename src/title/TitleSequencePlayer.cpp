@@ -48,7 +48,7 @@ private:
     rct_xy32        _viewCentreLocation = { 0 };
 
 public:
-    ~TitleSequencePlayer() override
+    ~TitleSequencePlayer() throw() override
     {
         Eject();
     }

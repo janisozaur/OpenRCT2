@@ -18,7 +18,7 @@
 #include "../config.h"
 #include "../drawing/drawing.h"
 #include "../game.h"
-#include "../image_io.h"
+//#include "../image_io.h"
 #include "../intro.h"
 #include "../localisation/localisation.h"
 #include "../OpenRCT2.h"
@@ -64,7 +64,7 @@ static void screenshot_get_rendered_palette(rct_palette* palette) {
 		entry->red = renderedEntry->r;
 		entry->green = renderedEntry->g;
 		entry->blue = renderedEntry->b;
-		entry->alpha = renderedEntry->a;
+		//entry->alpha = renderedEntry->a;
 	}
 }
 
@@ -126,11 +126,11 @@ int screenshot_dump_png(rct_drawpixelinfo *dpi)
 	rct_palette renderedPalette;
 	screenshot_get_rendered_palette(&renderedPalette);
 
-	if (image_io_png_write(dpi, &renderedPalette, path)) {
-		return index;
-	} else {
+	//if (image_io_png_write(dpi, &renderedPalette, path)) {
+	//	return index;
+	//} else {
 		return -1;
-	}
+	//}
 }
 
 int screenshot_dump_png_32bpp(sint32 width, sint32 height, const void *pixels)
@@ -142,11 +142,11 @@ int screenshot_dump_png_32bpp(sint32 width, sint32 height, const void *pixels)
 		return -1;
 	}
 
-	if (image_io_png_write_32bpp(width, height, pixels, path)) {
-		return index;
-	} else {
+	//if (image_io_png_write_32bpp(width, height, pixels, path)) {
+	//	return index;
+	//} else {
 		return -1;
-	}
+	//}
 }
 
 void screenshot_giant()
@@ -232,7 +232,7 @@ void screenshot_giant()
 	rct_palette renderedPalette;
 	screenshot_get_rendered_palette(&renderedPalette);
 
-	image_io_png_write(&dpi, &renderedPalette, path);
+	//image_io_png_write(&dpi, &renderedPalette, path);
 
 	free(dpi.bits);
 
@@ -369,7 +369,7 @@ int cmdline_for_screenshot(const char **argv, int argc)
 		rct_palette renderedPalette;
 		screenshot_get_rendered_palette(&renderedPalette);
 
-		image_io_png_write(&dpi, &renderedPalette, outputPath);
+		//image_io_png_write(&dpi, &renderedPalette, outputPath);
 
 		free(dpi.bits);
 		drawing_engine_dispose();

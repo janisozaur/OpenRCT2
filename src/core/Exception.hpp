@@ -28,7 +28,7 @@ public:
     explicit Exception(const char * message) : Exception(std::string(message)) { }
     explicit Exception(const std::string &message) : std::exception(), _message(message) { }
 
-    virtual ~Exception() { }
+    virtual ~Exception() throw() { }
 
     const char * what()       const throw() override { return _message.c_str(); }
     const char * GetMessage() const                  { return _message.c_str(); }

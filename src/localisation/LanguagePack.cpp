@@ -177,7 +177,7 @@ public:
         _currentScenarioOverride = nullptr;
     }
 
-    ~LanguagePack()
+    ~LanguagePack() throw()
     {
         Memory::Free(_stringData);
         Memory::Free(_currentGroup);

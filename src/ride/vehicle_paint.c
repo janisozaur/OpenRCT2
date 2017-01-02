@@ -2362,15 +2362,15 @@ void vehicle_paint(rct_vehicle *vehicle, int imageDirection)
 
 	switch (vehicleEntry->car_visual) {
 	case VEHICLE_VISUAL_DEFAULT:						vehicle_visual_default(x, imageDirection, y, z, vehicle, vehicleEntry); break;
-	case VEHICLE_VISUAL_LAUNCHED_FREEFALL:				vehicle_visual_launched_freefall(x, imageDirection, y, z, vehicle, vehicleEntry); break;
-	case VEHICLE_VISUAL_OBSERVATION_TOWER:				vehicle_visual_observation_tower(x, imageDirection, y, z, vehicle, vehicleEntry); break;
-	case VEHICLE_VISUAL_RIVER_RAPIDS:					vehicle_visual_river_rapids(x, imageDirection, y, z, vehicle, vehicleEntry); break;
-	case VEHICLE_VISUAL_MINI_GOLF_PLAYER:				vehicle_visual_mini_golf_player(x, imageDirection, y, z, vehicle); break;
-	case VEHICLE_VISUAL_MINI_GOLF_BALL:					vehicle_visual_mini_golf_ball(x, imageDirection, y, z, vehicle); break;
-	case VEHICLE_VISUAL_REVERSER:						vehicle_visual_reverser(x, imageDirection, y, z, vehicle, vehicleEntry); break;
-	case VEHICLE_VISUAL_SPLASH_BOATS_OR_WATER_COASTER:	vehicle_visual_splash_boats_or_water_coaster(x, imageDirection, y, z, vehicle, vehicleEntry); break;
-	case VEHICLE_VISUAL_ROTO_DROP:						vehicle_visual_roto_drop(x, imageDirection, y, z, vehicle, vehicleEntry); break;
-	case VEHICLE_VISUAL_VIRGINIA_REEL:					vehicle_visual_virginia_reel(x, imageDirection, y, z, vehicle, vehicleEntry); break;
-	case VEHICLE_VISUAL_SUBMARINE:						vehicle_visual_submarine(x, imageDirection, y, z, vehicle, vehicleEntry); break;
+	//case VEHICLE_VISUAL_LAUNCHED_FREEFALL:				vehicle_visual_launched_freefall(x, imageDirection, y, z, vehicle, vehicleEntry); break;
+	//case VEHICLE_VISUAL_OBSERVATION_TOWER:				vehicle_visual_observation_tower(x, imageDirection, y, z, vehicle, vehicleEntry); break;
+	//case VEHICLE_VISUAL_RIVER_RAPIDS:					vehicle_visual_river_rapids(x, imageDirection, y, z, vehicle, vehicleEntry); break;
+	//case VEHICLE_VISUAL_MINI_GOLF_PLAYER:				vehicle_visual_mini_golf_player(x, imageDirection, y, z, vehicle); break;
+	//case VEHICLE_VISUAL_MINI_GOLF_BALL:					vehicle_visual_mini_golf_ball(x, imageDirection, y, z, vehicle); break;
+	//case VEHICLE_VISUAL_REVERSER:						vehicle_visual_reverser(x, imageDirection, y, z, vehicle, vehicleEntry); break;
+	//case VEHICLE_VISUAL_SPLASH_BOATS_OR_WATER_COASTER:	vehicle_visual_splash_boats_or_water_coaster(x, imageDirection, y, z, vehicle, vehicleEntry); break;
+	//case VEHICLE_VISUAL_ROTO_DROP:						vehicle_visual_roto_drop(x, imageDirection, y, z, vehicle, vehicleEntry); break;
+	//case VEHICLE_VISUAL_VIRGINIA_REEL:					vehicle_visual_virginia_reel(x, imageDirection, y, z, vehicle, vehicleEntry); break;
+	//case VEHICLE_VISUAL_SUBMARINE:						vehicle_visual_submarine(x, imageDirection, y, z, vehicle, vehicleEntry); break;
 	}
 }

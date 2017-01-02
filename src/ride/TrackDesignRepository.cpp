@@ -78,7 +78,7 @@ public:
         _env = env;
     }
 
-    virtual ~TrackDesignRepository()
+    virtual ~TrackDesignRepository() throw()
     {
     }
 

@@ -157,7 +157,7 @@ namespace Path
             return buffer;
         }
 #else
-        utf8 * absolutePath = realpath(relativePath, NULL);
+		utf8 * absolutePath = nullptr;// realpath(relativePath, NULL);
         if (absolutePath == nullptr)
         {
             return String::Set(buffer, bufferSize, relativePath);

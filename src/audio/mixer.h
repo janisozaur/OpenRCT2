@@ -40,7 +40,7 @@ enum {
 
 #include <list>
 extern "C" {
-#include <speex/speex_resampler.h>
+//#include <speex/speex_resampler.h>
 }
 
 typedef struct AudioFormat {
@@ -149,7 +149,8 @@ private:
 	bool stopping = false;
 	int oldvolume = 0;
 	int group = MIXER_GROUP_SOUND;
-	SpeexResamplerState* resampler = nullptr;
+	//SpeexResamplerState* resampler = nullptr;
+	void* resampler = nullptr;
 	Source* source = nullptr;
 };
 
