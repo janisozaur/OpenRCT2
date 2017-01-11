@@ -67,6 +67,8 @@
     <None Include="data\shaders\fillrect.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="actions\GameAction.cpp" />
+    <ClCompile Include="actions\SetParkEntranceFeeAction.cpp" />
     <ClCompile Include="audio\AudioChannel.cpp" />
     <ClCompile Include="audio\AudioMixer.cpp" />
     <ClCompile Include="audio\FileAudioSource.cpp" />
@@ -421,6 +423,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\resources\resource.h" />
+    <ClInclude Include="actions\GameAction.h" />
     <ClInclude Include="audio\AudioChannel.h" />
     <ClInclude Include="audio\AudioFormat.h" />
     <ClInclude Include="audio\AudioMixer.h" />
