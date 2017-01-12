@@ -114,7 +114,7 @@ option(USE_MMAP "Use mmap to try loading rct2's data segment into memory.")
 option(WITH_TESTS "Build tests")
 option(DISABLE_TTF "Disable support for TTF provided by SDL2_ttf.")
 
-set(COMMON_COMPILE_OPTIONS "${COMMON_COMPILE_OPTIONS} -fstrict-aliasing -Werror -Wundef -Wmissing-declarations -Winit-self -Wall -Wno-unknown-pragmas -Wno-unused-function -Wno-missing-braces -Wno-comment")
+set(COMMON_COMPILE_OPTIONS "${COMMON_COMPILE_OPTIONS} -fstrict-aliasing -Werror -Wundef -Wmissing-declarations -Winit-self -Wall -Wno-unknown-pragmas -Wno-unused-function -Wno-missing-braces -Wno-comment -Wshadow")
 
 # On mingw all code is already PIC, this will avoid compiler error on redefining this option
 if(NOT MINGW)
