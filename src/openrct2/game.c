@@ -810,6 +810,27 @@ void game_log_multiplayer_command(int command, int *eax, int* ebx, int* ecx, int
 			format_string(log_msg, 256, STR_LOG_SET_SIGN_NAME, args_sign);
 			network_append_server_log(log_msg);
 		}
+	} else if (command == GAME_COMMAND_PLACE_TRACK) {
+		// Get ride name
+		int ride_index = *edx & 0xFF;
+		rct_ride* ride = get_ride(ride_index);
+		char ride_name[128];
+		format_string(ride_name, 128, ride->name, &ride->name_arguments);
+
+		char* args[2] = {
+			(char *) player_name,
+			ride_name
+		};
+
+		format_string(log_msg, 256, STR_LOG_PLACE_TRACK, args);
+		network_append_server_log(log_msg);
+	} else if (command == GAME_COMMAND_REMOVE_TRACK) {
+		char* args[1] = {
+			(char *) player_name
+		};
+
+		format_string(log_msg, 256, STR_LOG_REMOVE_TRACK, args);
+		network_append_server_log(log_msg);
 	}
 }
 
