@@ -510,7 +510,7 @@ sint32 game_do_command_p(sint32 command, sint32 *eax, sint32 *ebx, sint32 *ecx, 
 	bool serverLog = (network_get_mode() == NETWORK_MODE_SERVER) && gGameCommandNestLevel == 1 && gConfigNetwork.log_server_actions;
 	bool clientLog = (network_get_mode() == NETWORK_MODE_CLIENT) && (flags & GAME_COMMAND_FLAG_NETWORKED) && gGameCommandNestLevel == 1 && gConfigNetwork.log_server_actions;
 	if (serverLog || clientLog) {
-		game_log_multiplayer_command(command, ebx, ecx, edx, edi, ebp);
+		game_log_multiplayer_command(command, eax, ebx, ecx, edx, edi, ebp);
 	}
 
 	*ebx &= ~GAME_COMMAND_FLAG_APPLY;
@@ -612,7 +612,7 @@ sint32 game_do_command_p(sint32 command, sint32 *eax, sint32 *ebx, sint32 *ecx, 
 	return MONEY32_UNDEFINED;
 }
 
-void game_log_multiplayer_command(int command, int* ebx, int* ecx, int* edx, int* edi, int* ebp)
+void game_log_multiplayer_command(int command, int *eax, int* ebx, int* ecx, int* edx, int* edi, int* ebp)
 {
 	// Get player name
 	int player_index = network_get_player_index(game_command_playerid);
