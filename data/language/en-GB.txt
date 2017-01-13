@@ -4321,6 +4321,42 @@ STR_6009    :{SMALLFONT}{BLACK}Select cut height
 STR_6010    :{COMMA2DP32}m
 STR_6011    :{COMMA1DP16}ft
 STR_6012    :{COMMA1DP16}
+STR_6013    :Log user actions
+STR_6014    :{SMALLFONT}{BLACK}Logs all user actions to files in your user directory.
+STR_6015    :Server started.
+STR_6016    :Server shutdown.
+STR_6017    :{STRING} was kicked from the server by {STRING}.
+STR_6018    :{STRING} was set to group '{STRING}' by {STRING}.
+STR_6019    :{STRING} created new player group '{STRING}'.
+STR_6020    :{STRING} deleted player group '{String}'.
+STR_6021    :{STRING} edited permissions for player group '{String}'.
+STR_6022    :{STRING} changed player group name from '{String}' to '{String}'.
+STR_6023    :{STRING} changed the default player group to '{String}'.
+STR_6024    :{STRING} used/toggled cheat '{STRING}'.
+STR_6025    :Add Money
+STR_6026    :{STRING} created ride '{STRING}'.
+STR_6027    :{STRING} demolished ride '{STRING}'.
+STR_6028    :{STRING} changed the appearance of ride '{STRING}'.
+STR_6029    :{STRING} changed the status of ride '{STRING}' to closed.
+STR_6030    :{STRING} changed the status of ride '{STRING}' to open.
+STR_6031    :{STRING} changed the status of ride '{STRING}' to testing.
+STR_6032    :{STRING} changed the vehicle settings of ride '{STRING}'.
+STR_6033    :{STRING} changed the ride settings of ride '{STRING}'.
+STR_6034    :{STRING} renamed the ride '{STRING}' to '{STRING}'.
+STR_6035    :{STRING} changed the price of ride '{STRING}' to {STRING}
+STR_6036    :{STRING} changed the secondary price of ride '{STRING}' to {STRING}
+STR_6037    :{STRING} renamed the park from '{STRING}' to '{STRING}'.
+STR_6038    :{STRING} opened the park.
+STR_6039    :{STRING} closed the park.
+STR_6040    :{STRING} changed the park entrance fee to {STRING}
+STR_6041    :{STRING} placed new scenery.
+STR_6042    :{STRING} removed scenery.
+STR_6043    :{STRING} edited scenery.
+STR_6044    :{STRING} set sign name to '{STRING}'.
+STR_6045    :{STRING} placed a track of ride '{STRING}'.
+STR_6046    :{STRING} removed a track of ride.
+STR_6047    :You connected to the server.
+STR_6048    :You disconnected from the server.
 
 #############
 # Scenarios #
