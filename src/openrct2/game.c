@@ -641,7 +641,7 @@ void game_log_multiplayer_command(int command, int *eax, int* ebx, int* ecx, int
 
 		format_string(log_msg, 256, STR_LOG_CREATE_RIDE, args);
 		network_append_server_log(log_msg);
-	} else if (command == GAME_COMMAND_DEMOLISH_RIDE && *ebp == 1) { // ebp is 1 if command comes from ride window prompt, so we don't log "demolishing" ride previews
+	} else if (command == GAME_COMMAND_DEMOLISH_RIDE && (*ebp == 1 || *ebp == 0)) { // ebp is 1 if command comes from ride window prompt, so we don't log "demolishing" ride previews
 		// Get ride name
 		rct_ride* ride = get_ride(*edx);
 		char ride_name[128];
