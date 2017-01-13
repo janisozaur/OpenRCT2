@@ -2254,9 +2254,9 @@ void game_command_set_player_group(sint32* eax, sint32* ebx, sint32* ecx, sint32
 		NetworkGroup* new_player_group = gNetwork.GetGroupByID(groupid);
 		char log_msg[256];
 		const char * args[3] = {
-			(char *) player->name.c_str(),
+			(char *) player->Name.c_str(),
 			(char *) new_player_group->GetName().c_str(),
-			(char *) game_command_player->name.c_str()
+			(char *) game_command_player->Name.c_str()
 		};
 		format_string(log_msg, 256, STR_LOG_SET_PLAYER_GROUP, args);
 		network_append_server_log(log_msg);
@@ -2286,7 +2286,7 @@ void game_command_modify_groups(sint32 *eax, sint32 *ebx, sint32 *ecx, sint32 *e
 			NetworkPlayer* game_command_player = gNetwork.GetPlayerByID(game_command_playerid);
 			char log_msg[256];
 			const char * args[2] = {
-				(char *) game_command_player->name.c_str(),
+				(char *) game_command_player->Name.c_str(),
 				(char *) newgroup->GetName().c_str()
 			};
 			format_string(log_msg, 256, STR_LOG_ADD_PLAYER_GROUP, args);
@@ -2315,7 +2315,7 @@ void game_command_modify_groups(sint32 *eax, sint32 *ebx, sint32 *ecx, sint32 *e
 			char* groupName = (char *)group->GetName().c_str();
 			char log_msg[256];
 			const char * args[2] = {
-				(char *) game_command_player->name.c_str(),
+				(char *) game_command_player->Name.c_str(),
 				groupName
 			};
 			format_string(log_msg, 256, STR_LOG_REMOVE_PLAYER_GROUP, args);
@@ -2364,7 +2364,7 @@ void game_command_modify_groups(sint32 *eax, sint32 *ebx, sint32 *ecx, sint32 *e
 			// Log edit player group permissions event
 			char log_msg[256];
 			const char * args[2] = {
-				(char *) player->name.c_str(),
+				(char *) player->Name.c_str(),
 				(char *) group->GetName().c_str()
 			};
 			format_string(log_msg, 256, STR_LOG_EDIT_PLAYER_GROUP_PERMISSIONS, args);
@@ -2408,7 +2408,7 @@ void game_command_modify_groups(sint32 *eax, sint32 *ebx, sint32 *ecx, sint32 *e
 				NetworkPlayer* player = gNetwork.GetPlayerByID(game_command_playerid);
 				char log_msg[256];
 				const char * args[3] = {
-					(char *) player->name.c_str(),
+					(char *) player->Name.c_str(),
 					oldName,
 					newName
 				};
@@ -2434,7 +2434,7 @@ void game_command_modify_groups(sint32 *eax, sint32 *ebx, sint32 *ecx, sint32 *e
 			NetworkGroup* group = gNetwork.GetGroupByID(groupid);
 			char log_msg[256];
 			const char * args[2] = {
-				(char *) player->name.c_str(),
+				(char *) player->Name.c_str(),
 				(char *) group->GetName().c_str()
 			};
 			format_string(log_msg, 256, STR_LOG_EDIT_DEFAULT_PLAYER_GROUP, args);
@@ -2472,8 +2472,8 @@ void game_command_kick_player(sint32 *eax, sint32 *ebx, sint32 *ecx, sint32 *edx
 		NetworkPlayer* kicker = gNetwork.GetPlayerByID(game_command_playerid);
 		char log_msg[256];
 		const char * args[2] = {
-			(char *) player->name.c_str(),
-			(char *) kicker->name.c_str(),
+			(char *) player->Name.c_str(),
+			(char *) kicker->Name.c_str(),
 		};
 		format_string(log_msg, 256, STR_LOG_PLAYER_KICKED, args);
 		network_append_server_log(log_msg);

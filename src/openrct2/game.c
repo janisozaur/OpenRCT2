@@ -619,7 +619,6 @@ void game_log_multiplayer_command(int command, int* ebx, int* ecx, int* edx, int
 	const char* player_name = network_get_player_name(player_index);
 
 	char log_msg[256];
-
 	if (command == GAME_COMMAND_CHEAT) {
 		// Get cheat name
 		const char* cheat = cheats_get_cheat_string(*ecx, *edx, *edi);
@@ -707,7 +706,6 @@ void game_log_multiplayer_command(int command, int* ebx, int* ecx, int* edx, int
 		format_string(price_str, 16, STR_BOTTOM_TOOLBAR_CASH, price_args);
 
 		// Log change in primary or secondary price
-		char log_msg[256];
 		char* args[3] = {
 			(char *) player_name,
 			ride_name,
@@ -723,7 +721,6 @@ void game_log_multiplayer_command(int command, int* ebx, int* ecx, int* edx, int
 		network_append_server_log(log_msg);
 	} else if (command == GAME_COMMAND_SET_PARK_OPEN) {
 		// Log change in park open/close
-		char log_msg[256];
 		char* args[1] = {
 			(char *) player_name
 		};
@@ -742,7 +739,6 @@ void game_log_multiplayer_command(int command, int* ebx, int* ecx, int* edx, int
 		format_string(price_str, 16, STR_BOTTOM_TOOLBAR_CASH, price_args);
 
 		// Log change in park entrance fee
-		char log_msg[256];
 		char* args[2] = {
 			(char *) player_name,
 			price_str
@@ -759,7 +755,6 @@ void game_log_multiplayer_command(int command, int* ebx, int* ecx, int* edx, int
 		}
 
 		// Log placing scenery
-		char log_msg[256];
 		char* args[1] = {
 			(char *)player_name
 		};
@@ -775,7 +770,6 @@ void game_log_multiplayer_command(int command, int* ebx, int* ecx, int* edx, int
 		}
 
 		// Log removing scenery
-		char log_msg[256];
 		char* args[1] = {
 			(char *)player_name
 		};
@@ -787,7 +781,6 @@ void game_log_multiplayer_command(int command, int* ebx, int* ecx, int* edx, int
 		       command == GAME_COMMAND_SET_BANNER_NAME          || command == GAME_COMMAND_SET_SIGN_NAME     ||
 		       command == GAME_COMMAND_SET_BANNER_STYLE         || command == GAME_COMMAND_SET_SIGN_STYLE) {
 		// Log editing scenery
-		char log_msg[256];
 		char* args[1] = {
 			(char *)player_name
 		};
