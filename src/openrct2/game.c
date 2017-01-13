@@ -787,6 +787,29 @@ void game_log_multiplayer_command(int command, int *eax, int* ebx, int* ecx, int
 
 		format_string(log_msg, 256, STR_LOG_EDIT_SCENERY, args);
 		network_append_server_log(log_msg);
+		if (command == GAME_COMMAND_SET_BANNER_NAME          || command == GAME_COMMAND_SET_SIGN_NAME) {
+			static char banner_name[128];
+
+			memset(banner_name, ' ', sizeof(banner_name));
+			int nameChunkIndex = *eax & 0xFFFF;
+
+			int nameChunkOffset = nameChunkIndex - 1;
+			if (nameChunkOffset < 0)
+				nameChunkOffset = 2;
+			nameChunkOffset *= 12;
+			nameChunkOffset = min(nameChunkOffset, countof(banner_name) - 12);
+			memcpy(banner_name + nameChunkOffset + 0, edx, 4);
+			memcpy(banner_name + nameChunkOffset + 4, ebp, 4);
+			memcpy(banner_name + nameChunkOffset + 8, edi, 4);
+			banner_name[sizeof(banner_name) - 1] = '\0';
+			char* args_sign[2] = {
+				(char *)player_name,
+				(char *)banner_name
+			};
+
+			format_string(log_msg, 256, STR_LOG_SET_SIGN_NAME, args_sign);
+			network_append_server_log(log_msg);
+		}
 	}
 }
 
