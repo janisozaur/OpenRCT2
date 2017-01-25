@@ -213,6 +213,8 @@ bool Network::BeginClient(const char* host, uint16 port)
 	status = NETWORK_STATUS_CONNECTING;
 	_lastConnectStatus = SOCKET_STATUS_CLOSED;
 
+	log_warning("Logs: chatlog dir: %s", _chatLogDirectory);
+	log_warning("Logs: serverlog dir: %s", _serverLogDirectory);
 	BeginChatLog(_chatLogDirectory, _chatLogFilenameFormat);
 	BeginServerLog(_serverLogDirectory, gConfigNetwork.server_name, _serverLogFilenameFormat);
 
@@ -794,7 +796,9 @@ std::string Network::BeginLog(const char* directory, const char* filename_format
 
 	utf8 path[MAX_PATH];
 	platform_get_user_directory(path, directory, sizeof(path));
+	log_warning("Logs: serverlog beginlog path: %s, %s", path, directory);
 	Path::Append(path, sizeof(path), filename);
+	log_warning("Logs: serverlog beginlog path appended: %s", path);
 
 	return std::string(path);
 }
@@ -817,10 +821,15 @@ void Network::AppendLog(const utf8 *logPath, const utf8 *text)
 			String::Append(buffer, sizeof(buffer), text);
 			utf8_remove_formatting(buffer, false);
 			String::Append(buffer, sizeof(buffer), PLATFORM_NEWLINE);
+			log_warning("Logs: logging \"%s\" to %s does not exist", buffer, logPath);
 
 			SDL_RWwrite(_logStream, buffer, strlen(buffer), 1);
 			SDL_RWclose(_logStream);
+		} else {
+			log_warning("Logs: logpath %s does not exist", logPath);
 		}
+	} else {
+		log_warning("Logs: dir %s does not exist", directory);
 	}
 }
 
@@ -846,10 +855,12 @@ void Network::BeginServerLog(const char* directory, std::string server_name, con
 {
 	server_name.append(filename_format);
 	char* filename = (char *) server_name.c_str();
+	log_warning("Logs: serverlog filename: %s", filename);
 	_serverLogPath = BeginLog(directory, filename);
 
 	// Log server start event
 	char log_msg[256];
+	log_warning("Logs: serverlog path: %s", _serverLogPath);
 	if (GetMode() == NETWORK_MODE_CLIENT) {
 		format_string(log_msg, 256, STR_LOG_CLIENT_STARTED, NULL);
 	} else if (GetMode() == NETWORK_MODE_SERVER) {
