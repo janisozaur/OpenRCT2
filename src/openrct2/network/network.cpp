@@ -860,7 +860,7 @@ void Network::BeginServerLog(const char* directory, std::string server_name, con
 
 	// Log server start event
 	char log_msg[256];
-	log_warning("Logs: serverlog path: %s", _serverLogPath);
+	log_warning("Logs: serverlog path: %s", _serverLogPath.c_str());
 	if (GetMode() == NETWORK_MODE_CLIENT) {
 		format_string(log_msg, 256, STR_LOG_CLIENT_STARTED, NULL);
 	} else if (GetMode() == NETWORK_MODE_SERVER) {

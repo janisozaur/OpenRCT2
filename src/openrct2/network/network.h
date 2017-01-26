@@ -220,10 +220,10 @@ private:
 	uint8 default_group = 0;
 	SDL_RWops *_logStream;
 	std::string _chatLogPath;
-	const char* _chatLogDirectory = "/chatlogs";
+	const char* _chatLogDirectory = "chatlogs";
 	const char* _chatLogFilenameFormat = "%Y%m%d-%H%M%S.txt";
 	std::string _serverLogPath;
-	const char* _serverLogDirectory = "/serverlogs";
+	const char* _serverLogDirectory = "serverlogs";
 	const char* _serverLogFilenameFormat = "-%Y%m%d-%H%M%S.txt";
 
 	void UpdateServer();
