@@ -821,7 +821,7 @@ void Network::AppendLog(const utf8 *logPath, const utf8 *text)
 			String::Append(buffer, sizeof(buffer), text);
 			utf8_remove_formatting(buffer, false);
 			String::Append(buffer, sizeof(buffer), PLATFORM_NEWLINE);
-			log_warning("Logs: logging \"%s\" to %s does not exist", buffer, logPath);
+			log_warning("Logs: logging \"%s\" to %s", buffer, logPath);
 
 			SDL_RWwrite(_logStream, buffer, strlen(buffer), 1);
 			SDL_RWclose(_logStream);
