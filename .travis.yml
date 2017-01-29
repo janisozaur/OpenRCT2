@@ -28,7 +28,7 @@ matrix:
             - set -x
             - if [[ "z${TRAVIS_TAG}" != "z" ]] ; then
               export PUSH_BRANCH=master ;
-              else export PUSH_BRANCH=$TRAVIS_BRANCH ; export FILENAME_PART=-${TRAVIS_BRANCH}-$(git rev-parse --short HEAD)
+              else export PUSH_BRANCH=$TRAVIS_BRANCH ; export FILENAME_PART=-${TRAVIS_BRANCH}-$(git rev-parse --short HEAD) ;
               fi
             - set +x
             - if [[ "z$OPENRCT2_ORG_TOKEN" != "z" && "$TRAVIS_PULL_REQUEST" == "false" && ("${TRAVIS_BRANCH}" =~ ^(develop|push/) || "z${TRAVIS_TAG}" != "z") ]] ; then
