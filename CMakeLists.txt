@@ -141,13 +141,14 @@ if (HEADLESS)
 	set(DISABLE_TTF ON)
 endif (HEADLESS)
 
+# HEADLESS should turn lightfx off
+if (ENABLE_LIGHTFX AND NOT HEADLESS)
+	add_definitions(-D__ENABLE_LIGHTFX__)
+endif (ENABLE_LIGHTFX)
+
 if (DISABLE_TTF)
     add_definitions(-DNO_TTF)
 endif (DISABLE_TTF)
-
-if (ENABLE_LIGHTFX)
-    add_definitions(-D__ENABLE_LIGHTFX__)
-endif (ENABLE_LIGHTFX)
 
 # Launchpad turns on -Wdate-time for compilers that support it, this shouldn't break our build
 ADD_CHECK_C_COMPILER_FLAG(CMAKE_C_FLAGS C_WARN_WRITE_STRINGS -Wno-error=date-time)

@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#include "../common.h"
+
 #ifndef HEADLESS
 
 #pragma warning(disable : 4295) // 'identifier': array is too small to include a terminating null character
@@ -1933,5 +1935,13 @@ bool editor_check_object_group_at_least_one_selected(sint32 checkObjectType)
 	}
 	return false;
 }
+
+#else
+
+void window_editor_object_selection_open() {}
+void window_editor_inventions_list_open() {}
+void window_editor_scenario_options_open() {}
+void window_editor_objective_options_open() {}
+bool editor_check_object_group_at_least_one_selected(sint32 checkObjectType) { return false; }
 
 #endif

@@ -14,12 +14,13 @@
  *****************************************************************************/
 #pragma endregion
 
+#include "../localisation/localisation.h"
+
 #ifndef HEADLESS
 
 #include "../audio/audio.h"
 #include "../interface/widget.h"
 #include "../interface/window.h"
-#include "../localisation/localisation.h"
 #include "../platform/platform.h"
 #include "../rct2.h"
 #include "error.h"
@@ -182,5 +183,9 @@ static void window_error_paint(rct_window *w, rct_drawpixelinfo *dpi)
 	t = w->y + 1;
 	draw_string_centred_raw(dpi, l, t, _window_error_num_lines, _window_error_text);
 }
+
+#else
+
+void window_error_open(rct_string_id title, rct_string_id message) {}
 
 #endif

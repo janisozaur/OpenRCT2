@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#include "../interface/window.h"
+
 #ifndef HEADLESS
 
 #include <time.h>
@@ -22,7 +24,6 @@
 #include "../game.h"
 #include "../interface/themes.h"
 #include "../interface/widget.h"
-#include "../interface/window.h"
 #include "../localisation/localisation.h"
 #include "../network/network.h"
 #include "../scenario/scenario.h"
@@ -935,5 +936,10 @@ static void window_overwrite_prompt_paint(rct_window *w, rct_drawpixelinfo *dpi)
 
 
 #pragma endregion
+
+#else
+
+rct_window *window_loadsave_open(sint32 type, char *defaultName) { return NULL; }
+void window_loadsave_set_loadsave_callback(loadsave_callback cb) {}
 
 #endif

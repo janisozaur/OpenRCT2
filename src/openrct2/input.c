@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include <SDL_keycode.h>
 #include "audio/audio.h"
 #include "config/Config.h"
@@ -1754,3 +1756,4 @@ bool input_test_place_object_modifier(PLACE_OBJECT_MODIFIER modifier)
 {
 	return gInputPlaceObjectModifier & modifier;
 }
+#endif

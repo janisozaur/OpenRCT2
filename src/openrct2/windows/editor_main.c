@@ -14,11 +14,12 @@
  *****************************************************************************/
 #pragma endregion
 
+#include "../interface/window.h"
+
 #ifndef HEADLESS
 
 #include "../interface/viewport.h"
 #include "../interface/widget.h"
-#include "../interface/window.h"
 #include "../rct2.h"
 #include "../world/footpath.h"
 
@@ -97,5 +98,9 @@ static void window_editor_main_paint(rct_window *w, rct_drawpixelinfo *dpi)
 {
 	viewport_render(dpi, w->viewport, dpi->x, dpi->y, dpi->x + dpi->width, dpi->y + dpi->height);
 }
+
+#else
+
+rct_window * window_editor_main_open() { return NULL; }
 
 #endif

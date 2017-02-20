@@ -14,6 +14,9 @@
  *****************************************************************************/
 #pragma endregion
 
+#include "../interface/window.h"
+#include "tile_inspector.h"
+
 #ifndef HEADLESS
 
 #include "../common.h"
@@ -22,7 +25,6 @@
 #include "../input.h"
 #include "../interface/themes.h"
 #include "../interface/widget.h"
-#include "../interface/window.h"
 #include "../localisation/localisation.h"
 #include "../ride/track.h"
 #include "../sprites.h"
@@ -31,7 +33,6 @@
 #include "../world/scenery.h"
 #include "../world/tile_inspector.h"
 #include "dropdown.h"
-#include "tile_inspector.h"
 
 static const rct_string_id TerrainTypeStringIds[] = {
 	STR_TILE_INSPECTOR_TERRAIN_GRASS,
@@ -2036,5 +2037,10 @@ static void window_tile_inspector_scrollpaint(rct_window *w, rct_drawpixelinfo *
 		i++;
 	} while (!map_element_is_last_for_tile(mapElement++));
 }
+
+#else
+
+void window_tile_inspector_set_page(rct_window *w, const tile_inspector_page page) {}
+void window_tile_inspector_auto_set_buttons(rct_window *w) {}
 
 #endif

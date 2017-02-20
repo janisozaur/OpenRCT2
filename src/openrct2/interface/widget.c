@@ -14,11 +14,14 @@
  *****************************************************************************/
 #pragma endregion
 
+#include "window.h"
+
+#ifndef HEADLESS
+
 #include "../drawing/drawing.h"
 #include "../input.h"
 #include "../sprites.h"
 #include "widget.h"
-#include "window.h"
 #include "../platform/platform.h"
 #include "../localisation/localisation.h"
 #include "../util/util.h"
@@ -1121,3 +1124,9 @@ static void widget_text_box_draw(rct_drawpixelinfo *dpi, rct_window *w, sint32 w
 		gfx_fill_rect(dpi, cur_x, t + 9, cur_x + width, t + 9, colour + 5);
 	}
 }
+
+#else
+
+sint32 widget_is_disabled(rct_window *w, sint32 widgetIndex) { return true; }
+
+#endif
