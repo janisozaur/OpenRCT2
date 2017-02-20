@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #pragma warning(disable : 4295) // 'identifier': array is too small to include a terminating null character
 
 #include "../audio/audio.h"
@@ -1931,3 +1933,5 @@ bool editor_check_object_group_at_least_one_selected(sint32 checkObjectType)
 	}
 	return false;
 }
+
+#endif

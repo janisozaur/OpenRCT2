@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../game.h"
 #include "../interface/widget.h"
@@ -1003,3 +1005,5 @@ static void window_cheats_set_page(rct_window *w, sint32 page)
 	w->widgets[WIDX_PAGE_BACKGROUND].bottom = maxY - 1;
 	window_invalidate(w);
 }
+
+#endif

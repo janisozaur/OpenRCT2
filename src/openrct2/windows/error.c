@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../interface/widget.h"
 #include "../interface/window.h"
@@ -180,3 +182,5 @@ static void window_error_paint(rct_window *w, rct_drawpixelinfo *dpi)
 	t = w->y + 1;
 	draw_string_centred_raw(dpi, l, t, _window_error_num_lines, _window_error_text);
 }
+
+#endif

@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../interface/themes.h"
 #include "../interface/widget.h"
@@ -294,3 +296,5 @@ static void window_view_clipping_scrollgetsize(rct_window *w, int scrollIndex, i
 {
 	*width = 1000;
 }
+
+#endif

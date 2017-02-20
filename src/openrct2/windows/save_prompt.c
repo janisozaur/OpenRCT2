@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../config/Config.h"
 #include "../game.h"
@@ -265,3 +267,5 @@ static void window_save_prompt_callback(sint32 result, const utf8 * path)
 		game_load_or_quit_no_save_prompt();
 	}
 }
+
+#endif

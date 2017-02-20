@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../game.h"
 #include "../localisation/localisation.h"
 #include "../interface/widget.h"
@@ -658,3 +660,5 @@ static void window_research_draw_tab_images(rct_drawpixelinfo *dpi, rct_window *
 }
 
 #pragma endregion
+
+#endif

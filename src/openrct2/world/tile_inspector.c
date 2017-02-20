@@ -24,6 +24,10 @@
 #include "map.h"
 #include "tile_inspector.h"
 
+uint32 windowTileInspectorTileX;
+uint32 windowTileInspectorTileY;
+sint32 windowTileInspectorElementCount = 0;
+
 static bool map_swap_elements_at(sint32 x, sint32 y, sint16 first, sint16 second)
 {
 	rct_map_element *const firstElement = map_get_nth_element_at(x, y, first);

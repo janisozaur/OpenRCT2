@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../game.h"
 #include "../config/Config.h"
 #include "../localisation/localisation.h"
@@ -580,3 +582,5 @@ static void window_sign_small_invalidate(rct_window *w)
 	main_colour_btn->image = (w->list_information_type << 19) | 0x60000000 | SPR_PALETTE_BTN;
 	text_colour_btn->image = (w->var_492 << 19) | 0x60000000 | SPR_PALETTE_BTN;
 }
+
+#endif

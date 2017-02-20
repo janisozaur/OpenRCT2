@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../game.h"
 #include "../input.h"
@@ -672,3 +674,5 @@ static void window_game_bottom_toolbar_invalidate_dirty_widgets(rct_window *w)
 		widget_invalidate(w, WIDX_LEFT_INSET);
 	}
 }
+
+#endif

@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../common.h"
 #include "../core/Guard.hpp"
 #include "../game.h"
@@ -443,9 +445,6 @@ static struct {
 	{ COR_GBDT, COR_GBDB, COR_GBPT, COR_GBPB, STR_TILE_INSPECTOR_GROUPBOX_CORRUPT_INFO }
 };
 
-uint32 windowTileInspectorTileX;
-uint32 windowTileInspectorTileY;
-sint32 windowTileInspectorElementCount = 0;
 static sint16 windowTileInspectorHighlightedIndex = -1;
 static bool windowTileInspectorTileSelected = false;
 static sint32 windowTileInspectorToolMouseX = 0;
@@ -2037,3 +2036,5 @@ static void window_tile_inspector_scrollpaint(rct_window *w, rct_drawpixelinfo *
 		i++;
 	} while (!map_element_is_last_for_tile(mapElement++));
 }
+
+#endif

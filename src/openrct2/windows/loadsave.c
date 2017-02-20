@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include <time.h>
 #include "../config/Config.h"
 #include "../editor.h"
@@ -933,3 +935,5 @@ static void window_overwrite_prompt_paint(rct_window *w, rct_drawpixelinfo *dpi)
 
 
 #pragma endregion
+
+#endif

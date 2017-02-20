@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../audio/audio.h"
 #include "../localisation/date.h"
@@ -697,3 +699,5 @@ static bool is_locking_enabled(rct_window *w)
 	}
 	return true;
 }
+
+#endif

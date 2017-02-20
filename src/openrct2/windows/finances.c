@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../game.h"
 #include "../interface/graph.h"
@@ -1464,3 +1466,5 @@ static void window_finances_draw_tab_images(rct_drawpixelinfo *dpi, rct_window *
 }
 
 #pragma endregion
+
+#endif

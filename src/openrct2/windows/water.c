@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../input.h"
 #include "../interface/widget.h"
 #include "../interface/window.h"
@@ -258,3 +260,5 @@ static sint32 window_water_should_close()
 		return 1;
 	return 0;
 }
+
+#endif

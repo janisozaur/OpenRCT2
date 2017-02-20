@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../game.h"
 #include "../localisation/date.h"
@@ -2064,3 +2066,5 @@ static void window_park_draw_tab_images(rct_drawpixelinfo *dpi, rct_window *w)
 }
 
 #pragma endregion
+
+#endif

@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../drawing/drawing.h"
 #include "../game.h"
@@ -723,3 +725,5 @@ static uint8 window_staff_list_get_random_entertainer_costume()
 	}
 	return result;
 }
+
+#endif

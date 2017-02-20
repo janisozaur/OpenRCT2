@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../interface/themes.h"
 #include "../interface/viewport.h"
 #include "../interface/widget.h"
@@ -276,3 +278,5 @@ static void window_changelog_dispose_file()
 	_changelogTextSize = 0;
 	_changelogNumLines = 0;
 }
+
+#endif

@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../drawing/drawing.h"
 #include "../game.h"
@@ -1220,3 +1222,5 @@ void window_scenery_scrollpaint(rct_window *w, rct_drawpixelinfo *dpi, sint32 sc
 		sceneryTabItemIndex++;
 	}
 }
+
+#endif

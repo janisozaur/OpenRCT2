@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../interface/keyboard_shortcut.h"
 #include "../interface/themes.h"
@@ -120,3 +122,5 @@ static void window_shortcut_change_paint(rct_window *w, rct_drawpixelinfo *dpi)
 	set_format_arg(0, rct_string_id, ShortcutStringIds[gKeyboardShortcutChangeId]);
 	gfx_draw_string_centred_wrapped(dpi, gCommonFormatArgs, x, y, 242, STR_SHORTCUT_CHANGE_PROMPT, COLOUR_BLACK);
 }
+
+#endif

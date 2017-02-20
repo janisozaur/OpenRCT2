@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../interface/themes.h"
 #include "../interface/widget.h"
@@ -988,3 +990,5 @@ static void window_multiplayer_draw_tab_images(rct_window *w, rct_drawpixelinfo 
 	window_multiplayer_draw_tab_image(w, dpi, WINDOW_MULTIPLAYER_PAGE_GROUPS, SPR_TAB_STAFF_OPTIONS_0);
 	window_multiplayer_draw_tab_image(w, dpi, WINDOW_MULTIPLAYER_PAGE_OPTIONS, SPR_TAB_GEARS_0);
 }
+
+#endif

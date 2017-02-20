@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../game.h"
 #include "../input.h"
@@ -2137,3 +2139,5 @@ void window_guest_inventory_paint(rct_window *w, rct_drawpixelinfo *dpi)
 		gfx_draw_string_left(dpi, STR_NOTHING, NULL, COLOUR_BLACK, x, y);
 	}
 }
+
+#endif

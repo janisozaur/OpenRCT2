@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 /**
  * Text Input Window
  *
@@ -410,3 +412,5 @@ static void draw_ime_composition(rct_drawpixelinfo * dpi, int cursorX, int curso
 	gfx_fill_rect(dpi, x, y, x + width, y + height, 0);
 	gfx_draw_string(dpi, gTextInputComposition, COLOUR_DARK_GREEN, x, y);
 }
+
+#endif

@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../game.h"
 #include "../interface/themes.h"
 #include "../interface/widget.h"
@@ -1252,3 +1254,5 @@ static void window_editor_objective_options_update_disabled_widgets(rct_window *
 		w->disabled_widgets |= (1 << WIDX_TAB_2);
 	}
 }
+
+#endif

@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../game.h"
 #include "../interface/widget.h"
 #include "../interface/window.h"
@@ -141,3 +143,5 @@ static void window_staff_fire_paint(rct_window *w, rct_drawpixelinfo *dpi)
 
 	gfx_draw_string_centred_wrapped(dpi, gCommonFormatArgs, x, y, WW - 4, STR_FIRE_STAFF_ID, COLOUR_BLACK);
 }
+
+#endif

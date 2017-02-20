@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../game.h"
 #include "../drawing/drawing.h"
@@ -847,3 +849,5 @@ void window_themes_scrollpaint(rct_window *w, rct_drawpixelinfo *dpi, sint32 scr
 		y += _row_height;
 	}
 }
+
+#endif

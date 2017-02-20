@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../config/Config.h"
 #include "../game.h"
@@ -532,3 +534,5 @@ void window_editor_bottom_toolbar_paint(rct_window *w, rct_drawpixelinfo *dpi)
 		}
 	}
 }
+
+#endif

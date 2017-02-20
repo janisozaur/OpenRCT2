@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../interface/themes.h"
 #include "../interface/widget.h"
 #include "../interface/window.h"
@@ -1217,3 +1219,5 @@ static void window_editor_scenario_options_park_paint(rct_window *w, rct_drawpix
 }
 
 #pragma endregion
+
+#endif

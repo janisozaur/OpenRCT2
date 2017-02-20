@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../localisation/localisation.h"
 #include "../input.h"
 #include "../interface/widget.h"
@@ -1071,3 +1073,5 @@ static void window_mapgen_draw_tab_images(rct_drawpixelinfo *dpi, rct_window *w)
 }
 
 #pragma endregion
+
+#endif

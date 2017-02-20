@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../game.h"
 #include "../interface/viewport.h"
@@ -1341,3 +1343,5 @@ void window_staff_options_dropdown(rct_window *w, sint32 widgetIndex, sint32 dro
 	sint32 costume = _availableCostumes[dropdownIndex] | 0x80;
 	game_do_command(peep->x, (costume << 8) | 1, peep->y, w->number, GAME_COMMAND_SET_STAFF_ORDER, 0, 0);
 }
+
+#endif

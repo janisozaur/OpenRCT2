@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../cheats.h"
 #include "../game.h"
@@ -1733,3 +1735,5 @@ static void map_window_screen_to_map(sint32 screenX, sint32 screenY, sint32 *map
 		break;
 	}
 }
+
+#endif

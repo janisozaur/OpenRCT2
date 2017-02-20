@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../cheats.h"
 #include "../config/Config.h"
@@ -4061,3 +4063,5 @@ void window_ride_construction_do_entrance_exit_check()
 		}
 	}
 }
+
+#endif

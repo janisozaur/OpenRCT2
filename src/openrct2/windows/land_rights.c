@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../game.h"
 #include "../input.h"
 #include "../interface/themes.h"
@@ -261,3 +263,5 @@ static sint32 window_land_rights_should_close()
 		return 1;
 	return 0;
 }
+
+#endif

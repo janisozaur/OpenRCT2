@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../drawing/drawing.h"
 #include "../game.h"
@@ -514,3 +516,5 @@ static void window_maze_construction_construct(sint32 direction)
 		audio_play_sound_at_location(SOUND_PLACE_ITEM, x, y, z);
 	}
 }
+
+#endif

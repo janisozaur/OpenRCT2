@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../cheats.h"
 #include "../config/Config.h"
@@ -6383,3 +6385,5 @@ static void window_ride_customer_paint(rct_window *w, rct_drawpixelinfo *dpi)
 }
 
 #pragma endregion
+
+#endif

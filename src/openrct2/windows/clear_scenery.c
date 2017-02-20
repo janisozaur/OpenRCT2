@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../input.h"
 #include "../interface/themes.h"
 #include "../interface/widget.h"
@@ -267,3 +269,5 @@ static sint32 window_clear_scenery_should_close()
 		return 1;
 	return 0;
 }
+
+#endif

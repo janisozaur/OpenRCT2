@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../interface/widget.h"
 #include "../interface/window.h"
@@ -301,3 +303,5 @@ static bool *get_notification_value_ptr(const notification_def *ndef)
 	bool *configValue = (bool*)((size_t)&gConfigNotifications + ndef->config_offset);
 	return configValue;
 }
+
+#endif

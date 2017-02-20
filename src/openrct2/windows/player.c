@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../game.h"
 #include "../input.h"
@@ -654,3 +656,5 @@ static void window_player_update_title(rct_window* w)
 		set_format_arg(0, const char *, "");
 	}
 }
+
+#endif

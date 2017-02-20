@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../management/news_item.h"
 #include "../localisation/localisation.h"
@@ -381,3 +383,5 @@ static void window_news_scrollpaint(rct_window *w, rct_drawpixelinfo *dpi, sint3
 		y += 42;
 	}
 }
+
+#endif

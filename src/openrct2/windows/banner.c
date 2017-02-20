@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../game.h"
 #include "../config/Config.h"
 #include "../localisation/localisation.h"
@@ -379,3 +381,5 @@ static void window_banner_unknown_14(rct_window *w)
 	w->viewport->flags = gConfigGeneral.always_show_gridlines ? VIEWPORT_FLAG_GRIDLINES : 0;
 	window_invalidate(w);
 }
+
+#endif

@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../interface/themes.h"
 #include "../interface/widget.h"
@@ -287,3 +289,5 @@ static void window_server_start_paint(rct_window *w, rct_drawpixelinfo *dpi)
 	gfx_draw_string_left(dpi, STR_PASSWORD, NULL, w->colours[1], w->x + 6, w->y + w->widgets[WIDX_PASSWORD_INPUT].top);
 	gfx_draw_string_left(dpi, STR_MAX_PLAYERS, NULL, w->colours[1], w->x + 6, w->y + w->widgets[WIDX_MAXPLAYERS].top);
 }
+
+#endif

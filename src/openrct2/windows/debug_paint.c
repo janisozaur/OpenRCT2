@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../input.h"
 #include "../interface/themes.h"
 #include "../interface/widget.h"
@@ -138,3 +140,5 @@ static void window_debug_paint_paint(rct_window * w, rct_drawpixelinfo * dpi)
 {
 	window_draw_widgets(w, dpi);
 }
+
+#endif

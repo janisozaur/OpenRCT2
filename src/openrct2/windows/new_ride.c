@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../config/Config.h"
 #include "../game.h"
@@ -962,3 +964,5 @@ static void window_new_ride_select(rct_window *w)
 
 	ride_construct_new(item);
 }
+
+#endif

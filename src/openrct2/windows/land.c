@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../input.h"
 #include "../interface/themes.h"
 #include "../interface/widget.h"
@@ -405,3 +407,5 @@ static void window_land_paint(rct_window *w, rct_drawpixelinfo *dpi)
 		gfx_draw_string_centred(dpi, STR_COST_AMOUNT, x, y, COLOUR_BLACK, gCommonFormatArgs);
 	}
 }
+
+#endif

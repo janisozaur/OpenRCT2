@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../cheats.h"
 #include "../game.h"
@@ -616,3 +618,5 @@ static uint8 *draw_mini_preview_get_pixel_ptr(rct_xy16 pixel)
 {
 	return &_window_track_place_mini_preview[pixel.y * TRACK_MINI_PREVIEW_WIDTH + pixel.x];
 }
+
+#endif

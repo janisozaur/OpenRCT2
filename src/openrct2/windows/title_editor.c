@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../drawing/drawing.h"
 #include "../game.h"
@@ -1039,3 +1041,5 @@ static void window_title_editor_rename_park(size_t index, const utf8 * name)
 		TileSequenceSave(_editingTitleSequence);
 	}
 }
+
+#endif

@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../config/Config.h"
 #include "../drawing/IDrawingEngine.h"
@@ -632,3 +634,5 @@ static bool track_list_load_design_for_preview(utf8 *path)
 	}
 	return false;
 }
+
+#endif

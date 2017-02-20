@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../editor.h"
 #include "../interface/themes.h"
@@ -408,3 +410,5 @@ static void window_install_track_design(rct_window *w)
 		}
 	}
 }
+
+#endif

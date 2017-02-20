@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../interface/themes.h"
 #include "../interface/widget.h"
 #include "../interface/window.h"
@@ -184,3 +186,5 @@ static void window_network_status_paint(rct_window *w, rct_drawpixelinfo *dpi)
 	x -= gfx_get_string_width(buffer) / 2;
 	gfx_draw_string(dpi, buffer, COLOUR_BLACK, x, y);
 }
+
+#endif

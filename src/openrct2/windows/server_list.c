@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../interface/colour.h"
 #include "../interface/themes.h"
@@ -790,4 +792,6 @@ static void fetch_servers_callback(http_response_t* response)
 		window_invalidate(window);
 	}
 }
+#endif
+
 #endif

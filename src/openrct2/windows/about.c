@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../localisation/localisation.h"
 #include "../sprites.h"
 #include "../interface/themes.h"
@@ -174,3 +176,5 @@ static void window_about_paint(rct_window *w, rct_drawpixelinfo *dpi)
 	// Licence
 	gfx_draw_string_left(dpi, STR_LICENSED_TO_INFOGRAMES_INTERACTIVE_INC, NULL, COLOUR_BLACK, w->x + 157, w->y + 257);
 }
+
+#endif

@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../input.h"
 #include "../interface/widget.h"
 #include "../interface/window.h"
@@ -439,3 +441,5 @@ void window_dropdown_show_colour_available(rct_window *w, rct_widget *widget, ui
 	gDropdownLastColourHover = -1;
 	gDropdownDefaultIndex = defaultIndex;
 }
+
+#endif

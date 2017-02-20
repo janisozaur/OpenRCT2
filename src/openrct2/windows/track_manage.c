@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../game.h"
 #include "../interface/themes.h"
 #include "../interface/widget.h"
@@ -336,3 +338,5 @@ static void window_track_design_list_reload_tracks()
 		trackListWindow->track_list.reload_track_designs = true;
 	}
 }
+
+#endif

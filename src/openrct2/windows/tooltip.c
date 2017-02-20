@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../drawing/drawing.h"
 #include "../localisation/localisation.h"
 #include "../input.h"
@@ -215,3 +217,5 @@ static void window_tooltip_paint(rct_window *w, rct_drawpixelinfo *dpi)
 	top = w->y + 1;
 	draw_string_centred_raw(dpi, left, top, _tooltipNumLines, _tooltipText);
 }
+
+#endif

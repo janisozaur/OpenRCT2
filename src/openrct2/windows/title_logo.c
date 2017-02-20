@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../localisation/localisation.h"
 #include "../sprites.h"
 #include "../interface/widget.h"
@@ -81,3 +83,5 @@ static void window_title_logo_paint(rct_window *w, rct_drawpixelinfo *dpi)
 	gfx_draw_sprite(dpi, SPR_G2_LOGO, w->x + x, w->y + y, 0);
 	gfx_draw_sprite(dpi, SPR_G2_TITLE, w->x + x + 104, w->y + y + 18, 0);
 }
+
+#endif

@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../game.h"
 #include "../interface/themes.h"
@@ -1000,3 +1002,5 @@ static void window_guest_list_find_groups()
 		;
 	}
 }
+
+#endif

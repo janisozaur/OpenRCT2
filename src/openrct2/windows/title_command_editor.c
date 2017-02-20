@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../game.h"
 #include "../input.h"
 #include "../interface/themes.h"
@@ -580,3 +582,5 @@ static void window_title_command_editor_paint(rct_window *w, rct_drawpixelinfo *
 		}
 	}
 }
+
+#endif

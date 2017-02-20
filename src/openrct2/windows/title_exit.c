@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../game.h"
 #include "../sprites.h"
@@ -111,3 +113,5 @@ static void window_title_exit_invalidate(rct_window *w)
 {
 	colour_scheme_update(w);
 }
+
+#endif

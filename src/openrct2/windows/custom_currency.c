@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 /**
  * 'Custom currency configuration' window definition and logic.
  */
@@ -317,3 +319,5 @@ static void custom_currency_window_paint(rct_window *w, rct_drawpixelinfo *dpi)
 		);
 	}
 }
+
+#endif

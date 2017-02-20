@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../cheats.h"
 #include "../game.h"
@@ -1156,3 +1158,5 @@ static void footpath_select_default()
 		}
 	}
 }
+
+#endif

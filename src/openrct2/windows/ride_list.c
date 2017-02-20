@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../config/Config.h"
 #include "../game.h"
 #include "../ride/ride.h"
@@ -912,3 +914,5 @@ static void window_ride_list_open_all(rct_window *w)
 		ride_set_status(i, RIDE_STATUS_OPEN);
 	}
 }
+
+#endif

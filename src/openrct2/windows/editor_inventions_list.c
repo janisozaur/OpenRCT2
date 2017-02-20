@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../editor.h"
 #include "../input.h"
 #include "../interface/Cursors.h"
@@ -989,3 +991,5 @@ static void window_editor_inventions_list_drag_paint(rct_window *w, rct_drawpixe
 }
 
 #pragma endregion
+
+#endif

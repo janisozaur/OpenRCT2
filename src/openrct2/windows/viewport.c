@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../game.h"
 #include "../world/map.h"
@@ -235,3 +237,5 @@ static void window_viewport_paint(rct_window *w, rct_drawpixelinfo *dpi)
 	if (w->viewport != NULL)
 		window_draw_viewport(dpi, w);
 }
+
+#endif

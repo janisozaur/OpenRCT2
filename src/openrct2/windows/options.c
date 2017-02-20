@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 /**
  * To better group the options together and allow the window to be scalable with additional OpenRCT2 options, the window has
  * been changed to a tab interface similar to the options window seen in Locomotion.
@@ -2019,3 +2021,5 @@ static void window_options_draw_tab_images(rct_drawpixelinfo *dpi, rct_window *w
 }
 
 #pragma endregion
+
+#endif

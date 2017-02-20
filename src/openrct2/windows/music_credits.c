@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../localisation/localisation.h"
 #include "../sprites.h"
 #include "../interface/widget.h"
@@ -210,3 +212,5 @@ static void window_music_credits_scrollpaint(rct_window *w, rct_drawpixelinfo *d
 	}
 
 }
+
+#endif

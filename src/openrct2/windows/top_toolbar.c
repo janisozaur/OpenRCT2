@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../audio/audio.h"
 #include "../cheats.h"
 #include "../config/Config.h"
@@ -3240,3 +3242,5 @@ bool land_tool_is_active()
 		return false;
 	return true;
 }
+
+#endif

@@ -14,6 +14,8 @@
  *****************************************************************************/
 #pragma endregion
 
+#ifndef HEADLESS
+
 #include "../localisation/localisation.h"
 #include "../sprites.h"
 #include "../interface/widget.h"
@@ -177,6 +179,6 @@ static void window_publisher_credits_scrollpaint(rct_window *w, rct_drawpixelinf
 		gfx_draw_string_centred(dpi, credits_order[i], x, y, COLOUR_BLACK, NULL);
 		y += 11;
 	}
-
-
 }
+
+#endif
