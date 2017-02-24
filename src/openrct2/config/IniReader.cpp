@@ -93,6 +93,7 @@ public:
             return false;
         }
 
+        log_warning("parsing section %s", name.c_str());
         ParseSectionValues(it->second);
         return true;
     }
@@ -263,6 +264,7 @@ private:
         // Get the key and value
         std::string key = String::Trim(line.substr(0, equalsIndex));
         std::string value = String::Trim(line.substr(equalsIndex + 1));
+        log_warning("\"%s\" = \"%s\"", key.c_str(), value.c_str());
 
         value = UnquoteValue(value);
         value = UnescapeValue(value);
