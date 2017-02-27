@@ -15,6 +15,8 @@
 #pragma endregion
 
 #include "../common.h"
+#include "../interface/window.h"
+#include "../editor.h"
 
 #ifndef HEADLESS
 
@@ -26,7 +28,6 @@
 #include "../editor.h"
 #include "../interface/themes.h"
 #include "../interface/widget.h"
-#include "../interface/window.h"
 #include "../localisation/localisation.h"
 #include "../management/research.h"
 #include "../object.h"

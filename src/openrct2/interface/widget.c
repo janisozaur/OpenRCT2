@@ -14,14 +14,14 @@
  *****************************************************************************/
 #pragma endregion
 
-#include "window.h"
+#include "widget.h"
 
 #ifndef HEADLESS
 
 #include "../drawing/drawing.h"
 #include "../input.h"
 #include "../sprites.h"
-#include "widget.h"
+#include "window.h"
 #include "../platform/platform.h"
 #include "../localisation/localisation.h"
 #include "../util/util.h"

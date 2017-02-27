@@ -15,6 +15,7 @@
 #pragma endregion
 
 #include "../localisation/localisation.h"
+#include "error.h"
 
 #ifndef HEADLESS
 
@@ -23,7 +24,6 @@
 #include "../interface/window.h"
 #include "../platform/platform.h"
 #include "../rct2.h"
-#include "error.h"
 
 bool gDisableErrorWindowSound = false;
 

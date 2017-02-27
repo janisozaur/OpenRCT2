@@ -14,11 +14,12 @@
  *****************************************************************************/
 #pragma endregion
 
+#include "../interface/window.h"
+
 #ifndef HEADLESS
 
 #include "../interface/themes.h"
 #include "../interface/widget.h"
-#include "../interface/window.h"
 #include "../localisation/localisation.h"
 #include "../management/finance.h"
 #include "../rct2.h"
