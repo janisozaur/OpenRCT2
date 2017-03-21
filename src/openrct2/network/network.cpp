@@ -40,6 +40,7 @@ sint32 _pickup_peep_old_x = SPRITE_LOCATION_NULL;
 #include <set>
 #include <string>
 
+#include "../actions/GameAction.h"
 #include "../core/Console.hpp"
 #include "../core/FileStream.hpp"
 #include "../core/Json.hpp"
@@ -1040,6 +1041,22 @@ void Network::Server_Send_GAMECMD(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx
 	*packet << (uint32)NETWORK_COMMAND_GAMECMD << (uint32)gCurrentTicks << eax << (ebx | GAME_COMMAND_FLAG_NETWORKED)
 			<< ecx << edx << esi << edi << ebp << playerid << callback;
 	SendPacketToClients(*packet);
+}
+
+void Network::Client_Send_GAME_ACTION(const IGameAction * action)
+{
+    std::unique_ptr<NetworkPacket> packet(NetworkPacket::Allocate());
+    *packet << (uint32)NETWORK_COMMAND_GAME_ACTION << (uint32)gCurrentTicks << eax << (ebx | GAME_COMMAND_FLAG_NETWORKED)
+        << ecx << edx << esi << edi << ebp << callback;
+    server_connection.QueuePacket(std::move(packet));
+}
+
+void Network::Server_Send_GAME_ACTION(const IGameAction * action)
+{
+    std::unique_ptr<NetworkPacket> packet(NetworkPacket::Allocate());
+    *packet << (uint32)NETWORK_COMMAND_GAME_ACTION << (uint32)gCurrentTicks << eax << (ebx | GAME_COMMAND_FLAG_NETWORKED)
+        << ecx << edx << esi << edi << ebp << playerid << callback;
+    SendPacketToClients(*packet);
 }
 
 void Network::Server_Send_TICK()
@@ -2578,6 +2595,18 @@ void network_send_chat(const char* text)
 		chat_history_add(formatted);
 		gNetwork.Server_Send_CHAT(formatted);
 	}
+}
+
+void network_send_game_action(const IGameAction * action)
+{
+    switch (gNetwork.GetMode()) {
+    case NETWORK_MODE_SERVER:
+        gNetwork.Server_Send_GAME_ACTION(action);
+        break;
+    case NETWORK_MODE_CLIENT:
+        gNetwork.Client_Send_GAME_ACTION(action);
+        break;
+    }
 }
 
 void network_send_gamecmd(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32 esi, uint32 edi, uint32 ebp, uint8 callback)
