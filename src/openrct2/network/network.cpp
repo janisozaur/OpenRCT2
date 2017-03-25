@@ -1056,7 +1056,7 @@ void Network::Client_Send_GAME_ACTION(const uint8 * buffer, uint64 size, uint32 
 void Network::Server_Send_GAME_ACTION(const uint8 * buffer, uint64 size, uint32 type)
 {
     std::unique_ptr<NetworkPacket> packet(NetworkPacket::Allocate());
-    *packet << (uint32)NETWORK_COMMAND_GAME_ACTION << (uint32)gCurrentTicks << type;
+    *packet << (uint32)NETWORK_COMMAND_GAME_ACTION << (uint32)gCurrentTicks << type << gNetwork.GetPlayerID();
     packet->Write(buffer, size);
     SendPacketToClients(*packet);
 }
@@ -1262,21 +1262,41 @@ void Network::ProcessGameCommandQueue()
 	while (game_command_queue.begin() != game_command_queue.end() && game_command_queue.begin()->tick == gCurrentTicks) {
 		// run all the game commands at the current tick
 		const GameCommand& gc = (*game_command_queue.begin());
-		if (GetPlayerID() == gc.playerid) {
-			game_command_callback = game_command_callback_get_callback(gc.callback);
-		}
-		game_command_playerid = gc.playerid;
-		sint32 command = gc.esi;
-		money32 cost = game_do_command_p(command, (sint32*)&gc.eax, (sint32*)&gc.ebx, (sint32*)&gc.ecx, (sint32*)&gc.edx, (sint32*)&gc.esi, (sint32*)&gc.edi, (sint32*)&gc.ebp);
-		if (cost != MONEY32_UNDEFINED) {
-			game_commands_processed_this_tick++;
-			NetworkPlayer* player = GetPlayerByID(gc.playerid);
-			if (player) {
-				player->LastAction = NetworkActions::FindCommand(command);
-				player->LastActionTime = SDL_GetTicks();
-				player->AddMoneySpent(cost);
-			}
-		}
+
+      if (gc.actionType != 0xFFFFFFFF) {
+          IGameAction * action = GameActions::Create(gc.actionType);
+          uint16 flags = gc.parameters->ReadValue<uint16>();
+          action->Deserialise(gc.parameters);
+          delete gc.parameters;
+          GameActionResult result = GameActions::Execute(action, nullptr, flags | 0x80);
+          if (result.Error != GA_ERROR::OK)
+          {
+              game_commands_processed_this_tick++;
+              NetworkPlayer* player = GetPlayerByID(gc.playerid);
+              if (player) {
+                  player->LastAction = NetworkActions::FindCommand(gc.actionType);
+                  player->LastActionTime = SDL_GetTicks();
+                  player->AddMoneySpent(result.Cost);
+              }
+          }
+      }
+      else {
+          if (GetPlayerID() == gc.playerid) {
+              game_command_callback = game_command_callback_get_callback(gc.callback);
+          }
+          game_command_playerid = gc.playerid;
+          sint32 command = gc.esi;
+          money32 cost = game_do_command_p(command, (sint32*)&gc.eax, (sint32*)&gc.ebx, (sint32*)&gc.ecx, (sint32*)&gc.edx, (sint32*)&gc.esi, (sint32*)&gc.edi, (sint32*)&gc.ebp);
+          if (cost != MONEY32_UNDEFINED) {
+              game_commands_processed_this_tick++;
+              NetworkPlayer* player = GetPlayerByID(gc.playerid);
+              if (player) {
+                  player->LastAction = NetworkActions::FindCommand(command);
+                  player->LastActionTime = SDL_GetTicks();
+                  player->AddMoneySpent(cost);
+              }
+          }
+      }
 		game_command_queue.erase(game_command_queue.begin());
 	}
 }
@@ -1864,33 +1884,28 @@ void Network::Client_Handle_GAMECMD(NetworkConnection& connection, NetworkPacket
 void Network::Client_Handle_GAME_ACTION(NetworkConnection& connection, NetworkPacket& packet)
 {
     uint32 tick;
-    uint16 flags;
     uint32 type;
-    money16 test;
-    packet >> tick >> type;
+    uint8 playerid;
+    packet >> tick >> type >> playerid;
     MemoryStream stream;
     for (int i = packet.BytesRead; i < packet.Size; ++i) {
         stream.WriteValue(((uint8*)packet.GetData())[i]);
     }
     stream.SetPosition(0);
-    flags = stream.ReadValue<uint16>();
-    test = stream.ReadValue<money16>();
+    GameCommand gc = GameCommand(tick, type, stream, playerid);
+    game_command_queue.insert(gc);
 }
 
 void Network::Server_Handle_GAME_ACTION(NetworkConnection& connection, NetworkPacket& packet)
 {
     uint32 tick;
-    uint16 flags;
     uint32 type;
-    money16 test;
     packet >> tick >> type;
     MemoryStream stream;
     for (int i = packet.BytesRead; i < packet.Size; ++i) {
         stream.WriteValue(((uint8*)packet.GetData())[i]);
     }
     stream.SetPosition(0);
-    flags = stream.ReadValue<uint16>();
-    test = stream.ReadValue<money16>();
 }
 void Network::Server_Handle_GAMECMD(NetworkConnection& connection, NetworkPacket& packet)
 {
