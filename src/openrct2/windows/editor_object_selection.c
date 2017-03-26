@@ -18,6 +18,7 @@
 
 #include "../audio/audio.h"
 #include "../config/Config.h"
+#include "../Context.h"
 #include "../game.h"
 #include "../editor.h"
 #include "../interface/themes.h"
@@ -1003,7 +1004,8 @@ static void window_editor_object_selection_scroll_mousedown(rct_window *w, sint3
 
 	window_invalidate(w);
 
-	audio_play_sound_panned(SOUND_CLICK_1, gCursorState.x, 0, 0, 0);
+	const CursorState * state = context_get_cursor_state();
+	audio_play_sound_panned(SOUND_CLICK_1, state->x, 0, 0, 0);
 
 
 	if (gScreenFlags & SCREEN_FLAGS_TRACK_MANAGER) {
