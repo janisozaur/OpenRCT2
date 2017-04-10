@@ -135,8 +135,8 @@ public:
 	void Server_Send_CHAT(const char* text);
 	void Client_Send_GAMECMD(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32 esi, uint32 edi, uint32 ebp, uint8 callback);
 	void Server_Send_GAMECMD(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32 esi, uint32 edi, uint32 ebp, uint8 playerid, uint8 callback);
-   void Client_Send_GAME_ACTION(const uint8 * buffer, uint64 size, uint32 type);
-   void Server_Send_GAME_ACTION(const uint8 * buffer, uint64 size, uint32 type);
+	void Client_Send_GAME_ACTION(const uint8 * buffer, uint64 size, uint32 type);
+	void Server_Send_GAME_ACTION(const uint8 * buffer, uint64 size, uint32 type);
 	void Server_Send_TICK();
 	void Server_Send_PLAYERLIST();
 	void Client_Send_PING();
@@ -186,19 +186,20 @@ private:
 		GameCommand(uint32 t, uint32* args, uint8 p, uint8 cb) {
 			tick = t; eax = args[0]; ebx = args[1]; ecx = args[2]; edx = args[3];
 			esi = args[4]; edi = args[5]; ebp = args[6]; playerid = p; callback = cb;
-         actionType = 0xFFFFFFFF;
+			actionType = 0xFFFFFFFF;
 		}
 
-      GameCommand(uint32 t, uint32 aType, MemoryStream const &stream, uint8 p)
-      {
-          tick = t; playerid = p; actionType = aType;
-          // Note this will leak memory. Do something about this
-          parameters = new MemoryStream(stream);
-      }
+		GameCommand(uint32 t, uint32 aType, MemoryStream const &stream, uint8 p)
+		{
+			tick = t; playerid = p; actionType = aType;
+			// Note this will leak memory. Do something about this
+			parameters = new MemoryStream(stream);
+		}
+
 		uint32 tick;
 		uint32 eax, ebx, ecx, edx, esi, edi, ebp;
-      uint32 actionType = 0xFFFFFFFF;
-      MemoryStream *parameters;
+		uint32 actionType = 0xFFFFFFFF;
+		MemoryStream *parameters;
 		uint8 playerid;
 		uint8 callback;
 		bool operator<(const GameCommand& comp) const {
@@ -246,8 +247,8 @@ private:
 	void Server_Handle_CHAT(NetworkConnection& connection, NetworkPacket& packet);
 	void Client_Handle_GAMECMD(NetworkConnection& connection, NetworkPacket& packet);
 	void Server_Handle_GAMECMD(NetworkConnection& connection, NetworkPacket& packet);
-   void Client_Handle_GAME_ACTION(NetworkConnection& connection, NetworkPacket& packet);
-   void Server_Handle_GAME_ACTION(NetworkConnection& connection, NetworkPacket& packet);
+	void Client_Handle_GAME_ACTION(NetworkConnection& connection, NetworkPacket& packet);
+	void Server_Handle_GAME_ACTION(NetworkConnection& connection, NetworkPacket& packet);
 	void Client_Handle_TICK(NetworkConnection& connection, NetworkPacket& packet);
 	void Client_Handle_PLAYERLIST(NetworkConnection& connection, NetworkPacket& packet);
 	void Client_Handle_PING(NetworkConnection& connection, NetworkPacket& packet);
