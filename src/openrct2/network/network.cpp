@@ -2818,6 +2818,7 @@ sint32 network_get_status() { return NETWORK_STATUS_NONE; }
 sint32 network_get_authstatus() { return NETWORK_AUTH_NONE; }
 uint32 network_get_server_tick() { return gCurrentTicks; }
 void network_send_gamecmd(uint32 eax, uint32 ebx, uint32 ecx, uint32 edx, uint32 esi, uint32 edi, uint32 ebp, uint8 callback) {}
+void network_send_game_action(const IGameAction *action, uint32 flags = 0) {}
 void network_send_map() {}
 void network_update() {}
 sint32 network_begin_client(const char *host, sint32 port) { return 1; }
