@@ -198,12 +198,6 @@ private:
 			parameters = new MemoryStream(stream);
 		}
 
-		~GameCommand()
-		{
-			if (parameters != nullptr)
-				delete parameters;
-		}
-
 		uint32 tick;
 		uint32 eax, ebx, ecx, edx, esi, edi, ebp;
 		uint32 actionType = 0xFFFFFFFF;

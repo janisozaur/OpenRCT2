@@ -68,6 +68,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="actions\GameAction.cpp" />
+    <ClCompile Include="actions\PlaceParkEntranceAction.cpp" />
     <ClCompile Include="actions\SetParkEntranceFeeAction.cpp" />
     <ClCompile Include="audio\AudioChannel.cpp" />
     <ClCompile Include="audio\AudioMixer.cpp" />
