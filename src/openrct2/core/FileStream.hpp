@@ -74,7 +74,9 @@ public:
         _file = SDL_RWFromFile(path, mode);
         if (_file == nullptr)
         {
+            log_error("error reading '%s': %s", path, SDL_GetError());
             throw IOException(SDL_GetError());
+            log_error("threw exception");
         }
         _fileSize = SDL_RWsize(_file);
         _ownsFilePtr = true;

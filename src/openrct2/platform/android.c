@@ -27,6 +27,7 @@ int main(int argc, char *argv[]);
 
 int SDL_main(int argc, char *argv[])
 {
+    log_error("SDL_MAIN");
     return main(argc, argv);
 }
 
