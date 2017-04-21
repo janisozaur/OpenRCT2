@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void copyAssets() {
-        File dataDir = new File("/sdcard/openrct2/");
+        File dataDir = new File("/storage/emulated/0/openrct2/");
         try {
             copyAsset(getAssets(), "data", dataDir, "");
         } catch (IOException e) {

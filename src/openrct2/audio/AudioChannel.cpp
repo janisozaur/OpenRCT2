@@ -14,6 +14,7 @@
  *****************************************************************************/
 #pragma endregion
 
+#include <cstdint>
 #include <cmath>
 #include <speex/speex_resampler.h>
 #include "../core/Math.hpp"

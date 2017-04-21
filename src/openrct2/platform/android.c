@@ -56,11 +56,11 @@ bool platform_open_common_file_dialog(utf8 *outFilename, file_dialog_desc *desc,
 
 void platform_get_exe_path(utf8 *outPath, size_t outSize)
 {
-    safe_strcpy(outPath, "/sdcard/openrct2", outSize);
+    safe_strcpy(outPath, "/storage/emulated/0/openrct2", outSize);
 }
 
 void platform_posix_sub_user_data_path(char *buffer, size_t size, const char *homedir) {
-    safe_strcpy(buffer, "/sdcard/openrct2-user/", size);
+    safe_strcpy(buffer, "/storage/emulated/0/openrct2-user/", size);
 }
 
 void platform_show_messagebox(const utf8 * message)
@@ -72,7 +72,7 @@ utf8 *platform_open_directory_browser(const utf8 *title)
 {
     log_info(title);
     STUB();
-    return "/sdcard/rct2";
+    return "/storage/emulated/0/rct2";
 }
 
 #ifndef NO_TTF
@@ -84,7 +84,7 @@ bool platform_get_font_path(TTFFontDescriptor *font, utf8 *buffer, size_t size)
 #endif
 
 void platform_posix_sub_resolve_openrct_data_path(utf8 *out, size_t size) {
-    safe_strcpy(out, "/sdcard/openrct2", size);
+    safe_strcpy(out, "/storage/emulated/0/openrct2", size);
 }
 
 
