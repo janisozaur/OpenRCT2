@@ -103,6 +103,8 @@ typedef struct rct_object_filters {
 assert_struct_size(rct_object_filters, 3);
 #pragma pack(pop)
 
+extern const rct_object_entry RequiredSelectedObjects[7];
+
 extern const rct_object_entry_group object_entry_groups[];
 
 void object_list_load();

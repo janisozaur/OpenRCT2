@@ -20,6 +20,7 @@
 #include "../core/IStream.hpp"
 #include "../core/Path.hpp"
 #include "../core/String.hpp"
+#include "../core/Util.hpp"
 #include "../management/award.h"
 #include "../network/network.h"
 #include "../object/ObjectRepository.h"
@@ -160,6 +161,34 @@ public:
             chunkReader.ReadChunk(&_s6.elapsed_months, 16);
             chunkReader.ReadChunk(&_s6.map_elements, sizeof(_s6.map_elements));
             chunkReader.ReadChunk(&_s6.next_free_map_element_pointer_index, 3048816);
+        }
+        const rct_object_entry blank = { 0xffffffff, { -1, -1, -1, -1, -1, -1, -1, -1 }, 0xffffffff};
+        for (uint32 i = 0; i < Util::CountOf(RequiredSelectedObjects); i++) {
+            const rct_object_entry * object = &RequiredSelectedObjects[i];
+            bool found = false;
+            for (uint32 j = 0; j < Util::CountOf(_s6.objects); j++) {
+                if (strncmp(_s6.objects[j].name, object->name, sizeof(object->name)) == 0) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                log_warning("missing entry %.8s", object->name);
+                sint32 index = -1;
+                for (uint32 j = 0; j < Util::CountOf(_s6.objects); j++) {
+                    if (memcmp(&_s6.objects[j], &blank, sizeof(rct_object_entry)) == 0) {
+                        log_warning("vacant entry at index %d", j);
+                        index = j;
+                        break;
+                    }
+                }
+                if (index != -1) {
+                    memcpy(&_s6.objects[index], object, sizeof(rct_object_entry));
+                    log_warning("%.8s fixed", object->name);
+                } else {
+                    log_warning("baaad");
+                }
+            }
         }
     }
 
