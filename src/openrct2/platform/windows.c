@@ -948,10 +948,10 @@ uint8 platform_get_locale_date_format()
 {
 	// Retrieve short date format, eg "MM/dd/yyyy"
 	wchar_t dateFormat[20];
-	if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SSHORTDATE, dateFormat, sizeof(dateFormat)) == 0)
-	{
+	//if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SSHORTDATE, dateFormat, sizeof(dateFormat)) == 0)
+	//{
 		return DATE_FORMAT_DAY_MONTH_YEAR;
-	}
+	//}
 
 	// The only valid characters for format types are: dgyM
 	// We try to find 3 strings of format types, ignore any characters in between.
