@@ -14,16 +14,13 @@
  *****************************************************************************/
 #pragma endregion
 
-#ifdef __MINGW32__
-// 0x0600 == vista
-#define WINVER 0x0600
-#define _WIN32_WINNT 0x0600
-#endif // __MINGW32__
+#include "../common.h"
+
+#ifdef __WINDOWS__
 
 #include "../common.h"
 
 #ifdef _WIN32
-
 #include <windows.h>
 #include <lmcons.h>
 #include <psapi.h>
