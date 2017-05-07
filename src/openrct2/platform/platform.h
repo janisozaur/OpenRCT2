@@ -136,6 +136,9 @@ extern SDL_Color gPalette[256];
 
 extern bool gSteamOverlayActive;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 // Platform shared definitions
 void platform_update_fullscreen_resolutions();
 void platform_get_closest_resolution(sint32 inWidth, sint32 inHeight, sint32 *outWidth, sint32 *outHeight);
@@ -246,5 +249,8 @@ void core_init();
 // way a normal drag would do, given constraints in the user desktop (e.g. the dock
 // positioning). So it follows that the finished window size should be saved.
 sint32 platform_get_non_window_flags();
+#ifdef __cplusplus
+}
+#endif
 
 #endif
