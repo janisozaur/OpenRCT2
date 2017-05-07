@@ -18,12 +18,6 @@
 
 #ifdef __WINDOWS__
 
-#ifdef __MINGW32__
-// 0x0600 == vista
-#define WINVER 0x0600
-#define _WIN32_WINNT 0x0600
-#endif // __MINGW32__
-
 #include <windows.h>
 #include <lmcons.h>
 #include <psapi.h>
@@ -1081,6 +1075,7 @@ utf8* platform_get_username() {
 	return username;
 }
 
+#ifndef __MINGW32__
 ///////////////////////////////////////////////////////////////////////////////
 // File association setup
 ///////////////////////////////////////////////////////////////////////////////
@@ -1283,4 +1278,5 @@ sint32 platform_get_non_window_flags()
 	return SDL_WINDOW_MAXIMIZED | SDL_WINDOW_MINIMIZED | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP;
 }
 
+#endif
 #endif
