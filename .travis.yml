@@ -60,7 +60,7 @@ matrix:
           env: OPENRCT2_CMAKE_OPTS="-DCMAKE_TOOLCHAIN_FILE=../CMakeLists_mingw.txt -DFORCE32=on" TARGET=windows
           after_success:
               - cd build
-              - curl --progress-bar --upload-file openrct2-linux.tar.gz https://transfer.sh/openrct2-linux-x86_64.tar.gz -o link && cat link;
+              - curl --progress-bar --upload-file openrct2.exe https://transfer.sh/openrct2.exe -o link && cat link;
         - os: linux
           env: TARGET=docker64 OPENRCT2_CMAKE_OPTS="-DDISABLE_TTF=ON -DCMAKE_BUILD_TYPE=release"
           services:
