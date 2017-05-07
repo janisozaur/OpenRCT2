@@ -1271,6 +1271,7 @@ bool platform_setup_uri_protocol()
 	return false;
 }
 
+#endif
 ///////////////////////////////////////////////////////////////////////////////
 
 sint32 platform_get_non_window_flags()
@@ -1278,5 +1279,4 @@ sint32 platform_get_non_window_flags()
 	return SDL_WINDOW_MAXIMIZED | SDL_WINDOW_MINIMIZED | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP;
 }
 
-#endif
 #endif
