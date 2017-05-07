@@ -743,7 +743,7 @@ void platform_get_exe_path(utf8 *outPath, size_t outSize)
     GetModuleFileNameW(NULL, exePath, MAX_PATH);
     exeDelimiter = wcsrchr(exePath, *PATH_SEPARATOR);
     *exeDelimiter = L'\0';
-    wcscpy_s(tempPath, MAX_PATH, exePath);
+    wcscpy(tempPath, exePath);
     _wfullpath(exePath, tempPath, MAX_PATH);
     WideCharToMultiByte(CP_UTF8, 0, exePath, MAX_PATH, outPath, (sint32) outSize, NULL, NULL);
 }
