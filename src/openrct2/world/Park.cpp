@@ -14,28 +14,38 @@
  *****************************************************************************/
 #pragma endregion
 
-#include "../cheats.h"
+#include "../core/Math.hpp"
+#include "../core/Util.hpp"
 #include "../config/Config.h"
-#include "../game.h"
-#include "../interface/colour.h"
-#include "../interface/window.h"
-#include "../localisation/localisation.h"
-#include "../management/award.h"
-#include "../management/finance.h"
-#include "../management/marketing.h"
-#include "../management/news_item.h"
-#include "../management/research.h"
 #include "../network/network.h"
-#include "../peep/peep.h"
-#include "../peep/staff.h"
-#include "../rct2.h"
-#include "../ride/ride.h"
-#include "../ride/ride_data.h"
-#include "../scenario/scenario.h"
-#include "../world/map.h"
-#include "entrance.h"
-#include "park.h"
-#include "sprite.h"
+#include "Park.h"
+
+
+extern "C"
+{
+    #include "../cheats.h"
+    #include "../game.h"
+    #include "../interface/colour.h"
+    #include "../interface/window.h"
+    #include "../localisation/localisation.h"
+    #include "../management/award.h"
+    #include "../management/finance.h"
+    #include "../management/marketing.h"
+    #include "../management/news_item.h"
+    #include "../management/research.h"
+    #include "../peep/peep.h"
+    #include "../peep/staff.h"
+    #include "../rct2.h"
+    #include "../ride/ride.h"
+    #include "../ride/ride_data.h"
+    #include "../scenario/scenario.h"
+    #include "../world/map.h"
+    #include "entrance.h"
+    #include "sprite.h"
+}
+
+extern "C"
+{
 
 rct_string_id gParkName;
 uint32 gParkNameArgs;
@@ -203,7 +213,7 @@ sint32 calculate_park_rating()
         sint32 num_lost_guests;
 
         // -150 to +3 based on a range of guests from 0 to 2000
-        result -= 150 - (min(2000, gNumGuestsInPark) / 13);
+        result -= 150 - (std::min<sint16>(2000, gNumGuestsInPark) / 13);
 
         // Find the number of happy peeps and the number of peeps who can't find the park exit
         num_happy_peeps = 0;
@@ -221,7 +231,7 @@ sint32 calculate_park_rating()
         result -= 500;
 
         if (gNumGuestsInPark > 0)
-            result += 2 * min(250, (num_happy_peeps * 300) / gNumGuestsInPark);
+            result += 2 * std::min(250, (num_happy_peeps * 300) / gNumGuestsInPark);
 
         // Up to 25 guests can be lost without affecting the park rating.
         if (num_lost_guests > 25)
@@ -266,13 +276,13 @@ sint32 calculate_park_rating()
                 average_intensity = -average_intensity;
             }
 
-            average_excitement = min(average_excitement / 2, 50);
-            average_intensity = min(average_intensity / 2, 50);
+            average_excitement = std::min(average_excitement / 2, 50);
+            average_intensity = std::min(average_intensity / 2, 50);
             result += 100 - average_excitement - average_intensity;
         }
 
-        total_ride_excitement = min(1000, total_ride_excitement);
-        total_ride_intensity = min(1000, total_ride_intensity);
+        total_ride_excitement = std::min<sint16>(1000, total_ride_excitement);
+        total_ride_intensity = std::min<sint16>(1000, total_ride_intensity);
         result -= 200 - ((total_ride_excitement + total_ride_intensity) / 10);
     }
 
@@ -290,11 +300,11 @@ sint32 calculate_park_rating()
             if (litter->creationTick - gScenarioTicks >= 7680)
                 num_litter++;
         }
-        result -= 600 - (4 * (150 - min(150, num_litter)));
+        result -= 600 - (4 * (150 - std::min<sint16>(150, num_litter)));
     }
 
     result -= gParkRatingCasualtyPenalty;
-    result = clamp(0, result, 999);
+    result = Math::Clamp(0, result, 999);
     return result;
 }
 
@@ -395,7 +405,7 @@ static sint32 park_calculate_guest_generation_probability()
 
     // If difficult guest generation, extra guests are available for good rides
     if (gParkFlags & PARK_FLAGS_DIFFICULT_GUEST_GENERATION) {
-        suggestedMaxGuests = min(suggestedMaxGuests, 1000);
+        suggestedMaxGuests = std::min(suggestedMaxGuests, 1000);
         FOR_ALL_RIDES(i, ride) {
             if (ride->lifecycle_flags & RIDE_LIFECYCLE_BROKEN_DOWN)
                 continue;
@@ -418,12 +428,12 @@ static sint32 park_calculate_guest_generation_probability()
         }
     }
 
-    suggestedMaxGuests = min(suggestedMaxGuests, 65535);
+    suggestedMaxGuests = std::min(suggestedMaxGuests, 65535);
     gTotalRideValue = totalRideValue;
     _suggestedGuestMaximum = suggestedMaxGuests;
 
     // Begin with 50 + park rating
-    probability = 50 + clamp(0, gParkRating - 200, 650);
+    probability = 50 + Math::Clamp(0, gParkRating - 200, 650);
 
     // The more guests, the lower the chance of a new one
     sint32 numGuests = gNumGuestsInPark + gNumGuestsHeadingForPark;
@@ -611,7 +621,7 @@ void park_update_histories()
     // Update guests in park history
     for (sint32 i = 31; i > 0; i--)
         gGuestsInParkHistory[i] = gGuestsInParkHistory[i - 1];
-    gGuestsInParkHistory[0] = min(guestsInPark, 5000) / 20;
+    gGuestsInParkHistory[0] = std::min(guestsInPark, 5000) / 20;
     window_invalidate_by_class(WC_PARK_INFORMATION);
 
     // Update current cash history
@@ -810,7 +820,7 @@ void game_command_set_park_name(sint32 *eax, sint32 *ebx, sint32 *ecx, sint32 *e
         if (nameChunkOffset < 0)
             nameChunkOffset = 2;
         nameChunkOffset *= 12;
-        nameChunkOffset = min(nameChunkOffset, countof(newName) - 12);
+        nameChunkOffset = std::min(nameChunkOffset, (sint32)Util::CountOf(newName) - 12);
         memcpy(newName + nameChunkOffset + 0, edx, 4);
         memcpy(newName + nameChunkOffset + 4, ebp, 4);
         memcpy(newName + nameChunkOffset + 8, edi, 4);
@@ -933,6 +943,7 @@ static money32 map_buy_land_rights_for_tile(sint32 x, sint32 y, sint32 setting, 
         }
         return 0;
     case BUY_LAND_RIGHTS_FLAG_SET_OWNERSHIP_WITH_CHECKS:
+    {
         if (!(gScreenFlags & SCREEN_FLAGS_EDITOR) && !gCheatsSandboxMode) {
             return MONEY32_UNDEFINED;
         }
@@ -988,6 +999,7 @@ static money32 map_buy_land_rights_for_tile(sint32 x, sint32 y, sint32 setting, 
         update_park_fences_around_tile(x, y);
         gMapLandRightsUpdateSuccess = true;
         return 0;
+    }
     default:
         log_warning("Tried calling map_buy_land_rights_for_tile() with an incorrect setting!");
         assert(false);
@@ -1075,4 +1087,43 @@ money16 park_get_entrance_fee()
         if (gParkFlags & PARK_FLAGS_PARK_FREE_ENTRY) return 0;
     }
     return gParkEntranceFee;
+}
+
+}
+
+using namespace OpenRCT2;
+
+uint16 Park::GetParkRating() const
+{
+    return gParkRating;
+}
+
+money32 Park::GetParkValue() const
+{
+    return gParkValue;
+}
+
+money32 Park::GetCompanyValue() const
+{
+    return gCompanyValue;
+}
+
+void Park::Update()
+{
+    park_update();
+}
+
+sint32 Park::CalculateParkRating() const
+{
+    return calculate_park_rating();
+}
+
+money32 Park::CalculateParkValue() const
+{
+    return calculate_park_value();
+}
+
+money32 Park::CalculateCompanyValue() const
+{
+    return calculate_company_value();
 }
