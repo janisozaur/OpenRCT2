@@ -43,6 +43,7 @@
 #include "title/TitleScreen.h"
 #include "title/TitleSequenceManager.h"
 #include "ui/WindowManager.h"
+#include "world/Park.h"
 #include "Version.h"
 
 extern "C"
