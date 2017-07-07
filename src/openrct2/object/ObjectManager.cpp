@@ -458,10 +458,10 @@ private:
             if (!object_entry_is_empty(entry))
             {
                 ori = _objectRepository->FindObject(entry);
-                if (ori == nullptr)
+	            ReportMissingObject(entry);
+	            if (ori == nullptr)
                 {
-                    invalidEntries.push_back(*entry);
-                    ReportMissingObject(entry);
+	                invalidEntries.push_back(*entry);
                 }
                 else
                 {
@@ -568,7 +568,8 @@ private:
     {
         utf8 objName[9] = { 0 };
         Memory::Copy(objName, entry->name, 8);
-        Console::Error::WriteLine("[%s] Object not found.", objName);
+        Console::Error::WriteLine("{%u, { '%c', '%c', '%c', '%c', '%c', '%c', '%c', '%c'}, %u },", entry->flags, entry->name[0], entry->name[1], entry->name[2], entry->name[3], entry->name[4], entry->name[5], entry->name[6], entry->name[7], entry->checksum);
+
     }
 
     void ReportObjectLoadProblem(const rct_object_entry * entry)
