@@ -40,6 +40,7 @@
 #include "title/TitleSequenceManager.h"
 #include "ui/WindowManager.h"
 #include "Version.h"
+#include "rct2/S6Exporter.h"
 
 extern "C"
 {
@@ -341,6 +342,9 @@ namespace OpenRCT2
             }
 #endif // DISABLE_NETWORK
 
+            auto s6e = std::make_unique<S6Exporter>();
+            s6e->Export();
+            s6e->SaveGame("/tmp/xx.sv6");
             RunGameLoop();
         }
 
