@@ -24,6 +24,7 @@
 #include "../core/Path.hpp"
 #include "../core/String.hpp"
 #include "../OpenRCT2.h"
+#include "../GameState.h"
 #include "../ParkImporter.h"
 #include "../scenario/ScenarioRepository.h"
 #include "../scenario/ScenarioSources.h"
@@ -47,7 +48,8 @@ class TitleSequencePlayer final : public ITitleSequencePlayer
 private:
     static constexpr const char * SFMM_FILENAME = "Six Flags Magic Mountain.SC6";
 
-    IScenarioRepository * _scenarioRepository = nullptr;
+    IScenarioRepository * const _scenarioRepository;
+    GameState * const           _gameState;
 
     uint32          _sequenceId = 0;
     TitleSequence * _sequence = nullptr;
@@ -59,11 +61,12 @@ private:
     rct_xy32        _viewCentreLocation = { 0 };
 
 public:
-    TitleSequencePlayer(IScenarioRepository * scenarioRepository)
+    TitleSequencePlayer(IScenarioRepository * scenarioRepository, GameState * gameState)
+        : _scenarioRepository(scenarioRepository),
+          _gameState(gameState)
     {
         Guard::ArgumentNotNull(scenarioRepository);
-
-        _scenarioRepository = scenarioRepository;
+        Guard::ArgumentNotNull(gameState);
     }
 
     ~TitleSequencePlayer() override
@@ -207,7 +210,7 @@ public:
         {
             if (Update())
             {
-                game_logic_update();
+                _gameState->UpdateLogic();
             }
             else
             {
@@ -481,9 +484,9 @@ private:
     }
 };
 
-ITitleSequencePlayer * CreateTitleSequencePlayer(IScenarioRepository * scenarioRepository)
+ITitleSequencePlayer * CreateTitleSequencePlayer(IScenarioRepository * scenarioRepository, GameState * gameState)
 {
-    return new TitleSequencePlayer(scenarioRepository);
+    return new TitleSequencePlayer(scenarioRepository, gameState);
 }
 
 extern "C"
