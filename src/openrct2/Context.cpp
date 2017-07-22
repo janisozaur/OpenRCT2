@@ -30,6 +30,7 @@
 #include "core/Path.hpp"
 #include "core/String.hpp"
 #include "FileClassifier.h"
+#include "GameState.h"
 #include "network/network.h"
 #include "object/ObjectManager.h"
 #include "object/ObjectRepository.h"
@@ -88,7 +89,8 @@ namespace OpenRCT2
         IScenarioRepository *       _scenarioRepository = nullptr;
 
         // Game states
-        TitleScreen * _titleScreen = nullptr;
+        GameState *     _gameState = nullptr;
+        TitleScreen *   _titleScreen = nullptr;
 
         bool    _initialised = false;
         bool    _isWindowMinimised = false;
@@ -130,6 +132,7 @@ namespace OpenRCT2
             rct2_interop_dispose();
 
             delete _titleScreen;
+            delete _gameState;
 
             delete _scenarioRepository;
             delete _trackDesignRepository;
@@ -366,7 +369,8 @@ namespace OpenRCT2
             viewport_init_all();
             game_init_all(150);
 
-            _titleScreen = new TitleScreen();
+            _gameState = new GameState();
+            _titleScreen = new TitleScreen(_gameState);
             return true;
         }
 
@@ -674,7 +678,7 @@ namespace OpenRCT2
             }
             else
             {
-                game_update();
+                _gameState->Update();
             }
 
             twitch_update();
