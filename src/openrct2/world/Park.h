@@ -54,21 +54,34 @@ enum PARK_FLAGS
 
 #ifdef __cplusplus
 
+struct rct_peep;
+struct rct_ride;
+
 namespace OpenRCT2
 {
     class Park final
     {
     public:
+        Park();
+        ~Park();
+
         uint16  GetParkRating() const;
         money32 GetParkValue() const;
         money32 GetCompanyValue() const;
 
         void Update();
 
-    private:
         sint32  CalculateParkRating() const;
         money32 CalculateParkValue() const;
         money32 CalculateCompanyValue() const;
+
+        rct_peep *  GenerateGuest();
+
+    private:
+        money32 CalculateRideValue(const rct_ride * ride) const;
+
+        void        GenerateGuests();
+        rct_peep *  GenerateGuestFromCampaign(sint32 campaign);
     };
 }
 
