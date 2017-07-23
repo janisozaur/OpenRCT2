@@ -186,9 +186,9 @@ static sint32 award_is_deserved_best_value(sint32 awardType, sint32 activeAwardT
         return 0;
     if (gParkFlags & (PARK_FLAGS_NO_MONEY | PARK_FLAGS_PARK_FREE_ENTRY))
         return 0;
-    if (gTotalRideValue < MONEY(10, 00))
+    if (gTotalRideValueForMoney < MONEY(10, 00))
         return 0;
-    if (park_get_entrance_fee() + MONEY(0, 10) >= gTotalRideValue / 2)
+    if (park_get_entrance_fee() + MONEY(0, 10) >= gTotalRideValueForMoney / 2)
         return 0;
     return 1;
 }
@@ -240,7 +240,7 @@ static sint32 award_is_deserved_worse_value(sint32 awardType, sint32 activeAward
     money32 parkEntranceFee = park_get_entrance_fee();
     if (parkEntranceFee == MONEY(0, 00))
         return 0;
-    if (gTotalRideValue >= parkEntranceFee)
+    if (gTotalRideValueForMoney >= parkEntranceFee)
         return 0;
     return 1;
 }

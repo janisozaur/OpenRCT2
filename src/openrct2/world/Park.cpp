@@ -600,7 +600,7 @@ void Park::Initialise()
     gGuestChangeModifier = 0;
     gParkRating = 0;
     _guestGenerationProbability = 0;
-    gTotalRideValue = 0;
+    gTotalRideValueForMoney = 0;
     gResearchLastItemSubject = (uint32)-1;
 
     for (size_t i = 0; i < 20; i++)
@@ -657,7 +657,7 @@ void Park::Update()
         gParkRating = CalculateParkRating();
         gParkValue = CalculateParkValue();
         gCompanyValue = CalculateCompanyValue();
-        gTotalRideValue = CalculateTotalRideValue();
+        gTotalRideValueForMoney = CalculateTotalRideValueForMoney();
         _suggestedGuestMaximum = CalculateSuggestedMaxGuests();
         _guestGenerationProbability = CalculateGuestGenerationProbability();
 
@@ -837,7 +837,6 @@ money32 Park::CalculateRideValue(const rct_ride * ride) const
     if (ride->type != RIDE_TYPE_NULL &&
         ride->value != RIDE_VALUE_UNDEFINED)
     {
-        // Fair value * (...)
         result = (ride->value * 10) * (ride_customers_in_last_5_minutes(ride) + rideBonusValue[ride->type] * 4);
     }
     return result;
@@ -848,7 +847,7 @@ money32 Park::CalculateCompanyValue() const
     return finance_get_current_cash() + gParkValue - gBankLoan;
 }
 
-money16 Park::CalculateTotalRideValue() const
+money16 Park::CalculateTotalRideValueForMoney() const
 {
     money16 totalRideValue = 0;
     sint32 i;
@@ -937,11 +936,11 @@ uint32 Park::CalculateGuestGenerationProbability() const
 
     // Penalty for overpriced entrance fee relative to total ride value
     money16 entranceFee = park_get_entrance_fee();
-    if (entranceFee > gTotalRideValue)
+    if (entranceFee > gTotalRideValueForMoney)
     {
         probability /= 4;
         // Extra penalty for very overpriced entrance fee
-        if (entranceFee / 2 > gTotalRideValue)
+        if (entranceFee / 2 > gTotalRideValueForMoney)
         {
             probability /= 4;
         }
