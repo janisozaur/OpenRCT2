@@ -665,6 +665,15 @@ void Park::Update()
         window_invalidate_by_class(WC_FINANCES);
         window_invalidate_by_class(WC_PARK_INFORMATION);
     }
+
+    // Every week
+    if (date_is_week_start(gDateMonthTicks))
+    {
+        UpdateHistories();
+        gParkSize = CalculateParkSize();
+        window_invalidate_by_class(WC_PARK_INFORMATION);
+    }
+
     GenerateGuests();
 }
 
@@ -1144,11 +1153,6 @@ extern "C"
     rct_peep * park_generate_new_guest()
     {
         return _singleton->GenerateGuest();
-    }
-
-    void park_update_histories()
-    {
-        _singleton->UpdateHistories();
     }
 
     void park_reset_history()
