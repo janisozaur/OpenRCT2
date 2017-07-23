@@ -20,7 +20,6 @@
 #include "../network/network.h"
 #include "Park.h"
 
-
 extern "C"
 {
     #include "../cheats.h"
@@ -81,75 +80,6 @@ sint32 _suggestedGuestMaximum;
  * approximately 1 guest per second can be generated (+60 guests in one minute).
  */
 sint32 _guestGenerationProbability;
-
-sint32 park_is_open()
-{
-    return (gParkFlags & PARK_FLAGS_PARK_OPEN) != 0;
-}
-
-/**
- *
- *  rct2: 0x00667132
- */
-void park_init()
-{
-    sint32 i;
-
-    gUnk13CA740 = 0;
-    gParkName = STR_UNNAMED_PARK;
-    gStaffHandymanColour = COLOUR_BRIGHT_RED;
-    gStaffMechanicColour = COLOUR_LIGHT_BLUE;
-    gStaffSecurityColour = COLOUR_YELLOW;
-    gNumGuestsInPark = 0;
-    gNumGuestsInParkLastWeek = 0;
-    gNumGuestsHeadingForPark = 0;
-    gGuestChangeModifier = 0;
-    gParkRating = 0;
-    _guestGenerationProbability = 0;
-    gTotalRideValue = 0;
-    gResearchLastItemSubject = (uint32)-1;
-
-    for (i = 0; i < 20; i++)
-        gMarketingCampaignDaysLeft[i] = 0;
-
-    research_reset_items();
-    finance_init();
-
-    for (i = 0; i < 2; i++)
-        gResearchedRideTypes[i] = 0;
-
-    reset_researched_scenery_items();
-
-    gParkEntranceFee = MONEY(10, 00);
-    gPeepSpawns[0].x = PEEP_SPAWN_UNDEFINED;
-    gPeepSpawns[1].x = PEEP_SPAWN_UNDEFINED;
-    gResearchPriorities =
-        (1 << RESEARCH_CATEGORY_TRANSPORT) |
-        (1 << RESEARCH_CATEGORY_GENTLE) |
-        (1 << RESEARCH_CATEGORY_ROLLERCOASTER) |
-        (1 << RESEARCH_CATEGORY_THRILL) |
-        (1 << RESEARCH_CATEGORY_WATER) |
-        (1 << RESEARCH_CATEGORY_SHOP) |
-        (1 << RESEARCH_CATEGORY_SCENERYSET);
-    gResearchFundingLevel = RESEARCH_FUNDING_NORMAL;
-
-    gGuestInitialCash = MONEY(50,00); // Cash per guest (average)
-    gGuestInitialHappiness = calculate_guest_initial_happiness(50); // 50%
-    gGuestInitialHunger = 200;
-    gGuestInitialThirst = 200;
-    gScenarioObjectiveType = OBJECTIVE_GUESTS_BY;
-    gScenarioObjectiveYear = 4;
-    gScenarioObjectiveNumGuests = 1000;
-    gLandPrice = MONEY(90, 00);
-    gConstructionRightsPrice = MONEY(40,00);
-    gParkFlags = PARK_FLAGS_NO_MONEY | PARK_FLAGS_SHOW_REAL_GUEST_NAMES;
-    park_reset_history();
-    finance_reset_history();
-    award_reset();
-
-    gS6Info.name[0] = '\0';
-    format_string(gS6Info.details, 256, STR_NO_DETAILS_YET, NULL);
-}
 
 /**
  *
@@ -637,6 +567,11 @@ Park::~Park()
     }
 }
 
+bool Park::IsOpen() const
+{
+    return (gParkFlags & PARK_FLAGS_PARK_OPEN) != 0;
+}
+
 uint16 Park::GetParkRating() const
 {
     return gParkRating;
@@ -650,6 +585,68 @@ money32 Park::GetParkValue() const
 money32 Park::GetCompanyValue() const
 {
     return gCompanyValue;
+}
+
+void Park::Initialise()
+{
+    gUnk13CA740 = 0;
+    gParkName = STR_UNNAMED_PARK;
+    gStaffHandymanColour = COLOUR_BRIGHT_RED;
+    gStaffMechanicColour = COLOUR_LIGHT_BLUE;
+    gStaffSecurityColour = COLOUR_YELLOW;
+    gNumGuestsInPark = 0;
+    gNumGuestsInParkLastWeek = 0;
+    gNumGuestsHeadingForPark = 0;
+    gGuestChangeModifier = 0;
+    gParkRating = 0;
+    _guestGenerationProbability = 0;
+    gTotalRideValue = 0;
+    gResearchLastItemSubject = (uint32)-1;
+
+    for (size_t i = 0; i < 20; i++)
+    {
+        gMarketingCampaignDaysLeft[i] = 0;
+    }
+
+    research_reset_items();
+    finance_init();
+
+    for (size_t i = 0; i < 8; i++)
+    {
+        gResearchedRideTypes[i] = 0;
+    }
+
+    reset_researched_scenery_items();
+
+    gParkEntranceFee = MONEY(10, 00);
+    gPeepSpawns[0].x = PEEP_SPAWN_UNDEFINED;
+    gPeepSpawns[1].x = PEEP_SPAWN_UNDEFINED;
+    gResearchPriorities =
+        (1 << RESEARCH_CATEGORY_TRANSPORT) |
+        (1 << RESEARCH_CATEGORY_GENTLE) |
+        (1 << RESEARCH_CATEGORY_ROLLERCOASTER) |
+        (1 << RESEARCH_CATEGORY_THRILL) |
+        (1 << RESEARCH_CATEGORY_WATER) |
+        (1 << RESEARCH_CATEGORY_SHOP) |
+        (1 << RESEARCH_CATEGORY_SCENERYSET);
+    gResearchFundingLevel = RESEARCH_FUNDING_NORMAL;
+
+    gGuestInitialCash = MONEY(50,00);
+    gGuestInitialHappiness = CalculateGuestInitialHappiness(50);
+    gGuestInitialHunger = 200;
+    gGuestInitialThirst = 200;
+    gScenarioObjectiveType = OBJECTIVE_GUESTS_BY;
+    gScenarioObjectiveYear = 4;
+    gScenarioObjectiveNumGuests = 1000;
+    gLandPrice = MONEY(90,00);
+    gConstructionRightsPrice = MONEY(40,00);
+    gParkFlags = PARK_FLAGS_NO_MONEY | PARK_FLAGS_SHOW_REAL_GUEST_NAMES;
+    ResetHistories();
+    finance_reset_history();
+    award_reset();
+
+    gS6Info.name[0] = '\0';
+    format_string(gS6Info.details, 256, STR_NO_DETAILS_YET, nullptr);
 }
 
 void Park::Update()
@@ -1109,6 +1106,16 @@ void Park::UpdateHistories()
 
 extern "C"
 {
+    sint32 park_is_open()
+    {
+        return _singleton->IsOpen();
+    }
+
+    void park_init()
+    {
+        _singleton->Initialise();
+    }
+
     sint32 park_calculate_size()
     {
         auto tiles = _singleton->CalculateParkSize();
