@@ -176,6 +176,10 @@ void GameState::UpdateLogic()
     }
 
     sub_68B089();
+    
+    date_update();
+    _date = Date(gDateMonthTicks, gDateMonthTicks);
+
     scenario_update();
     climate_update();
     map_update_tiles();
@@ -190,7 +194,7 @@ void GameState::UpdateLogic()
 
     if (!(gScreenFlags & (SCREEN_FLAGS_SCENARIO_EDITOR | SCREEN_FLAGS_TRACK_DESIGNER | SCREEN_FLAGS_TRACK_MANAGER)))
     {
-        _park->Update();
+        _park->Update(_date);
     }
 
     research_update();

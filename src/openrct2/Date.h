@@ -16,29 +16,43 @@
 
 #pragma once
 
-#include "Date.h"
+#include "common.h"
+
+extern "C"
+{
+    #include "localisation/date.h"
+}
 
 namespace OpenRCT2
 {
-    class Park;
-
     /**
-     * Class to update the state of the map and park.
+     * Represents the current day, month and year in OpenRCT2.
      */
-    class GameState final
+    struct Date final
     {
     private:
-        Date            _date;
-        Park * const    _park;
+        uint16 _monthTicks = 0;
+        uint32 _monthsElapsed = 0;
 
     public:
-        GameState();
-        ~GameState();
+        Date();
+        Date(uint32 monthsElapsed, uint16 monthTicks);
 
-        Date * GetDate() { return &_date; }
-        Park * GetPark() { return _park; }
+        static Date FromYMD(sint32 year, sint32 month = 0, sint32 day = 0);
 
         void Update();
-        void UpdateLogic();
+
+        uint16 GetMonthTicks() const;
+        uint32 GetMonthsElapsed() const;
+        sint32 GetDay() const;
+        sint32 GetMonth() const;
+        sint32 GetYear() const;
+
+        bool IsDayStart() const;
+        bool IsWeekStart() const;
+        bool IsFortnightStart() const;
+        bool IsMonthStart() const;
+
+        static sint32 GetDaysInMonth(sint32 month);
     };
 }
