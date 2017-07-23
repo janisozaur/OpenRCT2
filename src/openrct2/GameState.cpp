@@ -21,6 +21,7 @@
 #include "OpenRCT2.h"
 #include "platform/Platform2.h"
 #include "world/Climate.h"
+#include "world/Park.h"
 
 extern "C"
 {
@@ -33,6 +34,16 @@ extern "C"
 }
 
 using namespace OpenRCT2;
+
+GameState::GameState()
+    : _park(new Park())
+{
+}
+
+GameState::~GameState()
+{
+    delete _park;
+}
 
 void GameState::Update()
 {
@@ -176,7 +187,12 @@ void GameState::UpdateLogic()
     vehicle_update_all();
     sprite_misc_update_all();
     ride_update_all();
-    park_update();
+
+    if (!(gScreenFlags & (SCREEN_FLAGS_SCENARIO_EDITOR | SCREEN_FLAGS_TRACK_DESIGNER | SCREEN_FLAGS_TRACK_MANAGER)))
+    {
+        _park->Update();
+    }
+
     research_update();
     ride_ratings_update_all();
     ride_measurements_update();

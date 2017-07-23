@@ -18,14 +18,22 @@
 
 namespace OpenRCT2
 {
+    class Park;
+
     /**
      * Class to update the state of the map and park.
      */
-    class GameState
+    class GameState final
     {
     private:
+        Park * const _park;
 
     public:
+        GameState();
+        ~GameState();
+
+        Park * GetPark() { return _park; }
+
         void Update();
         void UpdateLogic();
     };
