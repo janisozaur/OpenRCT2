@@ -17,6 +17,7 @@
 #include "../core/Math.hpp"
 #include "../core/Util.hpp"
 #include "../config/Config.h"
+#include "../Date.h"
 #include "../network/network.h"
 #include "Park.h"
 
@@ -649,7 +650,7 @@ void Park::Initialise()
     format_string(gS6Info.details, 256, STR_NO_DETAILS_YET, nullptr);
 }
 
-void Park::Update()
+void Park::Update(const Date &date)
 {
     // Every 5 seconds approximately
     if (gCurrentTicks % 512 == 0)
@@ -667,7 +668,7 @@ void Park::Update()
     }
 
     // Every week
-    if (date_is_week_start(gDateMonthTicks))
+    if (date.IsWeekStart())
     {
         UpdateHistories();
         gParkSize = CalculateParkSize();
