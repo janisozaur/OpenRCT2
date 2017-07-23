@@ -78,9 +78,6 @@ namespace OpenRCT2
         sint32          CalculateParkRating() const;
         money32         CalculateParkValue() const;
         money32         CalculateCompanyValue() const;
-        money16         CalculateTotalRideValue() const;
-        uint32          CalculateSuggestedMaxGuests() const;
-        uint32          CalculateGuestGenerationProbability() const;
         static uint8    CalculateGuestInitialHappiness(uint8 percentage);
 
         rct_peep *  GenerateGuest();
@@ -89,10 +86,14 @@ namespace OpenRCT2
         void UpdateHistories();
 
     private:
-        money32 CalculateRideValue(const rct_ride * ride) const;
+        money32     CalculateRideValue(const rct_ride * ride) const;
+        money16     CalculateTotalRideValueForMoney() const;
+        uint32      CalculateSuggestedMaxGuests() const;
+        uint32      CalculateGuestGenerationProbability() const;
 
         void        GenerateGuests();
         rct_peep *  GenerateGuestFromCampaign(sint32 campaign);
+
     };
 }
 
