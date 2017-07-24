@@ -25,7 +25,7 @@
 #include "../ride/track_design.h"
 #include "../ride/vehicle.h"
 #include "../scenario/scenario.h"
-#include "../world/park.h"
+#include "../world/Park.h"
 #include "colour.h"
 
 struct rct_window;

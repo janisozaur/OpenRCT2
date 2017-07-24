@@ -21,7 +21,7 @@
 #include "../peep/peep.h"
 #include "../ride/ride.h"
 #include "../util/util.h"
-#include "../world/park.h"
+#include "../world/Park.h"
 #include "../world/sprite.h"
 #include "finance.h"
 

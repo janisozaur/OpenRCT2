@@ -16,6 +16,7 @@
 
 #include <openrct2/OpenRCT2.h>
 #include <openrct2/world/Climate.h>
+#include <openrct2/world/Park.h>
 #include <openrct2-ui/windows/Window.h>
 
 extern "C"

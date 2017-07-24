@@ -50,7 +50,7 @@ extern "C"
     #include "../util/util.h"
     #include "../world/Climate.h"
     #include "../world/map_animation.h"
-    #include "../world/park.h"
+    #include "../world/Park.h"
     #include "../world/sprite.h"
 }
 
