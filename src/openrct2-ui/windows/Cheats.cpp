@@ -17,6 +17,7 @@
 #include <openrct2/config/Config.h>
 #include <openrct2/network/network.h>
 #include <openrct2/world/Climate.h>
+#include <openrct2/world/Park.h>
 #include <openrct2/core/Math.hpp>
 #include <openrct2-ui/windows/Window.h>
 #include <openrct2/Context.h>

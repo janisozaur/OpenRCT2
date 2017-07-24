@@ -56,7 +56,7 @@
 #include "world/footpath.h"
 #include "world/map.h"
 #include "world/map_animation.h"
-#include "world/park.h"
+#include "world/Park.h"
 #include "world/scenery.h"
 #include "world/sprite.h"
 #include "world/water.h"

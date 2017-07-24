@@ -26,7 +26,7 @@ extern "C"
     #include "../ride/track.h"
     #include "../ride/track_data.h"
     #include "map.h"
-    #include "park.h"
+    #include "Park.h"
     #include "scenery.h"
 }
 

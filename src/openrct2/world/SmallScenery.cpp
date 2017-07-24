@@ -22,7 +22,7 @@ extern "C"
     #include "footpath.h"
     #include "scenery.h"
     #include "map.h"
-    #include "park.h"
+    #include "Park.h"
     #include "../cheats.h"
     #include "../ride/track_design.h"
 }
