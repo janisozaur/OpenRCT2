@@ -29,7 +29,7 @@ extern "C"
     #include "input.h"
     #include "interface/Screenshot.h"
     #include "management/news_item.h"
-    #include "world/park.h"
+    #include "world/Park.h"
     #include "windows/error.h"
 }
 

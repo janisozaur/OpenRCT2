@@ -33,7 +33,7 @@
 #include "../sprites.h"
 #include "../util/util.h"
 #include "../world/entrance.h"
-#include "../world/park.h"
+#include "../world/Park.h"
 #include "../world/sprite.h"
 #include "../management/finance.h"
 #include "dropdown.h"

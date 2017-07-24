@@ -27,7 +27,7 @@
 #include "../util/sawyercoding.h"
 #include "../util/util.h"
 #include "../world/map_animation.h"
-#include "../world/park.h"
+#include "../world/Park.h"
 #include "../world/scenery.h"
 #include "../world/footpath.h"
 #include "../windows/error.h"

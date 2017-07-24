@@ -41,7 +41,7 @@
 #include "world/entrance.h"
 #include "world/footpath.h"
 #include "world/map.h"
-#include "world/park.h"
+#include "world/Park.h"
 #include "world/scenery.h"
 #include "world/sprite.h"
 

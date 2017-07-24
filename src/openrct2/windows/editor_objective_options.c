@@ -24,7 +24,7 @@
 #include "../sprites.h"
 #include "../util/util.h"
 #include "../world/Climate.h"
-#include "../world/park.h"
+#include "../world/Park.h"
 #include "dropdown.h"
 #include "error.h"
 

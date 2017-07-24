@@ -29,7 +29,7 @@
 #include "../rct2.h"
 #include "../sprites.h"
 #include "../world/Climate.h"
-#include "../world/park.h"
+#include "../world/Park.h"
 #include "../world/sprite.h"
 
 enum WINDOW_GAME_BOTTOM_TOOLBAR_WIDGET_IDX {

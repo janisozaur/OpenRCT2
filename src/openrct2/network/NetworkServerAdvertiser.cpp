@@ -32,7 +32,7 @@ extern "C"
     #include "../platform/platform.h"
     #include "../util/util.h"
     #include "../world/map.h"
-    #include "../world/park.h"
+    #include "../world/Park.h"
     #include "http.h"
 }
 

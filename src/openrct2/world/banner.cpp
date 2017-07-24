@@ -24,7 +24,7 @@ extern "C"
 {
     #include "banner.h"
     #include "map.h"
-    #include "park.h"
+    #include "Park.h"
     #include "scenery.h"
     #include "../game.h"
     #include "../interface/window.h"
