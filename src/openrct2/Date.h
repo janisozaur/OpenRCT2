@@ -28,14 +28,14 @@ namespace OpenRCT2
     /**
      * Represents the current day, month and year in OpenRCT2.
      */
-    struct Date final
+    class Date final
     {
     private:
         uint16 _monthTicks = 0;
         uint32 _monthsElapsed = 0;
 
     public:
-        Date();
+        Date() = default;
         Date(uint32 monthsElapsed, uint16 monthTicks);
 
         static Date FromYMD(sint32 year, sint32 month = 0, sint32 day = 0);

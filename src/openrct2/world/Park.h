@@ -59,7 +59,7 @@ struct rct_ride;
 
 namespace OpenRCT2
 {
-    struct Date;
+    class Date;
 
     class Park final
     {
