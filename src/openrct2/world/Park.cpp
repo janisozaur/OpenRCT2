@@ -652,7 +652,7 @@ void Park::Initialise()
 
 void Park::Update(const Date &date)
 {
-    // Every ~5 seconds
+    // Every ~13 seconds
     if (gCurrentTicks % 512 == 0)
     {
         gParkRating = CalculateParkRating();
