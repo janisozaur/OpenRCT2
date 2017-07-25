@@ -25,13 +25,9 @@ constexpr sint32 MASK_WEEK_TICKS = 0x3FFF;
 constexpr sint32 MASK_FORTNIGHT_TICKS = 0x7FFF;
 constexpr sint32 MASK_MONTH_TICKS = 0xFFFF;
 
-Date::Date()
-{
-}
-
 Date::Date(uint32 monthsElapsed, uint16 monthTicks)
-    : _monthsElapsed(monthsElapsed),
-      _monthTicks(monthTicks)
+    : _monthTicks(monthTicks),
+      _monthsElapsed(monthsElapsed)
 {
 }
 
