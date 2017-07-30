@@ -432,7 +432,6 @@
 		F76C87A41EC4E88500FA49E2 /* map_helpers.c in Sources */ = {isa = PBXBuildFile; fileRef = F76C856C1EC4E7CD00FA49E2 /* map_helpers.c */; };
 		F76C87A61EC4E88500FA49E2 /* mapgen.c in Sources */ = {isa = PBXBuildFile; fileRef = F76C856E1EC4E7CD00FA49E2 /* mapgen.c */; };
 		F76C87A81EC4E88500FA49E2 /* money_effect.c in Sources */ = {isa = PBXBuildFile; fileRef = F76C85701EC4E7CD00FA49E2 /* money_effect.c */; };
-		F76C87A91EC4E88500FA49E2 /* park.c in Sources */ = {isa = PBXBuildFile; fileRef = F76C85711EC4E7CD00FA49E2 /* park.c */; };
 		F76C87AB1EC4E88500FA49E2 /* particle.c in Sources */ = {isa = PBXBuildFile; fileRef = F76C85731EC4E7CD00FA49E2 /* particle.c */; };
 		F76C87AC1EC4E88500FA49E2 /* scenery.c in Sources */ = {isa = PBXBuildFile; fileRef = F76C85741EC4E7CD00FA49E2 /* scenery.c */; };
 		F76C87AE1EC4E88500FA49E2 /* sprite.c in Sources */ = {isa = PBXBuildFile; fileRef = F76C85761EC4E7CD00FA49E2 /* sprite.c */; };
@@ -467,6 +466,12 @@
 		F775F5371EE3724F001F00E7 /* DummyAudioContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F775F5361EE3724F001F00E7 /* DummyAudioContext.cpp */; };
 		F775F5381EE3725C001F00E7 /* DummyAudioContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F775F5361EE3724F001F00E7 /* DummyAudioContext.cpp */; };
 		F79F428F1F3260F1009E42F8 /* changelog.txt in Resources */ = {isa = PBXBuildFile; fileRef = F79F428E1F3260F1009E42F8 /* changelog.txt */; };
+		F79F42851F2E0702009E42F8 /* Date.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F79F42811F2E0702009E42F8 /* Date.cpp */; };
+		F79F42861F2E0702009E42F8 /* GameState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F79F42831F2E0702009E42F8 /* GameState.cpp */; };
+		F79F42881F2E07E1009E42F8 /* Park.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F79F42871F2E07E1009E42F8 /* Park.cpp */; };
+		F79F42891F2E0837009E42F8 /* Park.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F79F42871F2E07E1009E42F8 /* Park.cpp */; };
+		F79F428A1F2E0865009E42F8 /* Date.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F79F42811F2E0702009E42F8 /* Date.cpp */; };
+		F79F428B1F2E0865009E42F8 /* GameState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F79F42831F2E0702009E42F8 /* GameState.cpp */; };
 		F7CB863F1EEDA0B50030C877 /* WindowManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7CB863D1EEDA0B50030C877 /* WindowManager.cpp */; };
 		F7CB86491EEDA1330030C877 /* keyboard_shortcut.c in Sources */ = {isa = PBXBuildFile; fileRef = F7CB86461EEDA1330030C877 /* keyboard_shortcut.c */; };
 		F7CB864A1EEDA1330030C877 /* KeyboardShortcuts.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F7CB86471EEDA1330030C877 /* KeyboardShortcuts.cpp */; };
@@ -1319,7 +1324,6 @@
 		F76C856E1EC4E7CD00FA49E2 /* mapgen.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = mapgen.c; sourceTree = "<group>"; };
 		F76C856F1EC4E7CD00FA49E2 /* mapgen.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = mapgen.h; sourceTree = "<group>"; };
 		F76C85701EC4E7CD00FA49E2 /* money_effect.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = money_effect.c; sourceTree = "<group>"; };
-		F76C85711EC4E7CD00FA49E2 /* park.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = park.c; sourceTree = "<group>"; };
 		F76C85721EC4E7CD00FA49E2 /* park.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = park.h; sourceTree = "<group>"; };
 		F76C85731EC4E7CD00FA49E2 /* particle.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = particle.c; sourceTree = "<group>"; };
 		F76C85741EC4E7CD00FA49E2 /* scenery.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = scenery.c; sourceTree = "<group>"; };
@@ -1376,6 +1380,11 @@
 		F775F5331EE35A6B001F00E7 /* DummyUiContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DummyUiContext.cpp; sourceTree = "<group>"; };
 		F775F5361EE3724F001F00E7 /* DummyAudioContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DummyAudioContext.cpp; sourceTree = "<group>"; };
 		F79F428E1F3260F1009E42F8 /* changelog.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = changelog.txt; path = distribution/changelog.txt; sourceTree = SOURCE_ROOT; };
+		F79F42811F2E0702009E42F8 /* Date.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Date.cpp; sourceTree = "<group>"; };
+		F79F42821F2E0702009E42F8 /* Date.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Date.h; sourceTree = "<group>"; };
+		F79F42831F2E0702009E42F8 /* GameState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GameState.cpp; sourceTree = "<group>"; };
+		F79F42841F2E0702009E42F8 /* GameState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GameState.h; sourceTree = "<group>"; };
+		F79F42871F2E07E1009E42F8 /* Park.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Park.cpp; sourceTree = "<group>"; };
 		F7CB863D1EEDA0B50030C877 /* WindowManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WindowManager.cpp; sourceTree = "<group>"; };
 		F7CB863E1EEDA0B50030C877 /* WindowManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WindowManager.h; sourceTree = "<group>"; };
 		F7CB86461EEDA1330030C877 /* keyboard_shortcut.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = keyboard_shortcut.c; sourceTree = "<group>"; };
@@ -1789,6 +1798,8 @@
 				F76C836C1EC4E7CC00FA49E2 /* common.h */,
 				F76C83761EC4E7CC00FA49E2 /* Context.cpp */,
 				F76C83771EC4E7CC00FA49E2 /* Context.h */,
+				F79F42811F2E0702009E42F8 /* Date.cpp */,
+				F79F42821F2E0702009E42F8 /* Date.h */,
 				F76C839B1EC4E7CC00FA49E2 /* diagnostic.c */,
 				F76C839C1EC4E7CC00FA49E2 /* diagnostic.h */,
 				F76C83B11EC4E7CC00FA49E2 /* editor.c */,
@@ -1797,6 +1808,8 @@
 				F76C83B41EC4E7CC00FA49E2 /* FileClassifier.h */,
 				F76C83B51EC4E7CC00FA49E2 /* game.c */,
 				F76C83B61EC4E7CC00FA49E2 /* game.h */,
+				F79F42831F2E0702009E42F8 /* GameState.cpp */,
+				F79F42841F2E0702009E42F8 /* GameState.h */,
 				F76C83B71EC4E7CC00FA49E2 /* Imaging.cpp */,
 				F76C83B81EC4E7CC00FA49E2 /* Imaging.h */,
 				F76C83B91EC4E7CC00FA49E2 /* input.c */,
@@ -2493,7 +2506,7 @@
 				F76C856E1EC4E7CD00FA49E2 /* mapgen.c */,
 				F76C856F1EC4E7CD00FA49E2 /* mapgen.h */,
 				F76C85701EC4E7CD00FA49E2 /* money_effect.c */,
-				F76C85711EC4E7CD00FA49E2 /* park.c */,
+				F79F42871F2E07E1009E42F8 /* Park.cpp */,
 				F76C85721EC4E7CD00FA49E2 /* park.h */,
 				F76C85731EC4E7CD00FA49E2 /* particle.c */,
 				F76C85741EC4E7CD00FA49E2 /* scenery.c */,
@@ -3018,6 +3031,7 @@
 				4C8B42741EEB1B6F00F015CA /* Screenshot.cpp in Sources */,
 				F76C88781EC5324E00FA49E2 /* AudioChannel.cpp in Sources */,
 				C666EE6D1F37ACB10061AA04 /* Cheats.cpp in Sources */,
+				F79F42851F2E0702009E42F8 /* Date.cpp in Sources */,
 				F76C88791EC5324E00FA49E2 /* AudioContext.cpp in Sources */,
 				C666EE7A1F37ACB10061AA04 /* Themes.cpp in Sources */,
 				C666EE7F1F37ACB10061AA04 /* Viewport.cpp in Sources */,
@@ -3045,6 +3059,7 @@
 				4CB832A71EFBDCCE00B88761 /* land_tool.c in Sources */,
 				C666EE7B1F37ACB10061AA04 /* TitleExit.cpp in Sources */,
 				F7D7747F1EC61E5100BE6EBC /* UiContext.macOS.mm in Sources */,
+				F79F42861F2E0702009E42F8 /* GameState.cpp in Sources */,
 				F76C887E1EC5324E00FA49E2 /* CursorRepository.cpp in Sources */,
 				F775F5341EE35A6B001F00E7 /* DummyUiContext.cpp in Sources */,
 				C666ED761F33DBB20061AA04 /* ShortcutKeyChange.cpp in Sources */,
@@ -3085,6 +3100,8 @@
 				C666EE7D1F37ACB10061AA04 /* TitleMenu.cpp in Sources */,
 				F76C888D1EC5324E00FA49E2 /* UiContext.Linux.cpp in Sources */,
 				F76C888E1EC5324E00FA49E2 /* UiContext.Win32.cpp in Sources */,
+				F7FFCDAA1F02FD8E0078BFFB /* object_load_error.c in Sources */,
+				F79F42881F2E07E1009E42F8 /* Park.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3092,6 +3109,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F79F428A1F2E0865009E42F8 /* Date.cpp in Sources */,
+				F79F428B1F2E0865009E42F8 /* GameState.cpp in Sources */,
+				F79F42891F2E0837009E42F8 /* Park.cpp in Sources */,
+				F7FFCDAC1F02FF570078BFFB /* object_load_error.c in Sources */,
 				F7CB864E1EEDA2050030C877 /* DummyWindowManager.cpp in Sources */,
 				F775F5381EE3725C001F00E7 /* DummyAudioContext.cpp in Sources */,
 				F775F5351EE35A89001F00E7 /* DummyUiContext.cpp in Sources */,
@@ -3414,7 +3435,6 @@
 				F76C87A41EC4E88500FA49E2 /* map_helpers.c in Sources */,
 				F76C87A61EC4E88500FA49E2 /* mapgen.c in Sources */,
 				F76C87A81EC4E88500FA49E2 /* money_effect.c in Sources */,
-				F76C87A91EC4E88500FA49E2 /* park.c in Sources */,
 				F76C87AB1EC4E88500FA49E2 /* particle.c in Sources */,
 				F76C87AC1EC4E88500FA49E2 /* scenery.c in Sources */,
 				F76C87AE1EC4E88500FA49E2 /* sprite.c in Sources */,
