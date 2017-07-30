@@ -553,7 +553,7 @@ money16 park_get_entrance_fee()
 
 using namespace OpenRCT2;
 
-static Park * _singleton;
+static Park * _singleton = nullptr;
 
 Park::Park()
 {
