@@ -73,7 +73,16 @@ void Painter::Paint(IDrawingEngine * de)
     }
     gCurrentDrawCount++;
 }
-
+const sint32 face_sprite_large[] = {
+    5314,
+    5284,
+    5285,
+    5286,
+    5287,
+    5288,
+    5289,
+    5290
+};
 void Painter::PaintFPS(rct_drawpixelinfo * dpi)
 {
     sint32 x = _uiContext->GetWidth() / 2;
@@ -94,8 +103,9 @@ void Painter::PaintFPS(rct_drawpixelinfo * dpi)
     // Draw Text
     sint32 stringWidth = gfx_get_string_width(buffer);
     x = x - (stringWidth / 2);
-    gfx_draw_string(dpi, buffer, 0, x, y);
-
+    //gfx_draw_string(dpi, buffer, 0, x, y);
+    uint8 fps = (_currentFPS > 100 ? 100 : _currentFPS) / 13;
+    gfx_draw_sprite(dpi, face_sprite_large[fps], x, y, 0);
     // Make area dirty so the text doesn't get drawn over the last
     gfx_set_dirty_blocks(x - 16, y - 4, gLastDrawStringX + 16, 16);
 }
