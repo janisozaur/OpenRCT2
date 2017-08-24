@@ -53,7 +53,6 @@ TitleScreen::~TitleScreen()
 {
     delete _sequencePlayer;
     _singleton = nullptr;
-    delete _sequencePlayer;
 }
 
 ITitleSequencePlayer * TitleScreen::GetSequencePlayer()

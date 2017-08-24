@@ -20,6 +20,7 @@
 #include "../Date.h"
 #include "../network/network.h"
 #include "Park.h"
+#include "../OpenRCT2.h"
 
 extern "C"
 {
