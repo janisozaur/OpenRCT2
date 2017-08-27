@@ -153,6 +153,11 @@ namespace OpenRCT2
             return _uiContext;
         }
 
+        GameState * GetGameState() const override
+        {
+            return _gameState;
+        }
+
         sint32 RunOpenRCT2(int argc, char * * argv) override
         {
             if (Initialise())
