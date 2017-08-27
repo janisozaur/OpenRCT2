@@ -143,6 +143,14 @@ add_executable(test_string ${STRING_TEST_SOURCES})
 target_link_libraries(test_string ${GTEST_LIBRARIES} test-common ${LDL} z)
 add_test(NAME string COMMAND test_string)
 
+# Objects test
+set(OBJECTS_TEST_SOURCES
+        "${CMAKE_CURRENT_LIST_DIR}/ObjectsTest.cpp"
+        )
+add_executable(test_objects ${OBJECTS_TEST_SOURCES})
+target_link_libraries(test_objects ${GTEST_LIBRARIES} libopenrct2 ${LDL} z)
+add_test(NAME objects COMMAND test_objects)
+
 if (NOT DISABLE_RCT2_TESTS)
     # Ride ratings test
     set(RIDE_RATINGS_TEST_SOURCES "${CMAKE_CURRENT_LIST_DIR}/RideRatings.cpp"
