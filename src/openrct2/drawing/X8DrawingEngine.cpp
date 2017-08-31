@@ -14,6 +14,7 @@
  *****************************************************************************/
 #pragma endregion
 
+#include <thread>
 #include "../config/Config.h"
 #include "../Context.h"
 #include "../ui/UiContext.h"
@@ -439,12 +440,49 @@ void X8DrawingEngine::DrawAllDirtyBlocks()
 
         endRowCheck:
             uint32 rows = yy - y;
-            DrawDirtyBlocks(x, y, columns, rows);
+            auto call = DrawDirtyBlocks(x, y, columns, rows);
+            if (call.valid)
+            {
+                std::lock_guard<std::mutex> guard(_drawCallsMutex);
+                _drawCalls.push(call);
+            }
         }
+    }
+
+    if (!_workersSetup)
+    {
+        _workersSetup = true;
+        std::thread(&X8DrawingEngine::DrawWorker, this).detach();
+        // std::thread(&X8DrawingEngine::DrawWorker, this).detach();
+    }
+
+    while (_drawCalls.size() > 0)
+    {
     }
 }
 
-void X8DrawingEngine::DrawDirtyBlocks(uint32 x, uint32 y, uint32 columns, uint32 rows)
+void X8DrawingEngine::DrawWorker()
+{
+    while (true)
+    {
+        DrawBlockCall call;
+        {
+            std::lock_guard<std::mutex> guard(_drawCallsMutex);
+            if (_drawCalls.size() > 0)
+            {
+                call = _drawCalls.front();
+                _drawCalls.pop();
+            }
+            else
+            {
+                continue;
+            }
+        }
+        window_draw_all(&_bitsDPI, call.left, call.top, call.right, call.bottom);
+    }
+}
+
+X8DrawingEngine::DrawBlockCall X8DrawingEngine::DrawDirtyBlocks(uint32 x, uint32 y, uint32 columns, uint32 rows)
 {
     uint32  dirtyBlockColumns = _dirtyGrid.BlockColumns;
     uint8 * screenDirtyBlocks = _dirtyGrid.Blocks;
@@ -460,18 +498,17 @@ void X8DrawingEngine::DrawDirtyBlocks(uint32 x, uint32 y, uint32 columns, uint32
     }
 
     // Determine region in pixels
-    uint32 left = Math::Max<uint32>(0, x * _dirtyGrid.BlockWidth);
-    uint32 top = Math::Max<uint32>(0, y * _dirtyGrid.BlockHeight);
-    uint32 right = Math::Min(_width, left + (columns * _dirtyGrid.BlockWidth));
-    uint32 bottom = Math::Min(_height, top + (rows * _dirtyGrid.BlockHeight));
-    if (right <= left || bottom <= top)
+    DrawBlockCall call;
+    call.left = Math::Max<uint32>(0, x * _dirtyGrid.BlockWidth);
+    call.top = Math::Max<uint32>(0, y * _dirtyGrid.BlockHeight);
+    call.right = Math::Min(_width, call.left + (columns * _dirtyGrid.BlockWidth));
+    call.bottom = Math::Min(_height, call.top + (rows * _dirtyGrid.BlockHeight));
+    if (call.right > call.left && call.bottom > call.top)
     {
-        return;
+        call.valid = true;
+        OnDrawDirtyBlock(x, y, columns, rows);
     }
-
-    // Draw region
-    OnDrawDirtyBlock(x, y, columns, rows);
-    window_draw_all(&_bitsDPI, left, top, right, bottom);
+    return call;
 }
 
 #ifdef __WARN_SUGGEST_FINAL_METHODS__

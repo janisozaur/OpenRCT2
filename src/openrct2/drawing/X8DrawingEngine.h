@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <mutex>
+#include <queue>
 #include "../common.h"
 #include "IDrawingContext.h"
 #include "IDrawingEngine.h"
@@ -117,10 +119,21 @@ namespace OpenRCT2
             virtual void OnDrawDirtyBlock(uint32 x, uint32 y, uint32 columns, uint32 rows);
 
         private:
+            struct DrawBlockCall
+            {
+                uint32 left, top, right, bottom;
+                bool valid;
+            };
+            std::mutex _drawCallsMutex;
+            std::queue<DrawBlockCall> _drawCalls;
+            bool _workersSetup = false;
+
             void ConfigureDirtyGrid();
             static void ResetWindowVisbilities();
             void DrawAllDirtyBlocks();
-            void DrawDirtyBlocks(uint32 x, uint32 y, uint32 columns, uint32 rows);
+            DrawBlockCall DrawDirtyBlocks(uint32 x, uint32 y, uint32 columns, uint32 rows);
+
+            void DrawWorker();
         };
 #ifdef __WARN_SUGGEST_FINAL_TYPES__
     #pragma GCC diagnostic pop
