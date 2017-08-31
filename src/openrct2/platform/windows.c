@@ -16,8 +16,6 @@
 
 #include "../common.h"
 
-#ifdef __WINDOWS__
-
 #ifdef _WIN32
 #include <windows.h>
 #include <lmcons.h>
@@ -673,7 +671,7 @@ uint8 platform_get_locale_temperature_format()
 uint8 platform_get_locale_date_format()
 {
     // Retrieve short date format, eg "MM/dd/yyyy"
-    //wchar_t dateFormat[20];
+    wchar_t dateFormat[20];
     //if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SSHORTDATE, dateFormat, sizeof(dateFormat)) == 0)
     {
         return DATE_FORMAT_DAY_MONTH_YEAR;
@@ -712,11 +710,6 @@ uint8 platform_get_locale_date_format()
 
     // Default fallback
     return DATE_FORMAT_DAY_MONTH_YEAR;
-}
-
-bool platform_check_steam_overlay_attached()
-{
-	return GetModuleHandle("GameOverlayRenderer.dll") != NULL;
 }
 
 char *strndup(const char *src, size_t size)
