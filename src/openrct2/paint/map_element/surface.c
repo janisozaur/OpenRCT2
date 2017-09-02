@@ -1019,9 +1019,6 @@ void surface_paint(uint8 direction, uint16 height, rct_map_element * mapElement)
         }
     };
 
-	sint16 tile_max_height = max(ch.top, max(ch.right, max(ch.bottom, ch.left))) * 16;
-	tile_max_height = 0;
-
     tile_descriptor tileDescriptors[5];
     tileDescriptors[0] = selfDescriptor;
 
@@ -1139,7 +1136,7 @@ void surface_paint(uint8 direction, uint16 height, rct_map_element * mapElement)
 
         }
 
-        sub_98196C(image_id, 0, 0, 32, 32, -tile_max_height, height, rotation);
+        sub_98196C(image_id, 0, 0, 32, 32, 0, height, rotation);
         has_surface = true;
     }
 

@@ -16,7 +16,7 @@ uint8 affectorRecomputeQueue[LIGHTMAP_SIZE_Y][LIGHTMAP_SIZE_X];
 lighting_chunk lightingChunks[LIGHTMAP_CHUNKS_Z][LIGHTMAP_CHUNKS_Y][LIGHTMAP_CHUNKS_X];
 
 const lighting_value black = { .r = 0,.g = 0,.b = 0 };
-const lighting_value ambient = { .r = 10,.g = 10,.b = 10 };
+const lighting_value ambient = { .r = 0,.g = 0,.b = 0 };
 const lighting_value lit = { .r = 255,.g = 255,.b = 255 };
 
 // multiplies @target light with some multiplier light value @apply
@@ -476,42 +476,145 @@ static void lighting_update_chunk(lighting_chunk* chunk) {
 	chunk->invalid = false;
 }
 
+static void lighting_update_static(lighting_update_batch* updated_batch) {
+    // TODO: this is not monotonic on Windows
+    clock_t max_end = clock() + LIGHTING_MAX_CLOCKS_PER_FRAME;
+
+    // recompute invalid chunks until reaching a limit
+    for (int z = 0; z < LIGHTMAP_CHUNKS_Z; z++) {
+        for (int y = 0; y < LIGHTMAP_CHUNKS_Y; y++) {
+            for (int x = 0; x < LIGHTMAP_CHUNKS_X; x++) {
+                lightingChunks[z][y][x].has_dynamic_lights = false;
+
+                if (lightingChunks[z][y][x].invalid) {
+                    // recompute this invalid chunk
+                    lighting_chunk* chunk = &lightingChunks[z][y][x];
+                    lighting_update_chunk(chunk);
+                    updated_batch->updated_chunks[updated_batch->update_count++] = chunk;
+
+                    // exceeding max update count?
+                    if (updated_batch->update_count >= LIGHTING_MAX_CHUNK_UPDATES_PER_FRAME) {
+                        return;
+                    }
+
+                    // exceeding max time?
+                    if (clock() > max_end) {
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
+static lighting_value* lighting_get_dynamic_texel(lighting_update_batch* updated_batch, int x, int y, int z) {
+    int lm_z = z / LIGHTMAP_CHUNK_SIZE;
+    int lm_y = y / LIGHTMAP_CHUNK_SIZE;
+    int lm_x = x / LIGHTMAP_CHUNK_SIZE;
+
+    if (lm_z < 0 || lm_y < 0 || lm_x < 0 || lm_z >= LIGHTMAP_CHUNKS_Z || lm_y >= LIGHTMAP_CHUNKS_Y || lm_x >= LIGHTMAP_CHUNKS_X) return NULL;
+
+    lighting_chunk* chunk = &lightingChunks[lm_z][lm_y][lm_x];
+    if (!chunk->has_dynamic_lights) {
+        memcpy(chunk->data_dynamic, chunk->data, sizeof(chunk->data));
+        chunk->has_dynamic_lights = true;
+
+        updated_batch->updated_chunks[updated_batch->update_count++] = chunk;
+    }
+
+    return &chunk->data_dynamic[z % LIGHTMAP_CHUNK_SIZE][y % LIGHTMAP_CHUNK_SIZE][x % LIGHTMAP_CHUNK_SIZE];
+}
+
+static void lighting_add_dynamic(lighting_update_batch* updated_batch, sint16 x, sint16 y, sint16 z) {
+    int lm_x = x / 16;
+    int lm_y = y / 16;
+    int lm_z = z / 8;
+    int range = 8;
+    for (int pz = lm_z - range; pz <= lm_z + range; pz++) {
+        for (int py = lm_y - range; py <= lm_y + range; py++) {
+            for (int px = lm_x - range; px <= lm_x + range; px++) {
+                if (updated_batch->update_count >= LIGHTING_MAX_CHUNK_UPDATES_PER_FRAME) return;
+                lighting_value* texel = lighting_get_dynamic_texel(updated_batch, px, py, pz);
+                if (texel) {
+                    sint32 w_x = px * 16 + 8;
+                    sint32 w_y = py * 16 + 8;
+                    sint32 w_z = pz * 8 + 1;
+                    float distpot = sqrt((w_x - x)*(w_x - x) + (w_y - y)*(w_y - y) + (w_z - z)*(w_z - z));
+
+                    float intensity = 1.0f - distpot / (range * 16.0f);
+                    //log_info("int %f", intensity);
+                    if (intensity > 0) {
+                        rct_xyz32 pos = { .x = x,.y = y,.z = z / 4 };
+                        rct_xyz16 target = { .x = px,.y = py,.z = pz };
+                        intensity *= 70;
+                        lighting_value source_value = { .r = intensity,.g = intensity,.b = intensity };
+                        lighting_add(texel, lighting_raycast(source_value, pos, target));
+                    }
+                }
+            }
+        }
+    }
+}
+
+static void lighting_update_dynamic(lighting_update_batch* updated_batch) {
+    // TODO: this is not monotonic on Windows
+    //clock_t max_end = clock() + LIGHTING_MAX_CLOCKS_PER_FRAME;
+
+    //log_info("reg");
+
+    uint16 spriteIndex = gSpriteListHead[SPRITE_LIST_TRAIN];
+    while (spriteIndex != SPRITE_INDEX_NULL) {
+        rct_vehicle * vehicle = &(get_sprite(spriteIndex)->vehicle);
+        uint16 vehicleID = spriteIndex;
+        spriteIndex = vehicle->next;
+
+        if (vehicle->ride_subtype == RIDE_ENTRY_INDEX_NULL) {
+            continue;
+        }
+
+        for (uint16 q = vehicleID; q != SPRITE_INDEX_NULL; ) {
+            vehicle = GET_VEHICLE(q);
+
+            vehicleID = q;
+            if (vehicle->next_vehicle_on_train == q)
+                break;
+            q = vehicle->next_vehicle_on_train;
+
+            sint16 place_x, place_y, place_z;
+
+            place_x = vehicle->x;
+            place_y = vehicle->y;
+            place_z = vehicle->z;
+
+            rct_ride *ride = get_ride(vehicle->ride);
+            switch (ride->type) {
+            case RIDE_TYPE_MONORAIL:
+            case RIDE_TYPE_LOOPING_ROLLER_COASTER:
+                if (vehicle == vehicle_get_head(vehicle)) {
+                    lighting_add_dynamic(updated_batch, place_x, place_y, place_z);
+                }
+                break;
+            case RIDE_TYPE_BOAT_RIDE:
+                lighting_add_dynamic(updated_batch, place_x, place_y, place_z);
+                break;
+            default:
+                break;
+            };
+        }
+    }
+
+}
+
 static lighting_update_batch lighting_update_internal() {
 	// update all pending affectors first
 	lighting_update_affectors();
 
-	lighting_update_batch updated_batch;
-	size_t update_count = 0;
+    lighting_update_batch updated_batch = { .update_count = 0 };
 
-	// TODO: this is not monotonic on Windows
-	clock_t max_end = clock() + LIGHTING_MAX_CLOCKS_PER_FRAME;
+    lighting_update_static(&updated_batch);
+    lighting_update_dynamic(&updated_batch);
 
-	// recompute invalid chunks until reaching a limit
-	for (int z = 0; z < LIGHTMAP_CHUNKS_Z; z++) {
-		for (int y = 0; y < LIGHTMAP_CHUNKS_Y; y++) {
-			for (int x = 0; x < LIGHTMAP_CHUNKS_X; x++) {
-				if (lightingChunks[z][y][x].invalid) {
-					// recompute this invalid chunk
-					lighting_chunk* chunk = &lightingChunks[z][y][x];
-					lighting_update_chunk(chunk);
-					updated_batch.updated_chunks[update_count++] = chunk;
-
-					// exceeding max update count?
-					if (update_count >= LIGHTING_MAX_CHUNK_UPDATES_PER_FRAME) {
-						goto stop_updating;
-					}
-
-					if (clock() > max_end) {
-						goto stop_updating;
-					}
-				}
-			}
-		}
-	}
-
-stop_updating:
-
-	updated_batch.updated_chunks[update_count] = NULL;
+	updated_batch.updated_chunks[updated_batch.update_count] = NULL;
 
 	return updated_batch;
 }

@@ -31,15 +31,18 @@ typedef struct lighting_light {
 } lighting_light;
 
 typedef struct lighting_chunk {
-	lighting_value data[LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE];
-	lighting_light static_lights[LIGHTING_MAX_CHUNKS_LIGHTS];
+    lighting_value data[LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE];
+    lighting_value data_dynamic[LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE];
+    lighting_light static_lights[LIGHTING_MAX_CHUNKS_LIGHTS];
 	size_t static_lights_count;
-	bool invalid;
 	uint8 x, y, z;
+    bool invalid;
+    bool has_dynamic_lights;
 } lighting_chunk;
 
 typedef struct lighting_update_batch {
 	lighting_chunk* updated_chunks[LIGHTING_MAX_CHUNK_UPDATES_PER_FRAME + 1];
+    size_t update_count;
 } lighting_update_batch;
 
 void lighting_init();
