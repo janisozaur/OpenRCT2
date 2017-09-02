@@ -19,6 +19,8 @@ const lighting_value black = { .r = 0,.g = 0,.b = 0 };
 const lighting_value ambient = { .r = 0,.g = 0,.b = 0 };
 const lighting_value lit = { .r = 255,.g = 255,.b = 255 };
 
+#define SUBCELLITR(v, cbidx) for (int v = (cbidx); v < (cbidx) + 2; v++)
+
 // multiplies @target light with some multiplier light value @apply
 static void lighting_multiply(lighting_value* target, const lighting_value apply) {
 	target->r *= apply.r / 255.0f;
@@ -129,8 +131,8 @@ void lighting_invalidate_at(sint32 wx, sint32 wy) {
 	// remove static lights at this position
 	// iterate chunks lights could reach, find lights in this column, remove them
 	int range = 11;
-	sint32 lm_x = wx * 2;
-	sint32 lm_y = wy * 2;
+	sint32 lm_x = wx * LIGHTING_CELL_SUBDIVISIONS;
+	sint32 lm_y = wy * LIGHTING_CELL_SUBDIVISIONS;
 	for (int sz = 0; sz < LIGHTMAP_CHUNKS_Z; sz++) {
 		for (int sy = max(0, (lm_y - range) / LIGHTMAP_CHUNK_SIZE); sy <= min(LIGHTMAP_CHUNKS_Y - 1, (lm_y + range) / LIGHTMAP_CHUNK_SIZE); sy++) {
 			for (int sx = max(0, (lm_x - range) / LIGHTMAP_CHUNK_SIZE); sx <= min(LIGHTMAP_CHUNKS_X - 1, (lm_x + range) / LIGHTMAP_CHUNK_SIZE); sx++) {
@@ -180,45 +182,32 @@ void lighting_invalidate_at(sint32 wx, sint32 wy) {
 		} while (!map_element_is_last_for_tile(map_element++));
 	}
 
-	int x = wx * 2;
-	int y = wy * 2;
-
 	// revert values to lit...
-	for (int z = 0; z < LIGHTMAP_SIZE_Z; z++) {
-		for (int ulm_y = y; ulm_y <= y + 2; ulm_y++) {
-			for (int ulm_x = x; ulm_x <= x + 2; ulm_x++) {
-				lightingAffectorsX[y][ulm_x][z] = lit;
-				lightingAffectorsX[y+1][ulm_x][z] = lit;
-				lightingAffectorsY[ulm_y][x][z] = lit;
-				lightingAffectorsY[ulm_y][x+1][z] = lit;
-			}
+	for (int lm_z = 0; lm_z < LIGHTMAP_SIZE_Z; lm_z++) {
+        for (int ulm_x = lm_x; ulm_x <= lm_x + LIGHTING_CELL_SUBDIVISIONS; ulm_x++) {
+            SUBCELLITR(sy, lm_y) lightingAffectorsX[sy][ulm_x][lm_z] = lit;
+        }
+        for (int ulm_y = lm_y; ulm_y <= lm_y + LIGHTING_CELL_SUBDIVISIONS; ulm_y++) {
+            SUBCELLITR(sx, lm_x) lightingAffectorsY[ulm_y][sx][lm_z] = lit;
 		}
-		lightingAffectorsZ[y][x][z] = lit;
-		lightingAffectorsZ[y + 1][x][z] = lit;
-		lightingAffectorsZ[y][x + 1][z] = lit;
-		lightingAffectorsZ[y + 1][x + 1][z] = lit;
+        SUBCELLITR(sy, lm_y) SUBCELLITR(sx, lm_x) lightingAffectorsZ[sy][sx][lm_z] = lit;
 	}
 
 	// queue rebuilding affectors
-	affectorRecomputeQueue[y][x] = 0b1111;
-	affectorRecomputeQueue[y+1][x] = 0b1111;
-	affectorRecomputeQueue[y][x+1] = 0b1111;
-	affectorRecomputeQueue[y+1][x+1] = 0b1111;
-	if (x > 0) { // east
-		affectorRecomputeQueue[y][x - 1] |= 0b0100;
-		affectorRecomputeQueue[y + 1][x - 1] |= 0b0100;
+    SUBCELLITR(sy, lm_y) affectorRecomputeQueue[sy][lm_x] = 0b1111;
+    SUBCELLITR(sx, lm_x) affectorRecomputeQueue[lm_y][sx] = 0b1111;
+
+	if (lm_x > 0) { // east
+        SUBCELLITR(sy, lm_y) affectorRecomputeQueue[sy][lm_x - 1] |= 0b0100;
 	}
-	if (y > 0) { // north
-		affectorRecomputeQueue[y - 1][x] |= 0b0010;
-		affectorRecomputeQueue[y - 1][x + 1] |= 0b0010;
+	if (lm_y > 0) { // north
+        SUBCELLITR(sx, lm_x) affectorRecomputeQueue[lm_y - 1][sx] |= 0b0010;
 	}
-	if (x < LIGHTMAP_SIZE_X - 2) { // east
-		affectorRecomputeQueue[y][x + 2] |= 0b0001;
-		affectorRecomputeQueue[y + 1][x + 2] |= 0b0001;
+	if (lm_x < LIGHTMAP_SIZE_X - 2) { // east
+        SUBCELLITR(sy, lm_y) affectorRecomputeQueue[sy][lm_x + LIGHTING_CELL_SUBDIVISIONS] |= 0b0001;
 	}
-	if (y < LIGHTMAP_SIZE_Y - 2) { // south
-		affectorRecomputeQueue[y + 2][x] |= 0b1000;
-		affectorRecomputeQueue[y + 2][x + 1] |= 0b1000;
+	if (lm_y < LIGHTMAP_SIZE_Y - 2) { // south
+        SUBCELLITR(sx, lm_x) affectorRecomputeQueue[lm_y + LIGHTING_CELL_SUBDIVISIONS][sx] |= 0b1000;
 	}
 }
 
@@ -394,7 +383,7 @@ static void lighting_update_affectors() {
 		for (int x = 0; x < LIGHTMAP_SIZE_X; x++) {
 			uint8 dirs = affectorRecomputeQueue[y][x];
 			if (dirs) {
-				rct_map_element* map_element = map_get_first_element_at(x / 2, y / 2);
+				rct_map_element* map_element = map_get_first_element_at(x / LIGHTING_CELL_SUBDIVISIONS, y / LIGHTING_CELL_SUBDIVISIONS);
 				if (map_element) {
 					do {
 						switch (map_element_get_type(map_element))
@@ -438,16 +427,16 @@ static void lighting_update_affectors() {
 								}
 								switch (map_element_get_direction(map_element)) {
 								case MAP_ELEMENT_DIRECTION_NORTH:
-									if (y % 2 == 1) lighting_multiply(&lightingAffectorsY[y + 1][x][z], affector);
+									if (y % LIGHTING_CELL_SUBDIVISIONS == LIGHTING_CELL_SUBDIVISIONS - 1) lighting_multiply(&lightingAffectorsY[y + LIGHTING_CELL_SUBDIVISIONS - 1][x][z], affector);
 									break;
 								case MAP_ELEMENT_DIRECTION_SOUTH:
-									if (y % 2 == 0) lighting_multiply(&lightingAffectorsY[y][x][z], affector);
+									if (y % LIGHTING_CELL_SUBDIVISIONS == 0) lighting_multiply(&lightingAffectorsY[y][x][z], affector);
 									break;
 								case MAP_ELEMENT_DIRECTION_EAST:
-									if (x % 2 == 1) lighting_multiply(&lightingAffectorsX[y][x + 1][z], affector);
+									if (x % LIGHTING_CELL_SUBDIVISIONS == LIGHTING_CELL_SUBDIVISIONS - 1) lighting_multiply(&lightingAffectorsX[y][x + LIGHTING_CELL_SUBDIVISIONS - 1][z], affector);
 									break;
 								case MAP_ELEMENT_DIRECTION_WEST:
-									if (x % 2 == 0) lighting_multiply(&lightingAffectorsX[y][x][z], affector);
+									if (x % LIGHTING_CELL_SUBDIVISIONS == 0) lighting_multiply(&lightingAffectorsX[y][x][z], affector);
 									break;
 								}
 							}
@@ -526,8 +515,8 @@ static lighting_value* lighting_get_dynamic_texel(lighting_update_batch* updated
 }
 
 static void lighting_add_dynamic(lighting_update_batch* updated_batch, sint16 x, sint16 y, sint16 z) {
-    int lm_x = x / 16;
-    int lm_y = y / 16;
+    int lm_x = (x * LIGHTING_CELL_SUBDIVISIONS) / 32;
+    int lm_y = (y * LIGHTING_CELL_SUBDIVISIONS) / 32;
     int lm_z = z / 8;
     int range = 8;
     for (int pz = lm_z - range; pz <= lm_z + range; pz++) {
@@ -536,8 +525,8 @@ static void lighting_add_dynamic(lighting_update_batch* updated_batch, sint16 x,
                 if (updated_batch->update_count >= LIGHTING_MAX_CHUNK_UPDATES_PER_FRAME) return;
                 lighting_value* texel = lighting_get_dynamic_texel(updated_batch, px, py, pz);
                 if (texel) {
-                    sint32 w_x = px * 16 + 8;
-                    sint32 w_y = py * 16 + 8;
+                    sint32 w_x = px * (32 / LIGHTING_CELL_SUBDIVISIONS) + (16 / LIGHTING_CELL_SUBDIVISIONS);
+                    sint32 w_y = py * (32 / LIGHTING_CELL_SUBDIVISIONS) + (16 / LIGHTING_CELL_SUBDIVISIONS);
                     sint32 w_z = pz * 8 + 1;
                     float distpot = sqrt((w_x - x)*(w_x - x) + (w_y - y)*(w_y - y) + (w_z - z)*(w_z - z));
 
