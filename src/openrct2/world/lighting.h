@@ -34,6 +34,7 @@ typedef struct lighting_light {
 typedef struct lighting_chunk {
     lighting_value data[LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE];
     lighting_value data_dynamic[LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE];
+    lighting_value skylight_carry[LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE];
     lighting_light static_lights[LIGHTING_MAX_CHUNKS_LIGHTS];
 	size_t static_lights_count;
 	uint8 x, y, z;

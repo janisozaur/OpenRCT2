@@ -17,6 +17,7 @@ lighting_chunk lightingChunks[LIGHTMAP_CHUNKS_Z][LIGHTMAP_CHUNKS_Y][LIGHTMAP_CHU
 
 const lighting_value black = { .r = 0,.g = 0,.b = 0 };
 const lighting_value ambient = { .r = 0,.g = 0,.b = 0 };
+const lighting_value ambient_sky = { .r = 20,.g = 20,.b = 20 };
 const lighting_value lit = { .r = 255,.g = 255,.b = 255 };
 
 #define SUBCELLITR(v, cbidx) for (int v = (cbidx); v < (cbidx) + 2; v++)
@@ -34,6 +35,13 @@ static void lighting_add(lighting_value* target, const lighting_value apply) {
 	target->r += apply.r;
 	target->g += apply.g;
 	target->b += apply.b;
+}
+
+static void lighting_muladd(lighting_value* target, const lighting_value apply, const float multiplier) {
+    // TODO: can overflow
+    target->r += multiplier * apply.r;
+    target->g += multiplier * apply.g;
+    target->b += multiplier * apply.b;
 }
 
 // elementswise lerp between @a and @b depending on @frac (@lerp = 0 -> @a)
@@ -452,10 +460,34 @@ static void lighting_update_affectors() {
 }
 
 static void lighting_update_chunk(lighting_chunk* chunk) {
-	for (int oz = 0; oz < LIGHTMAP_CHUNK_SIZE; oz++) {
+    // reset skylight
+    // chunk->skylight_carry is used to store the lighting value at the current layer (i.e. `oz` in the next loop)
+    // at the end of that loop, skylight_carry will be the carry for the chunk below it too
+    if (chunk->z == LIGHTMAP_CHUNKS_Z - 1) {
+        // top chunk, skylight = lit
+        for (int oy = 0; oy < LIGHTMAP_CHUNK_SIZE; oy++) {
+            for (int ox = 0; ox < LIGHTMAP_CHUNK_SIZE; ox++) {
+                chunk->skylight_carry[oy][ox] = ambient_sky;
+            }
+        }
+    }
+    else {
+        // not top chunk, copy skylight from the chunk above
+        memcpy(chunk->skylight_carry, lightingChunks[chunk->z + 1][chunk->y][chunk->x].skylight_carry, sizeof(chunk->skylight_carry));
+    }
+
+	for (int oz = LIGHTMAP_CHUNK_SIZE - 1; oz >= 0; oz--) {
 		for (int oy = 0; oy < LIGHTMAP_CHUNK_SIZE; oy++) {
 			for (int ox = 0; ox < LIGHTMAP_CHUNK_SIZE; ox++) {
-				chunk->data[oz][oy][ox] = ambient;
+                chunk->data[oz][oy][ox] = ambient;
+
+                // skylight
+                lighting_value affector = lightingAffectorsZ[chunk->y*LIGHTMAP_CHUNK_SIZE + oy][chunk->x*LIGHTMAP_CHUNK_SIZE + ox][chunk->z*LIGHTMAP_CHUNK_SIZE + oz];
+                lighting_multiply(&chunk->skylight_carry[oy][ox], affector);
+
+                chunk->data[oz][oy][ox] = chunk->skylight_carry[oy][ox];
+
+                // static lights that reach this chunk
 				for (size_t lidx = 0; lidx < chunk->static_lights_count; lidx++) {
 					lighting_static_light_cast(&chunk->data[oz][oy][ox], chunk->static_lights[lidx], chunk->x*LIGHTMAP_CHUNK_SIZE + ox, chunk->y*LIGHTMAP_CHUNK_SIZE + oy, chunk->z*LIGHTMAP_CHUNK_SIZE + oz);
 				}
@@ -470,7 +502,8 @@ static void lighting_update_static(lighting_update_batch* updated_batch) {
     clock_t max_end = clock() + LIGHTING_MAX_CLOCKS_PER_FRAME;
 
     // recompute invalid chunks until reaching a limit
-    for (int z = 0; z < LIGHTMAP_CHUNKS_Z; z++) {
+    // start from the top to pass through skylights in the correct order
+    for (int z = LIGHTMAP_CHUNKS_Z - 1; z >= 0; z--) {
         for (int y = 0; y < LIGHTMAP_CHUNKS_Y; y++) {
             for (int x = 0; x < LIGHTMAP_CHUNKS_X; x++) {
                 lightingChunks[z][y][x].has_dynamic_lights = false;
