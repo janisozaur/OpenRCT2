@@ -131,6 +131,7 @@ namespace OpenRCT2
             void ConfigureDirtyGrid();
             static void ResetWindowVisbilities();
             void DrawAllDirtyBlocks();
+            void DrawAllDirtyBlocks(uint32 x, uint32 y, uint32 columns, uint32 rows);
             DrawBlockCall DrawDirtyBlocks(uint32 x, uint32 y, uint32 columns, uint32 rows);
 
             void DrawWorker();

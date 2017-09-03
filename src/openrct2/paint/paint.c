@@ -32,7 +32,6 @@ const uint32 construction_markers[] = {
 };
 
 paint_session gPaintSession;
-static bool _paintSessionInUse;
 
 #ifndef NO_RCT2
 #define _paintQuadrants (RCT2_ADDRESS(0x00F1A50C, paint_struct*))
@@ -67,18 +66,14 @@ static uint32 paint_ps_colourify_image(uint32 imageId, uint8 spriteType, uint32 
 
 paint_session * paint_session_alloc(rct_drawpixelinfo * dpi)
 {
-    // Currently limited to just one session at a time
-    assert(!_paintSessionInUse);
-    _paintSessionInUse = true;
-    paint_session * session = &gPaintSession;
-
+    paint_session * session = (paint_session *)malloc(sizeof(paint_session));
     paint_session_init(session, dpi);
     return session;
 }
 
 void paint_session_free(paint_session * session)
 {
-    _paintSessionInUse = false;
+    free(session);
 }
 
 static void paint_session_init(paint_session * session, rct_drawpixelinfo * dpi)

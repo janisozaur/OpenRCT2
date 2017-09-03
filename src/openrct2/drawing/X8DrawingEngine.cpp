@@ -399,13 +399,64 @@ void X8DrawingEngine::ResetWindowVisbilities()
 
 void X8DrawingEngine::DrawAllDirtyBlocks()
 {
-    uint32  dirtyBlockColumns = _dirtyGrid.BlockColumns;
-    uint32  dirtyBlockRows = _dirtyGrid.BlockRows;
-    uint8 * dirtyBlocks = _dirtyGrid.Blocks;
+    uint32 dirtyBlockColumns = _dirtyGrid.BlockColumns;
+    uint32 dirtyBlockRows = _dirtyGrid.BlockRows;
 
-    for (uint32 x = 0; x < dirtyBlockColumns; x++)
+    uint32 numThreads = 4;
+    if (!_workersSetup)
     {
-        for (uint32 y = 0; y < dirtyBlockRows; y++)
+        _workersSetup = true;
+        for (uint32 i = 0; i < numThreads; i++)
+        {
+            std::thread(&X8DrawingEngine::DrawWorker, this).detach();
+        }
+    }
+
+    uint32 colsPerThread = dirtyBlockColumns / numThreads;
+    for (uint32 i = 0; i < numThreads; i++)
+    {
+        uint32 left = i * colsPerThread;
+        uint32 right = Math::Min(left + colsPerThread, dirtyBlockColumns);
+        uint32 top = 0;
+        uint32 bottom = dirtyBlockRows;
+        DrawBlockCall call = { left, top, right, bottom, true };
+        _drawCalls.push(call);
+    }
+
+    while (_drawCalls.size() > 0)
+    {
+    }
+}
+
+void X8DrawingEngine::DrawWorker()
+{
+    while (true)
+    {
+        DrawBlockCall call;
+        {
+            std::lock_guard<std::mutex> guard(_drawCallsMutex);
+            if (_drawCalls.size() > 0)
+            {
+                call = _drawCalls.front();
+                _drawCalls.pop();
+            }
+            else
+            {
+                continue;
+            }
+        }
+        DrawAllDirtyBlocks(call.left, call.top, call.right, call.bottom);
+    }
+}
+
+void X8DrawingEngine::DrawAllDirtyBlocks(uint32 left, uint32 top, uint32 right, uint32 bottom)
+{
+    uint32 dirtyBlockColumns = _dirtyGrid.BlockColumns;
+    uint32 dirtyBlockRows = _dirtyGrid.BlockRows;
+    uint8 * dirtyBlocks = _dirtyGrid.Blocks;
+    for (uint32 x = left; x < right; x++)
+    {
+        for (uint32 y = top; y < bottom; y++)
         {
             uint32 yOffset = y * dirtyBlockColumns;
             if (dirtyBlocks[yOffset + x] == 0)
@@ -443,42 +494,9 @@ void X8DrawingEngine::DrawAllDirtyBlocks()
             auto call = DrawDirtyBlocks(x, y, columns, rows);
             if (call.valid)
             {
-                std::lock_guard<std::mutex> guard(_drawCallsMutex);
-                _drawCalls.push(call);
+                window_draw_all(&_bitsDPI, call.left, call.top, call.right, call.bottom);
             }
         }
-    }
-
-    if (!_workersSetup)
-    {
-        _workersSetup = true;
-        std::thread(&X8DrawingEngine::DrawWorker, this).detach();
-        // std::thread(&X8DrawingEngine::DrawWorker, this).detach();
-    }
-
-    while (_drawCalls.size() > 0)
-    {
-    }
-}
-
-void X8DrawingEngine::DrawWorker()
-{
-    while (true)
-    {
-        DrawBlockCall call;
-        {
-            std::lock_guard<std::mutex> guard(_drawCallsMutex);
-            if (_drawCalls.size() > 0)
-            {
-                call = _drawCalls.front();
-                _drawCalls.pop();
-            }
-            else
-            {
-                continue;
-            }
-        }
-        window_draw_all(&_bitsDPI, call.left, call.top, call.right, call.bottom);
     }
 }
 
