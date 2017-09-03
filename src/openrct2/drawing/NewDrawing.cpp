@@ -231,6 +231,7 @@ extern "C"
         {
             IDrawingContext * dc = _drawingEngine->GetDrawingContext(dpi);
             dc->Clear(paletteIndex);
+            delete dc;
         }
     }
 
@@ -240,6 +241,7 @@ extern "C"
         {
             IDrawingContext * dc = _drawingEngine->GetDrawingContext(dpi);
             dc->FillRect(colour, left, top, right, bottom);
+            delete dc;
         }
     }
 
@@ -249,6 +251,7 @@ extern "C"
         {
             IDrawingContext * dc = _drawingEngine->GetDrawingContext(dpi);
             dc->FilterRect(palette, left, top, right, bottom);
+            delete dc;
         }
     }
 
@@ -258,6 +261,7 @@ extern "C"
         {
             IDrawingContext * dc = _drawingEngine->GetDrawingContext(dpi);
             dc->DrawLine(colour, x1, y1, x2, y2);
+            delete dc;
         }
     }
 
@@ -267,6 +271,7 @@ extern "C"
         {
             IDrawingContext * dc = _drawingEngine->GetDrawingContext(dpi);
             dc->DrawSprite(image, x, y, tertiary_colour);
+            delete dc;
         }
     }
 
@@ -276,6 +281,7 @@ extern "C"
         {
             IDrawingContext * dc = _drawingEngine->GetDrawingContext(dpi);
             dc->DrawGlyph(image, x, y, palette);
+            delete dc;
         }
     }
 
@@ -285,6 +291,7 @@ extern "C"
         {
             IDrawingContext * dc = _drawingEngine->GetDrawingContext(dpi);
             dc->DrawSpriteRawMasked(x, y, maskImage, colourImage);
+            delete dc;
         }
     }
 
@@ -294,6 +301,7 @@ extern "C"
         {
             IDrawingContext * dc = _drawingEngine->GetDrawingContext(dpi);
             dc->DrawSpriteSolid(image, x, y, colour);
+            delete dc;
         }
     }
 

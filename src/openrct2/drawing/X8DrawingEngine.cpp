@@ -287,8 +287,9 @@ sint32 X8DrawingEngine::Screenshot()
 
 IDrawingContext * X8DrawingEngine::GetDrawingContext(rct_drawpixelinfo * dpi)
 {
-    _drawingContext->SetDPI(dpi);
-    return _drawingContext;
+    auto dc = new X8DrawingContext(this);
+    dc->SetDPI(dpi);
+    return dc;
 }
 
 rct_drawpixelinfo * X8DrawingEngine::GetDrawingPixelInfo()
