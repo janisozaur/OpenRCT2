@@ -31,11 +31,6 @@ TextureCache::~TextureCache()
     FreeTextures();
 }
 
-void PaletteTextureCache::SetPalette(const SDL_Color * palette)
-{
-    Memory::CopyArray(_palette, palette, 256);
-}
-
 void TextureCache::InvalidateImage(uint32 image)
 {
     auto kvp = _imageTextureMap.find(image);
@@ -44,6 +39,114 @@ void TextureCache::InvalidateImage(uint32 image)
         _atlases[kvp->second.index].Free(kvp->second);
         _imageTextureMap.erase(kvp);
     }
+}
+
+void TextureCache::CreateAtlasesTexture()
+{
+    if (!_atlasesTextureInitialised)
+    {
+        // Determine width and height to use for texture atlases
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &_atlasesTextureDimensions);
+        if (_atlasesTextureDimensions > TEXTURE_CACHE_MAX_ATLAS_SIZE) {
+            _atlasesTextureDimensions = TEXTURE_CACHE_MAX_ATLAS_SIZE;
+        }
+
+        // Determine maximum number of atlases (minimum of size and array limit)
+        glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &_atlasesTextureIndicesLimit);
+        if (_atlasesTextureDimensions < _atlasesTextureIndicesLimit) _atlasesTextureIndicesLimit = _atlasesTextureDimensions;
+
+        AllocateAtlasesTexture();
+
+        _atlasesTextureInitialised = true;
+        _atlasesTextureIndices = 0;
+    }
+}
+
+void TextureCache::AllocateAtlasesTexture()
+{
+    // Create an array texture to hold all of the atlases
+    glGenTextures(1, &_atlasesTexture);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, _atlasesTexture);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+}
+
+CachedTextureInfo TextureCache::AllocateImage(sint32 imageWidth, sint32 imageHeight)
+{
+    CreateAtlasesTexture();
+
+    // Find an atlas that fits this image
+    for (Atlas& atlas : _atlases)
+    {
+        if (atlas.GetFreeSlots() > 0 && atlas.IsImageSuitable(imageWidth, imageHeight))
+        {
+            return atlas.Allocate(imageWidth, imageHeight);
+        }
+    }
+
+    // If there is no such atlas, then create a new one
+    if ((sint32)_atlases.size() >= _atlasesTextureIndicesLimit)
+    {
+        throw std::runtime_error("more texture atlases required, but device limit reached!");
+    }
+
+    sint32 atlasIndex = (sint32)_atlases.size();
+    sint32 atlasSize = (sint32)powf(2, (float)Atlas::CalculateImageSizeOrder(imageWidth, imageHeight));
+
+#ifdef DEBUG
+    log_verbose("new texture atlas #%d (size %d) allocated\n", atlasIndex, atlasSize);
+#endif
+
+    _atlases.emplace_back(atlasIndex, atlasSize);
+    _atlases.back().Initialise(_atlasesTextureDimensions, _atlasesTextureDimensions);
+
+    // Enlarge texture array to support new atlas
+    EnlargeAtlasesTexture(1);
+
+    // And allocate from the new atlas
+    return _atlases.back().Allocate(imageWidth, imageHeight);
+}
+
+void TextureCache::FreeTextures()
+{
+    // Free array texture
+    glDeleteTextures(1, &_atlasesTexture);
+}
+
+rct_drawpixelinfo * TextureCache::CreateDPI(sint32 width, sint32 height)
+{
+    size_t numPixels = width * height;
+    uint8 * pixels8 = Memory::Allocate<uint8>(numPixels);
+    Memory::Set(pixels8, 0, numPixels);
+
+    rct_drawpixelinfo * dpi = new rct_drawpixelinfo();
+    dpi->bits = pixels8;
+    dpi->pitch = 0;
+    dpi->x = 0;
+    dpi->y = 0;
+    dpi->width = width;
+    dpi->height = height;
+    dpi->zoom_level = 0;
+    return dpi;
+}
+
+void TextureCache::DeleteDPI(rct_drawpixelinfo* dpi)
+{
+    Memory::Free(dpi->bits);
+    delete dpi;
+}
+
+GLuint TextureCache::GetAtlasesTexture()
+{
+    return _atlasesTexture;
+}
+
+
+
+void PaletteTextureCache::SetPalette(const SDL_Color * palette)
+{
+    Memory::CopyArray(_palette, palette, 256);
 }
 
 CachedTextureInfo PaletteTextureCache::GetOrLoadImageTexture(uint32 image)
@@ -110,37 +213,6 @@ CachedTextureInfo PaletteTextureCache::GetOrLoadGlyphTexture(uint32 image, uint8
     _glyphTextureMap[glyphId] = cacheInfo;
 
     return cacheInfo;
-}
-
-void TextureCache::CreateAtlasesTexture()
-{
-    if (!_atlasesTextureInitialised)
-    {
-        // Determine width and height to use for texture atlases
-        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &_atlasesTextureDimensions);
-        if (_atlasesTextureDimensions > TEXTURE_CACHE_MAX_ATLAS_SIZE) {
-            _atlasesTextureDimensions = TEXTURE_CACHE_MAX_ATLAS_SIZE;
-        }
-
-        // Determine maximum number of atlases (minimum of size and array limit)
-        glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &_atlasesTextureIndicesLimit);
-        if (_atlasesTextureDimensions < _atlasesTextureIndicesLimit) _atlasesTextureIndicesLimit = _atlasesTextureDimensions;
-
-        AllocateAtlasesTexture();
-
-        _atlasesTextureInitialised = true;
-        _atlasesTextureIndices = 0;
-    }
-}
-
-void TextureCache::AllocateAtlasesTexture()
-{
-    // Create an array texture to hold all of the atlases
-    glGenTextures(1, &_atlasesTexture);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, _atlasesTexture);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }
 
 void PaletteTextureCache::EnlargeAtlasesTexture(GLuint newEntries)
@@ -222,42 +294,6 @@ void * PaletteTextureCache::GetImageAsARGB(uint32 image, uint32 tertiaryColour, 
     return pixels32;
 }
 
-CachedTextureInfo TextureCache::AllocateImage(sint32 imageWidth, sint32 imageHeight)
-{
-    CreateAtlasesTexture();
-
-    // Find an atlas that fits this image
-    for (Atlas& atlas : _atlases)
-    {
-        if (atlas.GetFreeSlots() > 0 && atlas.IsImageSuitable(imageWidth, imageHeight))
-        {
-            return atlas.Allocate(imageWidth, imageHeight);
-        }
-    }
-
-    // If there is no such atlas, then create a new one
-    if ((sint32) _atlases.size() >= _atlasesTextureIndicesLimit)
-    {
-        throw std::runtime_error("more texture atlases required, but device limit reached!");
-    }
-
-    sint32 atlasIndex = (sint32) _atlases.size();
-    sint32 atlasSize = (sint32) powf(2, (float) Atlas::CalculateImageSizeOrder(imageWidth, imageHeight));
-
-#ifdef DEBUG
-    log_verbose("new texture atlas #%d (size %d) allocated\n", atlasIndex, atlasSize);
-#endif
-
-    _atlases.emplace_back(atlasIndex, atlasSize);
-    _atlases.back().Initialise(_atlasesTextureDimensions, _atlasesTextureDimensions);
-
-    // Enlarge texture array to support new atlas
-    EnlargeAtlasesTexture(1);
-
-    // And allocate from the new atlas
-    return _atlases.back().Allocate(imageWidth, imageHeight);
-}
-
 rct_drawpixelinfo * PaletteTextureCache::GetImageAsDPI(uint32 image, uint32 tertiaryColour)
 {
     rct_g1_element * g1Element = gfx_get_g1_element(image & 0x7FFFF);
@@ -325,38 +361,5 @@ void * PaletteTextureCache::ConvertDPIto32bpp(const rct_drawpixelinfo * dpi)
     return pixels32;
 }
 
-void TextureCache::FreeTextures()
-{
-    // Free array texture
-    glDeleteTextures(1, &_atlasesTexture);
-}
-
-rct_drawpixelinfo * TextureCache::CreateDPI(sint32 width, sint32 height)
-{
-    size_t numPixels = width * height;
-    uint8 * pixels8 = Memory::Allocate<uint8>(numPixels);
-    Memory::Set(pixels8, 0, numPixels);
-
-    rct_drawpixelinfo * dpi = new rct_drawpixelinfo();
-    dpi->bits = pixels8;
-    dpi->pitch = 0;
-    dpi->x = 0;
-    dpi->y = 0;
-    dpi->width = width;
-    dpi->height = height;
-    dpi->zoom_level = 0;
-    return dpi;
-}
-
-void TextureCache::DeleteDPI(rct_drawpixelinfo* dpi)
-{
-    Memory::Free(dpi->bits);
-    delete dpi;
-}
-
-GLuint TextureCache::GetAtlasesTexture()
-{
-    return _atlasesTexture;
-}
 
 #endif /* DISABLE_OPENGL */
