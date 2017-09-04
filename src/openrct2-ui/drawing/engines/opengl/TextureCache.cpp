@@ -31,7 +31,7 @@ TextureCache::~TextureCache()
     FreeTextures();
 }
 
-void TextureCache::SetPalette(const SDL_Color * palette)
+void PaletteTextureCache::SetPalette(const SDL_Color * palette)
 {
     Memory::CopyArray(_palette, palette, 256);
 }
@@ -46,7 +46,7 @@ void TextureCache::InvalidateImage(uint32 image)
     }
 }
 
-CachedTextureInfo TextureCache::GetOrLoadImageTexture(uint32 image)
+CachedTextureInfo PaletteTextureCache::GetOrLoadImageTexture(uint32 image)
 {
     image &= 0x7FFFF;
     auto kvp = _imageTextureMap.find(image);
@@ -61,7 +61,7 @@ CachedTextureInfo TextureCache::GetOrLoadImageTexture(uint32 image)
     return cacheInfo;
 }
 
-CachedTextureInfo TextureCache::GetOrLoadPaletteTexture(uint32 image, uint32 tertiaryColour, bool special)
+CachedTextureInfo PaletteTextureCache::GetOrLoadPaletteTexture(uint32 image, uint32 tertiaryColour, bool special)
 {
     if ((image & (IMAGE_TYPE_REMAP | IMAGE_TYPE_REMAP_2_PLUS | IMAGE_TYPE_TRANSPARENT)) == 0)
         return CachedTextureInfo{ 0 };
@@ -94,7 +94,7 @@ CachedTextureInfo TextureCache::GetOrLoadPaletteTexture(uint32 image, uint32 ter
     return cacheInfo;
 }
 
-CachedTextureInfo TextureCache::GetOrLoadGlyphTexture(uint32 image, uint8 * palette)
+CachedTextureInfo PaletteTextureCache::GetOrLoadGlyphTexture(uint32 image, uint8 * palette)
 {
     GlyphId glyphId;
     glyphId.Image = image;
@@ -143,7 +143,7 @@ void TextureCache::AllocateAtlasesTexture()
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 }
 
-void TextureCache::EnlargeAtlasesTexture(GLuint newEntries)
+void PaletteTextureCache::EnlargeAtlasesTexture(GLuint newEntries)
 {
     CreateAtlasesTexture();
 
@@ -164,7 +164,7 @@ void TextureCache::EnlargeAtlasesTexture(GLuint newEntries)
     _atlasesTextureIndices = newIndices;
 }
 
-CachedTextureInfo TextureCache::LoadImageTexture(uint32 image)
+CachedTextureInfo PaletteTextureCache::LoadImageTexture(uint32 image)
 {
     rct_drawpixelinfo * dpi = GetImageAsDPI(image, 0);
 
@@ -178,7 +178,7 @@ CachedTextureInfo TextureCache::LoadImageTexture(uint32 image)
     return cacheInfo;
 }
 
-CachedTextureInfo TextureCache::LoadPaletteTexture(uint32 image, uint32 tertiaryColour, bool special)
+CachedTextureInfo PaletteTextureCache::LoadPaletteTexture(uint32 image, uint32 tertiaryColour, bool special)
 {
     rct_drawpixelinfo dpi;
     dpi.bits = gfx_draw_sprite_get_palette(image, tertiaryColour);
@@ -192,7 +192,7 @@ CachedTextureInfo TextureCache::LoadPaletteTexture(uint32 image, uint32 tertiary
     return cacheInfo;
 }
 
-CachedTextureInfo TextureCache::LoadGlyphTexture(uint32 image, uint8 * palette)
+CachedTextureInfo PaletteTextureCache::LoadGlyphTexture(uint32 image, uint8 * palette)
 {
     rct_drawpixelinfo * dpi = GetGlyphAsDPI(image, palette);
 
@@ -206,7 +206,7 @@ CachedTextureInfo TextureCache::LoadGlyphTexture(uint32 image, uint8 * palette)
     return cacheInfo;
 }
 
-void * TextureCache::GetImageAsARGB(uint32 image, uint32 tertiaryColour, uint32 * outWidth, uint32 * outHeight)
+void * PaletteTextureCache::GetImageAsARGB(uint32 image, uint32 tertiaryColour, uint32 * outWidth, uint32 * outHeight)
 {
     rct_g1_element * g1Element = gfx_get_g1_element(image & 0x7FFFF);
     sint32 width = g1Element->width;
@@ -258,7 +258,7 @@ CachedTextureInfo TextureCache::AllocateImage(sint32 imageWidth, sint32 imageHei
     return _atlases.back().Allocate(imageWidth, imageHeight);
 }
 
-rct_drawpixelinfo * TextureCache::GetImageAsDPI(uint32 image, uint32 tertiaryColour)
+rct_drawpixelinfo * PaletteTextureCache::GetImageAsDPI(uint32 image, uint32 tertiaryColour)
 {
     rct_g1_element * g1Element = gfx_get_g1_element(image & 0x7FFFF);
     sint32 width = g1Element->width;
@@ -269,7 +269,7 @@ rct_drawpixelinfo * TextureCache::GetImageAsDPI(uint32 image, uint32 tertiaryCol
     return dpi;
 }
 
-void * TextureCache::GetGlyphAsARGB(uint32 image, uint8 * palette, uint32 * outWidth, uint32 * outHeight)
+void * PaletteTextureCache::GetGlyphAsARGB(uint32 image, uint8 * palette, uint32 * outWidth, uint32 * outHeight)
 {
     rct_g1_element * g1Element = gfx_get_g1_element(image & 0x7FFFF);
     sint32 width = g1Element->width;
@@ -285,7 +285,7 @@ void * TextureCache::GetGlyphAsARGB(uint32 image, uint8 * palette, uint32 * outW
     return pixels32;
 }
 
-rct_drawpixelinfo * TextureCache::GetGlyphAsDPI(uint32 image, uint8 * palette)
+rct_drawpixelinfo * PaletteTextureCache::GetGlyphAsDPI(uint32 image, uint8 * palette)
 {
     rct_g1_element * g1Element = gfx_get_g1_element(image & 0x7FFFF);
     sint32 width = g1Element->width;
@@ -296,7 +296,7 @@ rct_drawpixelinfo * TextureCache::GetGlyphAsDPI(uint32 image, uint8 * palette)
     return dpi;
 }
 
-void * TextureCache::ConvertDPIto32bpp(const rct_drawpixelinfo * dpi)
+void * PaletteTextureCache::ConvertDPIto32bpp(const rct_drawpixelinfo * dpi)
 {
     size_t numPixels = dpi->width * dpi->height;
     uint8 * pixels32 = Memory::Allocate<uint8>(numPixels * 4);

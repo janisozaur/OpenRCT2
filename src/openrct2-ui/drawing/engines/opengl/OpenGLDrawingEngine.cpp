@@ -74,7 +74,7 @@ private:
     DrawLineShader *        _drawLineShader         = nullptr;
     FillRectShader *        _fillRectShader         = nullptr;
 
-    TextureCache * _textureCache = nullptr;
+    PaletteTextureCache * _textureCache = nullptr;
 
     sint32 _offsetX    = 0;
     sint32 _offsetY    = 0;
@@ -96,7 +96,7 @@ public:
     ~OpenGLDrawingContext() override;
 
     IDrawingEngine * GetEngine() override;
-    TextureCache * GetTextureCache() const { return _textureCache; }
+    PaletteTextureCache * GetTextureCache() const { return _textureCache; }
 
     void Initialise();
     void Resize(sint32 width, sint32 height);
@@ -429,7 +429,7 @@ IDrawingEngine * OpenGLDrawingContext::GetEngine()
 
 void OpenGLDrawingContext::Initialise()
 {
-    _textureCache = new TextureCache();
+    _textureCache = new PaletteTextureCache();
     _drawImageShader = new DrawImageShader();
     _drawLineShader = new DrawLineShader();
     _fillRectShader = new FillRectShader();

@@ -184,9 +184,9 @@ private:
     }
 };
 
-class TextureCache final
+class TextureCache
 {
-private:
+protected:
     bool _atlasesTextureInitialised = false;
 
     GLuint _atlasesTexture            = 0;
@@ -199,34 +199,45 @@ private:
     std::unordered_map<GlyphId, CachedTextureInfo, GlyphId::Hash, GlyphId::Equal> _glyphTextureMap;
     std::unordered_map<uint32, CachedTextureInfo> _paletteTextureMap;
 
+public:
+    TextureCache() = default;
+    virtual ~TextureCache();
+    void InvalidateImage(uint32 image);
+
+    GLuint GetAtlasesTexture();
+
+protected:
+    void CreateAtlasesTexture();
+    void AllocateAtlasesTexture();
+    virtual void EnlargeAtlasesTexture(GLuint newEntries) = 0;
+    CachedTextureInfo AllocateImage(sint32 imageWidth, sint32 imageHeight);
+    void FreeTextures();
+
+    static rct_drawpixelinfo * CreateDPI(sint32 width, sint32 height);
+    static void DeleteDPI(rct_drawpixelinfo * dpi);
+};
+
+class PaletteTextureCache final : public TextureCache
+{
+private:
     SDL_Color _palette[256];
 
 public:
-    TextureCache() = default;
-    ~TextureCache();
     void SetPalette(const SDL_Color * palette);
-    void InvalidateImage(uint32 image);
     CachedTextureInfo GetOrLoadImageTexture(uint32 image);
     CachedTextureInfo GetOrLoadGlyphTexture(uint32 image, uint8 * palette);
     CachedTextureInfo GetOrLoadPaletteTexture(uint32 image, uint32 tertiaryColour, bool special);
 
-    GLuint GetAtlasesTexture();
-
 private:
-    void CreateAtlasesTexture();
-    void AllocateAtlasesTexture();
-    void EnlargeAtlasesTexture(GLuint newEntries);
+    virtual void EnlargeAtlasesTexture(GLuint newEntries) override;
+
     CachedTextureInfo LoadImageTexture(uint32 image);
     CachedTextureInfo LoadGlyphTexture(uint32 image, uint8 * palette);
     CachedTextureInfo LoadPaletteTexture(uint32 image, uint32 tertiaryColour, bool special);
-    CachedTextureInfo AllocateImage(sint32 imageWidth, sint32 imageHeight);
+
     void * GetImageAsARGB(uint32 image, uint32 tertiaryColour, uint32 * outWidth, uint32 * outHeight);
     rct_drawpixelinfo * GetImageAsDPI(uint32 image, uint32 tertiaryColour);
     void * GetGlyphAsARGB(uint32 image, uint8 * palette, uint32 * outWidth, uint32 * outHeight);
     rct_drawpixelinfo * GetGlyphAsDPI(uint32 image, uint8 * palette);
     void * ConvertDPIto32bpp(const rct_drawpixelinfo * dpi);
-    void FreeTextures();
-
-    static rct_drawpixelinfo * CreateDPI(sint32 width, sint32 height);
-    static void DeleteDPI(rct_drawpixelinfo * dpi);
 };
