@@ -494,11 +494,12 @@ static void lighting_update_chunk(lighting_chunk* chunk) {
             for (int ox = 0; ox < LIGHTMAP_CHUNK_SIZE; ox++) {
                 chunk->data[oz][oy][ox] = ambient;
 
-                // skylight
+                // initialize to skylight value
+                chunk->data[oz][oy][ox] = chunk->skylight_carry[oy][ox];
+
+                // update carry skylight
                 lighting_value affector = lightingAffectorsZ[LAIDX(chunk->y*LIGHTMAP_CHUNK_SIZE + oy, chunk->x*LIGHTMAP_CHUNK_SIZE + ox, chunk->z*LIGHTMAP_CHUNK_SIZE + oz)];
                 lighting_multiply(&chunk->skylight_carry[oy][ox], affector);
-
-                chunk->data[oz][oy][ox] = chunk->skylight_carry[oy][ox];
 
                 // static lights that reach this chunk
                 for (size_t lidx = 0; lidx < chunk->static_lights_count; lidx++) {
