@@ -747,7 +747,6 @@ static void viewport_paint_column(rct_drawpixelinfo * dpi, uint32 viewFlags)
     paint_session_generate(session);
     paint_struct ps = paint_session_arrange(session);
     paint_draw_structs(dpi, &ps, viewFlags);
-    paint_session_free(session);
 
     if (gConfigGeneral.render_weather_gloom &&
         !gTrackDesignSaveMode &&
@@ -759,6 +758,7 @@ static void viewport_paint_column(rct_drawpixelinfo * dpi, uint32 viewFlags)
     if (session->PSStringHead != NULL) {
         paint_draw_money_structs(dpi, session->PSStringHead);
     }
+    paint_session_free(session);
 }
 
 static void viewport_paint_weather_gloom(rct_drawpixelinfo * dpi)
