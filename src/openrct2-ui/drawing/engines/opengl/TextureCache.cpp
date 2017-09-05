@@ -412,7 +412,7 @@ CachedTextureInfo DisplacementTextureCache::LoadDisplacementTexture(uint32 image
     if (wallRH >= -4) wallRH = 0;
 
     // bottom pixel X value
-    int bottomX = dpi->width / 2, bottomY = dpi->height - 1;
+    int bottomX = dpi->width / 2, bottomY = dpi->height - 1, topY = -1;
     int bottomWH = (wallLH + wallRH) / 2; // todo lerp
 
     for (int y = dpi->height - 1; y >= 0; y--) {
@@ -429,44 +429,62 @@ CachedTextureInfo DisplacementTextureCache::LoadDisplacementTexture(uint32 image
             }
         }
     }
-    foundBPY:
+foundBPY:
+
+    for (int y = 0; y < dpi->height; y++) {
+        if (dpi->bits[y * dpi->width + bottomX]) {
+            topY = y;
+            break;
+        }
+    }
+
+    int maxDX = Math::Max(bottomX - wallLX, wallRX - bottomX);
+    int extraTopWH = ((bottomY + bottomWH) - topY) - maxDX;
+    extraTopWH = (extraTopWH + 8) / 16 * 16;
+    int midY = bottomY + bottomWH;
 
     // walls
     for (int y = 0; y < dpi->height; y++) {
         for (int x = 0; x < dpi->width; x++) {
             int dx = x - bottomX;
             float wh;
+            float wht;
             float whb;
+
             if (dx < 0)
             {
                 float frac = Math::Clamp(0.0f, (float)(bottomX - x) / (bottomX - wallLX), 1.0f);
                 wh = (wallLY + wallLH) * frac + (1 - frac) * (bottomY + bottomWH);
+                wht = (wallLY + wallLH) * frac + (1 - frac) * (bottomY + bottomWH - extraTopWH);
                 whb = (wallLY) * frac + (1 - frac) * (bottomY);
                 displacement[y * dpi->width * 3 + x * 3 + 0] = 0;
                 displacement[y * dpi->width * 3 + x * 3 + 1] = -dx * 2;
-                displacement[y * dpi->width * 3 + x * 3 + 2] = 0;
             }
             else
             {
                 float frac = Math::Clamp(0.0f, (float)(x - bottomX) / (wallRX - bottomX), 1.0f);
                 wh = (wallRY + wallRH) * frac + (1 - frac) * (bottomY + bottomWH);
+                wht = (wallRY + wallRH) * frac + (1 - frac) * (bottomY + bottomWH - extraTopWH);
                 whb = (wallRY) * frac + (1 - frac) * (bottomY);
                 displacement[y * dpi->width * 3 + x * 3 + 0] = dx * 2;
                 displacement[y * dpi->width * 3 + x * 3 + 1] = 0;
-                displacement[y * dpi->width * 3 + x * 3 + 2] = 0;
             }
 
             // is above wall?
-            if (y <= wh)
-            {
-                displacement[y * dpi->width * 3 + x * 3 + 2] = (whb - wh) * 1;
+            if (y < wh) {
+                // above wall
+                float fracy = (float)(y - midY) / (topY - midY);
+                float targetTop = wh * (1 - fracy) + wht * fracy;
+
+                displacement[y * dpi->width * 3 + x * 3 + 2] = Math::Clamp(0.0f, whb - targetTop, 255.0f);
+                float ratio = 1.0f / ((bottomY - topY) / (float)maxDX);
                 float dp = wh - y;
-                displacement[y * dpi->width * 3 + x * 3 + 0] += dp * 2;
-                displacement[y * dpi->width * 3 + x * 3 + 1] += dp * 2;
+                displacement[y * dpi->width * 3 + x * 3 + 0] += dp * 2 * ratio;
+                displacement[y * dpi->width * 3 + x * 3 + 1] += dp * 2 * ratio;
             }
             else
             {
-                displacement[y * dpi->width * 3 + x * 3 + 2] = (whb - y) * 1;
+                displacement[y * dpi->width * 3 + x * 3 + 2] = Math::Clamp(0.0f, whb - y, 255.0f);
             }
         }
     }
