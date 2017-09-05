@@ -16,6 +16,8 @@ in int   ivMask;
 in vec3  ivWorldBoxOrigin;
 in vec3  ivWorldBoxSize;
 in float ivPrelight;
+in int   ivTexDisplacementAtlas;
+in vec4  ivTexDisplacementBounds;
 
 in uint vIndex;
 
@@ -26,14 +28,14 @@ flat out int   fFlags;
 out vec4       fColour;
 flat out int   fTexColourAtlas;
 out vec2       fTexColourCoords;
+flat out int   fTexDisplacementAtlas;
+out vec2       fTexDisplacementCoords;
 flat out int   fTexMaskAtlas;
 out vec2       fTexMaskCoords;
 flat out int   fTexPaletteAtlas;
 flat out vec4  fTexPaletteBounds;
 flat out int   fMask;
-flat out vec3  fWorldBoxOrigin;
-flat out vec3  fBoxProjData;
-flat out float fPrelight;
+flat out vec4  fWorldIn;
 
 void main()
 {
@@ -42,21 +44,25 @@ void main()
     case 0u:
         pos = ivBounds.xy;
         fTexColourCoords = ivTexColourBounds.xy;
+        fTexDisplacementCoords = ivTexDisplacementBounds.xy;
         fTexMaskCoords = ivTexMaskBounds.xy;
         break;
     case 1u:
         pos = ivBounds.zy;
         fTexColourCoords = ivTexColourBounds.zy;
+        fTexDisplacementCoords = ivTexDisplacementBounds.zy;
         fTexMaskCoords = ivTexMaskBounds.zy;
         break;
     case 2u:
         pos = ivBounds.xw;
         fTexColourCoords = ivTexColourBounds.xw;
+        fTexDisplacementCoords = ivTexDisplacementBounds.xw;
         fTexMaskCoords = ivTexMaskBounds.xw;
         break;
     case 3u:
         pos = ivBounds.zw;
         fTexColourCoords = ivTexColourBounds.zw;
+        fTexDisplacementCoords = ivTexDisplacementBounds.zw;
         fTexMaskCoords = ivTexMaskBounds.zw;
         break;
     }
@@ -73,12 +79,11 @@ void main()
     fColour = ivColour;
     fMask = ivMask;
     fTexColourAtlas = ivTexColourAtlas;
+    fTexDisplacementAtlas = ivTexDisplacementAtlas;
     fTexMaskAtlas = ivTexMaskAtlas;
     fTexPaletteAtlas = ivTexPaletteAtlas;
     fTexPaletteBounds = ivTexPaletteBounds;
-    fWorldBoxOrigin = ivWorldBoxOrigin;
-    fBoxProjData = ivWorldBoxSize;
-    fPrelight = ivPrelight;
+    fWorldIn = vec4(ivWorldBoxOrigin, ivPrelight);
 
     gl_Position = vec4(pos, 0.0, 1.0);
 }

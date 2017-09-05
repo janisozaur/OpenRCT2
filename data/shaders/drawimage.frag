@@ -7,6 +7,7 @@ const int FLAG_TRANSPARENT_SPECIAL = (1 << 3);
 
 uniform vec4            uPalette[256];
 uniform usampler2DArray uTexture;
+uniform usampler2DArray uDisplacementTexture;
 uniform sampler3D       uLightmap;
 
 flat in ivec4           fClip;
@@ -14,14 +15,14 @@ flat in int             fFlags;
 in vec4                 fColour;
 flat in int             fTexColourAtlas;
 in vec2                 fTexColourCoords;
+flat in int             fTexDisplacementAtlas;
+in vec2                 fTexDisplacementCoords;
 flat in int             fTexMaskAtlas;
 in vec2                 fTexMaskCoords;
 flat in int             fTexPaletteAtlas;
 flat in vec4            fTexPaletteBounds;
 flat in int             fMask;
-flat in vec3            fWorldBoxOrigin;
-flat in vec3            fBoxProjData;
-flat in float           fPrelight;
+flat in vec4            fWorldIn;
 
 in vec2 fPosition;
 in vec2 fTextureCoordinate;
@@ -37,9 +38,11 @@ void main()
     }
 
     vec4 texel;
+    vec3 fWorldBoxOrigin = fWorldIn.xyz;
+    float fPrelight = fWorldIn.w;
 
     // Lightmap
-    float diffFromXSplit = fBoxProjData.x - fPosition.x; // difference from bbox center in px
+    /*float diffFromXSplit = fBoxProjData.x - fPosition.x; // difference from bbox center in px
     float totalHeight = fBoxProjData.y - fBoxProjData.z; // bbox height in px
     float height = (fBoxProjData.y - fPosition.y) - abs(diffFromXSplit) * 0.5; // height in the bbox of the current fragment
     float extraY = height - totalHeight; // how much "over" the full bbox height in px (i.e. if >= 0, the fragment is on the top of the bbox)
@@ -48,12 +51,17 @@ void main()
     worldPos.y += max(0, extraY) / 32; // if top of the box
     worldPos.y += max(0, diffFromXSplit) / 32; // if right of the box
     worldPos.x -= min(0, diffFromXSplit) / 32; // if left of the box
-    worldPos.z += min(totalHeight, height) / 8;
+    worldPos.z += min(totalHeight, height) / 8;*/
+    vec3 worldPos = fWorldBoxOrigin;
+
+    // reads uvec!
+    vec3 worldOffset = vec3(texture(uDisplacementTexture, vec3(fTexDisplacementCoords, float(fTexDisplacementAtlas))).xyz) / vec3(64.0, 64.0, 8.0);
+    worldPos += worldOffset;
     
     vec3 lmPos = worldPos * vec3(2.0, 2.0, 1.0);
     vec3 sampleVec = lmPos / vec3(512.0, 512.0, 128.0);
     vec3 lightValue = texture(uLightmap, sampleVec).rgb;
-    vec4 lmmultint = mix(vec4(lightValue * 5.0, 1), vec4(1, 1, 1, 1), fPrelight);
+    vec4 lmmultint = mix(vec4(lightValue * 5.0 + 0.2, 1), vec4(1, 1, 1, 1), fPrelight);
     vec4 lmaddint = mix(vec4(max(lightValue - 0.25, 0) * 2.0, 0), vec4(0, 0, 0, 0), fPrelight);
 
     // If remap palette used
@@ -108,4 +116,6 @@ void main()
             oColour = texel * lmmultint + lmaddint;
         }
     }
+
+    //oColour = vec4(worldOffset.xyz / 50.0, oColour.a);
 }

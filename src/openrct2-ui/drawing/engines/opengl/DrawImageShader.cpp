@@ -36,8 +36,8 @@ DrawImageShader::DrawImageShader() : OpenGLShaderProgram("drawimage")
 
     glBindBuffer(GL_ARRAY_BUFFER, _vboInstances);
     glVertexAttribIPointer(vClip, 4, GL_INT, sizeof(DrawImageInstance), (void*) offsetof(DrawImageInstance, clip));
-    glVertexAttribIPointer(vTexColourAtlas, 1, GL_INT, sizeof(DrawImageInstance), (void*) offsetof(DrawImageInstance, texColourAtlas));
-    glVertexAttribPointer(vTexColourBounds, 4, GL_FLOAT, GL_FALSE, sizeof(DrawImageInstance), (void*) offsetof(DrawImageInstance, texColourBounds));
+    glVertexAttribIPointer(vTexColourAtlas, 1, GL_INT, sizeof(DrawImageInstance), (void*)offsetof(DrawImageInstance, texColourAtlas));
+    glVertexAttribPointer(vTexColourBounds, 4, GL_FLOAT, GL_FALSE, sizeof(DrawImageInstance), (void*)offsetof(DrawImageInstance, texColourBounds));
     glVertexAttribIPointer(vTexMaskAtlas, 1, GL_INT, sizeof(DrawImageInstance), (void*) offsetof(DrawImageInstance, texMaskAtlas));
     glVertexAttribPointer(vTexMaskBounds, 4, GL_FLOAT, GL_FALSE, sizeof(DrawImageInstance), (void*) offsetof(DrawImageInstance, texMaskBounds));
     glVertexAttribIPointer(vTexPaletteAtlas, 1, GL_INT, sizeof(DrawImageInstance), (void*) offsetof(DrawImageInstance, texPaletteAtlas));
@@ -48,12 +48,15 @@ DrawImageShader::DrawImageShader() : OpenGLShaderProgram("drawimage")
     glVertexAttribIPointer(vMask, 1, GL_INT, sizeof(DrawImageInstance), (void*) offsetof(DrawImageInstance, mask));
 	glVertexAttribPointer(vPrelight, 1, GL_FLOAT, GL_FALSE, sizeof(DrawImageInstance), (void*)offsetof(DrawImageInstance, prelight));
 	glVertexAttribPointer(vWorldBoxOrigin, 3, GL_FLOAT, GL_FALSE, sizeof(DrawImageInstance), (void*)offsetof(DrawImageInstance, worldBoxOrigin));
-	glVertexAttribPointer(vWorldBoxSize, 3, GL_FLOAT, GL_FALSE, sizeof(DrawImageInstance), (void*)offsetof(DrawImageInstance, worldBoxSize));
+    glVertexAttribIPointer(vTexDisplacementAtlas, 1, GL_INT, sizeof(DrawImageInstance), (void*)offsetof(DrawImageInstance, texDisplacementAtlas));
+    glVertexAttribPointer(vTexDisplacementBounds, 4, GL_FLOAT, GL_FALSE, sizeof(DrawImageInstance), (void*)offsetof(DrawImageInstance, texDisplacementBounds));
 
     glEnableVertexAttribArray(vIndex);
     glEnableVertexAttribArray(vClip);
     glEnableVertexAttribArray(vTexColourAtlas);
     glEnableVertexAttribArray(vTexColourBounds);
+    glEnableVertexAttribArray(vTexDisplacementAtlas);
+    glEnableVertexAttribArray(vTexDisplacementBounds);
     glEnableVertexAttribArray(vTexMaskAtlas);
     glEnableVertexAttribArray(vTexMaskBounds);
     glEnableVertexAttribArray(vTexPaletteAtlas);
@@ -64,11 +67,12 @@ DrawImageShader::DrawImageShader() : OpenGLShaderProgram("drawimage")
     glEnableVertexAttribArray(vMask);
 	glEnableVertexAttribArray(vPrelight);
 	glEnableVertexAttribArray(vWorldBoxOrigin);
-	glEnableVertexAttribArray(vWorldBoxSize);
 
     glVertexAttribDivisor(vClip, 1);
     glVertexAttribDivisor(vTexColourAtlas, 1);
     glVertexAttribDivisor(vTexColourBounds, 1);
+    glVertexAttribDivisor(vTexDisplacementAtlas, 1);
+    glVertexAttribDivisor(vTexDisplacementBounds, 1);
     glVertexAttribDivisor(vTexMaskAtlas, 1);
     glVertexAttribDivisor(vTexMaskBounds, 1);
     glVertexAttribDivisor(vTexPaletteAtlas, 1);
@@ -79,11 +83,11 @@ DrawImageShader::DrawImageShader() : OpenGLShaderProgram("drawimage")
     glVertexAttribDivisor(vMask, 1);
 	glVertexAttribDivisor(vPrelight, 1);
 	glVertexAttribDivisor(vWorldBoxOrigin, 1);
-	glVertexAttribDivisor(vWorldBoxSize, 1);
 
     Use();
-	glUniform1i(uTexture, 0);
-	glUniform1i(uLightmap, 1);
+    glUniform1i(uTexture, 0);
+    glUniform1i(uDisplacementTexture, 1);
+	glUniform1i(uLightmap, 2);
 }
 
 DrawImageShader::~DrawImageShader()
@@ -97,6 +101,7 @@ void DrawImageShader::GetLocations()
 {
     uScreenSize         = GetUniformLocation("uScreenSize");
     uTexture            = GetUniformLocation("uTexture");
+    uDisplacementTexture      = GetUniformLocation("uDisplacementTexture");
     uPalette            = GetUniformLocation("uPalette");
 	uLightmap           = GetUniformLocation("uLightmap");
 
@@ -104,6 +109,8 @@ void DrawImageShader::GetLocations()
     vClip               = GetAttributeLocation("ivClip");
     vTexColourAtlas     = GetAttributeLocation("ivTexColourAtlas");
     vTexColourBounds    = GetAttributeLocation("ivTexColourBounds");
+    vTexDisplacementAtlas = GetAttributeLocation("ivTexDisplacementAtlas"); 
+    vTexDisplacementBounds    = GetAttributeLocation("ivTexDisplacementBounds");
     vTexMaskAtlas       = GetAttributeLocation("ivTexMaskAtlas");
     vTexMaskBounds      = GetAttributeLocation("ivTexMaskBounds");
     vTexPaletteAtlas    = GetAttributeLocation("ivTexPaletteAtlas");
@@ -114,7 +121,6 @@ void DrawImageShader::GetLocations()
     vMask               = GetAttributeLocation("ivMask");
 	vPrelight           = GetAttributeLocation("ivPrelight");
 	vWorldBoxOrigin     = GetAttributeLocation("ivWorldBoxOrigin");
-	vWorldBoxSize       = GetAttributeLocation("ivWorldBoxSize");
 }
 
 void DrawImageShader::SetScreenSize(sint32 width, sint32 height)

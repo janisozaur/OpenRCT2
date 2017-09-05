@@ -75,6 +75,7 @@ private:
     FillRectShader *        _fillRectShader         = nullptr;
 
     PaletteTextureCache * _textureCache = nullptr;
+    DisplacementTextureCache * _displacementTextureCache = nullptr;
 
     sint32 _offsetX    = 0;
     sint32 _offsetY    = 0;
@@ -420,6 +421,7 @@ OpenGLDrawingContext::~OpenGLDrawingContext()
     delete _fillRectShader;
 
     delete _textureCache;
+    delete _displacementTextureCache;
 }
 
 IDrawingEngine * OpenGLDrawingContext::GetEngine()
@@ -430,6 +432,7 @@ IDrawingEngine * OpenGLDrawingContext::GetEngine()
 void OpenGLDrawingContext::Initialise()
 {
     _textureCache = new PaletteTextureCache();
+    _displacementTextureCache = new DisplacementTextureCache();
     _drawImageShader = new DrawImageShader();
     _drawLineShader = new DrawLineShader();
     _fillRectShader = new FillRectShader();
@@ -685,11 +688,15 @@ void OpenGLDrawingContext::DrawSprite(uint32 image, sint32 x, sint32 y, uint32 t
 
     auto texture2 = _textureCache->GetOrLoadPaletteTexture(image, tertiaryColour, special);
 
+    auto displacementTexture = _displacementTextureCache->GetOrLoadDisplacementTexture(image);
+
     DrawImageCommand command;
 
     command.clip = { _clipLeft, _clipTop, _clipRight, _clipBottom };
     command.texColourAtlas = texture.index;
     command.texColourBounds = texture.normalizedBounds;
+    command.texDisplacementAtlas = displacementTexture.index;
+    command.texDisplacementBounds = displacementTexture.normalizedBounds;
     command.texMaskAtlas = 0;
     command.texMaskBounds = { 0.0f, 0.0f, 0.0f };
     command.texPaletteAtlas = texture2.index;
@@ -704,7 +711,6 @@ void OpenGLDrawingContext::DrawSprite(uint32 image, sint32 x, sint32 y, uint32 t
     command.mask = 0;
     command.flags = 0;
 	command.prelight = lightingData.prelight;
-	command.worldBoxSize = { lightingData.bbox_origin_px_x + _offsetX, lightingData.bbox_origin_px_y + _offsetY, lightingData.bbox_upperfront_px_y + _offsetY };
 	command.worldBoxOrigin = { lightingData.bbox_origin_3d[0], lightingData.bbox_origin_3d[1], lightingData.bbox_origin_3d[2] };
 
     if (special)
@@ -782,7 +788,6 @@ void OpenGLDrawingContext::DrawSpriteRawMasked(sint32 x, sint32 y, uint32 maskIm
     command.bounds = { left, top, right, bottom };
     command.mask = 1;
 	command.prelight = lightingData.prelight;
-	command.worldBoxSize = { lightingData.bbox_origin_px_x + _offsetX, lightingData.bbox_origin_px_y + _offsetY, lightingData.bbox_upperfront_px_y + _offsetY };
 	command.worldBoxOrigin = { lightingData.bbox_origin_3d[0], lightingData.bbox_origin_3d[1], lightingData.bbox_origin_3d[2] };
 
     _commandBuffers.images.emplace_back(std::move(command));
@@ -841,7 +846,6 @@ void OpenGLDrawingContext::DrawSpriteSolid(uint32 image, sint32 x, sint32 y, uin
     command.mask = 0;
 	command.prelight = 1.0f;
 	command.worldBoxOrigin = { 0.0f, 0.0f, 0.0f };
-	command.worldBoxSize = { 0.0f, 0.0f, 0.0f };
 
     _commandBuffers.images.emplace_back(std::move(command));
 }
@@ -892,7 +896,6 @@ void OpenGLDrawingContext::DrawGlyph(uint32 image, sint32 x, sint32 y, uint8 * p
     command.mask = 0;
 	command.prelight = 1.0f;
 	command.worldBoxOrigin = { 0.0f, 0.0f, 0.0f };
-	command.worldBoxSize = { 0.0f, 0.0f, 0.0f };
 
     _commandBuffers.images.emplace_back(std::move(command));
 }
@@ -935,8 +938,9 @@ void OpenGLDrawingContext::FlushImages()
 {
     if (_commandBuffers.images.size() == 0) return;
 
-	OpenGLAPI::SetTexture(0, GL_TEXTURE_2D_ARRAY, _textureCache->GetAtlasesTexture());
-	OpenGLAPI::SetTexture(1, GL_TEXTURE_3D, _lightmapTexture);
+    OpenGLAPI::SetTexture(0, GL_TEXTURE_2D_ARRAY, _textureCache->GetAtlasesTexture());
+    OpenGLAPI::SetTexture(1, GL_TEXTURE_2D_ARRAY, _displacementTextureCache->GetAtlasesTexture());
+	OpenGLAPI::SetTexture(2, GL_TEXTURE_3D, _lightmapTexture);
 
     _drawImageShader->Use();
     _drawImageShader->DrawInstances(_commandBuffers.images);

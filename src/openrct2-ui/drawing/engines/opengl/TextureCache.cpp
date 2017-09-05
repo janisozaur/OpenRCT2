@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <openrct2/core/Memory.hpp>
 #include "TextureCache.h"
+#include "openrct2/core/Math.hpp"
 
 extern "C"
 {
@@ -222,6 +223,7 @@ void PaletteTextureCache::EnlargeAtlasesTexture(GLuint newEntries)
     GLuint newIndices = _atlasesTextureIndices + newEntries;
 
     // Retrieve current array data
+    glBindTexture(GL_TEXTURE_2D_ARRAY, _atlasesTexture);
     auto oldPixels = std::vector<char>(_atlasesTextureDimensions * _atlasesTextureDimensions * _atlasesTextureIndices);
     glGetTexImage(GL_TEXTURE_2D_ARRAY, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, oldPixels.data());
 
@@ -294,7 +296,7 @@ void * PaletteTextureCache::GetImageAsARGB(uint32 image, uint32 tertiaryColour, 
     return pixels32;
 }
 
-rct_drawpixelinfo * PaletteTextureCache::GetImageAsDPI(uint32 image, uint32 tertiaryColour)
+rct_drawpixelinfo * TextureCache::GetImageAsDPI(uint32 image, uint32 tertiaryColour)
 {
     rct_g1_element * g1Element = gfx_get_g1_element(image & 0x7FFFF);
     sint32 width = g1Element->width;
@@ -360,6 +362,149 @@ void * PaletteTextureCache::ConvertDPIto32bpp(const rct_drawpixelinfo * dpi)
     }
     return pixels32;
 }
+
+CachedTextureInfo DisplacementTextureCache::GetOrLoadDisplacementTexture(uint32 image)
+{
+    image &= 0x7FFFF;
+    auto kvp = _imageTextureMap.find(image);
+    if (kvp != _imageTextureMap.end())
+    {
+        return kvp->second;
+    }
+
+    auto cacheInfo = LoadDisplacementTexture(image);
+    _imageTextureMap[image] = cacheInfo;
+
+    return cacheInfo;
+}
+
+CachedTextureInfo DisplacementTextureCache::LoadDisplacementTexture(uint32 image)
+{
+    rct_drawpixelinfo * dpi = GetImageAsDPI(image, 0);
+
+    std::vector<uint8> displacement = std::vector<uint8>(dpi->width * dpi->height * 3);
+    
+    // experimental
+    int wallLX = -1, wallLY = -1, wallLH = 0, wallRX = -1, wallRY = -1, wallRH = 0;
+
+    for (int x = 0; x < dpi->width - 1; x++) {
+        for (int y = dpi->height - 1; y >= 0; y--)
+            if (dpi->bits[y * dpi->width + x]) {
+                wallLX = x;
+                if (wallLY < 0) wallLY = y;
+                wallLH = y - wallLY;
+            }
+        if (wallLY >= 0) break;
+    }
+
+    if (wallLH >= -4) wallLH = 0;
+
+    for (int x = dpi->width - 1; x >= 1; x--) {
+        for (int y = dpi->height - 1; y >= 0; y--)
+            if (dpi->bits[y * dpi->width + x]) {
+                wallRX = x;
+                if (wallRY < 0) wallRY = y;
+                wallRH = y - wallRY;
+            }
+        if (wallRY >= 0) break;
+    }
+
+    if (wallRH >= -4) wallRH = 0;
+
+    // bottom pixel X value
+    int bottomX = dpi->width / 2, bottomY = dpi->height - 1;
+    int bottomWH = (wallLH + wallRH) / 2; // todo lerp
+
+    for (int y = dpi->height - 1; y >= 0; y--) {
+        for (int x = 0; x < dpi->width; x++) {
+            int firstX = -1, lastX = -1;
+            if (dpi->bits[y * dpi->width + x]) {
+                if (firstX == -1) firstX = x;
+                lastX = x;
+            }
+            if (firstX >= 0) {
+                bottomX = (firstX + lastX) / 2;
+                bottomY = y;
+                goto foundBPY;
+            }
+        }
+    }
+    foundBPY:
+
+    // walls
+    for (int y = 0; y < dpi->height; y++) {
+        for (int x = 0; x < dpi->width; x++) {
+            int dx = x - bottomX;
+            float wh;
+            float whb;
+            if (dx < 0)
+            {
+                float frac = Math::Clamp(0.0f, (float)(bottomX - x) / (bottomX - wallLX), 1.0f);
+                wh = (wallLY + wallLH) * frac + (1 - frac) * (bottomY + bottomWH);
+                whb = (wallLY) * frac + (1 - frac) * (bottomY);
+                displacement[y * dpi->width * 3 + x * 3 + 0] = 0;
+                displacement[y * dpi->width * 3 + x * 3 + 1] = -dx * 2;
+                displacement[y * dpi->width * 3 + x * 3 + 2] = 0;
+            }
+            else
+            {
+                float frac = Math::Clamp(0.0f, (float)(x - bottomX) / (wallRX - bottomX), 1.0f);
+                wh = (wallRY + wallRH) * frac + (1 - frac) * (bottomY + bottomWH);
+                whb = (wallRY) * frac + (1 - frac) * (bottomY);
+                displacement[y * dpi->width * 3 + x * 3 + 0] = dx * 2;
+                displacement[y * dpi->width * 3 + x * 3 + 1] = 0;
+                displacement[y * dpi->width * 3 + x * 3 + 2] = 0;
+            }
+
+            // is above wall?
+            if (y <= wh)
+            {
+                displacement[y * dpi->width * 3 + x * 3 + 2] = (whb - wh) * 1;
+                float dp = wh - y;
+                displacement[y * dpi->width * 3 + x * 3 + 0] += dp * 2;
+                displacement[y * dpi->width * 3 + x * 3 + 1] += dp * 2;
+            }
+            else
+            {
+                displacement[y * dpi->width * 3 + x * 3 + 2] = (whb - y) * 1;
+            }
+        }
+    }
+
+
+    auto cacheInfo = AllocateImage(dpi->width, dpi->height);
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, _atlasesTexture);
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, cacheInfo.bounds.x, cacheInfo.bounds.y, cacheInfo.index, dpi->width, dpi->height, 1, GL_RGB_INTEGER, GL_UNSIGNED_BYTE, displacement.data());
+
+    DeleteDPI(dpi);
+
+    return cacheInfo;
+}
+
+void DisplacementTextureCache::EnlargeAtlasesTexture(GLuint newEntries)
+{
+    CreateAtlasesTexture();
+
+    GLuint newIndices = _atlasesTextureIndices + newEntries;
+
+    // Retrieve current array data
+    glBindTexture(GL_TEXTURE_2D_ARRAY, _atlasesTexture);
+    auto oldPixels = std::vector<char>(_atlasesTextureDimensions * _atlasesTextureDimensions * _atlasesTextureIndices * 3);
+    glGetTexImage(GL_TEXTURE_2D_ARRAY, 0, GL_RGB_INTEGER, GL_UNSIGNED_BYTE, oldPixels.data());
+
+    // Delete old texture, allocate a new one, then define the new format on the newly created texture
+    glDeleteTextures(1, &_atlasesTexture);
+    AllocateAtlasesTexture();
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB8UI, _atlasesTextureDimensions, _atlasesTextureDimensions, newIndices, 0, GL_RGB_INTEGER, GL_UNSIGNED_BYTE, nullptr);
+
+    // Restore old data
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, _atlasesTextureDimensions, _atlasesTextureDimensions, _atlasesTextureIndices, GL_RGB_INTEGER, GL_UNSIGNED_BYTE, oldPixels.data());
+
+    _atlasesTextureIndices = newIndices;
+}
+
+
 
 
 #endif /* DISABLE_OPENGL */

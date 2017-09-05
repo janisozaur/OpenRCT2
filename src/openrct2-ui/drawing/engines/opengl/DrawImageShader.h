@@ -36,7 +36,8 @@ struct DrawImageInstance {
     sint32 mask;
 	float prelight;
 	vec3f worldBoxOrigin;
-	vec3f worldBoxSize;
+    sint32 texDisplacementAtlas;
+    vec4f texDisplacementBounds;
 
     enum
     {
@@ -52,6 +53,7 @@ class DrawImageShader final : public OpenGLShaderProgram
 private:
     GLuint uScreenSize;
     GLuint uTexture;
+    GLuint uDisplacementTexture;
     GLuint uPalette;
 	GLuint uLightmap;
 
@@ -69,7 +71,8 @@ private:
     GLuint vMask;
 	GLuint vPrelight;
 	GLuint vWorldBoxOrigin;
-	GLuint vWorldBoxSize;
+    GLuint vTexDisplacementAtlas;
+    GLuint vTexDisplacementBounds;
 
     GLuint _vbo;
     GLuint _vboInstances;

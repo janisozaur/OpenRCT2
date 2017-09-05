@@ -213,6 +213,7 @@ protected:
     CachedTextureInfo AllocateImage(sint32 imageWidth, sint32 imageHeight);
     void FreeTextures();
 
+    rct_drawpixelinfo * GetImageAsDPI(uint32 image, uint32 tertiaryColour);
     static rct_drawpixelinfo * CreateDPI(sint32 width, sint32 height);
     static void DeleteDPI(rct_drawpixelinfo * dpi);
 };
@@ -236,8 +237,18 @@ private:
     CachedTextureInfo LoadPaletteTexture(uint32 image, uint32 tertiaryColour, bool special);
 
     void * GetImageAsARGB(uint32 image, uint32 tertiaryColour, uint32 * outWidth, uint32 * outHeight);
-    rct_drawpixelinfo * GetImageAsDPI(uint32 image, uint32 tertiaryColour);
     void * GetGlyphAsARGB(uint32 image, uint8 * palette, uint32 * outWidth, uint32 * outHeight);
     rct_drawpixelinfo * GetGlyphAsDPI(uint32 image, uint8 * palette);
     void * ConvertDPIto32bpp(const rct_drawpixelinfo * dpi);
+};
+
+class DisplacementTextureCache final : public TextureCache
+{
+public:
+    CachedTextureInfo GetOrLoadDisplacementTexture(uint32 image);
+
+private:
+    virtual void EnlargeAtlasesTexture(GLuint newEntries) override;
+
+    CachedTextureInfo LoadDisplacementTexture(uint32 image);
 };
