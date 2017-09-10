@@ -1049,6 +1049,7 @@ void surface_paint(uint8 direction, uint16 height, rct_map_element * mapElement)
         tileDescriptors[i + 1].corner_heights.left = baseHeight + ch.left;
     }
 
+
     if ((gCurrentViewportFlags & VIEWPORT_FLAG_LAND_HEIGHTS) && (zoomLevel == 0)) {
         sint16 x = gPaintMapPosition.x, y = gPaintMapPosition.y;
 
@@ -1136,7 +1137,7 @@ void surface_paint(uint8 direction, uint16 height, rct_map_element * mapElement)
 
         }
 
-        sub_98196C(image_id, 0, 0, 32, 32, 0, height, rotation);
+        sub_98196C(image_id, 0, 0, 32, 32, -1, height, rotation);
         has_surface = true;
     }
 
