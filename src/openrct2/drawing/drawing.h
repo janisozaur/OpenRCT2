@@ -19,6 +19,7 @@
 
 #include "../common.h"
 #include "../interface/colour.h"
+#include "../world/lighting.h"
 #include "font.h"
 
 // For g1 only enable packing when still relying on vanilla

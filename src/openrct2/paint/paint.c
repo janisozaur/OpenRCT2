@@ -911,16 +911,9 @@ void paint_draw_structs(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 viewF
 
 static LightingData get_lighting_data(paint_struct* ps) {
 	rct_xyz16 box_origin = { .x = ps->bound_box_x_end,.y = ps->bound_box_y_end,.z = ps->bound_box_z };
-	rct_xyz16 frontTop = { .x = ps->bound_box_x_end,.y = ps->bound_box_y_end,.z = ps->bound_box_z_end };
-	rct_xy16 screenCoordFrontTop = coordinate_3d_to_2d(&frontTop, get_current_rotation());
-	rct_xyz16 frontBottom = { .x = ps->bound_box_x_end,.y = ps->bound_box_y_end,.z = ps->bound_box_z };
-	rct_xy16 screenCoordFrontBottom = coordinate_3d_to_2d(&frontBottom, get_current_rotation());
 
 	return (LightingData) {
 		.prelight = 0.0f,
-		.bbox_origin_px_x = screenCoordFrontBottom.x,
-		.bbox_origin_px_y = screenCoordFrontBottom.y,
-		.bbox_upperfront_px_y = screenCoordFrontTop.y, // -4 because the bbox is always 1 too low for some reason
 		.bbox_origin_3d = { box_origin.x / 32.0f, box_origin.y / 32.0f, box_origin.z / 8.0f }
 	};
 }

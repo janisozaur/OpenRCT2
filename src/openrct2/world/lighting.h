@@ -16,6 +16,11 @@
 #define LIGHTING_MAX_CLOCKS_PER_FRAME (CLOCKS_PER_SEC / 100)
 #define LIGHTING_MAX_CHUNK_UPDATES_PER_FRAME 100
 
+typedef struct LightingData {
+    float prelight;
+    float bbox_origin_3d[3];
+} LightingData;
+
 #pragma pack(push, 1)
 typedef struct lighting_value {
 	uint8 r;
