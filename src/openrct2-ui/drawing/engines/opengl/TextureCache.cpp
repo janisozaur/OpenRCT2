@@ -16,15 +16,19 @@
 
 #ifndef DISABLE_OPENGL
 
+#include <fstream>
 #include <vector>
 #include <stdexcept>
 #include <openrct2/core/Memory.hpp>
+#include <openrct2/core/Path.hpp>
+#include <openrct2/core/String.hpp>
 #include "TextureCache.h"
 #include "openrct2/core/Math.hpp"
 
 extern "C"
 {
     #include <openrct2/drawing/drawing.h>
+    #include <openrct2/platform/platform.h>
 }
 
 TextureCache::~TextureCache()
@@ -378,126 +382,212 @@ CachedTextureInfo DisplacementTextureCache::GetOrLoadDisplacementTexture(uint32 
     return cacheInfo;
 }
 
+void DisplacementTextureCache::LoadDisplacementsForKnownShapes()
+{
+    shapeToDisplacement[GetShape(1921)] = "s1lt";
+    shapeToDisplacement[GetShape(1918)] = "s1rt";
+    shapeToDisplacement[GetShape(1943)] = "s1rb";
+    shapeToDisplacement[GetShape(1946)] = "s1lb";
+    shapeToDisplacement[GetShape(1942)] = "s2d2";
+    shapeToDisplacement[GetShape(1949)] = "s2d";
+    shapeToDisplacement[GetShape(1932)] = "s2r";
+    shapeToDisplacement[GetShape(1933)] = "s2l";
+    shapeToDisplacement[GetShape(1945)] = "s3r";
+    shapeToDisplacement[GetShape(1941)] = "s3t";
+    shapeToDisplacement[GetShape(1947)] = "s3b";
+    shapeToDisplacement[GetShape(1948)] = "s3l";
+}
+
 CachedTextureInfo DisplacementTextureCache::LoadDisplacementTexture(uint32 image)
+{
+    if (shapeToDisplacement.empty()) LoadDisplacementsForKnownShapes();
+
+    image &= 0x7FFFF;
+
+    sint16 dpWidth;
+    sint16 dpHeight;
+    std::vector<uint8> displacement;
+
+    // shape is known?
+    std::bitset<64 * 64> shape = GetShape(image);
+    auto shapeFile = shapeToDisplacement.find(shape);
+    if (shapeFile != shapeToDisplacement.end())
+    {
+        // load from file
+        // TODO: move
+        char buffer[512];
+        platform_get_openrct_data_path(buffer, 512);
+        Path::Append(buffer, 512, "displacements");
+        Path::Append(buffer, 512, shapeFile->second.c_str());
+        String::Append(buffer, 512, ".raw");
+
+        // TODO: error check + assert sizes
+        std::ifstream stream(buffer, std::ios::in | std::ios::binary);
+        std::vector<uint8> contents((std::istreambuf_iterator<char>(stream)), std::istreambuf_iterator<char>());
+        stream.close();
+
+        dpWidth = contents[0];
+        dpHeight = contents[1];
+        displacement = std::vector<uint8>(dpWidth * dpHeight * 3);
+        memcpy(displacement.data(), contents.data() + 2, dpWidth * dpHeight * 3);
+    }
+    else
+    {
+        // estimate displacement
+        // TODO: move + refactor
+        rct_drawpixelinfo * dpi = GetImageAsDPI(image, 0);
+
+        dpWidth = dpi->width;
+        dpHeight = dpi->height;
+        displacement = std::vector<uint8>(dpWidth * dpHeight * 3);
+
+        // experimental
+        int wallLX = -1, wallLY = -1, wallLH = 0, wallRX = -1, wallRY = -1, wallRH = 0;
+
+        for (int x = 0; x < dpi->width - 1; x++) {
+            for (int y = dpi->height - 1; y >= 0; y--)
+                if (dpi->bits[y * dpi->width + x]) {
+                    wallLX = x;
+                    if (wallLY < 0) wallLY = y;
+                    wallLH = y - wallLY;
+                }
+            if (wallLY >= 0) break;
+        }
+
+        if (wallLH >= -4) wallLH = 0;
+
+        for (int x = dpi->width - 1; x >= 1; x--) {
+            for (int y = dpi->height - 1; y >= 0; y--)
+                if (dpi->bits[y * dpi->width + x]) {
+                    wallRX = x;
+                    if (wallRY < 0) wallRY = y;
+                    wallRH = y - wallRY;
+                }
+            if (wallRY >= 0) break;
+        }
+
+        if (wallRH >= -4) wallRH = 0;
+
+        // bottom pixel X value
+        int bottomX = dpi->width / 2, bottomY = dpi->height - 1, topY = -1;
+        int bottomWH = (wallLH + wallRH) / 2; // todo lerp
+
+        for (int y = dpi->height - 1; y >= 0; y--) {
+            for (int x = 0; x < dpi->width; x++) {
+                int firstX = -1, lastX = -1;
+                if (dpi->bits[y * dpi->width + x]) {
+                    if (firstX == -1) firstX = x;
+                    lastX = x;
+                }
+                if (firstX >= 0) {
+                    bottomX = (firstX + lastX) / 2;
+                    bottomY = y;
+                    goto foundBPY;
+                }
+            }
+        }
+    foundBPY:
+
+        for (int y = 0; y < dpi->height; y++) {
+            if (dpi->bits[y * dpi->width + bottomX]) {
+                topY = y;
+                break;
+            }
+        }
+
+        int maxDX = Math::Max(bottomX - wallLX, wallRX - bottomX);
+        int extraTopWH = ((bottomY + bottomWH) - topY) - maxDX;
+        extraTopWH = (extraTopWH + 8) / 16 * 16;
+        //int midY = bottomY + bottomWH;
+
+        // walls
+        for (int y = 0; y < dpi->height; y++) {
+            for (int x = 0; x < dpi->width; x++) {
+                int dx = x - bottomX;
+                float yMiddle;
+                float wht;
+                float yBottom;
+                float yTop;
+
+                if (dx < 0)
+                {
+                    float frac = Math::Clamp(0.0f, (float)(bottomX - x) / (bottomX - wallLX), 1.0f);
+                    yMiddle = (wallLY + wallLH) * frac + (1 - frac) * (bottomY + bottomWH);
+                    wht = (wallLY + wallLH) * frac + (1 - frac) * (bottomY + bottomWH - extraTopWH);
+                    yBottom = (wallLY)* frac + (1 - frac) * (bottomY);
+                    yTop = (wallLY + wallLH) * frac + (1 - frac) * ((float)topY);
+                    displacement[y * dpi->width * 3 + x * 3 + 0] = 0;
+                    displacement[y * dpi->width * 3 + x * 3 + 1] = -dx * 2;
+                }
+                else
+                {
+                    float frac = Math::Clamp(0.0f, (float)(x - bottomX) / (wallRX - bottomX), 1.0f);
+                    yMiddle = (wallRY + wallRH) * frac + (1 - frac) * (bottomY + bottomWH);
+                    wht = (wallRY + wallRH) * frac + (1 - frac) * (bottomY + bottomWH - extraTopWH);
+                    yBottom = (wallRY)* frac + (1 - frac) * (bottomY);
+                    yTop = (wallRY + wallRH) * frac + (1 - frac) * ((float)topY);
+                    displacement[y * dpi->width * 3 + x * 3 + 0] = dx * 2;
+                    displacement[y * dpi->width * 3 + x * 3 + 1] = 0;
+                }
+
+                // is above wall?
+                if (y < yMiddle) {
+                    // above wall
+                    //float fracy = (float)(y - midY) / (topY - midY);
+                    //float fracy = 1.0f - (float)(y - yTop) / (yMiddle - yTop); // verified
+                    //log_info("mmm interp %f %f %f %f", (float)y, yMiddle, yTop, fracy);
+                    //float baseY = yBottom - yMiddle;
+                    //float whbExpected = -(midY - abs((float)dx) * 2.0f);
+                    //float targetTop = yMiddle * (1 - fracy) + wht * fracy;
+
+                    //float whbExpectedBottom = (midY - abs((float)dx) * 2.0f);
+                    //float whbExpectedTop = (topY + abs((float)dx) * 2.0f);
+                    // interp y between this
+                    // mult w extray
+
+                    //displacement[y * dpi->width * 3 + x * 3 + 2] = Math::Clamp(0.0f, targetTop, 255.0f);//Math::Clamp(0.0f, whb - targetTop, 255.0f);
+                    //displacement[y * dpi->width * 3 + x * 3 + 2] = Math::Clamp(0.0f, (float)midY + 70.0f, 255.0f);
+                    //displacement[y * dpi->width * 3 + x * 3 + 2] = Math::Clamp(0.0f, whbExpectedBottom, 255.0f);
+                    float ratio = 1.0f;//1.0f / ((bottomY - topY) / (float)maxDX);
+                    float dp = yMiddle - y;
+                    displacement[y * dpi->width * 3 + x * 3 + 0] += dp * 2 * ratio;
+                    displacement[y * dpi->width * 3 + x * 3 + 1] += dp * 2 * ratio;
+                    displacement[y * dpi->width * 3 + x * 3 + 2] = Math::Clamp(0.0f, yBottom - yMiddle, 255.0f);
+                }
+                else
+                {
+                    displacement[y * dpi->width * 3 + x * 3 + 2] = Math::Clamp(0.0f, yBottom - y, 255.0f);
+                }
+            }
+        }
+        DeleteDPI(dpi);
+    }
+
+
+    auto cacheInfo = AllocateImage(dpWidth, dpHeight);
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, _atlasesTexture);
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, cacheInfo.bounds.x, cacheInfo.bounds.y, cacheInfo.index, dpWidth, dpHeight, 1, GL_RGB_INTEGER, GL_UNSIGNED_BYTE, displacement.data());
+
+    return cacheInfo;
+}
+
+std::bitset<64 * 64> DisplacementTextureCache::GetShape(uint32 image)
 {
     rct_drawpixelinfo * dpi = GetImageAsDPI(image, 0);
 
-    std::vector<uint8> displacement = std::vector<uint8>(dpi->width * dpi->height * 3);
-    
-    // experimental
-    int wallLX = -1, wallLY = -1, wallLH = 0, wallRX = -1, wallRY = -1, wallRH = 0;
-
-    for (int x = 0; x < dpi->width - 1; x++) {
-        for (int y = dpi->height - 1; y >= 0; y--)
-            if (dpi->bits[y * dpi->width + x]) {
-                wallLX = x;
-                if (wallLY < 0) wallLY = y;
-                wallLH = y - wallLY;
-            }
-        if (wallLY >= 0) break;
-    }
-
-    if (wallLH >= -4) wallLH = 0;
-
-    for (int x = dpi->width - 1; x >= 1; x--) {
-        for (int y = dpi->height - 1; y >= 0; y--)
-            if (dpi->bits[y * dpi->width + x]) {
-                wallRX = x;
-                if (wallRY < 0) wallRY = y;
-                wallRH = y - wallRY;
-            }
-        if (wallRY >= 0) break;
-    }
-
-    if (wallRH >= -4) wallRH = 0;
-
-    // bottom pixel X value
-    int bottomX = dpi->width / 2, bottomY = dpi->height - 1, topY = -1;
-    int bottomWH = (wallLH + wallRH) / 2; // todo lerp
-
-    for (int y = dpi->height - 1; y >= 0; y--) {
-        for (int x = 0; x < dpi->width; x++) {
-            int firstX = -1, lastX = -1;
-            if (dpi->bits[y * dpi->width + x]) {
-                if (firstX == -1) firstX = x;
-                lastX = x;
-            }
-            if (firstX >= 0) {
-                bottomX = (firstX + lastX) / 2;
-                bottomY = y;
-                goto foundBPY;
-            }
-        }
-    }
-foundBPY:
-
-    for (int y = 0; y < dpi->height; y++) {
-        if (dpi->bits[y * dpi->width + bottomX]) {
-            topY = y;
-            break;
-        }
-    }
-
-    int maxDX = Math::Max(bottomX - wallLX, wallRX - bottomX);
-    int extraTopWH = ((bottomY + bottomWH) - topY) - maxDX;
-    extraTopWH = (extraTopWH + 8) / 16 * 16;
-    int midY = bottomY + bottomWH;
-
-    // walls
-    for (int y = 0; y < dpi->height; y++) {
-        for (int x = 0; x < dpi->width; x++) {
-            int dx = x - bottomX;
-            float wh;
-            float wht;
-            float whb;
-
-            if (dx < 0)
-            {
-                float frac = Math::Clamp(0.0f, (float)(bottomX - x) / (bottomX - wallLX), 1.0f);
-                wh = (wallLY + wallLH) * frac + (1 - frac) * (bottomY + bottomWH);
-                wht = (wallLY + wallLH) * frac + (1 - frac) * (bottomY + bottomWH - extraTopWH);
-                whb = (wallLY) * frac + (1 - frac) * (bottomY);
-                displacement[y * dpi->width * 3 + x * 3 + 0] = 0;
-                displacement[y * dpi->width * 3 + x * 3 + 1] = -dx * 2;
-            }
+    std::bitset<64 * 64> shapeMap;
+    for (int y = 0; y < 64; y++)
+        for (int x = 0; x < 64; x++) {
+            if (y < dpi->height && x < dpi->width)
+                shapeMap[y * 64 + x] = dpi->bits[y * dpi->width + x] ? 1 : 0;
             else
-            {
-                float frac = Math::Clamp(0.0f, (float)(x - bottomX) / (wallRX - bottomX), 1.0f);
-                wh = (wallRY + wallRH) * frac + (1 - frac) * (bottomY + bottomWH);
-                wht = (wallRY + wallRH) * frac + (1 - frac) * (bottomY + bottomWH - extraTopWH);
-                whb = (wallRY) * frac + (1 - frac) * (bottomY);
-                displacement[y * dpi->width * 3 + x * 3 + 0] = dx * 2;
-                displacement[y * dpi->width * 3 + x * 3 + 1] = 0;
-            }
-
-            // is above wall?
-            if (y < wh) {
-                // above wall
-                float fracy = (float)(y - midY) / (topY - midY);
-                float targetTop = wh * (1 - fracy) + wht * fracy;
-
-                displacement[y * dpi->width * 3 + x * 3 + 2] = Math::Clamp(0.0f, whb - targetTop, 255.0f);
-                float ratio = 1.0f / ((bottomY - topY) / (float)maxDX);
-                float dp = wh - y;
-                displacement[y * dpi->width * 3 + x * 3 + 0] += dp * 2 * ratio;
-                displacement[y * dpi->width * 3 + x * 3 + 1] += dp * 2 * ratio;
-            }
-            else
-            {
-                displacement[y * dpi->width * 3 + x * 3 + 2] = Math::Clamp(0.0f, whb - y, 255.0f);
-            }
+                shapeMap[y * 64 + x] = 0;
         }
-    }
-
-
-    auto cacheInfo = AllocateImage(dpi->width, dpi->height);
-
-    glBindTexture(GL_TEXTURE_2D_ARRAY, _atlasesTexture);
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, cacheInfo.bounds.x, cacheInfo.bounds.y, cacheInfo.index, dpi->width, dpi->height, 1, GL_RGB_INTEGER, GL_UNSIGNED_BYTE, displacement.data());
 
     DeleteDPI(dpi);
 
-    return cacheInfo;
+    return shapeMap;
 }
 
 void DisplacementTextureCache::EnlargeAtlasesTexture(GLuint newEntries)

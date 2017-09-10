@@ -17,6 +17,7 @@
 #pragma once
 
 #include <algorithm>
+#include <bitset>
 #include <unordered_map>
 #include <vector>
 #include <SDL_pixels.h>
@@ -244,11 +245,16 @@ private:
 
 class DisplacementTextureCache final : public TextureCache
 {
+private:
+    std::unordered_map<std::bitset<64 * 64>, std::string> shapeToDisplacement;
+
 public:
     CachedTextureInfo GetOrLoadDisplacementTexture(uint32 image);
+    void LoadDisplacementsForKnownShapes();
 
 private:
     virtual void EnlargeAtlasesTexture(GLuint newEntries) override;
 
     CachedTextureInfo LoadDisplacementTexture(uint32 image);
+    std::bitset<64 * 64> GetShape(uint32 image);
 };
