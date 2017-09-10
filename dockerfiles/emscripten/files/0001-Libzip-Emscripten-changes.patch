@@ -1,0 +1,135 @@
+From c3954a47e25c3ab0c7ad944142e197d2fd20b36e Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Micha=C5=82=20Janiszewski?= <janisozaur@gmail.com>
+Date: Sun, 10 Sep 2017 21:48:34 +0200
+Subject: [PATCH] Libzip: Emscripten changes
+
+---
+ CMakeLists.txt         | 14 +++++++-------
+ lib/compat.h           | 13 +++----------
+ regress/CMakeLists.txt |  5 -----
+ src/CMakeLists.txt     | 22 +++++++++++-----------
+ 4 files changed, 21 insertions(+), 33 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b979444..da51c77 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -95,12 +95,12 @@ CHECK_TYPE_SIZE("ssize_t" SSIZE_T_LIBZIP)
+ 
+ TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
+ 
+-FIND_PACKAGE(ZLIB REQUIRED)
+-INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIR})
+-set(CMAKE_REQUIRED_INCLUDES ${ZLIB_INCLUDE_DIR})
+-IF(ZLIB_VERSION_STRING VERSION_LESS "1.1.2")
+-  MESSAGE(FATAL_ERROR "-- ZLIB version too old, please install at least v1.1.2")
+-ENDIF(ZLIB_VERSION_STRING VERSION_LESS "1.1.2")
++#FIND_PACKAGE(ZLIB REQUIRED)
++#INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIR})
++#set(CMAKE_REQUIRED_INCLUDES ${ZLIB_INCLUDE_DIR})
++#IF(ZLIB_VERSION_STRING VERSION_LESS "1.1.2")
++#  MESSAGE(FATAL_ERROR "-- ZLIB version too old, please install at least v1.1.2")
++#ENDIF(ZLIB_VERSION_STRING VERSION_LESS "1.1.2")
+ 
+ FIND_PACKAGE(BZip2)
+ IF(BZIP2_FOUND)
+@@ -119,7 +119,7 @@ ADD_DEFINITIONS("-DHAVE_CONFIG_H")
+ 
+ # Targets
+ ADD_SUBDIRECTORY(lib)
+-ADD_SUBDIRECTORY(man)
++#ADD_SUBDIRECTORY(man)
+ ADD_SUBDIRECTORY(src)
+ ADD_SUBDIRECTORY(regress)
+ ADD_SUBDIRECTORY(examples)
+diff --git a/lib/compat.h b/lib/compat.h
+index 625c84e..40de705 100644
+--- a/lib/compat.h
++++ b/lib/compat.h
+@@ -118,14 +118,6 @@ typedef char bool;
+ #endif
+ #endif
+ 
+-#ifndef HAVE_FSEEKO
+-#define fseeko(s, o, w)	(fseek((s), (long int)(o), (w)))
+-#endif
+-
+-#ifndef HAVE_FTELLO
+-#define ftello(s)	((long)ftell((s)))
+-#endif
+-
+ #ifndef HAVE_MKSTEMP
+ int _zip_mkstemp(char *);
+ #define mkstemp _zip_mkstemp
+@@ -149,7 +141,8 @@ int _zip_mkstemp(char *);
+ #define ZIP_OFF_MAX ZIP_INT16_MAX
+ #define ZIP_OFF_MIN ZIP_INT16_MIN
+ #else
+-#error unsupported size of off_t
++#define ZIP_OFF_MAX ZIP_INT32_MAX
++#define ZIP_OFF_MIN ZIP_INT32_MIN
+ #endif
+ 
+ #if defined(HAVE_FTELLO) && defined(HAVE_FSEEKO)
+@@ -169,7 +162,7 @@ int _zip_mkstemp(char *);
+ #elif SIZEOF_SIZE_T == 2
+ #define SIZE_MAX ZIP_INT16_MAX
+ #else
+-#error unsupported size of size_t
++#define SIZE_MAX ZIP_INT32_MAX
+ #endif
+ #endif
+ 
+diff --git a/regress/CMakeLists.txt b/regress/CMakeLists.txt
+index 3cd1a47..214184a 100644
+--- a/regress/CMakeLists.txt
++++ b/regress/CMakeLists.txt
+@@ -13,11 +13,6 @@ SET(TEST_PROGRAMS
+   fseek
+ )
+ 
+-SET(GETOPT_USERS
+-  fread
+-  tryopen
+-)
+-
+ SET(EXTRA_TESTS
+ 	add_dir.test
+ 	add_from_buffer.test
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 48ddf3f..474f26d 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -6,18 +6,18 @@ IF(NOT HAVE_GETOPT)
+   SET(SRC_EXTRA_FILES getopt.c)
+ ENDIF(NOT HAVE_GETOPT)
+ 
+-ADD_EXECUTABLE(zipcmp zipcmp.c ${SRC_EXTRA_FILES})
+-TARGET_LINK_LIBRARIES(zipcmp zip)
+-INSTALL(TARGETS zipcmp RUNTIME DESTINATION bin)
++#ADD_EXECUTABLE(zipcmp zipcmp.c ${SRC_EXTRA_FILES})
++#TARGET_LINK_LIBRARIES(zipcmp zip)
++#INSTALL(TARGETS zipcmp RUNTIME DESTINATION bin)
+ 
+-ADD_EXECUTABLE(zipmerge zipmerge.c ${SRC_EXTRA_FILES})
+-TARGET_LINK_LIBRARIES(zipmerge zip)
+-INSTALL(TARGETS zipmerge RUNTIME DESTINATION bin)
++#ADD_EXECUTABLE(zipmerge zipmerge.c ${SRC_EXTRA_FILES})
++#TARGET_LINK_LIBRARIES(zipmerge zip)
++#INSTALL(TARGETS zipmerge RUNTIME DESTINATION bin)
+ 
+-ADD_EXECUTABLE(ziptool ziptool.c ${SRC_EXTRA_FILES} source_hole.c)
+-TARGET_LINK_LIBRARIES(ziptool zip)
+-INSTALL(TARGETS ziptool RUNTIME DESTINATION bin)
++#ADD_EXECUTABLE(ziptool ziptool.c ${SRC_EXTRA_FILES} source_hole.c)
++#TARGET_LINK_LIBRARIES(ziptool zip)
++#INSTALL(TARGETS ziptool RUNTIME DESTINATION bin)
+ 
+-ADD_EXECUTABLE(hole hole.c ${SRC_EXTRA_FILES} source_hole.c)
+-TARGET_LINK_LIBRARIES(hole zip)
++#ADD_EXECUTABLE(hole hole.c ${SRC_EXTRA_FILES} source_hole.c)
++#TARGET_LINK_LIBRARIES(hole zip)
+ # do not install hole, just a test helper
+-- 
+2.14.1
+
