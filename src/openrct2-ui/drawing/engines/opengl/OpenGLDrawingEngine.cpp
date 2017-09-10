@@ -688,7 +688,7 @@ void OpenGLDrawingContext::DrawSprite(uint32 image, sint32 x, sint32 y, uint32 t
 
     auto texture2 = _textureCache->GetOrLoadPaletteTexture(image, tertiaryColour, special);
 
-    auto displacementTexture = _displacementTextureCache->GetOrLoadDisplacementTexture(image);
+    auto displacementTexture = _displacementTextureCache->GetOrLoadDisplacementTexture(g1Id);
 
     DrawImageCommand command;
 
