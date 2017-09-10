@@ -20,9 +20,13 @@ lighting_chunk* lightingChunks = NULL;
 #define LIGHTINGCHUNK(z, y, x) lightingChunks[(z) * (LIGHTMAP_CHUNKS_Y) * (LIGHTMAP_CHUNKS_X) + (y) * (LIGHTMAP_CHUNKS_Y) + (x)]
 
 const lighting_value black = { .r = 0,.g = 0,.b = 0 };
+const lighting_value dimmedblack = { .r = 200,.g = 200,.b = 200 };
+const lighting_value dimmedblackside = { .r = 240,.g = 240,.b = 240 };
+const lighting_value dimmedblackvside = { .r = 250,.g = 250,.b = 250 };
 const lighting_value ambient = { .r = 0,.g = 0,.b = 0 };
-const lighting_value ambient_sky = { .r = 30,.g = 30,.b = 30 };
+const lighting_value ambient_sky = { .r = 5,.g = 6,.b = 20 };
 const lighting_value lit = { .r = 255,.g = 255,.b = 255 };
+const lighting_value lightlit = { .r = 180,.g = 110,.b = 108 };
 
 #define SUBCELLITR(v, cbidx) for (int v = (cbidx); v < (cbidx) + 2; v++)
 
@@ -385,16 +389,18 @@ static const float TransparentColourTable[144 - 44][3] =
 #pragma endregion Colormap
 
 static void lighting_static_light_cast(lighting_value* target_value, lighting_light light, sint32 px, sint32 py, sint32 pz) {
-    sint32 range = 11;
+    //sint32 range = 11;
     sint32 w_x = px * 16 + 8;
     sint32 w_y = py * 16 + 8;
     sint32 w_z = pz * 2 + 1;
     float distpot = sqrt((w_x - light.pos.x)*(w_x - light.pos.x) + (w_y - light.pos.y)*(w_y - light.pos.y) + (w_z - light.pos.z)*(w_z - light.pos.z) * 4 * 4);
-    float intensity = 1.0f - distpot / (range * 12.0f);
+    float intensity = 900.0f / (distpot*distpot);
     if (intensity > 0) {
+        if (intensity > 0.5f) intensity = 0.5f;
         rct_xyz16 target = { .x = px,.y = py,.z = pz };
-        intensity *= 10;
+        intensity *= 35;
         lighting_value source_value = { .r = intensity,.g = intensity,.b = intensity };
+        lighting_multiply(&source_value, lightlit);
         lighting_add(target_value, lighting_raycast(source_value, light.pos, target));
     }
 }
@@ -405,6 +411,16 @@ static void lighting_update_affectors() {
             uint8 dirs = affectorRecomputeQueue[y][x];
             if (dirs) {
                 rct_map_element* map_element = map_get_first_element_at(x / LIGHTING_CELL_SUBDIVISIONS, y / LIGHTING_CELL_SUBDIVISIONS);
+
+                uint8 quadrant_offset_x = (x / (LIGHTING_CELL_SUBDIVISIONS / 2)) % 2;
+                uint8 quadrant_offset_y = (y / (LIGHTING_CELL_SUBDIVISIONS / 2)) % 2;
+                uint8 quadrant_mask;
+                if (!quadrant_offset_x && !quadrant_offset_y) quadrant_mask = 1 << 2;
+                else if (quadrant_offset_x && !quadrant_offset_y) quadrant_mask = 1 << 1;
+                else if (!quadrant_offset_x && quadrant_offset_y) quadrant_mask = 1 << 3;
+                else quadrant_mask = 1 << 0;
+
+                // test
                 if (map_element) {
                     do {
                         switch (map_element_get_type(map_element))
@@ -421,14 +437,46 @@ static void lighting_update_affectors() {
                             break;
                         }
                         case MAP_ELEMENT_TYPE_SCENERY: {
+                            if (!(map_element->flags & quadrant_mask)) continue;
                             for (int z = map_element->base_height - 1; z < map_element->clearance_height - 1; z++) {
-                                lightingAffectorsX[LAIDX(y, x, z)] = black;
-                                lightingAffectorsY[LAIDX(y, x, z)] = black;
-                                lightingAffectorsX[LAIDX(y, x + 1, z)] = black;
-                                lightingAffectorsY[LAIDX(y + 1, x, z)] = black;
-                                lightingAffectorsZ[LAIDX(y, x, z)] = black;
-                                lightingAffectorsZ[LAIDX(y, x, z + 1)] = black;
+                                if (map_element->clearance_height - map_element->base_height > 5)
+                                {
+                                    // probably a tree or so
+                                    lighting_multiply(&lightingAffectorsX[LAIDX(y, x, z)], dimmedblackside);
+                                    lighting_multiply(&lightingAffectorsY[LAIDX(y, x, z)], dimmedblackside);
+                                    lighting_multiply(&lightingAffectorsX[LAIDX(y, x + 1, z)], dimmedblackside);
+                                    lighting_multiply(&lightingAffectorsY[LAIDX(y + 1, x, z)], dimmedblackside);
+                                    lighting_multiply(&lightingAffectorsZ[LAIDX(y, x, z)], dimmedblackvside);
+                                    lighting_multiply(&lightingAffectorsZ[LAIDX(y, x, z + 1)], dimmedblackvside);
+                                }
+                                else
+                                {
+                                    lightingAffectorsX[LAIDX(y, x, z)] = black;
+                                    lightingAffectorsY[LAIDX(y, x, z)] = black;
+                                    lightingAffectorsX[LAIDX(y, x + 1, z)] = black;
+                                    lightingAffectorsY[LAIDX(y + 1, x, z)] = black;
+                                    lightingAffectorsZ[LAIDX(y, x, z)] = black;
+                                    lightingAffectorsZ[LAIDX(y, x, z + 1)] = black;
+                                }
                             }
+                            break;
+                        }
+                        case MAP_ELEMENT_TYPE_TRACK: {
+                            if (!(map_element->flags & quadrant_mask)) continue;
+                            for (int z = map_element->base_height - 1; z < map_element->clearance_height - 3; z++) {
+                                // TODO check side flag if it should be updated
+                                lighting_multiply(&lightingAffectorsX[LAIDX(y, x, z)], dimmedblackside);
+                                lighting_multiply(&lightingAffectorsY[LAIDX(y, x, z)], dimmedblackside);
+                                lighting_multiply(&lightingAffectorsX[LAIDX(y, x + 1, z)], dimmedblackside);
+                                lighting_multiply(&lightingAffectorsY[LAIDX(y + 1, x, z)], dimmedblackside);
+                                lighting_multiply(&lightingAffectorsZ[LAIDX(y, x, z)], dimmedblack);
+                                lighting_multiply(&lightingAffectorsZ[LAIDX(y, x, z + 1)], dimmedblack);
+                            }
+                            break;
+                        }
+                        case MAP_ELEMENT_TYPE_PATH: {
+                            int z = map_element->base_height - 1;
+                            lightingAffectorsZ[LAIDX(y, x, z)] = black;
                             break;
                         }
                         case MAP_ELEMENT_TYPE_WALL: {
@@ -520,13 +568,20 @@ static void lighting_update_static(lighting_update_batch* updated_batch) {
     for (int z = LIGHTMAP_CHUNKS_Z - 1; z >= 0; z--) {
         for (int y = 0; y < LIGHTMAP_CHUNKS_Y; y++) {
             for (int x = 0; x < LIGHTMAP_CHUNKS_X; x++) {
+                // if it used to have dynamic lights, update always (to clean the dynamic lights)
+                bool shouldUpdate = LIGHTINGCHUNK(z, y, x).has_dynamic_lights;
                 LIGHTINGCHUNK(z, y, x).has_dynamic_lights = false;
 
+                // invalidated static data?
                 if (LIGHTINGCHUNK(z, y, x).invalid) {
                     // recompute this invalid chunk
                     lighting_chunk* chunk = &LIGHTINGCHUNK(z, y, x);
                     lighting_update_chunk(chunk);
-                    updated_batch->updated_chunks[updated_batch->update_count++] = chunk;
+                    shouldUpdate = true;
+                }
+
+                if (shouldUpdate) {
+                    updated_batch->updated_chunks[updated_batch->update_count++] = &LIGHTINGCHUNK(z, y, x);
 
                     // exceeding max update count?
                     if (updated_batch->update_count >= LIGHTING_MAX_CHUNK_UPDATES_PER_FRAME) {
@@ -577,13 +632,14 @@ static void lighting_add_dynamic(lighting_update_batch* updated_batch, sint16 x,
                     sint32 w_z = pz * 8 + 1;
                     float distpot = sqrt((w_x - x)*(w_x - x) + (w_y - y)*(w_y - y) + (w_z - z)*(w_z - z));
 
-                    float intensity = 1.0f - distpot / (range * 16.0f);
-                    //log_info("int %f", intensity);
+                    float intensity = 1100.0f / (distpot*distpot);
                     if (intensity > 0) {
+                        if (intensity > 0.5f) intensity = 0.5f;
                         rct_xyz32 pos = { .x = x,.y = y,.z = z / 4 };
                         rct_xyz16 target = { .x = px,.y = py,.z = pz };
                         intensity *= 70;
                         lighting_value source_value = { .r = intensity,.g = intensity,.b = intensity };
+                        lighting_multiply(&source_value, lightlit);
                         lighting_add(texel, lighting_raycast(source_value, pos, target));
                     }
                 }
@@ -626,12 +682,20 @@ static void lighting_update_dynamic(lighting_update_batch* updated_batch) {
             switch (ride->type) {
             case RIDE_TYPE_MONORAIL:
             case RIDE_TYPE_LOOPING_ROLLER_COASTER:
+            case RIDE_TYPE_VIRGINIA_REEL:
+            case RIDE_TYPE_MINE_RIDE:
+            case RIDE_TYPE_MINE_TRAIN_COASTER:
+            case RIDE_TYPE_WOODEN_ROLLER_COASTER:
+            case RIDE_TYPE_MINIATURE_RAILWAY:
                 if (vehicle == vehicle_get_head(vehicle)) {
                     lighting_add_dynamic(updated_batch, place_x, place_y, place_z);
                 }
                 break;
             case RIDE_TYPE_BOAT_RIDE:
-                lighting_add_dynamic(updated_batch, place_x, place_y, place_z);
+            case RIDE_TYPE_WATER_COASTER:
+                if (vehicle == vehicle_get_head(vehicle)) {
+                    lighting_add_dynamic(updated_batch, place_x, place_y, place_z);
+                }
                 break;
             default:
                 break;
