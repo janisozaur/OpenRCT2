@@ -38,21 +38,9 @@ void main()
     }
 
     vec4 texel;
-    vec3 fWorldBoxOrigin = fWorldIn.xyz;
-    float fPrelight = fWorldIn.w;
 
-    // Lightmap
-    /*float diffFromXSplit = fBoxProjData.x - fPosition.x; // difference from bbox center in px
-    float totalHeight = fBoxProjData.y - fBoxProjData.z; // bbox height in px
-    float height = (fBoxProjData.y - fPosition.y) - abs(diffFromXSplit) * 0.5; // height in the bbox of the current fragment
-    float extraY = height - totalHeight; // how much "over" the full bbox height in px (i.e. if >= 0, the fragment is on the top of the bbox)
-    vec3 worldPos = fWorldBoxOrigin; // bottom-front 3d point of the item
-    worldPos.x += max(0, extraY) / 32; // if top of the box
-    worldPos.y += max(0, extraY) / 32; // if top of the box
-    worldPos.y += max(0, diffFromXSplit) / 32; // if right of the box
-    worldPos.x -= min(0, diffFromXSplit) / 32; // if left of the box
-    worldPos.z += min(totalHeight, height) / 8;*/
-    vec3 worldPos = fWorldBoxOrigin;
+    vec3 worldPos = fWorldIn.xyz;
+    float prelight = fWorldIn.w;
 
     // reads uvec!
     vec3 worldOffset = vec3(texture(uDisplacementTexture, vec3(fTexDisplacementCoords, float(fTexDisplacementAtlas))).xyz) / vec3(64.0, 64.0, 8.0);
@@ -61,8 +49,8 @@ void main()
     vec3 lmPos = worldPos * vec3(2.0, 2.0, 1.0);
     vec3 sampleVec = lmPos / vec3(512.0, 512.0, 128.0);
     vec3 lightValue = texture(uLightmap, sampleVec).rgb;
-    vec4 lmmultint = mix(vec4(lightValue * 5.0 + 0.2, 1), vec4(1, 1, 1, 1), fPrelight);
-    vec4 lmaddint = mix(vec4(max(lightValue - 0.25, 0) * 2.0, 0), vec4(0, 0, 0, 0), fPrelight);
+    vec4 lmmultint = mix(vec4(lightValue * 5.0 + 0.2, 1), vec4(1, 1, 1, 1), prelight);
+    vec4 lmaddint = mix(vec4(max(lightValue - 0.25, 0) * 2.0, 0), vec4(0, 0, 0, 0), prelight);
 
     // If remap palette used
     if ((fFlags & FLAG_REMAP) != 0)
@@ -116,6 +104,4 @@ void main()
             oColour = texel * lmmultint + lmaddint;
         }
     }
-
-    //oColour = vec4(worldOffset.xyz / 50.0, oColour.a);
 }
