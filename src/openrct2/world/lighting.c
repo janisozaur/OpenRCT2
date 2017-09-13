@@ -19,37 +19,38 @@ uint8 affectorRecomputeQueue[LIGHTMAP_SIZE_Y][LIGHTMAP_SIZE_X];
 lighting_chunk* lightingChunks = NULL;
 #define LIGHTINGCHUNK(z, y, x) lightingChunks[(z) * (LIGHTMAP_CHUNKS_Y) * (LIGHTMAP_CHUNKS_X) + (y) * (LIGHTMAP_CHUNKS_Y) + (x)]
 
+#define LIGHTMAXSPREAD 7
+
 const lighting_value black = { .r = 0,.g = 0,.b = 0 };
 const lighting_value dimmedblack = { .r = 200,.g = 200,.b = 200 };
 const lighting_value dimmedblackside = { .r = 240,.g = 240,.b = 240 };
 const lighting_value dimmedblackvside = { .r = 250,.g = 250,.b = 250 };
 const lighting_value ambient = { .r = 0,.g = 0,.b = 0 };
-const lighting_value ambient_sky = { .r = 5,.g = 6,.b = 20 };
+const lighting_value ambient_sky = { .r = 10/2,.g = 20/2,.b = 70/2 };
 const lighting_value lit = { .r = 255,.g = 255,.b = 255 };
-const lighting_value lightlit = { .r = 180,.g = 110,.b = 108 };
+const lighting_value lightlit = { .r = 180/2,.g = 110/2,.b = 108/2 };
 
 #define SUBCELLITR(v, cbidx) for (int v = (cbidx); v < (cbidx) + 2; v++)
 
 // multiplies @target light with some multiplier light value @apply
 static void lighting_multiply(lighting_value* target, const lighting_value apply) {
-    target->r *= apply.r / 255.0f;
-    target->g *= apply.g / 255.0f;
-    target->b *= apply.b / 255.0f;
+    // don't convert to FP
+    uint16 mulr = ((uint16)target->r * apply.r) / 255;
+    uint16 mulg = ((uint16)target->g * apply.g) / 255;
+    uint16 mulb = ((uint16)target->b * apply.b) / 255;
+    target->r = mulr;
+    target->g = mulg;
+    target->b = mulb;
 }
 
 // adds @target light with some multiplier light value @apply
 static void lighting_add(lighting_value* target, const lighting_value apply) {
-    // TODO: can overflow
-    target->r += apply.r;
-    target->g += apply.g;
-    target->b += apply.b;
-}
-
-static void lighting_muladd(lighting_value* target, const lighting_value apply, const float multiplier) {
-    // TODO: can overflow
-    target->r += multiplier * apply.r;
-    target->g += multiplier * apply.g;
-    target->b += multiplier * apply.b;
+    uint16 resr = (uint16)target->r + apply.r;
+    uint16 resg = (uint16)target->g + apply.g;
+    uint16 resb = (uint16)target->b + apply.b;
+    target->r = resr > 255 ? 255 : resr;
+    target->g = resg > 255 ? 255 : resg;
+    target->b = resb > 255 ? 255 : resb;
 }
 
 // elementswise lerp between @a and @b depending on @frac (@lerp = 0 -> @a)
@@ -60,6 +61,136 @@ static lighting_value interpolate_lighting(const lighting_value a, const lightin
             .g = a.g * (1.0f - frac) + b.g * frac,
             .b = a.b * (1.0f - frac) + b.b * frac
     };
+}
+
+static float max_intensity_at(lighting_light light, int chlm_x, int chlm_y, int chlm_z) {
+    sint32 w_x = chlm_x * 16 + 8;
+    sint32 w_y = chlm_y * 16 + 8;
+    sint32 w_z = chlm_z * 2 + 1;
+    float distpot = ((w_x - light.pos.x)*(w_x - light.pos.x) + (w_y - light.pos.y)*(w_y - light.pos.y) + (w_z - light.pos.z)*(w_z - light.pos.z) * 4 * 4);
+    float intensity = 500.0f / (distpot);
+    if (intensity > 0.5f) intensity = 0.5f;
+    return intensity;
+}
+
+// expands a light into the map array passed
+static void light_expand_to_map(lighting_light light, lighting_value map[LIGHTMAXSPREAD * 4 + 1][LIGHTMAXSPREAD * 2 + 1][LIGHTMAXSPREAD * 2 + 1]) {
+    float x = light.pos.x / (32.0f / LIGHTING_CELL_SUBDIVISIONS);
+    float y = light.pos.y / (32.0f / LIGHTING_CELL_SUBDIVISIONS);
+    float z = light.pos.z / 2.0f;
+    int lm_x = x;
+    int lm_y = y;
+    int lm_z = z;
+
+    // light offset from the center of the cell in [-0.5, 0.5]
+    float off_x = (x - lm_x) - 0.5f;
+    float off_y = (y - lm_y) - 0.5f;
+    float off_z = (z - lm_z) - 0.5f;
+
+    float intensity000 = max_intensity_at(light, lm_x, lm_y, lm_z); // to the "root" light cell
+    map[LIGHTMAXSPREAD * 2][LIGHTMAXSPREAD][LIGHTMAXSPREAD] = lightlit;
+    // apply falloff at the center cell (light may not be perfectly rounded to the cell center)
+    // note that this falloff can be "recovered" when spreading to nearby cells below if the light source is e.g. on the edge of two lightmap cells
+    map[LIGHTMAXSPREAD * 2][LIGHTMAXSPREAD][LIGHTMAXSPREAD].r *= intensity000;
+    map[LIGHTMAXSPREAD * 2][LIGHTMAXSPREAD][LIGHTMAXSPREAD].g *= intensity000;
+    map[LIGHTMAXSPREAD * 2][LIGHTMAXSPREAD][LIGHTMAXSPREAD].b *= intensity000;
+
+    // temporary cache
+    static rct_xyz16 itr_queue[(LIGHTMAXSPREAD * 4 + 1) * (LIGHTMAXSPREAD * 2 + 1) * (LIGHTMAXSPREAD * 2 + 1)];
+    static bool did_compute_itr_queue = false;
+
+    if (!did_compute_itr_queue) {
+        int itr_queue_build_pos = 0;
+        for (int dist = 0; dist <= LIGHTMAXSPREAD + LIGHTMAXSPREAD + LIGHTMAXSPREAD * 2; dist++) {
+            for (int dx = -LIGHTMAXSPREAD; dx <= LIGHTMAXSPREAD; dx++)
+                for (int dy = -LIGHTMAXSPREAD; dy <= LIGHTMAXSPREAD; dy++)
+                    for (int dz = -LIGHTMAXSPREAD * 2; dz <= LIGHTMAXSPREAD * 2; dz++) {
+                        int thisdist = abs(dx) + abs(dy) + abs(dz);
+                        if (thisdist == dist) itr_queue[itr_queue_build_pos++] = (rct_xyz16) { .x = dx, .y = dy, .z = dz };
+                    }
+        }
+
+        did_compute_itr_queue = true;
+    }
+
+    // iterate distances (skip 0, 0, 0)
+    for (int citr = 1; citr < (LIGHTMAXSPREAD * 4 + 1) * (LIGHTMAXSPREAD * 2 + 1) * (LIGHTMAXSPREAD * 2 + 1); citr++) {
+        rct_xyz16* delta = itr_queue + citr;
+        // distance to the light in lightmap space
+        float this_delta_x = delta->x - off_x;
+        float this_delta_y = delta->y - off_y;
+        float this_delta_z = (delta->z - off_z) * 0.5;
+        // this forces not reading values that have not yet been set (i.e. going outwards from the center)
+        if (delta->x == 0) this_delta_x = 0.0f;
+        if (delta->y == 0) this_delta_y = 0.0f;
+        if (delta->z == 0) this_delta_z = 0.0f;
+
+        int w_x = lm_x + delta->x;
+        int w_y = lm_y + delta->y;
+        int w_z = lm_z + delta->z;
+        // manhattan distance, ensures that fragx/y/z below sum to 1
+        float dist = fabs(this_delta_x) + fabs(this_delta_y) + fabs(this_delta_z);
+        // delta/dist -> how much from each direction should be consumed? (sums to 1 across all axes)
+        // intensitybase / intensity -> how much should the light intensity fall off when making this jump (always in [0.0, 1.0])?
+        float intensitybase = max_intensity_at(light, lm_x + delta->x, lm_y + delta->y, lm_z + delta->z);
+        float fragx = fabs(this_delta_x) / dist * intensitybase / max_intensity_at(light, w_x + (delta->x < 0 ? 1 : -1), w_y, w_z);
+        float fragy = fabs(this_delta_y) / dist * intensitybase / max_intensity_at(light, w_x, w_y + (delta->y < 0 ? 1 : -1), w_z);
+        float fragz = fabs(this_delta_z) / dist * intensitybase / max_intensity_at(light, w_x, w_y, w_z + (delta->z < 0 ? 1 : -1));
+
+        // lighting data from the source positions
+        lighting_value from_x = map[LIGHTMAXSPREAD * 2 + delta->z][LIGHTMAXSPREAD + delta->y][LIGHTMAXSPREAD + delta->x + (delta->x < 0 ? 1 : -1)];
+        lighting_value from_y = map[LIGHTMAXSPREAD * 2 + delta->z][LIGHTMAXSPREAD + delta->y + (delta->y < 0 ? 1 : -1)][LIGHTMAXSPREAD + delta->x];
+        lighting_value from_z = map[LIGHTMAXSPREAD * 2 + delta->z + (delta->z < 0 ? 1 : -1)][LIGHTMAXSPREAD + delta->y][LIGHTMAXSPREAD + delta->x];
+
+        // apply affectors from the boundaries
+        // TODO: maybe quad-lerp like done with raycasts? will yield smoother occlusion, especially when a light is moving
+        //       will impact performance though (and still not look as smooth as the raycast approach)
+        lighting_multiply(&from_x, lightingAffectorsX[LAIDX(w_y, w_x + (delta->x < 0), w_z)]);
+        lighting_multiply(&from_y, lightingAffectorsY[LAIDX(w_y + (delta->y < 0), w_x, w_z)]);
+        lighting_multiply(&from_z, lightingAffectorsZ[LAIDX(w_y, w_x, w_z + (delta->z < 0))]);
+
+        // interpolate values
+        map[LIGHTMAXSPREAD * 2 + delta->z][LIGHTMAXSPREAD + delta->y][LIGHTMAXSPREAD + delta->x] = (lighting_value) {
+            .r = from_x.r * fragx + from_y.r * fragy + from_z.r * fragz,
+                .g = from_x.g * fragx + from_y.g * fragy + from_z.g * fragz,
+                .b = from_x.b * fragx + from_y.b * fragy + from_z.b * fragz
+        };
+    }
+}
+
+// given an expanded light map, applies it to a chunk
+static void light_expansion_apply(lighting_light light, lighting_value map[LIGHTMAXSPREAD * 4 + 1][LIGHTMAXSPREAD * 2 + 1][LIGHTMAXSPREAD * 2 + 1], lighting_chunk* target, lighting_value target_data[LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE]) {
+    float x = light.pos.x / (32.0f / LIGHTING_CELL_SUBDIVISIONS);
+    float y = light.pos.y / (32.0f / LIGHTING_CELL_SUBDIVISIONS);
+    float z = light.pos.z / 2.0f;
+    int lm_x = (int)x - LIGHTMAXSPREAD;
+    int lm_y = (int)y - LIGHTMAXSPREAD;
+    int lm_z = (int)z - LIGHTMAXSPREAD * 2;
+
+    // apply
+    for (int llm_z = 0; llm_z < LIGHTMAP_CHUNK_SIZE; llm_z++) {
+        for (int llm_y = 0; llm_y < LIGHTMAP_CHUNK_SIZE; llm_y++) {
+            for (int llm_x = 0; llm_x < LIGHTMAP_CHUNK_SIZE; llm_x++) {
+                int chlm_x = llm_x + target->x * LIGHTMAP_CHUNK_SIZE;
+                int chlm_y = llm_y + target->y * LIGHTMAP_CHUNK_SIZE;
+                int chlm_z = llm_z + target->z * LIGHTMAP_CHUNK_SIZE;
+                int lp_offset_x = chlm_x - lm_x;
+                int lp_offset_y = chlm_y - lm_y;
+                int lp_offset_z = chlm_z - lm_z;
+
+                if (lp_offset_x >= 0 && lp_offset_x < LIGHTMAXSPREAD * 2 && lp_offset_y >= 0 && lp_offset_y < LIGHTMAXSPREAD * 2 && lp_offset_z >= 0 && lp_offset_z < LIGHTMAXSPREAD * 4) {
+                    lighting_add(&target_data[llm_z][llm_y][llm_x], map[lp_offset_z][lp_offset_y][lp_offset_x]);
+                }
+            }
+        }
+    }
+}
+
+// expand + apply a light
+static void light_expand(lighting_light light, lighting_chunk* target, lighting_value target_data[LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE]) {
+    lighting_value map[LIGHTMAXSPREAD * 4 + 1][LIGHTMAXSPREAD * 2 + 1][LIGHTMAXSPREAD * 2 + 1];
+    light_expand_to_map(light, map);
+    light_expansion_apply(light, map, target, target_data);
 }
 
 // cast a ray from a 3d world position @a (light source position) to lighting tile
@@ -548,14 +679,15 @@ static void lighting_update_chunk(lighting_chunk* chunk) {
                 // update carry skylight
                 lighting_value affector = lightingAffectorsZ[LAIDX(chunk->y*LIGHTMAP_CHUNK_SIZE + oy, chunk->x*LIGHTMAP_CHUNK_SIZE + ox, chunk->z*LIGHTMAP_CHUNK_SIZE + oz)];
                 lighting_multiply(&chunk->skylight_carry[oy][ox], affector);
-
-                // static lights that reach this chunk
-                for (size_t lidx = 0; lidx < chunk->static_lights_count; lidx++) {
-                    lighting_static_light_cast(&chunk->data[oz][oy][ox], chunk->static_lights[lidx], chunk->x*LIGHTMAP_CHUNK_SIZE + ox, chunk->y*LIGHTMAP_CHUNK_SIZE + oy, chunk->z*LIGHTMAP_CHUNK_SIZE + oz);
-                }
             }
         }
     }
+
+    for (size_t lidx = 0; lidx < chunk->static_lights_count; lidx++) {
+        // TODO: expansion data can be reused, which severely boosts performance
+        light_expand(chunk->static_lights[lidx], chunk, chunk->data);
+    }
+
     chunk->invalid = false;
 }
 
@@ -621,31 +753,27 @@ static void lighting_add_dynamic(lighting_update_batch* updated_batch, sint16 x,
     int lm_y = (y * LIGHTING_CELL_SUBDIVISIONS) / 32;
     int lm_z = z / 8;
     int range = 8;
-    for (int pz = lm_z - range; pz <= lm_z + range; pz++) {
-        for (int py = lm_y - range; py <= lm_y + range; py++) {
-            for (int px = lm_x - range; px <= lm_x + range; px++) {
-                if (updated_batch->update_count >= LIGHTING_MAX_CHUNK_UPDATES_PER_FRAME) return;
-                lighting_value* texel = lighting_get_dynamic_texel(updated_batch, px, py, pz);
-                if (texel) {
-                    sint32 w_x = px * (32 / LIGHTING_CELL_SUBDIVISIONS) + (16 / LIGHTING_CELL_SUBDIVISIONS);
-                    sint32 w_y = py * (32 / LIGHTING_CELL_SUBDIVISIONS) + (16 / LIGHTING_CELL_SUBDIVISIONS);
-                    sint32 w_z = pz * 8 + 1;
-                    float distpot = sqrt((w_x - x)*(w_x - x) + (w_y - y)*(w_y - y) + (w_z - z)*(w_z - z));
 
-                    float intensity = 1100.0f / (distpot*distpot);
-                    if (intensity > 0) {
-                        if (intensity > 0.5f) intensity = 0.5f;
-                        rct_xyz32 pos = { .x = x,.y = y,.z = z / 4 };
-                        rct_xyz16 target = { .x = px,.y = py,.z = pz };
-                        intensity *= 70;
-                        lighting_value source_value = { .r = intensity,.g = intensity,.b = intensity };
-                        lighting_multiply(&source_value, lightlit);
-                        lighting_add(texel, lighting_raycast(source_value, pos, target));
-                    }
+    lighting_light light;
+    light.pos = (rct_xyz32) { .x = x, .y = y, .z = z / 4 }; // TODO: not sure why this coordinate space is / 8 instead of / 2, which requires this random correction here
+
+    lighting_value map[LIGHTMAXSPREAD * 4 + 1][LIGHTMAXSPREAD * 2 + 1][LIGHTMAXSPREAD * 2 + 1];
+    light_expand_to_map(light, map);
+
+    for (int ch_z = max(0, (lm_z - range * 2) / LIGHTMAP_CHUNK_SIZE); ch_z <= min(LIGHTMAP_CHUNKS_Z, (lm_z + range * 2) / LIGHTMAP_CHUNK_SIZE); ch_z++)
+        for (int ch_y = max(0, (lm_y - range) / LIGHTMAP_CHUNK_SIZE); ch_y <= min(LIGHTMAP_CHUNKS_Y, (lm_y + range) / LIGHTMAP_CHUNK_SIZE); ch_y++)
+            for (int ch_x = max(0, (lm_x - range) / LIGHTMAP_CHUNK_SIZE); ch_x <= min(LIGHTMAP_CHUNKS_X, (lm_x + range) / LIGHTMAP_CHUNK_SIZE); ch_x++) {
+                if (updated_batch->update_count >= LIGHTING_MAX_CHUNK_UPDATES_PER_FRAME) return;
+
+                lighting_chunk* chunk = &LIGHTINGCHUNK(ch_z, ch_y, ch_x);
+                if (!chunk->has_dynamic_lights) {
+                    memcpy(chunk->data_dynamic, chunk->data, sizeof(chunk->data));
+                    chunk->has_dynamic_lights = true;
+
+                    updated_batch->updated_chunks[updated_batch->update_count++] = chunk;
                 }
+                light_expansion_apply(light, map, chunk, chunk->data_dynamic);
             }
-        }
-    }
 }
 
 static void lighting_update_dynamic(lighting_update_batch* updated_batch) {
