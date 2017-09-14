@@ -1,7 +1,11 @@
-#include "lighting.h"
-#include "../world/map.h"
-#include "../world/scenery.h"
-#include "../world/footpath.h"
+extern "C" {
+    #include "lighting.h"
+    #include "../world/map.h"
+    #include "../world/scenery.h"
+    #include "../world/footpath.h"
+}
+
+#include "openrct2/core/Math.hpp"
 
 // how the light will be affected when light passes through a certain plane
 lighting_value* lightingAffectorsX = NULL;
@@ -21,14 +25,14 @@ lighting_chunk* lightingChunks = NULL;
 
 #define LIGHTMAXSPREAD 7
 
-const lighting_value black = { .r = 0,.g = 0,.b = 0 };
-const lighting_value dimmedblack = { .r = 200,.g = 200,.b = 200 };
-const lighting_value dimmedblackside = { .r = 240,.g = 240,.b = 240 };
-const lighting_value dimmedblackvside = { .r = 250,.g = 250,.b = 250 };
-const lighting_value ambient = { .r = 0,.g = 0,.b = 0 };
-const lighting_value ambient_sky = { .r = 10/2,.g = 20/2,.b = 70/2 };
-const lighting_value lit = { .r = 255,.g = 255,.b = 255 };
-const lighting_value lightlit = { .r = 180/2,.g = 110/2,.b = 108/2 };
+const lighting_value black = { 0, 0, 0 };
+const lighting_value dimmedblack = { 200, 200, 200 };
+const lighting_value dimmedblackside = { 240, 240, 240 };
+const lighting_value dimmedblackvside = { 250, 250, 250 };
+const lighting_value ambient = { 0, 0, 0 };
+const lighting_value ambient_sky = { 10/2, 20/2, 70/2 };
+const lighting_value lit = { 255, 255, 255 };
+const lighting_value lightlit = { 180/2, 110/2, 108/2 };
 
 #define SUBCELLITR(v, cbidx) for (int v = (cbidx); v < (cbidx) + 2; v++)
 
@@ -53,15 +57,17 @@ static void lighting_add(lighting_value* target, const lighting_value apply) {
     target->b = resb > 255 ? 255 : resb;
 }
 
+/*
 // elementswise lerp between @a and @b depending on @frac (@lerp = 0 -> @a)
 // @return 
 static lighting_value interpolate_lighting(const lighting_value a, const lighting_value b, float frac) {
-    return (lighting_value) {
-        .r = a.r * (1.0f - frac) + b.r * frac,
-            .g = a.g * (1.0f - frac) + b.g * frac,
-            .b = a.b * (1.0f - frac) + b.b * frac
+    return {
+        (uint8)(a.r * (1.0f - frac) + b.r * frac),
+        (uint8)(a.g * (1.0f - frac) + b.g * frac),
+        (uint8)(a.b * (1.0f - frac) + b.b * frac)
     };
 }
+*/
 
 static float max_intensity_at(lighting_light light, int chlm_x, int chlm_y, int chlm_z) {
     sint32 w_x = chlm_x * 16 + 8;
@@ -101,12 +107,12 @@ static void light_expand_to_map(lighting_light light, lighting_value map[LIGHTMA
 
     if (!did_compute_itr_queue) {
         int itr_queue_build_pos = 0;
-        for (int dist = 0; dist <= LIGHTMAXSPREAD + LIGHTMAXSPREAD + LIGHTMAXSPREAD * 2; dist++) {
-            for (int dx = -LIGHTMAXSPREAD; dx <= LIGHTMAXSPREAD; dx++)
-                for (int dy = -LIGHTMAXSPREAD; dy <= LIGHTMAXSPREAD; dy++)
-                    for (int dz = -LIGHTMAXSPREAD * 2; dz <= LIGHTMAXSPREAD * 2; dz++) {
+        for (sint16 dist = 0; dist <= LIGHTMAXSPREAD + LIGHTMAXSPREAD + LIGHTMAXSPREAD * 2; dist++) {
+            for (sint16 dx = -LIGHTMAXSPREAD; dx <= LIGHTMAXSPREAD; dx++)
+                for (sint16 dy = -LIGHTMAXSPREAD; dy <= LIGHTMAXSPREAD; dy++)
+                    for (sint16 dz = -LIGHTMAXSPREAD * 2; dz <= LIGHTMAXSPREAD * 2; dz++) {
                         int thisdist = abs(dx) + abs(dy) + abs(dz);
-                        if (thisdist == dist) itr_queue[itr_queue_build_pos++] = (rct_xyz16) { .x = dx, .y = dy, .z = dz };
+                        if (thisdist == dist) itr_queue[itr_queue_build_pos++] = { dx, dy, dz };
                     }
         }
 
@@ -150,10 +156,10 @@ static void light_expand_to_map(lighting_light light, lighting_value map[LIGHTMA
         lighting_multiply(&from_z, lightingAffectorsZ[LAIDX(w_y, w_x, w_z + (delta->z < 0))]);
 
         // interpolate values
-        map[LIGHTMAXSPREAD * 2 + delta->z][LIGHTMAXSPREAD + delta->y][LIGHTMAXSPREAD + delta->x] = (lighting_value) {
-            .r = from_x.r * fragx + from_y.r * fragy + from_z.r * fragz,
-                .g = from_x.g * fragx + from_y.g * fragy + from_z.g * fragz,
-                .b = from_x.b * fragx + from_y.b * fragy + from_z.b * fragz
+        map[LIGHTMAXSPREAD * 2 + delta->z][LIGHTMAXSPREAD + delta->y][LIGHTMAXSPREAD + delta->x] = {
+            (uint8)(from_x.r * fragx + from_y.r * fragy + from_z.r * fragz),
+            (uint8)(from_x.g * fragx + from_y.g * fragy + from_z.g * fragz),
+            (uint8)(from_x.b * fragx + from_y.b * fragy + from_z.b * fragz)
         };
     }
 }
@@ -193,6 +199,7 @@ static void light_expand(lighting_light light, lighting_chunk* target, lighting_
     light_expansion_apply(light, map, target, target_data);
 }
 
+/*
 // cast a ray from a 3d world position @a (light source position) to lighting tile
 // @return 
 static lighting_value FASTCALL lighting_raycast(lighting_value color, const rct_xyz32 light_source_pos, const rct_xyz16 lightmap_texel) {
@@ -203,7 +210,7 @@ static lighting_value FASTCALL lighting_raycast(lighting_value color, const rct_
     float dy = (lightmap_texel.y + .5) - y;
     float dz = (lightmap_texel.z + .5) - z;
 
-    for (int px = min(lightmap_texel.x + 1, (int)ceil(x)); px <= max((int)floor(x), lightmap_texel.x); px++) {
+    for (int px = Math::Min(lightmap_texel.x + 1, (int)ceil(x)); px <= Math::Max((sint16)floor(x), lightmap_texel.x); px++) {
         float multiplier = (px - x) / dx;
         float py = dy * multiplier + y - .5;
         float pz = dz * multiplier + z - .5;
@@ -220,7 +227,7 @@ static lighting_value FASTCALL lighting_raycast(lighting_value color, const rct_
         lighting_multiply(&color, interpolate_lighting(v0, v1, progz));
     }
 
-    for (int py = min(lightmap_texel.y + 1, (int)ceil(y)); py <= max((int)floor(y), lightmap_texel.y); py++) {
+    for (int py = Math::Min(lightmap_texel.y + 1, (int)ceil(y)); py <= Math::Max((sint16)floor(y), lightmap_texel.y); py++) {
         float multiplier = (py - y) / dy;
         float px = dx * multiplier + x - .5;
         float pz = dz * multiplier + z - .5;
@@ -237,7 +244,7 @@ static lighting_value FASTCALL lighting_raycast(lighting_value color, const rct_
         lighting_multiply(&color, interpolate_lighting(v0, v1, progz));
     }
 
-    for (int pz = min(lightmap_texel.z + 1, (int)ceil(z)); pz <= max((int)floor(z), lightmap_texel.z); pz++) {
+    for (int pz = Math::Min(lightmap_texel.z + 1, (int)ceil(z)); pz <= Math::Max((sint16)floor(z), lightmap_texel.z); pz++) {
         float multiplier = (pz - z) / dz;
         float px = dx * multiplier + x - .5;
         float py = dy * multiplier + y - .5;
@@ -256,6 +263,7 @@ static lighting_value FASTCALL lighting_raycast(lighting_value color, const rct_
 
     return color;
 }
+*/
 
 // inserts a static light into the chunks this light can reach
 static void lighting_insert_static_light(const lighting_light light) {
@@ -263,9 +271,9 @@ static void lighting_insert_static_light(const lighting_light light) {
     sint32 lm_x = light.map_x * LIGHTING_CELL_SUBDIVISIONS;
     sint32 lm_y = light.map_y * LIGHTING_CELL_SUBDIVISIONS;
     sint32 lm_z = light.pos.z / 2;
-    for (int sz = max(0, (lm_z - range * 2) / LIGHTMAP_CHUNK_SIZE); sz <= min(LIGHTMAP_CHUNKS_Z - 1, (lm_z + range * 2) / LIGHTMAP_CHUNK_SIZE); sz++) {
-        for (int sy = max(0, (lm_y - range) / LIGHTMAP_CHUNK_SIZE); sy <= min(LIGHTMAP_CHUNKS_Y - 1, (lm_y + range) / LIGHTMAP_CHUNK_SIZE); sy++) {
-            for (int sx = max(0, (lm_x - range) / LIGHTMAP_CHUNK_SIZE); sx <= min(LIGHTMAP_CHUNKS_X - 1, (lm_x + range) / LIGHTMAP_CHUNK_SIZE); sx++) {
+    for (int sz = Math::Max(0, (lm_z - range * 2) / LIGHTMAP_CHUNK_SIZE); sz <= Math::Min(LIGHTMAP_CHUNKS_Z - 1, (lm_z + range * 2) / LIGHTMAP_CHUNK_SIZE); sz++) {
+        for (int sy = Math::Max(0, (lm_y - range) / LIGHTMAP_CHUNK_SIZE); sy <= Math::Min(LIGHTMAP_CHUNKS_Y - 1, (lm_y + range) / LIGHTMAP_CHUNK_SIZE); sy++) {
+            for (int sx = Math::Max(0, (lm_x - range) / LIGHTMAP_CHUNK_SIZE); sx <= Math::Min(LIGHTMAP_CHUNKS_X - 1, (lm_x + range) / LIGHTMAP_CHUNK_SIZE); sx++) {
                 lighting_chunk* chunk = &LIGHTINGCHUNK(sz, sy, sx);
                 // TODO: bounds check
                 chunk->static_lights[chunk->static_lights_count++] = light;
@@ -281,8 +289,8 @@ void lighting_invalidate_at(sint32 wx, sint32 wy) {
     sint32 lm_x = wx * LIGHTING_CELL_SUBDIVISIONS;
     sint32 lm_y = wy * LIGHTING_CELL_SUBDIVISIONS;
     for (int sz = 0; sz < LIGHTMAP_CHUNKS_Z; sz++) {
-        for (int sy = max(0, (lm_y - range) / LIGHTMAP_CHUNK_SIZE); sy <= min(LIGHTMAP_CHUNKS_Y - 1, (lm_y + range) / LIGHTMAP_CHUNK_SIZE); sy++) {
-            for (int sx = max(0, (lm_x - range) / LIGHTMAP_CHUNK_SIZE); sx <= min(LIGHTMAP_CHUNKS_X - 1, (lm_x + range) / LIGHTMAP_CHUNK_SIZE); sx++) {
+        for (int sy = Math::Max(0, (lm_y - range) / LIGHTMAP_CHUNK_SIZE); sy <= Math::Min(LIGHTMAP_CHUNKS_Y - 1, (lm_y + range) / LIGHTMAP_CHUNK_SIZE); sy++) {
+            for (int sx = Math::Max(0, (lm_x - range) / LIGHTMAP_CHUNK_SIZE); sx <= Math::Min(LIGHTMAP_CHUNKS_X - 1, (lm_x + range) / LIGHTMAP_CHUNK_SIZE); sx++) {
                 lighting_chunk* chunk = &LIGHTINGCHUNK(sz, sy, sx);
                 for (size_t lidx = 0; lidx < chunk->static_lights_count; lidx++) {
                     if (chunk->static_lights[lidx].map_x == wx && chunk->static_lights[lidx].map_y == wy) {
@@ -310,16 +318,16 @@ void lighting_invalidate_at(sint32 wx, sint32 wy) {
                     if (sceneryEntry->path_bit.flags & PATH_BIT_FLAG_LAMP) {
                         int z = map_element->base_height * 2 + 6;
                         if (!(map_element->properties.path.edges & (1 << 0))) {
-                            lighting_insert_static_light((lighting_light) { .map_x = wx, .map_y = wy, .pos = { .x = x - 14,.y = y,.z = z }, .color = lit });
+                            lighting_insert_static_light({ { x - 14, y, z }, lit, wx, wy });
                         }
                         if (!(map_element->properties.path.edges & (1 << 1))) {
-                            lighting_insert_static_light((lighting_light) { .map_x = wx, .map_y = wy, .pos = { .x = x,.y = y + 14,.z = z }, .color = lit });
+                            lighting_insert_static_light({ { x, y + 14, z }, lit, wx, wy });
                         }
                         if (!(map_element->properties.path.edges & (1 << 2))) {
-                            lighting_insert_static_light((lighting_light) { .map_x = wx, .map_y = wy, .pos = { .x = x + 14,.y = y,.z = z }, .color = lit });
+                            lighting_insert_static_light({ { x + 14, y, z }, lit, wx, wy });
                         }
                         if (!(map_element->properties.path.edges & (1 << 3))) {
-                            lighting_insert_static_light((lighting_light) { .map_x = wx, .map_y = wy, .pos = { .x = x,.y = y - 14,.z = z }, .color = lit });
+                            lighting_insert_static_light({ { x, y - 14, z }, lit, wx, wy });
                         }
                     }
                 }
@@ -518,24 +526,24 @@ static const float TransparentColourTable[144 - 44][3] =
     { 0.9f, 0.6f, 0.6f },
 };
 #pragma endregion Colormap
-
-static void lighting_static_light_cast(lighting_value* target_value, lighting_light light, sint32 px, sint32 py, sint32 pz) {
+/*
+static void lighting_static_light_cast(lighting_value* target_value, lighting_light light, sint16 px, sint16 py, sint16 pz) {
     //sint32 range = 11;
-    sint32 w_x = px * 16 + 8;
-    sint32 w_y = py * 16 + 8;
-    sint32 w_z = pz * 2 + 1;
+    sint16 w_x = px * 16 + 8;
+    sint16 w_y = py * 16 + 8;
+    sint16 w_z = pz * 2 + 1;
     float distpot = sqrt((w_x - light.pos.x)*(w_x - light.pos.x) + (w_y - light.pos.y)*(w_y - light.pos.y) + (w_z - light.pos.z)*(w_z - light.pos.z) * 4 * 4);
     float intensity = 900.0f / (distpot*distpot);
     if (intensity > 0) {
         if (intensity > 0.5f) intensity = 0.5f;
-        rct_xyz16 target = { .x = px,.y = py,.z = pz };
+        rct_xyz16 target = { px, py, pz };
         intensity *= 35;
-        lighting_value source_value = { .r = intensity,.g = intensity,.b = intensity };
+        lighting_value source_value = { (uint8)intensity, (uint8)intensity, (uint8)intensity };
         lighting_multiply(&source_value, lightlit);
         lighting_add(target_value, lighting_raycast(source_value, light.pos, target));
     }
 }
-
+*/
 static void lighting_update_affectors() {
     for (int y = 0; y < LIGHTMAP_SIZE_Y; y++) {
         for (int x = 0; x < LIGHTMAP_SIZE_X; x++) {
@@ -729,7 +737,7 @@ static void lighting_update_static(lighting_update_batch* updated_batch) {
         }
     }
 }
-
+/*
 static lighting_value* lighting_get_dynamic_texel(lighting_update_batch* updated_batch, int x, int y, int z) {
     int lm_z = z / LIGHTMAP_CHUNK_SIZE;
     int lm_y = y / LIGHTMAP_CHUNK_SIZE;
@@ -747,7 +755,7 @@ static lighting_value* lighting_get_dynamic_texel(lighting_update_batch* updated
 
     return &chunk->data_dynamic[z % LIGHTMAP_CHUNK_SIZE][y % LIGHTMAP_CHUNK_SIZE][x % LIGHTMAP_CHUNK_SIZE];
 }
-
+*/
 static void lighting_add_dynamic(lighting_update_batch* updated_batch, sint16 x, sint16 y, sint16 z) {
     int lm_x = (x * LIGHTING_CELL_SUBDIVISIONS) / 32;
     int lm_y = (y * LIGHTING_CELL_SUBDIVISIONS) / 32;
@@ -755,14 +763,14 @@ static void lighting_add_dynamic(lighting_update_batch* updated_batch, sint16 x,
     int range = 8;
 
     lighting_light light;
-    light.pos = (rct_xyz32) { .x = x, .y = y, .z = z / 4 }; // TODO: not sure why this coordinate space is / 8 instead of / 2, which requires this random correction here
+    light.pos = { x, y, z / 4 }; // TODO: not sure why this coordinate space is / 8 instead of / 2, which requires this random correction here
 
     lighting_value map[LIGHTMAXSPREAD * 4 + 1][LIGHTMAXSPREAD * 2 + 1][LIGHTMAXSPREAD * 2 + 1];
     light_expand_to_map(light, map);
 
-    for (int ch_z = max(0, (lm_z - range * 2) / LIGHTMAP_CHUNK_SIZE); ch_z <= min(LIGHTMAP_CHUNKS_Z, (lm_z + range * 2) / LIGHTMAP_CHUNK_SIZE); ch_z++)
-        for (int ch_y = max(0, (lm_y - range) / LIGHTMAP_CHUNK_SIZE); ch_y <= min(LIGHTMAP_CHUNKS_Y, (lm_y + range) / LIGHTMAP_CHUNK_SIZE); ch_y++)
-            for (int ch_x = max(0, (lm_x - range) / LIGHTMAP_CHUNK_SIZE); ch_x <= min(LIGHTMAP_CHUNKS_X, (lm_x + range) / LIGHTMAP_CHUNK_SIZE); ch_x++) {
+    for (int ch_z = Math::Max(0, (lm_z - range * 2) / LIGHTMAP_CHUNK_SIZE); ch_z <= Math::Min(LIGHTMAP_CHUNKS_Z, (lm_z + range * 2) / LIGHTMAP_CHUNK_SIZE); ch_z++)
+        for (int ch_y = Math::Max(0, (lm_y - range) / LIGHTMAP_CHUNK_SIZE); ch_y <= Math::Min(LIGHTMAP_CHUNKS_Y, (lm_y + range) / LIGHTMAP_CHUNK_SIZE); ch_y++)
+            for (int ch_x = Math::Max(0, (lm_x - range) / LIGHTMAP_CHUNK_SIZE); ch_x <= Math::Min(LIGHTMAP_CHUNKS_X, (lm_x + range) / LIGHTMAP_CHUNK_SIZE); ch_x++) {
                 if (updated_batch->update_count >= LIGHTING_MAX_CHUNK_UPDATES_PER_FRAME) return;
 
                 lighting_chunk* chunk = &LIGHTINGCHUNK(ch_z, ch_y, ch_x);
@@ -837,7 +845,8 @@ static lighting_update_batch lighting_update_internal() {
     // update all pending affectors first
     lighting_update_affectors();
 
-    lighting_update_batch updated_batch = { .update_count = 0 };
+    lighting_update_batch updated_batch;
+    updated_batch.update_count = 0;
 
     lighting_update_static(&updated_batch);
     lighting_update_dynamic(&updated_batch);
