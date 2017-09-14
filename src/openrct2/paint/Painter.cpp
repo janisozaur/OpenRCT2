@@ -57,7 +57,7 @@ void Painter::Paint(IDrawingEngine * de)
 		lighting_chunk** chunk_itr = update_batch.updated_chunks;
 		while (*chunk_itr) {
 			lighting_chunk* chunk = *(chunk_itr++);
-			de->UpdateLightmap(chunk->x, chunk->y, chunk->z, chunk->has_dynamic_lights ? (uint8*)chunk->data_dynamic : (uint8*)chunk->data);
+			de->UpdateLightmap(chunk->x, chunk->y, chunk->z, chunk->has_dynamic_lights ? (uint8*)chunk->data_dynamic : (uint8*)chunk->data_static);
 		}
 			
         update_palette_effects();
