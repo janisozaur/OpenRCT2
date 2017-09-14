@@ -16,6 +16,7 @@
 
 #ifndef DISABLE_OPENGL
 
+#include <array>
 #include <unordered_map>
 #include <vector>
 #include <SDL.h>
@@ -33,6 +34,7 @@
 
 extern "C"
 {
+    #include <openrct2/interface/viewport.h>
     #include <openrct2/interface/window.h>
     #include <openrct2/intro.h>
     #include <openrct2/drawing/drawing.h>
@@ -953,7 +955,16 @@ void OpenGLDrawingContext::FlushImages()
     OpenGLAPI::SetTexture(1, GL_TEXTURE_2D_ARRAY, _displacementTextureCache->GetAtlasesTexture());
 	OpenGLAPI::SetTexture(2, GL_TEXTURE_3D, _lightmapTexture);
 
+    std::array<float, 4> rotationTransform;
+    switch (get_current_rotation() % 4) {
+        case 0: rotationTransform = { -1.0,  0.0,  0.0, -1.0 }; break;
+        case 1: rotationTransform = {  0.0,  1.0, -1.0,  0.0 }; break;
+        case 2: rotationTransform = {  1.0,  0.0,  0.0,  1.0 }; break;
+        case 3: rotationTransform = {  0.0, -1.0,  1.0,  0.0 }; break;
+    }
+
     _drawImageShader->Use();
+    _drawImageShader->SetRotationTransform(rotationTransform.data());
     _drawImageShader->DrawInstances(_commandBuffers.images);
 
     _commandBuffers.images.clear();

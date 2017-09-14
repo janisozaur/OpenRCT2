@@ -109,6 +109,7 @@ static const char * TryLoadAllProcAddresses()
     SetupOpenGLFunction(glUniform4f);
     SetupOpenGLFunction(glUniform4i);
     SetupOpenGLFunction(glUniform4fv);
+    SetupOpenGLFunction(glUniformMatrix2fv);
     SetupOpenGLFunction(glUseProgram);
     SetupOpenGLFunction(glVertexAttribIPointer);
     SetupOpenGLFunction(glVertexAttribPointer);

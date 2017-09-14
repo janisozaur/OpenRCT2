@@ -56,6 +56,7 @@ private:
     GLuint uDisplacementTexture;
     GLuint uPalette;
 	GLuint uLightmap;
+    GLuint uRotationTransform;
 
     GLuint vIndex;
     GLuint vClip;
@@ -84,6 +85,7 @@ public:
 
     void SetScreenSize(sint32 width, sint32 height);
     void SetPalette(const vec4f *glPalette);
+    void SetRotationTransform(const float rotationTransform[4]);
     void DrawInstances(const std::vector<DrawImageInstance>& instances);
 
 private:

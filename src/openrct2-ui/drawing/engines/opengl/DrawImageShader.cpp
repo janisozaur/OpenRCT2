@@ -104,6 +104,7 @@ void DrawImageShader::GetLocations()
     uDisplacementTexture      = GetUniformLocation("uDisplacementTexture");
     uPalette            = GetUniformLocation("uPalette");
 	uLightmap           = GetUniformLocation("uLightmap");
+    uRotationTransform  = GetUniformLocation("uRotationTransform");
 
     vIndex              = GetAttributeLocation("vIndex");
     vClip               = GetAttributeLocation("ivClip");
@@ -131,6 +132,11 @@ void DrawImageShader::SetScreenSize(sint32 width, sint32 height)
 void DrawImageShader::SetPalette(const vec4f *glPalette)
 {
     glUniform4fv(uPalette, 256, (const GLfloat *) glPalette);
+}
+
+void DrawImageShader::SetRotationTransform(const float rotationTransform[4])
+{
+    glUniformMatrix2fv(uRotationTransform, 1, GL_TRUE, rotationTransform);
 }
 
 void DrawImageShader::DrawInstances(const std::vector<DrawImageInstance>& instances)

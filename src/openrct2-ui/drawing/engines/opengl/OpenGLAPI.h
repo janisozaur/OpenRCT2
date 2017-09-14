@@ -171,6 +171,7 @@ GLAPI_DECL PFNGLUNIFORM2FPROC                   glUniform2f                 GLAP
 GLAPI_DECL PFNGLUNIFORM4FPROC                   glUniform4f                 GLAPI_SET;
 GLAPI_DECL PFNGLUNIFORM4IPROC                   glUniform4i                 GLAPI_SET;
 GLAPI_DECL PFNGLUNIFORM4FVPROC                  glUniform4fv                GLAPI_SET;
+GLAPI_DECL PFNGLUNIFORMMATRIX2FVPROC            glUniformMatrix2fv          GLAPI_SET;
 GLAPI_DECL PFNGLUSEPROGRAMPROC                  glUseProgram                GLAPI_SET;
 GLAPI_DECL PFNGLVERTEXATTRIBIPOINTERPROC        glVertexAttribIPointer      GLAPI_SET;
 GLAPI_DECL PFNGLVERTEXATTRIBPOINTERPROC         glVertexAttribPointer       GLAPI_SET;
