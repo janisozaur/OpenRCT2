@@ -58,7 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\resources\resource.h" />
-    <ClInclude Include="lighting\vollighting.h" />
+    <ClInclude Include="**\*.h" />
     <ClInclude Include="**\*.hpp" />
   </ItemGroup>
   <ItemGroup>
