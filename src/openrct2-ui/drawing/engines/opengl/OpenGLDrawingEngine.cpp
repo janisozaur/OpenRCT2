@@ -595,6 +595,9 @@ void OpenGLDrawingContext::DrawLine(uint32 colour, sint32 x1, sint32 y1, sint32 
 
 void OpenGLDrawingContext::DrawSprite(uint32 image, sint32 x, sint32 y, uint32 tertiaryColour, LightingData lightingData)
 {
+    sint32 g1IdZoom0 = image & 0x7FFFF;
+
+reload_g1: // TODO: there must be a better way to handle this
     sint32 g1Id = image & 0x7FFFF;
     rct_g1_element * g1Element = gfx_get_g1_element(g1Id);
 
@@ -611,8 +614,12 @@ void OpenGLDrawingContext::DrawSprite(uint32 image, sint32 x, sint32 y, uint32 t
             zoomedDPI.pitch = _dpi->pitch;
             zoomedDPI.zoom_level = _dpi->zoom_level - 1;
             SetDPI(&zoomedDPI);
-            DrawSprite((image & 0xFFF80000) | (g1Id - g1Element->zoomed_offset), x >> 1, y >> 1, tertiaryColour, lightingData);
-            return;
+
+            image = (image & 0xFFF80000) | (g1Id - g1Element->zoomed_offset);
+            x >>= 1;
+            y >>= 1;
+
+            goto reload_g1;
         }
         if (g1Element->flags & (1 << 5))
         {
@@ -688,7 +695,7 @@ void OpenGLDrawingContext::DrawSprite(uint32 image, sint32 x, sint32 y, uint32 t
 
     auto texture2 = _textureCache->GetOrLoadPaletteTexture(image, tertiaryColour, special);
 
-    auto displacementTexture = _displacementTextureCache->GetOrLoadDisplacementTexture(g1Id);
+    auto displacementTexture = _displacementTextureCache->GetOrLoadDisplacementTexture(g1IdZoom0);
 
     DrawImageCommand command;
 
