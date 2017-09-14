@@ -434,132 +434,104 @@ CachedTextureInfo DisplacementTextureCache::LoadDisplacementTexture(uint32 image
     else
     {
         // estimate displacement
-        // TODO: move + refactor
+        // TODO: move
         rct_drawpixelinfo * dpi = GetImageAsDPI(image, 0);
 
         dpWidth = dpi->width;
         dpHeight = dpi->height;
         displacement = std::vector<uint8>(dpWidth * dpHeight * 3);
 
-        // experimental
-        int wallLX = -1, wallLY = -1, wallLH = 0, wallRX = -1, wallRY = -1, wallRH = 0;
+        int leftBottomOffY = 100000;
+        int leftBottomX = 0;
+        int leftBottomY = 0;
+        int rightBottomOffY = 100000;
+        int rightBottomX = 0;
+        int rightBottomY = 0;
+        int leftTopOffY = -100000;
+        int leftTopX = 0;
+        int leftTopY = 0;
+        int rightTopOffY = -100000;
+        int rightTopX = 0;
+        int rightTopY = 0;
+        int leftX = dpi->width - 1;
 
-        for (int x = 0; x < dpi->width - 1; x++) {
-            for (int y = dpi->height - 1; y >= 0; y--)
+        // find the pixels on the left/right top/bottom "edges" of the bounding box
+        //    /T\
+        //  LT   RT
+        //  /     \
+        // |\     /|
+        // | \   / |
+        //  \ \ / /
+        //  LB v RB
+        //    \B/
+        for (int y = dpi->height - 1; y >= 0; y--) {
+            for (int x = 0; x < dpi->width; x++) {
                 if (dpi->bits[y * dpi->width + x]) {
-                    wallLX = x;
-                    if (wallLY < 0) wallLY = y;
-                    wallLH = y - wallLY;
+                    int thisLeftOffY = (x) - y * 2;
+                    int thisRightOffY = (dpi->width - x) - y * 2;
+                    if (thisLeftOffY < leftBottomOffY) {
+                        leftBottomOffY = thisLeftOffY;
+                        leftBottomX = x;
+                        leftBottomY = y;
+                    }
+                    if (thisRightOffY < rightBottomOffY) {
+                        rightBottomOffY = thisRightOffY;
+                        rightBottomX = x;
+                        rightBottomY = y;
+                    }
+                    if (thisRightOffY > leftTopOffY) {
+                        leftTopOffY = thisRightOffY;
+                        leftTopX = x;
+                        leftTopY = y;
+                    }
+                    if (thisLeftOffY > rightTopOffY) {
+                        rightTopOffY = thisLeftOffY;
+                        rightTopX = x;
+                        rightTopY = y;
+                    }
+
+                    if (x < leftX) leftX = x;
                 }
-            if (wallLY >= 0) break;
+            }
         }
 
-        if (wallLH >= -4) wallLH = 0;
+        // from the found pixels, determine top and bottom
+        int topX, topY, bottomX, bottomY;
 
-        for (int x = dpi->width - 1; x >= 1; x--) {
-            for (int y = dpi->height - 1; y >= 0; y--)
-                if (dpi->bits[y * dpi->width + x]) {
-                    wallRX = x;
-                    if (wallRY < 0) wallRY = y;
-                    wallRH = y - wallRY;
-                }
-            if (wallRY >= 0) break;
-        }
+        // correct right side so that Y values equal
+        int topDeltaY = rightTopY - leftTopY;
+        rightTopX -= topDeltaY * 2;
+        rightTopY -= topDeltaY;
 
-        if (wallRH >= -4) wallRH = 0;
+        int bottomDeltaY = rightBottomY - leftBottomY;
+        rightBottomX -= bottomDeltaY * 2;
+        rightBottomY -= bottomDeltaY;
 
-        // bottom pixel X value
-        int bottomX = dpi->width / 2, bottomY = dpi->height - 1, topY = -1;
-        int bottomWH = (wallLH + wallRH) / 2; // todo lerp
+        topX = (rightTopX + leftTopX) / 2;
+        bottomX = (rightBottomX + leftBottomX) / 2;
+        topY = rightTopY - (rightTopX - leftTopX) / 4; // half difference and divide by 2
+        bottomY = rightBottomY + (rightBottomX - leftBottomX) / 4;
+
+        int leftWallYTop = topY + (topX - leftX) / 2;
+        int leftWallYBottom = bottomY - (bottomX - leftX) / 2;
+        int wallHeight = leftWallYBottom - leftWallYTop;
+        int wallHeight2 = wallHeight * 2;
 
         for (int y = dpi->height - 1; y >= 0; y--) {
             for (int x = 0; x < dpi->width; x++) {
-                int firstX = -1, lastX = -1;
-                if (dpi->bits[y * dpi->width + x]) {
-                    if (firstX == -1) firstX = x;
-                    lastX = x;
-                }
-                if (firstX >= 0) {
-                    bottomX = (firstX + lastX) / 2;
-                    bottomY = y;
-                    goto foundBPY;
-                }
-            }
-        }
-    foundBPY:
-
-        for (int y = 0; y < dpi->height; y++) {
-            if (dpi->bits[y * dpi->width + bottomX]) {
-                topY = y;
-                break;
-            }
-        }
-
-        int maxDX = Math::Max(bottomX - wallLX, wallRX - bottomX);
-        int extraTopWH = ((bottomY + bottomWH) - topY) - maxDX;
-        extraTopWH = (extraTopWH + 8) / 16 * 16;
-        //int midY = bottomY + bottomWH;
-
-        // walls
-        for (int y = 0; y < dpi->height; y++) {
-            for (int x = 0; x < dpi->width; x++) {
-                int dx = x - bottomX;
-                float yMiddle;
-                float wht;
-                float yBottom;
-                float yTop;
-
-                if (dx < 0)
-                {
-                    float frac = Math::Clamp(0.0f, (float)(bottomX - x) / (bottomX - wallLX), 1.0f);
-                    yMiddle = (wallLY + wallLH) * frac + (1 - frac) * (bottomY + bottomWH);
-                    wht = (wallLY + wallLH) * frac + (1 - frac) * (bottomY + bottomWH - extraTopWH);
-                    yBottom = (wallLY)* frac + (1 - frac) * (bottomY);
-                    yTop = (wallLY + wallLH) * frac + (1 - frac) * ((float)topY);
-                    displacement[y * dpi->width * 3 + x * 3 + 0] = 0;
-                    displacement[y * dpi->width * 3 + x * 3 + 1] = -dx * 2;
-                }
-                else
-                {
-                    float frac = Math::Clamp(0.0f, (float)(x - bottomX) / (wallRX - bottomX), 1.0f);
-                    yMiddle = (wallRY + wallRH) * frac + (1 - frac) * (bottomY + bottomWH);
-                    wht = (wallRY + wallRH) * frac + (1 - frac) * (bottomY + bottomWH - extraTopWH);
-                    yBottom = (wallRY)* frac + (1 - frac) * (bottomY);
-                    yTop = (wallRY + wallRH) * frac + (1 - frac) * ((float)topY);
-                    displacement[y * dpi->width * 3 + x * 3 + 0] = dx * 2;
-                    displacement[y * dpi->width * 3 + x * 3 + 1] = 0;
-                }
-
-                // is above wall?
-                if (y < yMiddle) {
-                    // above wall
-                    //float fracy = (float)(y - midY) / (topY - midY);
-                    //float fracy = 1.0f - (float)(y - yTop) / (yMiddle - yTop); // verified
-                    //log_info("mmm interp %f %f %f %f", (float)y, yMiddle, yTop, fracy);
-                    //float baseY = yBottom - yMiddle;
-                    //float whbExpected = -(midY - abs((float)dx) * 2.0f);
-                    //float targetTop = yMiddle * (1 - fracy) + wht * fracy;
-
-                    //float whbExpectedBottom = (midY - abs((float)dx) * 2.0f);
-                    //float whbExpectedTop = (topY + abs((float)dx) * 2.0f);
-                    // interp y between this
-                    // mult w extray
-
-                    //displacement[y * dpi->width * 3 + x * 3 + 2] = Math::Clamp(0.0f, targetTop, 255.0f);//Math::Clamp(0.0f, whb - targetTop, 255.0f);
-                    //displacement[y * dpi->width * 3 + x * 3 + 2] = Math::Clamp(0.0f, (float)midY + 70.0f, 255.0f);
-                    //displacement[y * dpi->width * 3 + x * 3 + 2] = Math::Clamp(0.0f, whbExpectedBottom, 255.0f);
-                    float ratio = 1.0f;//1.0f / ((bottomY - topY) / (float)maxDX);
-                    float dp = yMiddle - y;
-                    displacement[y * dpi->width * 3 + x * 3 + 0] += dp * 2 * ratio;
-                    displacement[y * dpi->width * 3 + x * 3 + 1] += dp * 2 * ratio;
-                    displacement[y * dpi->width * 3 + x * 3 + 2] = Math::Clamp(0.0f, yBottom - yMiddle, 255.0f);
-                }
-                else
-                {
-                    displacement[y * dpi->width * 3 + x * 3 + 2] = Math::Clamp(0.0f, yBottom - y, 255.0f);
+                int dx = bottomX - x;
+                int dy = ((dpi->height - 1) - y) * 2 - abs(dx);
+                off_t offset = dpi->width * 3 * y + 3 * x;
+                displacement[offset + 0] = Math::Clamp(0, -dx * 2, 255);
+                displacement[offset + 1] = Math::Clamp(0, dx * 2, 255);
+                displacement[offset + 2] = Math::Clamp(0, dy / 2, Math::Min(255, wallHeight));
+                if (dy > wallHeight2) {
+                    displacement[offset + 0] = Math::Clamp(0, (int)displacement[offset + 0] + (dy - wallHeight2), 255);
+                    displacement[offset + 1] = Math::Clamp(0, (int)displacement[offset + 1] + (dy - wallHeight2), 255);
                 }
             }
         }
+
         DeleteDPI(dpi);
     }
 
