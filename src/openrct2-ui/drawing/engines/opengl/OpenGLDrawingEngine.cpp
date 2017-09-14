@@ -774,11 +774,15 @@ void OpenGLDrawingContext::DrawSpriteRawMasked(sint32 x, sint32 y, uint32 maskIm
     right += _clipLeft;
     bottom += _clipTop;
 
+    auto displacementTexture = _displacementTextureCache->GetOrLoadDisplacementTexture(colourImage & 0x7FFFF);
+
     DrawImageCommand command;
 
     command.clip = { _clipLeft, _clipTop, _clipRight, _clipBottom };
     command.texColourAtlas = textureColour.index;
     command.texColourBounds = textureColour.normalizedBounds;
+    command.texDisplacementAtlas = displacementTexture.index;
+    command.texDisplacementBounds = displacementTexture.normalizedBounds;
     command.texMaskAtlas = textureMask.index;
     command.texMaskBounds = textureMask.normalizedBounds;
     command.texPaletteAtlas = 0;
