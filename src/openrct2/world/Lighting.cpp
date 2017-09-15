@@ -90,7 +90,7 @@ rct_xyz16 skylight_cell_itr[LIGHTMAP_CHUNK_SIZE * LIGHTMAP_CHUNK_SIZE * LIGHTMAP
 
 std::mutex is_collecting_data_mutex;
 bool is_collecting_data = false;
-std::atomic<bool> worker_threads_continue = false;
+std::atomic<bool> worker_threads_continue;
 std::vector<std::thread> worker_threads;
 
 // multiplies @target light with some multiplier light value @apply
