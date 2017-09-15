@@ -5,6 +5,8 @@ extern "C" {
     #include "../world/footpath.h"
 }
 
+#include <atomic>
+#include <mutex>
 #include <queue>
 #include <unordered_set>
 #include "openrct2/core/Math.hpp"
@@ -62,7 +64,7 @@ public:
         set.erase(front);
         return front;
     }
-
+    
     void push(T elem) {
         if (set.find(elem) == set.end()) {
             set.insert(elem);
@@ -72,7 +74,8 @@ public:
 };
 
 // TODO: custom data structure for queue + set
-std::queue<lighting_chunk*> outdated_skylight; // should recompute skylight
+queue_set<lighting_chunk*> outdated_skylight; // should recompute skylight
+std::mutex outdated_skylight_mutex;
 queue_set<lighting_chunk*> outdated_static; // has outdated static lights
 queue_set<lighting_chunk*> outdated_gpu; // needs to update texture on gpu
 std::unordered_set<lighting_chunk*> dynamic_chunks;
@@ -81,6 +84,7 @@ float skylight_direction[3] = { 0.0, 0.0, 0.0 }; // normalized with manhattan di
 rct_xyz16 skylight_delta = {0, 0, 0}; // each value +1 or -1, depending on the direction the skylight travels
 std::vector<lighting_chunk*> skylight_batch[LIGHTMAP_CHUNKS_X + LIGHTMAP_CHUNKS_Y + LIGHTMAP_CHUNKS_Z]; // indexed by distance to corner
 int skylight_batch_current = 0;
+std::atomic<uint8> skylight_batch_remaining = 0;
 rct_xyz16 skylight_cell_itr[LIGHTMAP_CHUNK_SIZE * LIGHTMAP_CHUNK_SIZE * LIGHTMAP_CHUNK_SIZE];
 
 // multiplies @target light with some multiplier light value @apply
@@ -425,8 +429,10 @@ void lighting_invalidate_around(sint32 wx, sint32 wy) {
     if (wy > 0) lighting_invalidate_at(wx, wy - 1);
 }
 
+static void lighting_enqueue_next_skylight_batch();
 void lighting_set_skylight_direction(float direction[3]);
 void lighting_init() {
+
     free(lightingChunks);
     free(lightingAffectorsX);
     free(lightingAffectorsY);
@@ -438,7 +444,10 @@ void lighting_init() {
     lightingAffectorsZ = (lighting_value*)malloc(sizeof(lighting_value) * (LIGHTMAP_SIZE_X + 1) * (LIGHTMAP_SIZE_Y + 1) * (LIGHTMAP_SIZE_Z + 1));
     outdated_gpu.clear();
     outdated_static.clear();
-    std::queue<lighting_chunk*>().swap(outdated_skylight);
+    {
+        std::lock_guard<std::mutex> lock(outdated_skylight_mutex);
+        outdated_skylight.clear();
+    }
     std::unordered_set<lighting_chunk*>().swap(dynamic_chunks);
 
     // reset affectors to 1^3
@@ -468,6 +477,9 @@ void lighting_init() {
     skylight_delta = { 0, 0, 0 }; // must reset, pointers are no longer valid
     float new_skylight_direction[3] = { 0.2f, -0.4f, -0.4f };
     lighting_set_skylight_direction(new_skylight_direction);
+
+    skylight_batch_current = -1;
+    lighting_enqueue_next_skylight_batch();
 
     lighting_reset();
 }
@@ -978,6 +990,20 @@ static lighting_value lighting_get_skylight_at(int w_x, int w_y, int w_z) {
     return chunk.data_skylight[w_z % LIGHTMAP_CHUNK_SIZE][w_y % LIGHTMAP_CHUNK_SIZE][w_x % LIGHTMAP_CHUNK_SIZE];
 }
 
+static void lighting_enqueue_next_skylight_batch() {
+    std::lock_guard<std::mutex> lock(outdated_skylight_mutex);
+
+    do {
+        skylight_batch_current = (skylight_batch_current + 1) % (LIGHTMAP_CHUNKS_X + LIGHTMAP_CHUNKS_Y + LIGHTMAP_CHUNKS_Z);
+
+        for (lighting_chunk* chunk : skylight_batch[skylight_batch_current]) {
+            outdated_skylight.push(chunk);
+        }
+    } while (skylight_batch[skylight_batch_current].size() == 0);
+
+    skylight_batch_remaining = (uint8)skylight_batch[skylight_batch_current].size();
+}
+
 static void lighting_update_skylight(lighting_chunk* chunk) {
     for (int upd_idx = 0; upd_idx < LIGHTMAP_CHUNK_SIZE * LIGHTMAP_CHUNK_SIZE * LIGHTMAP_CHUNK_SIZE; upd_idx++) {
         const rct_xyz16& cell_coord = skylight_cell_itr[upd_idx];
@@ -1004,6 +1030,7 @@ static void lighting_update_skylight(lighting_chunk* chunk) {
             (uint8)(from_x.b * fragx + from_y.b * fragy + from_z.b * fragz)
         };
 
+        // TODO: refactor to something more efficient
         lighting_value static_value = chunk->data_static[cell_coord.z][cell_coord.y][cell_coord.x];
 
         chunk->data_skylight[cell_coord.z][cell_coord.y][cell_coord.x] = new_skylight_value;
@@ -1017,6 +1044,23 @@ static void lighting_update_skylight(lighting_chunk* chunk) {
     outdated_gpu.push(chunk);
 }
 
+static void lighting_update_any_skylight() {
+    lighting_chunk* chunk;
+    {
+        std::lock_guard<std::mutex> lock(outdated_skylight_mutex);
+
+        if (outdated_skylight.empty()) return;
+
+        chunk = outdated_skylight.frontpop();
+    }
+
+    lighting_update_skylight(chunk);
+    
+    if (--skylight_batch_remaining == 0) {
+        lighting_enqueue_next_skylight_batch();
+    }
+}
+
 static lighting_update_batch lighting_update_internal() {
     // update all pending affectors first
     lighting_update_affectors();
@@ -1024,6 +1068,9 @@ static lighting_update_batch lighting_update_internal() {
     lighting_update_batch updated_batch;
     updated_batch.update_count = 0;
 
+    for (int i = 0; i < 100; i++) {
+        lighting_update_any_skylight();
+    }
 
     // reset current dynamic chunks to static
     // must update at gpu too!
@@ -1032,12 +1079,6 @@ static lighting_update_batch lighting_update_internal() {
         outdated_gpu.push(chunk);
     }
     std::unordered_set<lighting_chunk*>().swap(dynamic_chunks);
-
-    for (lighting_chunk* chunk : skylight_batch[skylight_batch_current]) {
-        //log_info("upd %d", skylight_batch_current);
-        lighting_update_skylight(chunk);
-    }
-    skylight_batch_current = (skylight_batch_current + 1) % (LIGHTMAP_CHUNKS_X + LIGHTMAP_CHUNKS_Y + LIGHTMAP_CHUNKS_Z);
 
     lighting_update_static(&updated_batch);
     lighting_update_dynamic(&updated_batch);
