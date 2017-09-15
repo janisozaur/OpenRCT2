@@ -7,6 +7,7 @@ extern "C" {
 
 #include <atomic>
 #include <mutex>
+#include <thread>
 #include <queue>
 #include <unordered_set>
 #include "openrct2/core/Math.hpp"
@@ -86,6 +87,11 @@ std::vector<lighting_chunk*> skylight_batch[LIGHTMAP_CHUNKS_X + LIGHTMAP_CHUNKS_
 int skylight_batch_current = 0;
 std::atomic<uint8> skylight_batch_remaining = 0;
 rct_xyz16 skylight_cell_itr[LIGHTMAP_CHUNK_SIZE * LIGHTMAP_CHUNK_SIZE * LIGHTMAP_CHUNK_SIZE];
+
+std::mutex is_collecting_data_mutex;
+bool is_collecting_data = false;
+std::atomic<bool> worker_threads_continue = false;
+std::vector<std::thread> worker_threads;
 
 // multiplies @target light with some multiplier light value @apply
 static void lighting_multiply(lighting_value* target, const lighting_value apply) {
@@ -431,12 +437,10 @@ void lighting_invalidate_around(sint32 wx, sint32 wy) {
 
 static void lighting_enqueue_next_skylight_batch();
 void lighting_set_skylight_direction(float direction[3]);
+static void lighting_worker_thread();
 void lighting_init() {
+    lighting_cleanup();
 
-    free(lightingChunks);
-    free(lightingAffectorsX);
-    free(lightingAffectorsY);
-    free(lightingAffectorsZ);
     lightingChunks = (lighting_chunk*)malloc(sizeof(lighting_chunk) * LIGHTMAP_CHUNKS_X * LIGHTMAP_CHUNKS_Y * LIGHTMAP_CHUNKS_Z);
     // TODO: this should honestly really be a power of two size for fast multiplication for indexing...
     lightingAffectorsX = (lighting_value*)malloc(sizeof(lighting_value) * (LIGHTMAP_SIZE_X + 1) * (LIGHTMAP_SIZE_Y + 1) * (LIGHTMAP_SIZE_Z + 1));
@@ -481,6 +485,11 @@ void lighting_init() {
     skylight_batch_current = -1;
     lighting_enqueue_next_skylight_batch();
 
+    if (worker_threads.size() == 0) {
+        worker_threads_continue.store(true);
+        worker_threads.push_back(std::thread(lighting_worker_thread));
+    }
+
     lighting_reset();
 }
 
@@ -491,6 +500,21 @@ void lighting_invalidate_all() {
             lighting_invalidate_at(x, y);
         }
     }
+}
+
+void lighting_cleanup() {
+    log_info("Cleaning");
+    worker_threads_continue.store(false);
+    for (std::thread& thread : worker_threads) {
+        thread.join();
+    }
+    log_info("Done");
+    worker_threads.clear();
+
+    free(lightingChunks);
+    free(lightingAffectorsX);
+    free(lightingAffectorsY);
+    free(lightingAffectorsZ);
 }
 
 void lighting_set_skylight_direction(float direction[3]) {
@@ -1061,16 +1085,29 @@ static void lighting_update_any_skylight() {
     }
 }
 
+static void lighting_worker_thread() {
+    using namespace std::chrono_literals;
+
+    while (worker_threads_continue.load()) { // TODO: may constantly read from cache?
+        //std::unique_lock<std::mutex> lock(is_collecting_data_mutex);
+        //is_collecting_data_cv.wait(lock, [] { return !is_collecting_data; } );
+        lighting_update_any_skylight();
+        std::this_thread::sleep_for(1ms);
+        //lock.release();
+    }
+}
+
 static lighting_update_batch lighting_update_internal() {
+
     // update all pending affectors first
     lighting_update_affectors();
 
     lighting_update_batch updated_batch;
     updated_batch.update_count = 0;
 
-    for (int i = 0; i < 100; i++) {
+    /*for (int i = 0; i < 100; i++) {
         lighting_update_any_skylight();
-    }
+    }*/
 
     // reset current dynamic chunks to static
     // must update at gpu too!

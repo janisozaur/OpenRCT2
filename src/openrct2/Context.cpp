@@ -65,6 +65,7 @@ extern "C"
     #include "rct1.h"
     #include "rct2/interop.h"
     #include "util/util.h"
+    #include "world/lighting.h"
 }
 
 using namespace OpenRCT2;
@@ -574,6 +575,8 @@ namespace OpenRCT2
                 }
             } while (!_finished);
             log_verbose("finish openrct2 loop");
+
+            lighting_cleanup();
         }
 
         void RunFixedFrame()

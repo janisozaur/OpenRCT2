@@ -66,4 +66,5 @@ void lighting_reset();
 void lighting_invalidate_at(sint32 x, sint32 y);
 void lighting_invalidate_around(sint32 x, sint32 y);
 void lighting_invalidate_all();
+void lighting_cleanup();
 lighting_update_batch lighting_update();
