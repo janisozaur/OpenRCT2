@@ -9,6 +9,7 @@ uniform vec4            uPalette[256];
 uniform usampler2DArray uTexture;
 uniform usampler2DArray uDisplacementTexture;
 uniform sampler3D       uLightmap;
+uniform mat2            uRotationTransform;
 
 flat in ivec4           fClip;
 flat in int             fFlags;
@@ -44,6 +45,7 @@ void main()
 
     // reads uvec!
     vec3 worldOffset = vec3(texture(uDisplacementTexture, vec3(fTexDisplacementCoords, float(fTexDisplacementAtlas))).xyz) / vec3(64.0, 64.0, 8.0);
+    worldOffset.xy = uRotationTransform * worldOffset.xy;
     worldPos += worldOffset;
     
     vec3 lmPos = worldPos * vec3(2.0, 2.0, 1.0);
@@ -109,4 +111,6 @@ void main()
     }
 
     oColour.rgb = pow(oColour.rgb, vec3(1.0 / 2.2));
+
+    //oColour.rgb = vec3(worldOffset.rg, 0);
 }
