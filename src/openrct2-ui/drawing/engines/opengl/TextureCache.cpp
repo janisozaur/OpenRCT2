@@ -515,6 +515,8 @@ CachedTextureInfo DisplacementTextureCache::LoadDisplacementTexture(uint32 image
         int leftWallYTop = topY + (topX - leftX) / 2;
         int leftWallYBottom = bottomY - (bottomX - leftX) / 2;
         int wallHeight = leftWallYBottom - leftWallYTop;
+        if (wallHeight < 8) wallHeight = 0;
+
         int wallHeight2 = wallHeight * 2;
 
         for (int y = dpi->height - 1; y >= 0; y--) {
