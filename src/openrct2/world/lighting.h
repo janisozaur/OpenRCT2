@@ -43,11 +43,11 @@ typedef struct lighting_chunk_static_light {
 } lighting_chunk_static_light;
 
 typedef struct lighting_chunk {
-    // data_skylight added onto data_static, data_static added onto data_dynamic
-    // so static also contains skylight data, dynamic contains everything
-    // static/dynamic is not always initialized, check static_lights_count and has_dynamic_lights
+    // data_skylight_static should always be set to data_skylight + data_static, elementswise
+    // data_dynamic is set to data_skylight_static + whatever dynamic lights exists, but is not always initialized (check has_dynamic_lights)
     lighting_value data_skylight[LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE];
     lighting_value data_static[LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE];
+    lighting_value data_skylight_static[LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE];
     lighting_value data_dynamic[LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE][LIGHTMAP_CHUNK_SIZE];
     lighting_chunk_static_light static_lights[LIGHTING_MAX_CHUNKS_LIGHTS];
 	size_t static_lights_count;

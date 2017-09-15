@@ -13,7 +13,7 @@ extern "C" {
 lighting_value* lightingAffectorsX = NULL;
 lighting_value* lightingAffectorsY = NULL;
 lighting_value* lightingAffectorsZ = NULL;
-#define LAIDX(y, x, z) ((y) * LIGHTMAP_SIZE_X * LIGHTMAP_SIZE_Z + (x) * LIGHTMAP_SIZE_Z + (z))
+#define LAIDX(y, x, z) ((y) * (LIGHTMAP_SIZE_X+1) * (LIGHTMAP_SIZE_Z+1) + (x) * (LIGHTMAP_SIZE_Z+1) + (z))
 
 // lightmap columns whose lightingAffectors are outdated
 // each element contains a bitmap, each bit identifying if a direction should be recomputed (4 bits, 1 << MAP_ELEMENT_DIRECTION_... for each direction)
@@ -29,10 +29,11 @@ lighting_chunk* lightingChunks = NULL;
 
 const lighting_value black = { 0, 0, 0 };
 const lighting_value dimmedblack = { 200, 200, 200 };
-const lighting_value dimmedblackside = { 240, 240, 240 };
+const lighting_value dimmedblackside = { 200, 200, 200 };
 const lighting_value dimmedblackvside = { 250, 250, 250 };
 const lighting_value ambient = { 0, 0, 0 };
-const lighting_value ambient_sky = { 10/2, 20/2, 70/2 };
+//const lighting_value ambient_sky = { 10 / 2, 20 / 2, 70 / 2 };
+const lighting_value ambient_sky = { 150, 130, 120 };
 const lighting_value lit = { 255, 255, 255 };
 const lighting_value lightlit = { 180/2, 110/2, 108/2 };
 
@@ -49,6 +50,12 @@ std::unordered_set<lighting_chunk*> outdated_static_set;
 std::queue<lighting_chunk*> outdated_gpu; // needs to update texture on gpu
 std::unordered_set<lighting_chunk*> outdated_gpu_set;
 std::unordered_set<lighting_chunk*> dynamic_chunks;
+
+float skylight_direction[3] = { 0.0, 0.0, 0.0 }; // normalized with manhattan distance(!) x + y + z = 1
+rct_xyz16 skylight_delta = {0, 0, 0}; // each value +1 or -1, depending on the direction the skylight travels
+std::vector<lighting_chunk*> skylight_batch[LIGHTMAP_CHUNKS_X + LIGHTMAP_CHUNKS_Y + LIGHTMAP_CHUNKS_Z]; // indexed by distance to corner
+int skylight_batch_current = 0;
+rct_xyz16 skylight_cell_itr[LIGHTMAP_CHUNK_SIZE * LIGHTMAP_CHUNK_SIZE * LIGHTMAP_CHUNK_SIZE];
 
 // multiplies @target light with some multiplier light value @apply
 static void lighting_multiply(lighting_value* target, const lighting_value apply) {
@@ -312,6 +319,7 @@ void lighting_invalidate_at(sint32 wx, sint32 wy) {
             }
 
             memset(chunk->data_static, 0, sizeof(chunk->data_static));
+            memcpy(chunk->data_skylight_static, chunk->data_skylight, sizeof(chunk->data_skylight));
             for (size_t light_idx = 0; light_idx < chunk->static_lights_count; light_idx++) {
                 chunk->static_lights[light_idx].is_drawn = false;
             }
@@ -396,15 +404,17 @@ void lighting_invalidate_around(sint32 wx, sint32 wy) {
     if (wy > 0) lighting_invalidate_at(wx, wy - 1);
 }
 
+void lighting_set_skylight_direction(float direction[3]);
 void lighting_init() {
     free(lightingChunks);
     free(lightingAffectorsX);
     free(lightingAffectorsY);
     free(lightingAffectorsZ);
     lightingChunks = (lighting_chunk*)malloc(sizeof(lighting_chunk) * LIGHTMAP_CHUNKS_X * LIGHTMAP_CHUNKS_Y * LIGHTMAP_CHUNKS_Z);
-    lightingAffectorsX = (lighting_value*)malloc(sizeof(lighting_value) * LIGHTMAP_SIZE_X * LIGHTMAP_SIZE_Y * LIGHTMAP_SIZE_Z);
-    lightingAffectorsY = (lighting_value*)malloc(sizeof(lighting_value) * LIGHTMAP_SIZE_X * LIGHTMAP_SIZE_Y * LIGHTMAP_SIZE_Z);
-    lightingAffectorsZ = (lighting_value*)malloc(sizeof(lighting_value) * LIGHTMAP_SIZE_X * LIGHTMAP_SIZE_Y * LIGHTMAP_SIZE_Z);
+    // TODO: this should honestly really be a power of two size for fast multiplication for indexing...
+    lightingAffectorsX = (lighting_value*)malloc(sizeof(lighting_value) * (LIGHTMAP_SIZE_X + 1) * (LIGHTMAP_SIZE_Y + 1) * (LIGHTMAP_SIZE_Z + 1));
+    lightingAffectorsY = (lighting_value*)malloc(sizeof(lighting_value) * (LIGHTMAP_SIZE_X + 1) * (LIGHTMAP_SIZE_Y + 1) * (LIGHTMAP_SIZE_Z + 1));
+    lightingAffectorsZ = (lighting_value*)malloc(sizeof(lighting_value) * (LIGHTMAP_SIZE_X + 1) * (LIGHTMAP_SIZE_Y + 1) * (LIGHTMAP_SIZE_Z + 1));
     std::queue<lighting_chunk*>().swap(outdated_gpu);
     std::unordered_set<lighting_chunk*>().swap(outdated_gpu_set);
     std::queue<lighting_chunk*>().swap(outdated_static);
@@ -436,6 +446,10 @@ void lighting_init() {
         }
     }
 
+    skylight_delta = { 0, 0, 0 }; // must reset, pointers are no longer valid
+    float new_skylight_direction[3] = { 0.2f, -0.4f, -0.4f };
+    lighting_set_skylight_direction(new_skylight_direction);
+
     lighting_reset();
 }
 
@@ -446,6 +460,49 @@ void lighting_invalidate_all() {
             lighting_invalidate_at(x, y);
         }
     }
+}
+
+void lighting_set_skylight_direction(float direction[3]) {
+    memcpy(skylight_direction, direction, sizeof(float) * 3);
+    rct_xyz16 delta = { direction[0] > 0 ? -1 : 1, direction[1] > 0 ? -1 : 1, direction[2] > 0 ? -1 : 1 };
+
+    if (delta.x != skylight_delta.x || delta.y != skylight_delta.y || delta.z != skylight_delta.z) {
+        // rebuild chunk iterators...
+        for (int dist = 0; dist < LIGHTMAP_CHUNKS_X + LIGHTMAP_CHUNKS_Y + LIGHTMAP_CHUNKS_Z; dist++) {
+            skylight_batch[dist].clear();
+        }
+
+        rct_xyz16 sourceChunk = { delta.x == 1 ? LIGHTMAP_CHUNKS_X - 1 : 0, delta.y == 1 ? LIGHTMAP_CHUNKS_Y - 1 : 0, delta.z == 1 ? LIGHTMAP_CHUNKS_Z - 1 : 0 };
+        log_info("start at %d %d %d", sourceChunk.x, sourceChunk.y, sourceChunk.z);
+
+        for (int z = 0; z < LIGHTMAP_CHUNKS_Z; z++) {
+            for (int y = 0; y < LIGHTMAP_CHUNKS_Y; y++) {
+                for (int x = 0; x < LIGHTMAP_CHUNKS_X; x++) {
+                    int dist = abs(sourceChunk.x - x) + abs(sourceChunk.y - y) + abs(sourceChunk.z - z);
+                    skylight_batch[dist].emplace_back(&LIGHTINGCHUNK(z, y, x));
+                }
+            }
+        }
+
+        // rebuild cell iterator...
+        rct_xyz16 sourceCell = { delta.x == 1 ? LIGHTMAP_CHUNK_SIZE - 1 : 0, delta.y == 1 ? LIGHTMAP_CHUNK_SIZE - 1 : 0, delta.z == 1 ? LIGHTMAP_CHUNK_SIZE - 1 : 0 };
+
+        int itr_queue_build_pos = 0;
+        for (sint16 dist = 0; dist <= LIGHTMAP_CHUNK_SIZE + LIGHTMAP_CHUNK_SIZE + LIGHTMAP_CHUNK_SIZE; dist++) {
+            for (sint16 x = 0; x < LIGHTMAP_CHUNK_SIZE; x++)
+                for (sint16 y = 0; y < LIGHTMAP_CHUNK_SIZE; y++)
+                    for (sint16 z = 0; z < LIGHTMAP_CHUNK_SIZE; z++) {
+                        int thisdist = abs(sourceCell.x - x) + abs(sourceCell.y - y) + abs(sourceCell.z - z);
+                        if (thisdist == dist) skylight_cell_itr[itr_queue_build_pos++] = { x, y, z };
+                    }
+        }
+
+        skylight_delta = delta;
+    }
+
+    skylight_batch_current = 0;
+
+    log_info("Set skylight %f %f %f", direction[0], direction[1], direction[2]);
 }
 
 #pragma region Colormap
@@ -705,6 +762,7 @@ static void lighting_update_static_light(lighting_light& light) {
             if (!memcmp(&chunk->static_lights[light_idx].light, &light, sizeof(lighting_light))) {
                 if (!chunk->static_lights[light_idx].is_drawn) {
                     light_expansion_apply(light, map, chunk, chunk->data_static);
+                    light_expansion_apply(light, map, chunk, chunk->data_skylight_static); // TODO: applying to this can be done much more efficiently for sure
                     chunk->static_lights[light_idx].is_drawn = true;
                 }
                 break;
@@ -828,7 +886,7 @@ static void lighting_add_dynamic(lighting_update_batch* updated_batch, sint16 x,
     CHUNKRANGEITRXYZ(lm_x, lm_y, lm_z, ch_x, ch_y, ch_z, range) {
         lighting_chunk* chunk = &LIGHTINGCHUNK(ch_z, ch_y, ch_x);
         if (!chunk->has_dynamic_lights) {
-            memcpy(chunk->data_dynamic, chunk->data_static, sizeof(chunk->data_static));
+            memcpy(chunk->data_dynamic, chunk->data_skylight_static, sizeof(chunk->data_static));
             chunk->has_dynamic_lights = true;
 
             dynamic_chunks.insert(chunk);
@@ -900,6 +958,57 @@ static void lighting_update_dynamic(lighting_update_batch* updated_batch) {
 
 }
 
+static lighting_value lighting_get_skylight_at(int w_x, int w_y, int w_z) {
+    // out of bounds?
+    if (w_x < 0 || w_y < 0 || w_z < 0 || w_x >= LIGHTMAP_SIZE_X || w_y >= LIGHTMAP_SIZE_Y || w_z >= LIGHTMAP_SIZE_Z)
+        return ambient_sky;
+
+    lighting_chunk& chunk = LIGHTINGCHUNK(w_z / LIGHTMAP_CHUNK_SIZE, w_y / LIGHTMAP_CHUNK_SIZE, w_x / LIGHTMAP_CHUNK_SIZE);
+    return chunk.data_skylight[w_z % LIGHTMAP_CHUNK_SIZE][w_y % LIGHTMAP_CHUNK_SIZE][w_x % LIGHTMAP_CHUNK_SIZE];
+}
+
+static void lighting_update_skylight(lighting_chunk* chunk) {
+    for (int upd_idx = 0; upd_idx < LIGHTMAP_CHUNK_SIZE * LIGHTMAP_CHUNK_SIZE * LIGHTMAP_CHUNK_SIZE; upd_idx++) {
+        const rct_xyz16& cell_coord = skylight_cell_itr[upd_idx];
+        int w_x = chunk->x * LIGHTMAP_CHUNK_SIZE + cell_coord.x;
+        int w_y = chunk->y * LIGHTMAP_CHUNK_SIZE + cell_coord.y;
+        int w_z = chunk->z * LIGHTMAP_CHUNK_SIZE + cell_coord.z;
+
+        lighting_value from_x = lighting_get_skylight_at(w_x + skylight_delta.x, w_y, w_z);
+        lighting_value from_y = lighting_get_skylight_at(w_x, w_y + skylight_delta.y, w_z);
+        lighting_value from_z = lighting_get_skylight_at(w_x, w_y, w_z + skylight_delta.z);
+
+        lighting_multiply(&from_x, lightingAffectorsX[LAIDX(w_y, w_x + (skylight_delta.x < 0), w_z)]);
+        lighting_multiply(&from_y, lightingAffectorsY[LAIDX(w_y + (skylight_delta.y < 0), w_x, w_z)]);
+        lighting_multiply(&from_z, lightingAffectorsZ[LAIDX(w_y, w_x, w_z + (skylight_delta.z < 0))]);
+
+        float fragx = fabs(skylight_direction[0]);
+        float fragy = fabs(skylight_direction[1]);
+        float fragz = fabs(skylight_direction[2]);
+
+        // interpolate values
+        lighting_value new_skylight_value = {
+            (uint8)(from_x.r * fragx + from_y.r * fragy + from_z.r * fragz),
+            (uint8)(from_x.g * fragx + from_y.g * fragy + from_z.g * fragz),
+            (uint8)(from_x.b * fragx + from_y.b * fragy + from_z.b * fragz)
+        };
+
+        lighting_value static_value = chunk->data_static[cell_coord.z][cell_coord.y][cell_coord.x];
+
+        chunk->data_skylight[cell_coord.z][cell_coord.y][cell_coord.x] = new_skylight_value;
+        chunk->data_skylight_static[cell_coord.z][cell_coord.y][cell_coord.x] = {
+            (uint8)(static_value.r + new_skylight_value.r),
+            (uint8)(static_value.g + new_skylight_value.g),
+            (uint8)(static_value.b + new_skylight_value.b),
+        };
+    }
+
+    if (outdated_gpu_set.find(chunk) == outdated_gpu_set.end()) {
+        outdated_gpu.push(chunk);
+        outdated_gpu_set.insert(chunk);
+    }
+}
+
 static lighting_update_batch lighting_update_internal() {
     // update all pending affectors first
     lighting_update_affectors();
@@ -917,6 +1026,12 @@ static lighting_update_batch lighting_update_internal() {
         }
     }
     std::unordered_set<lighting_chunk*>().swap(dynamic_chunks);
+
+    for (lighting_chunk* chunk : skylight_batch[skylight_batch_current]) {
+        //log_info("upd %d", skylight_batch_current);
+        lighting_update_skylight(chunk);
+    }
+    skylight_batch_current = (skylight_batch_current + 1) % (LIGHTMAP_CHUNKS_X + LIGHTMAP_CHUNKS_Y + LIGHTMAP_CHUNKS_Z);
 
     lighting_update_static(&updated_batch);
     lighting_update_dynamic(&updated_batch);
