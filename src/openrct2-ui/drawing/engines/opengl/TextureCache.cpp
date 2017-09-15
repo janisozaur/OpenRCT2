@@ -454,6 +454,7 @@ CachedTextureInfo DisplacementTextureCache::LoadDisplacementTexture(uint32 image
         int rightTopX = 0;
         int rightTopY = 0;
         int leftX = dpi->width - 1;
+        int rightX = 0;
 
         // find the pixels on the left/right top/bottom "edges" of the bounding box
         //    /T\
@@ -491,6 +492,7 @@ CachedTextureInfo DisplacementTextureCache::LoadDisplacementTexture(uint32 image
                     }
 
                     if (x < leftX) leftX = x;
+                    if (x > rightX) rightX = x;
                 }
             }
         }
@@ -514,7 +516,9 @@ CachedTextureInfo DisplacementTextureCache::LoadDisplacementTexture(uint32 image
 
         int leftWallYTop = topY + (topX - leftX) / 2;
         int leftWallYBottom = bottomY - (bottomX - leftX) / 2;
-        int wallHeight = leftWallYBottom - leftWallYTop;
+        int rightWallYTop = topY + (rightX - topX) / 2;
+        int rightWallYBottom = bottomY - (rightX - bottomX) / 2;
+        int wallHeight = Math::Min(leftWallYBottom - leftWallYTop, rightWallYBottom - rightWallYTop);
         if (wallHeight < 8) wallHeight = 0;
 
         int wallHeight2 = wallHeight * 2;
