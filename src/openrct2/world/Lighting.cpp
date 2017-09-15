@@ -124,7 +124,11 @@ static float max_intensity_at(lighting_light light, int chlm_x, int chlm_y, int 
     sint32 w_y = chlm_y * 16 + 8;
     sint32 w_z = chlm_z * 2 + 1;
     float distpot = ((w_x - light.pos.x)*(w_x - light.pos.x) + (w_y - light.pos.y)*(w_y - light.pos.y) + (w_z - light.pos.z)*(w_z - light.pos.z) * 4 * 4);
-    float intensity = 500.0f / (distpot);
+    float intensity = 0.5f;
+    if (distpot != 0.f)
+    {
+        intensity = 500.0f / (distpot);
+    }
     if (intensity > 0.5f) intensity = 0.5f;
     return intensity;
 }
