@@ -76,6 +76,7 @@ public:
 // TODO: custom data structure for queue + set
 queue_set<lighting_chunk*> outdated_skylight; // should recompute skylight
 std::mutex outdated_skylight_mutex;
+std::mutex outdated_gpu_mutex;
 queue_set<lighting_chunk*> outdated_static; // has outdated static lights
 queue_set<lighting_chunk*> outdated_gpu; // needs to update texture on gpu
 std::unordered_set<lighting_chunk*> dynamic_chunks;
@@ -364,7 +365,10 @@ void lighting_invalidate_at(sint32 wx, sint32 wy) {
             }
 
             outdated_static.push(chunk);
-            outdated_gpu.push(chunk);
+            {
+                std::lock_guard<std::mutex> lock(outdated_gpu_mutex);
+                outdated_gpu.push(chunk);
+            }
         }
     }
 
@@ -449,7 +453,10 @@ void lighting_init() {
     lightingAffectorsX = (lighting_value*)malloc(sizeof(lighting_value) * (LIGHTMAP_SIZE_X + 1) * (LIGHTMAP_SIZE_Y + 1) * (LIGHTMAP_SIZE_Z + 1));
     lightingAffectorsY = (lighting_value*)malloc(sizeof(lighting_value) * (LIGHTMAP_SIZE_X + 1) * (LIGHTMAP_SIZE_Y + 1) * (LIGHTMAP_SIZE_Z + 1));
     lightingAffectorsZ = (lighting_value*)malloc(sizeof(lighting_value) * (LIGHTMAP_SIZE_X + 1) * (LIGHTMAP_SIZE_Y + 1) * (LIGHTMAP_SIZE_Z + 1));
-    outdated_gpu.clear();
+	{
+		std::lock_guard<std::mutex> lock(outdated_gpu_mutex);
+		outdated_gpu.clear();
+	}
     outdated_static.clear();
     {
         std::lock_guard<std::mutex> lock(outdated_skylight_mutex);
@@ -901,7 +908,10 @@ static void lighting_update_static(lighting_update_batch* updated_batch) {
                 assert(chunk->static_lights[lidx].is_drawn);
             }
 
-            outdated_gpu.push(chunk);
+            {
+                std::lock_guard<std::mutex> lock(outdated_gpu_mutex);
+                outdated_gpu.push(chunk);
+            }
         }
     }
 }
@@ -947,7 +957,10 @@ static void lighting_add_dynamic(lighting_update_batch* updated_batch, sint16 x,
         }
         light_expansion_apply(light, map, chunk, chunk->data_dynamic);
 
-        outdated_gpu.push(chunk);
+        {
+            std::lock_guard<std::mutex> lock(outdated_gpu_mutex);
+            outdated_gpu.push(chunk);
+        }
     }
 }
 
@@ -1068,7 +1081,10 @@ static void lighting_update_skylight(lighting_chunk* chunk) {
         };
     }
 
-    outdated_gpu.push(chunk);
+    {
+        std::lock_guard<std::mutex> lock(outdated_gpu_mutex);
+        outdated_gpu.push(chunk);
+    }
 }
 
 static void lighting_update_any_skylight() {
@@ -1114,20 +1130,26 @@ static lighting_update_batch lighting_update_internal() {
 
     // reset current dynamic chunks to static
     // must update at gpu too!
-    for (lighting_chunk* chunk : dynamic_chunks) {
-        chunk->has_dynamic_lights = false;
-        outdated_gpu.push(chunk);
+    {
+        std::lock_guard<std::mutex> lock(outdated_gpu_mutex);
+        for (lighting_chunk *chunk : dynamic_chunks) {
+            chunk->has_dynamic_lights = false;
+            outdated_gpu.push(chunk);
+        }
     }
     std::unordered_set<lighting_chunk*>().swap(dynamic_chunks);
 
     lighting_update_static(&updated_batch);
     lighting_update_dynamic(&updated_batch);
 
-    for (int i = 0; i < LIGHTING_MAX_CHUNK_UPDATES_PER_FRAME; i++) {
-        if (outdated_gpu.empty()) break;
+    {
+        std::lock_guard<std::mutex> lock(outdated_gpu_mutex);
+        for (int i = 0; i < LIGHTING_MAX_CHUNK_UPDATES_PER_FRAME; i++) {
+            if (outdated_gpu.empty()) break;
 
-        lighting_chunk* chunk = outdated_gpu.frontpop();
-        updated_batch.updated_chunks[updated_batch.update_count++] = chunk;
+            lighting_chunk *chunk = outdated_gpu.frontpop();
+            updated_batch.updated_chunks[updated_batch.update_count++] = chunk;
+        }
     }
 
     updated_batch.updated_chunks[updated_batch.update_count] = NULL;
