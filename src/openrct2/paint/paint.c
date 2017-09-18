@@ -83,7 +83,7 @@ void paint_session_free(paint_session * session)
 
 static void paint_session_init(paint_session * session, rct_drawpixelinfo * dpi)
 {
-    memset(session, 0, sizeof(paint_session));
+    //memset(session, 0, sizeof(paint_session));
     session->Unk140E9A8 = dpi;
     session->EndOfPaintStructArray = &session->PaintStructs[4000 - 1];
     session->NextFreePaintStruct = session->PaintStructs;

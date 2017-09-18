@@ -44,6 +44,44 @@ struct DrawImageInstance {
     };
 };
 
+
+class ImageCommandBatch
+{
+private:
+    std::vector<DrawImageInstance> _instances;
+    size_t _numInstances;
+
+public:
+    ImageCommandBatch()
+        : _numInstances(0)
+    {
+    }
+    bool empty() const
+    {
+        return _numInstances == 0;
+    }
+    void reset()
+    {
+        _numInstances = 0;
+    }
+    DrawImageInstance& occuopy()
+    {
+        if (_numInstances + 1 > _instances.size())
+        {
+            _instances.resize((_numInstances + 1) << 1);
+        }
+        return _instances[_numInstances++];
+    }
+    size_t size() const
+    {
+        return _numInstances;
+    }
+    const DrawImageInstance* data() const
+    {
+        return &_instances.at(0);
+    }
+};
+
 class DrawImageShader final : public OpenGLShaderProgram
 {
 private:
@@ -74,7 +112,7 @@ public:
 
     void SetScreenSize(sint32 width, sint32 height);
     void SetPalette(const vec4f *glPalette);
-    void DrawInstances(const std::vector<DrawImageInstance>& instances);
+    void DrawInstances(const ImageCommandBatch& instances);
 
 private:
     void GetLocations();

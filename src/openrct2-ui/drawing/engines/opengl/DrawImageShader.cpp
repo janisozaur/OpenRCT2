@@ -113,12 +113,12 @@ void DrawImageShader::SetPalette(const vec4f *glPalette)
     glUniform4fv(uPalette, 256, (const GLfloat *) glPalette);
 }
 
-void DrawImageShader::DrawInstances(const std::vector<DrawImageInstance>& instances)
+void DrawImageShader::DrawInstances(const ImageCommandBatch& instances)
 {
     glBindVertexArray(_vao);
 
     glBindBuffer(GL_ARRAY_BUFFER, _vboInstances);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(instances[0]) * instances.size(), instances.data(), GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(DrawImageInstance) * instances.size(), instances.data(), GL_STREAM_DRAW);
 
     glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (GLsizei)instances.size());
 }

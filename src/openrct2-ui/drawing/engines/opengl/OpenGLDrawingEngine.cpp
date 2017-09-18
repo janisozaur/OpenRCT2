@@ -83,7 +83,8 @@ private:
     struct {
         std::vector<DrawRectCommand> rectangles;
         std::vector<DrawLineCommand> lines;
-        std::vector<DrawImageCommand> images;
+        //std::vector<DrawImageCommand> images;
+        ImageCommandBatch images;
     } _commandBuffers;
 
 public:
@@ -665,20 +666,16 @@ void OpenGLDrawingContext::DrawSprite(uint32 image, sint32 x, sint32 y, uint32 t
 
     auto texture2 = _textureCache->GetOrLoadPaletteTexture(image, tertiaryColour, special);
 
-    DrawImageCommand command;
+    //DrawImageCommand command;
+    DrawImageCommand& command = _commandBuffers.images.allocate();
 
     command.clip = { _clipLeft, _clipTop, _clipRight, _clipBottom };
-    command.texColourAtlas = texture.index;
-    command.texColourBounds = texture.normalizedBounds;
+    command.texColourAtlas = texture->index;
+    command.texColourBounds = texture->normalizedBounds;
     command.texMaskAtlas = 0;
     command.texMaskBounds = { 0.0f, 0.0f, 0.0f };
-    command.texPaletteAtlas = texture2.index;
-    command.texPaletteBounds = {
-        texture2.normalizedBounds.x,
-        texture2.normalizedBounds.y,
-        (texture2.normalizedBounds.z - texture2.normalizedBounds.x) / (float)(texture2.bounds.z - texture2.bounds.x),
-        (texture2.normalizedBounds.w - texture2.normalizedBounds.y) / (float)(texture2.bounds.w - texture2.bounds.y)
-    };
+    command.texPaletteAtlas = texture2->index;
+    command.texPaletteBounds = texture2->computedBounds;
     command.colour = { 0.0f, 0.0f, 0.0f };
     command.bounds = { left, top, right, bottom };
     command.mask = 0;
@@ -698,7 +695,7 @@ void OpenGLDrawingContext::DrawSprite(uint32 image, sint32 x, sint32 y, uint32 t
         command.flags |= DrawImageCommand::FLAG_REMAP;
     }
 
-    _commandBuffers.images.emplace_back(std::move(command));
+    //_commandBuffers.images.emplace_back(std::move(command));
 }
 
 void OpenGLDrawingContext::DrawSpriteRawMasked(sint32 x, sint32 y, uint32 maskImage, uint32 colourImage)
@@ -745,13 +742,14 @@ void OpenGLDrawingContext::DrawSpriteRawMasked(sint32 x, sint32 y, uint32 maskIm
     right += _clipLeft;
     bottom += _clipTop;
 
-    DrawImageCommand command;
+    //DrawImageCommand command;
+    DrawImageCommand& command = _commandBuffers.images.allocate();
 
     command.clip = { _clipLeft, _clipTop, _clipRight, _clipBottom };
-    command.texColourAtlas = textureColour.index;
-    command.texColourBounds = textureColour.normalizedBounds;
-    command.texMaskAtlas = textureMask.index;
-    command.texMaskBounds = textureMask.normalizedBounds;
+    command.texColourAtlas = textureColour->index;
+    command.texColourBounds = textureColour->normalizedBounds;
+    command.texMaskAtlas = textureMask->index;
+    command.texMaskBounds = textureMask->normalizedBounds;
     command.texPaletteAtlas = 0;
     command.texPaletteBounds = {0.0f, 0.0f, 0.0f};
     command.flags = 0;
@@ -759,7 +757,7 @@ void OpenGLDrawingContext::DrawSpriteRawMasked(sint32 x, sint32 y, uint32 maskIm
     command.bounds = { left, top, right, bottom };
     command.mask = 1;
 
-    _commandBuffers.images.emplace_back(std::move(command));
+    //_commandBuffers.images.emplace_back(std::move(command));
 }
 
 void OpenGLDrawingContext::DrawSpriteSolid(uint32 image, sint32 x, sint32 y, uint8 colour)
@@ -795,26 +793,22 @@ void OpenGLDrawingContext::DrawSpriteSolid(uint32 image, sint32 x, sint32 y, uin
     right += _offsetX;
     bottom += _offsetY;
 
-    DrawImageCommand command;
+    //DrawImageCommand command;
+    DrawImageCommand& command = _commandBuffers.images.allocate();
 
     command.clip = { _clipLeft, _clipTop, _clipRight, _clipBottom };
-    command.texColourAtlas = texture.index;
-    command.texColourBounds = texture.normalizedBounds;
+    command.texColourAtlas = texture->index;
+    command.texColourBounds = texture->normalizedBounds;
     command.texMaskAtlas = 0;
     command.texMaskBounds = { 0.0f, 0.0f, 0.0f };
-    command.texPaletteAtlas = texture.index;
-    command.texPaletteBounds = {
-        texture.normalizedBounds.x,
-        texture.normalizedBounds.y,
-        (texture.normalizedBounds.z - texture.normalizedBounds.x) / (float)(texture.bounds.z - texture.bounds.x),
-        (texture.normalizedBounds.w - texture.normalizedBounds.y) / (float)(texture.bounds.w - texture.bounds.y)
-    };
+    command.texPaletteAtlas = texture->index;
+    command.texPaletteBounds = texture->computedBounds;
     command.flags = DrawImageCommand::FLAG_COLOUR;
     command.colour = paletteColour;
     command.bounds = { left, top, right, bottom };
     command.mask = 0;
 
-    _commandBuffers.images.emplace_back(std::move(command));
+    //_commandBuffers.images.emplace_back(std::move(command));
 }
 
 void OpenGLDrawingContext::DrawGlyph(uint32 image, sint32 x, sint32 y, uint8 * palette)
@@ -848,7 +842,8 @@ void OpenGLDrawingContext::DrawGlyph(uint32 image, sint32 x, sint32 y, uint8 * p
     right += _offsetX;
     bottom += _offsetY;
 
-    DrawImageCommand command;
+    //DrawImageCommand command;
+    DrawImageCommand& command = _commandBuffers.images.allocate();
 
     command.clip = { _clipLeft, _clipTop, _clipRight, _clipBottom };
     command.texColourAtlas = texture.index;
@@ -862,7 +857,7 @@ void OpenGLDrawingContext::DrawGlyph(uint32 image, sint32 x, sint32 y, uint8 * p
     command.bounds = { left, top, right, bottom };
     command.mask = 0;
 
-    _commandBuffers.images.emplace_back(std::move(command));
+    //_commandBuffers.images.emplace_back(std::move(command));
 }
 
 void OpenGLDrawingContext::FlushCommandBuffers()
@@ -908,7 +903,7 @@ void OpenGLDrawingContext::FlushImages()
     _drawImageShader->Use();
     _drawImageShader->DrawInstances(_commandBuffers.images);
 
-    _commandBuffers.images.clear();
+    _commandBuffers.images.reset();
 }
 
 void OpenGLDrawingContext::SetDPI(rct_drawpixelinfo * dpi)
