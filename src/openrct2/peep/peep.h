@@ -748,6 +748,7 @@ void game_command_pickup_guest(sint32* eax, sint32* ebx, sint32* ecx, sint32* ed
 void peep_sprite_remove(rct_peep* peep);
 void peep_remove(rct_peep* peep);
 void peep_update_sprite_type(rct_peep* peep);
+void peep_leave_park(rct_peep* peep);
 
 void peep_window_state_update(rct_peep* peep);
 void peep_decrement_num_riders(rct_peep* peep);
