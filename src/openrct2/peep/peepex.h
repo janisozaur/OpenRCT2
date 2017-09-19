@@ -21,5 +21,7 @@
 
 void peepex_base_update(rct_peep *peep, sint32 index);
 void peep_update_action_sidestepping(sint16* x, sint16* y, sint16 x_delta, sint16 y_delta, sint16* xy_distance, rct_peep* peep);
+sint32 peep_update_queue_position_messy(rct_peep* peep, uint8 previous_action);
+sint32 peep_move_one_tile_messy(sint32 x, sint32 y, uint8 direction, rct_peep* peep);
 
 #endif

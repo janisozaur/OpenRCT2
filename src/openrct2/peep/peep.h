@@ -486,8 +486,9 @@ typedef struct rct_peep {
 	union {
 		uint8 pad_1F[3];			// 0x1F - Legacy
 		struct {
-			uint8 peeps_ex_direction_preference;
-			uint8 pad_1F_[2];
+			uint8 peepex_direction_preference;
+			uint8 peepex_queue_wait_distance;
+			uint8 peepex_crowded_store;
 		};
 	};
     rct_string_id name_string_idx;  // 0x22

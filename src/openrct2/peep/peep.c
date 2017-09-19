@@ -4880,6 +4880,8 @@ static void peep_update_queuing(rct_peep* peep){
 
     if (peep->sub_state != 10){
         bool is_front = true;
+		bool always_allow_entry = false;
+
         if (peep->next_in_queue != SPRITE_INDEX_NULL) {
             // Fix #4819: Occasionally the peep->next_in_queue is incorrectly set
             // to prevent this from causing the peeps to enter a loop
@@ -4892,7 +4894,11 @@ static void peep_update_queuing(rct_peep* peep){
                 is_front = false;
             }
         }
-        if (is_front){
+
+		if (gConfigPeepEx.enable_messy_queue)
+			always_allow_entry = true;
+
+        if (is_front || always_allow_entry){
             //Happens every time peep goes onto ride.
             peep->destination_tolerence = 0;
             peep_decrement_num_riders(peep);
@@ -7911,49 +7917,58 @@ static sint32 peep_update_queue_position(rct_peep* peep, uint8 previous_action){
 
     rct_peep* peep_next = GET_PEEP(peep->next_in_queue);
 
-    sint16 x_diff = abs(peep_next->x - peep->x);
-    sint16 y_diff = abs(peep_next->y - peep->y);
-    sint16 z_diff = abs(peep_next->z - peep->z);
+	bool useMessyQueuing	= gConfigPeepEx.enable_messy_queue;
 
-    if (z_diff > 10)
-        return 0;
+	if (useMessyQueuing) {
+		if (0 == peep_update_queue_position_messy(peep, previous_action))
+			return 0;
+	}
+	else {
+		sint16 x_diff = abs(peep_next->x - peep->x);
+		sint16 y_diff = abs(peep_next->y - peep->y);
+		sint16 z_diff = abs(peep_next->z - peep->z);
 
-    if (x_diff < y_diff){
-        sint16 temp_x = x_diff;
-        x_diff = y_diff;
-        y_diff = temp_x;
-    }
+		if (z_diff > 10)
+			return 0;
+		
+		if (x_diff < y_diff){
+			sint16 temp_x = x_diff;
+			x_diff = y_diff;	
+			y_diff = temp_x;
+		}
 
-    x_diff += y_diff / 2;
-    if (x_diff > 7){
-        if (x_diff > 13){
-            if ((peep->x & 0xFFE0) != (peep_next->x & 0xFFE0) ||
-                (peep->y & 0xFFE0) != (peep_next->y & 0xFFE0))
-                return 0;
-        }
+		x_diff += y_diff / 2;
+		if (x_diff > 7){
+			if (x_diff > 13){
+				if ((peep->x & 0xFFE0) != (peep_next->x & 0xFFE0) ||
+					(peep->y & 0xFFE0) != (peep_next->y & 0xFFE0))
+					return 0;
+			}
 
-        if (peep->sprite_direction != peep_next->sprite_direction)
-            return 0;
+			if (peep->sprite_direction != peep_next->sprite_direction)
+				return 0;
 
-        switch (peep_next->sprite_direction / 8){
-        case 0:
-            if (peep->x >= peep_next->x)
-                return 0;
-            break;
-        case 1:
-            if (peep->y <= peep_next->y)
-                return 0;
-            break;
-        case 2:
-            if (peep->x <= peep_next->x)
-                return 0;
-            break;
-        case 3:
-            if (peep->y >= peep_next->y)
-                return 0;
-            break;
-        }
-    }
+			switch (peep_next->sprite_direction / 8){
+			case 0:
+				if (peep->x >= peep_next->x)
+					return 0;
+				break;
+			case 1:
+				if (peep->y <= peep_next->y)
+					return 0;
+				break;
+			case 2:
+				if (peep->x <= peep_next->x)
+					return 0;
+				break;
+			case 3:
+				if (peep->y >= peep_next->y)
+					return 0;
+				break;
+			}
+		}
+	}
+
 
     sint16 xy_dist, x, y;
     if (peep->action < PEEP_ACTION_NONE_1)
@@ -8311,6 +8326,15 @@ static sint32 peep_footpath_move_forward(rct_peep* peep, sint16 x, sint16 y, rct
         peep->happiness_target = max(0, peep->happiness_target - 14);
     }
 
+	// Remember for a while what the tile was like; this allows us to
+	//	make the peeps walk a bit differently when congested without
+	//	repeating the check
+
+	if (peep->state == PEEP_STATE_WALKING) {
+		peep->peepex_crowded_store /= 2;
+		peep->peepex_crowded_store += min(100, crowded / 2);
+	}
+
     litter_count = min(3, litter_count);
     sick_count = min(3, sick_count);
 
@@ -8566,14 +8590,19 @@ static sint32 peep_move_one_tile(uint8 direction, rct_peep* peep){
         // This could loop!
         return guest_surface_path_finding(peep);
     }
-
-    peep->direction = direction;
-    peep->destination_x = x + 16;
-    peep->destination_y = y + 16;
-    peep->destination_tolerence = 2;
-    if (peep->state != PEEP_STATE_QUEUING){
-        peep->destination_tolerence = (peep_rand() & 7) + 2;
-    }
+	
+	if (gConfigPeepEx.enable_messy_walking) {
+		return peep_move_one_tile_messy(x, y, direction, peep);
+	}
+	else {
+		peep->direction = direction;
+		peep->destination_x = x + 16;
+		peep->destination_y = y + 16;
+		peep->destination_tolerence = 2;
+		if (peep->state != PEEP_STATE_QUEUING){
+			peep->destination_tolerence = (peep_rand() & 7) + 2;
+		}
+	}
     return 0;
 }
 
