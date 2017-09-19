@@ -20,5 +20,6 @@
 #include "peep.h"
 
 void peepex_base_update(rct_peep *peep, sint32 index);
+void peep_update_action_sidestepping(sint16* x, sint16* y, sint16 x_delta, sint16 y_delta, sint16* xy_distance, rct_peep* peep);
 
 #endif

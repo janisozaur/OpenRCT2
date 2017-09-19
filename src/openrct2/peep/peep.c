@@ -1576,33 +1576,41 @@ static sint32 peep_update_action(sint16* x, sint16* y, sint16* xy_distance, rct_
     *xy_distance = x_delta + y_delta;
 
     if (peep->action >= 0xFE){
-        if (*xy_distance <= peep->destination_tolerence){
-            return 0;
-        }
-        sint32 direction = 0;
-        if (x_delta < y_delta){
-            direction = 8;
-            if (*y >= 0){
-                direction = 24;
-            }
-        }
-        else{
-            direction = 16;
-            if (*x >= 0){
-                direction = 0;
-            }
-        }
-        peep->sprite_direction = direction;
-        *x = peep->x + word_981D7C[direction / 8].x;
-        *y = peep->y + word_981D7C[direction / 8].y;
-        peep->no_action_frame_no++;
-        const rct_peep_animation * peepAnimation = g_peep_animation_entries[peep->sprite_type].sprite_animation;
-        const uint8* imageOffset = peepAnimation[peep->action_sprite_type].frame_offsets;
-        if (peep->no_action_frame_no >= peepAnimation[peep->action_sprite_type].num_frames){
-            peep->no_action_frame_no = 0;
-        }
-        peep->action_sprite_image_offset = imageOffset[peep->no_action_frame_no];
-        return 1;
+		if (*xy_distance <= peep->destination_tolerence){
+			return 0;
+		}
+
+		if (gConfigPeepEx.enable_sidestepping) {
+			peep_update_action_sidestepping(x, y, x_delta, y_delta, xy_distance, peep);
+		}
+		else {
+			sint32 direction = 0;
+			if (x_delta < y_delta){
+				direction = 8;
+				if (*y >= 0){
+					direction = 24;
+				}
+			}
+			else{
+				direction = 16;
+				if (*x >= 0){
+					direction = 0;
+				}
+			}
+
+			peep->sprite_direction = direction;
+			*x = peep->x + word_981D7C[direction / 8].x;
+			*y = peep->y + word_981D7C[direction / 8].y;
+		}
+
+		peep->no_action_frame_no++;
+		const rct_peep_animation * peepAnimation = g_peep_animation_entries[peep->sprite_type].sprite_animation;
+		const uint8* imageOffset = peepAnimation[peep->action_sprite_type].frame_offsets;
+		if (peep->no_action_frame_no >= peepAnimation[peep->action_sprite_type].num_frames){
+			peep->no_action_frame_no = 0;
+		}
+		peep->action_sprite_image_offset = imageOffset[peep->no_action_frame_no];
+		return 1;
     }
 
     const rct_peep_animation * peepAnimation = g_peep_animation_entries[peep->sprite_type].sprite_animation;
