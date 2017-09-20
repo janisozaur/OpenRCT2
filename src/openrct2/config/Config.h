@@ -142,6 +142,7 @@ typedef struct PeepExConfiguration
     bool        enable_messy_queue;
     bool        enable_messy_walking;
     bool        enable_messy_congestion;
+	bool		enable_buddies;
 } PeepExConfiguration;
 
 typedef struct NetworkConfiguration

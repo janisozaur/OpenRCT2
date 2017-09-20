@@ -486,6 +486,7 @@ namespace Config
             model->enable_messy_queue = reader->GetBoolean("enable_messy_queue", true);
             model->enable_messy_walking = reader->GetBoolean("enable_messy_walking", true);
             model->enable_messy_congestion = reader->GetBoolean("enable_messy_congestion", true);
+            model->enable_buddies = reader->GetBoolean("enable_buddies", true);
         }
     }
 
@@ -498,6 +499,7 @@ namespace Config
         writer->WriteBoolean("enable_messy_queue", model->enable_messy_queue);
         writer->WriteBoolean("enable_messy_walking", model->enable_messy_walking);
         writer->WriteBoolean("enable_messy_congestion", model->enable_messy_congestion);
+        writer->WriteBoolean("enable_buddies", model->enable_buddies);
     }
 
     static void ReadFont(IIniReader * reader)
