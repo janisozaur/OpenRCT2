@@ -74,6 +74,87 @@ void peep_update_action_sidestepping(sint16* x, sint16* y, sint16 x_delta, sint1
 		actualStepX += (actualStepX & 0x8000)? 1 : -1;
 	}
 
+	sint16 pushAsideX = 0;
+	sint16 pushAsideY = 0;
+	sint16 expectAsideX = 0;
+	sint16 expectAsideY = 0;
+	
+	if (peep->state == PEEP_STATE_WALKING)
+	{
+		const static sint32 checkDistance		= 4;
+		const static sint32 checkDistancePow	= 4*4;
+
+		const static sint32 checkDistanceFar	= 15;
+		const static sint32 checkDistanceFarPow	= 15*15;
+
+		sint16 crowdedCount = 0;
+
+		uint16 sprite_id = sprite_get_first_in_quadrant(peep->x, peep->y);
+		for (rct_sprite* sprite; sprite_id != SPRITE_INDEX_NULL; sprite_id = sprite->unknown.next_in_quadrant){
+			sprite = get_sprite(sprite_id);
+			if (sprite->unknown.sprite_identifier != SPRITE_IDENTIFIER_PEEP)
+				continue;
+
+			rct_peep* other_peep = (rct_peep*)sprite;
+
+			if (other_peep == peep)
+				continue;
+
+			if (abs(other_peep->z - peep->z) > 16)
+				continue;
+			
+			sint16 distX = other_peep->x - peep->x;
+			sint16 distY = other_peep->y - peep->y;
+			sint16 workDist = distX * distX + distY * distY;
+			
+			if (workDist < checkDistanceFarPow) {
+				if ((actualStepX > 0) == (distX > 0) ||
+					(actualStepY > 0) == (distY > 0)) {
+					if (crowdedCount < 8)
+						crowdedCount	+= 4;
+					expectAsideX	+= (checkDistanceFar - abs(distX)) * (distX < 0)? 1 : -1;
+					expectAsideY	+= (checkDistanceFar - abs(distY)) * (distY < 0)? 1 : -1;		
+				}
+				if (workDist < checkDistancePow) {
+					if ((actualStepX > 0) == (distX > 0) ||
+						(actualStepY > 0) == (distY > 0)) {
+						crowdedCount	+= 4;
+					}
+					pushAsideX		+= (checkDistance - abs(distX)) * (distX < 0)? 1 : -1;
+					pushAsideY		+= (checkDistance - abs(distY)) * (distY < 0)? 1 : -1;
+				}
+			}
+		}
+
+		peep->peepex_crowded_store /= 2;
+		peep->peepex_crowded_store += min(100, crowdedCount / 3);
+
+		if (actualStepX == 0) {
+			if (expectAsideX > 0)
+				sidestepX += 1;
+			else if (expectAsideX < 0)
+				sidestepX -= 1;
+		}
+		if (actualStepY == 0) {
+			if (expectAsideY > 0)
+				sidestepY += 1;
+			else if (expectAsideY < 0)
+				sidestepY -= 1;
+		}
+
+		if (pushAsideX > 0)
+			sidestepX += 1;
+		else if (pushAsideX < 0)
+			sidestepX -= 1;
+		if (pushAsideY > 0)
+			sidestepY += 1;
+		else if (pushAsideY < 0)
+			sidestepY -= 1;
+
+	//	actualStepX = 0;
+	//	actualStepY = 0;
+	}
+
 	*x = peep->x + actualStepX + sidestepX;
 	*y = peep->y + actualStepY + sidestepY;
 }

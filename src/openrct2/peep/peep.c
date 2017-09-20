@@ -6717,6 +6717,19 @@ static void peep_update(rct_peep *peep)
             stepsToTake += stepsToTake / 2;
     }
 
+	if (gConfigPeepEx.enable_messy_congestion && peep->state == PEEP_STATE_WALKING) {
+		if (peep->peepex_crowded_store > 15) {
+			stepsToTake /= 2 + scenario_rand_max(2);
+		}
+		else if (peep->peepex_crowded_store > 9) {
+			stepsToTake /= 1 + scenario_rand_max(2);
+		}
+		else if (peep->peepex_crowded_store > 4) {
+			stepsToTake *= 6;
+			stepsToTake /= 4 + scenario_rand_max(2);
+		}
+	}
+
     uint32 carryCheck = peep->var_73 + stepsToTake;
     peep->var_73 = carryCheck;
     if (carryCheck <= 255) {
@@ -8325,15 +8338,6 @@ static sint32 peep_footpath_move_forward(rct_peep* peep, sint16 x, sint16 y, rct
         peep_insert_new_thought(peep, PEEP_THOUGHT_TYPE_CROWDED, 0xFF);
         peep->happiness_target = max(0, peep->happiness_target - 14);
     }
-
-	// Remember for a while what the tile was like; this allows us to
-	//	make the peeps walk a bit differently when congested without
-	//	repeating the check
-
-	if (peep->state == PEEP_STATE_WALKING) {
-		peep->peepex_crowded_store /= 2;
-		peep->peepex_crowded_store += min(100, crowded / 2);
-	}
 
     litter_count = min(3, litter_count);
     sick_count = min(3, sick_count);
