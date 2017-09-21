@@ -6718,13 +6718,12 @@ static void peep_update(rct_peep *peep)
     }
 
 	if (gConfigPeepEx.enable_messy_congestion && peep->state == PEEP_STATE_WALKING) {
-		if (peep->peepex_crowded_store > 15) {
-			stepsToTake /= 2 + scenario_rand_max(2);
-		}
-		else if (peep->peepex_crowded_store > 9) {
+		stepsToTake *= 4;
+		stepsToTake /= 5;
+		if (peep->peepex_crowded_store > 10) {
 			stepsToTake /= 1 + scenario_rand_max(2);
 		}
-		else if (peep->peepex_crowded_store > 4) {
+		else if (peep->peepex_crowded_store > 7) {
 			stepsToTake *= 6;
 			stepsToTake /= 4 + scenario_rand_max(2);
 		}
@@ -8717,7 +8716,7 @@ static sint32 banner_clear_path_edges(rct_map_element *mapElement, sint32 edges)
 /**
  * Gets the connected edges of a path that are permitted (i.e. no 'no entry' signs)
  */
-static sint32 path_get_permitted_edges(rct_map_element *mapElement)
+sint32 path_get_permitted_edges(rct_map_element *mapElement)
 {
     return banner_clear_path_edges(mapElement, mapElement->properties.path.edges) & 0x0F;
 }
@@ -10329,10 +10328,12 @@ static sint32 guest_path_finding(rct_peep* peep)
             switch (pathSearchResult) {
             case PATH_SEARCH_DEAD_END:
             case PATH_SEARCH_RIDE_EXIT:
-            case PATH_SEARCH_WIDE:
                 adjustedEdges &= ~(1 << chosenDirection);
                 break;
             }
+			if ((0x9 << chosenDirection) & (peep->peepex_wide_path_blocker)) {
+			   adjustedEdges &= ~(1 << chosenDirection);
+			}
         }
         if (adjustedEdges != 0)
             edges = adjustedEdges;

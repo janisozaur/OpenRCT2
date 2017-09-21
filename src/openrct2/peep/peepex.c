@@ -1,5 +1,6 @@
 #include "peepex.h"
 #include "../ride/ride.h"
+#include "../world/footpath.h"
 #include "../scenario/scenario.h"
 #include "../config/Config.h"
 
@@ -41,7 +42,7 @@ void peep_update_action_sidestepping(sint16* x, sint16* y, sint16 x_delta, sint1
 			spriteDirection = 24;
 		}
 
-		if (scenario_rand_max(*xy_distance) < (uint32)x_delta * 1) {
+		if (scenario_rand_max(*xy_distance) < (uint32)x_delta * 8) {
 			if (*x > 1)
 				sidestepX = -1;
 			else if (*x < -1)
@@ -53,7 +54,7 @@ void peep_update_action_sidestepping(sint16* x, sint16* y, sint16 x_delta, sint1
 		if (*x >= 0) {
 			spriteDirection = 0;
 		}
-		if (scenario_rand_max(*xy_distance) < (uint32)y_delta * 1) {
+		if (scenario_rand_max(*xy_distance) < (uint32)y_delta * 8) {
 			if (*y > 1)
 				sidestepY = -1;
 			else if (*y < -1)
@@ -78,14 +79,16 @@ void peep_update_action_sidestepping(sint16* x, sint16* y, sint16 x_delta, sint1
 	sint16 pushAsideY = 0;
 	sint16 expectAsideX = 0;
 	sint16 expectAsideY = 0;
+	sint16 pushStepX = 0;
+	sint16 pushStepY = 0;
 	
 	if (peep->state == PEEP_STATE_WALKING)
 	{
-		const static sint32 checkDistance		= 4;
-		const static sint32 checkDistancePow	= 4*4;
+		const static sint32 checkDistance		= 6;
+		const static sint32 checkDistancePow	= 6*6;
 
-		const static sint32 checkDistanceFar	= 15;
-		const static sint32 checkDistanceFarPow	= 15*15;
+		const static sint32 checkDistanceFar	= 12;
+		const static sint32 checkDistanceFarPow	= 12*12;
 
 		sint16 crowdedCount = 0;
 
@@ -102,7 +105,7 @@ void peep_update_action_sidestepping(sint16* x, sint16* y, sint16 x_delta, sint1
 
 			if (abs(other_peep->z - peep->z) > 16)
 				continue;
-			
+				
 			sint16 distX = other_peep->x - peep->x;
 			sint16 distY = other_peep->y - peep->y;
 			sint16 workDist = distX * distX + distY * distY;
@@ -110,53 +113,90 @@ void peep_update_action_sidestepping(sint16* x, sint16* y, sint16 x_delta, sint1
 			if (workDist < checkDistanceFarPow) {
 				if ((actualStepX > 0) == (distX > 0) ||
 					(actualStepY > 0) == (distY > 0)) {
-					if (crowdedCount < 8)
-						crowdedCount	+= 4;
-					expectAsideX	+= (checkDistanceFar - abs(distX)) * (distX < 0)? 1 : -1;
-					expectAsideY	+= (checkDistanceFar - abs(distY)) * (distY < 0)? 1 : -1;		
+					if (other_peep->direction != peep->direction) {
+						crowdedCount	+= 3;
+						expectAsideX	+= (checkDistanceFar - abs(distX)) * (distX < 0)? 1 : -1;
+						expectAsideY	+= (checkDistanceFar - abs(distY)) * (distY < 0)? 1 : -1;	
+					}
 				}
 				if (workDist < checkDistancePow) {
 					if ((actualStepX > 0) == (distX > 0) ||
 						(actualStepY > 0) == (distY > 0)) {
-						crowdedCount	+= 4;
+						if (other_peep->direction != peep->direction)
+							crowdedCount	+= 8;
 					}
-					pushAsideX		+= (checkDistance - abs(distX)) * (distX < 0)? 1 : -1;
-					pushAsideY		+= (checkDistance - abs(distY)) * (distY < 0)? 1 : -1;
+					pushAsideX		+= (checkDistancePow - abs(distX)) * (distX < 0)? 1 : -1;
+					pushAsideY		+= (checkDistancePow - abs(distY)) * (distY < 0)? 1 : -1;
 				}
 			}
 		}
 
 		peep->peepex_crowded_store /= 2;
-		peep->peepex_crowded_store += min(100, crowdedCount / 3);
+		peep->peepex_crowded_store += min(100, crowdedCount / 1);
 
 		if (actualStepX == 0) {
 			if (expectAsideX > 0)
-				sidestepX += 1;
+				pushStepX += 1;
 			else if (expectAsideX < 0)
-				sidestepX -= 1;
+				pushStepX -= 1;
 		}
 		if (actualStepY == 0) {
 			if (expectAsideY > 0)
-				sidestepY += 1;
+				pushStepY += 1;
 			else if (expectAsideY < 0)
-				sidestepY -= 1;
+				pushStepY -= 1;
+		}
+		
+		sint32 peepEdgeLimits = 0xF;
+
+		rct_map_element *mapElement = map_get_path_element_at(peep->next_x / 32, peep->next_y / 32, peep->next_z);
+		if (mapElement && map_element_get_type(mapElement) == MAP_ELEMENT_TYPE_PATH) {
+			sint32 tileLimits = 16;
+
+			sint32 edges = mapElement->properties.path.edges & peep->peepex_path_limits;
+			if ((peep->x & 0x1F) < tileLimits && !(edges & 0x1))
+				peepEdgeLimits &= ~0x1;
+			if ((peep->y & 0x1F) > (32-tileLimits) && !(edges & 0x2))
+				peepEdgeLimits &= ~0x2;
+			if ((peep->x & 0x1F) > (32-tileLimits) && !(edges & 0x4))
+				peepEdgeLimits &= ~0x4;
+			if ((peep->y & 0x1F) < tileLimits && !(edges & 0x8))
+				peepEdgeLimits &= ~0x8;
 		}
 
-		if (pushAsideX > 0)
-			sidestepX += 1;
-		else if (pushAsideX < 0)
-			sidestepX -= 1;
-		if (pushAsideY > 0)
-			sidestepY += 1;
-		else if (pushAsideY < 0)
-			sidestepY -= 1;
+		if (pushStepX < 0 && !(peepEdgeLimits & 0x1))
+			pushStepX = 0;
+		if (pushStepY > 0 && !(peepEdgeLimits & 0x2))
+			pushStepY = 0;
+		if (pushStepX > 0 && !(peepEdgeLimits & 0x4))
+			pushStepX = 0;
+		if (pushStepY < 0 && !(peepEdgeLimits & 0x8))
+			pushStepY = 0;
 
-	//	actualStepX = 0;
-	//	actualStepY = 0;
+		peep->destination_x	+= pushStepX * 2;
+		peep->destination_y	+= pushStepY * 2;
+
+		if (actualStepX <= 0 && pushAsideX > 0)
+			pushStepX += 1;
+		else if (actualStepX >= 0 && pushAsideX < 0)
+			pushStepX -= 1;
+		if (actualStepY <= 0 && pushAsideY > 0)
+			pushStepY += 1;
+		else if (actualStepY >= 0 && pushAsideY < 0)
+			pushStepY -= 1;
+		
+		if (pushStepX < 0 && !(peepEdgeLimits & 0x1))
+			pushStepX = 0;
+		if (pushStepY > 0 && !(peepEdgeLimits & 0x2))
+			pushStepY = 0;
+		if (pushStepX > 0 && !(peepEdgeLimits & 0x4))
+			pushStepX = 0;
+		if (pushStepY < 0 && !(peepEdgeLimits & 0x8))
+			pushStepY = 0;
 	}
 
-	*x = peep->x + actualStepX + sidestepX;
-	*y = peep->y + actualStepY + sidestepY;
+	*x = peep->x + actualStepX + sidestepX + pushStepX;
+	*y = peep->y + actualStepY + sidestepY + pushStepY;
 }
 
 sint32 peep_update_queue_position_messy(rct_peep* peep, uint8 previous_action)
@@ -398,8 +438,36 @@ sint32 peep_move_one_tile_messy(sint32 x, sint32 y, uint8 direction, rct_peep* p
 	tileOffsetX -= 16;
 	tileOffsetY -= 16;
 
-	tileOffsetX -= scenario_rand_max(TileDirectionDelta[direction].x);
-	tileOffsetY -= scenario_rand_max(TileDirectionDelta[direction].y);
+	tileOffsetX -= ((TileDirectionDelta[direction].x) * scenario_rand_max(16)) / 4;
+	tileOffsetY -= ((TileDirectionDelta[direction].y) * scenario_rand_max(16)) / 4;
+
+	tileOffsetX += 1 - scenario_rand_max(3);
+	tileOffsetY += 1 - scenario_rand_max(3);
+
+	sint32 edges = 0x0;
+	
+	sint16 peepMacroTileNextX		= x / 32;
+	sint16 peepMacroTileNextY		= y / 32;
+
+    rct_map_element *mapElement = map_get_path_element_at(peepMacroTileNextX, peepMacroTileNextY, peep->next_z);
+    if (mapElement) {
+		sint32 nextEdges = mapElement->properties.path.edges;
+		sint32 curEdges = 0;
+		
+		mapElement = map_get_path_element_at(peep->x / 32, peep->y / 32, peep->next_z);
+		if (mapElement)
+			curEdges = mapElement->properties.path.edges;
+
+		if ((curEdges & 0x1) == (nextEdges & 0x1))
+			edges |= 0xA;
+		if ((curEdges & 0xA) == (nextEdges & 0xA))
+			edges |= 0x5;
+		
+		edges &= curEdges;
+		edges &= nextEdges;
+    }
+
+	peep->peepex_path_limits = edges;
 
 	if (peep->state == PEEP_STATE_WALKING) {
 		sint16 enterOffsetX = 0;
@@ -424,32 +492,50 @@ sint32 peep_move_one_tile_messy(sint32 x, sint32 y, uint8 direction, rct_peep* p
 			};
 		}
 
-		tileOffsetX += enterOffsetX;
-		tileOffsetY += enterOffsetY;
-
-		if (peep->peepex_crowded_store > 0) {
-			uint8 crowdedAdd = max((sint16)(50) - (sint16)(peep->peepex_crowded_store), (sint16)(1));
-			tileOffsetX += TileDirectionDelta[(direction+1) & 0x3].x / crowdedAdd;
-			tileOffsetY += TileDirectionDelta[(direction+1) & 0x3].y / crowdedAdd;
-		}
-
 		int offset = 1 + min(10, max(0, (peep->nausea / 50) - 3) + (peep->peepex_crowded_store / 20));
 
 		tileOffsetX += -offset + scenario_rand_max(1 + (offset << 1));
 		tileOffsetY += -offset + scenario_rand_max(1 + (offset << 1));
 
-		sint16 maxTileOffset = 6;
+		sint16 baseTileOffset = 6;
+		sint16 maxTileOffset[4] = { -baseTileOffset, baseTileOffset, baseTileOffset, -baseTileOffset };
+		
+		if (edges & 0x1)
+			maxTileOffset[0] = -20;
+		if (edges & 0x2)
+			maxTileOffset[1] = 20;
+		if (edges & 0x4)
+			maxTileOffset[2] = 20;
+		if (edges & 0x8)
+			maxTileOffset[3] = -20;
 
-		maxTileOffset += min(peep->peepex_crowded_store / 3, 5);
+		if (tileOffsetX < maxTileOffset[0])
+			tileOffsetX = maxTileOffset[0];
+		else if (tileOffsetX > maxTileOffset[2])
+			tileOffsetX = maxTileOffset[2];
+		if (tileOffsetY < maxTileOffset[3])
+			tileOffsetY = maxTileOffset[3];
+		else if (tileOffsetY > maxTileOffset[1])
+			tileOffsetY = maxTileOffset[1];
 
-		if (tileOffsetX < -maxTileOffset)
-			tileOffsetX = -maxTileOffset;
-		else if (tileOffsetX > maxTileOffset)
-			tileOffsetX = maxTileOffset;
-		if (tileOffsetY < -maxTileOffset)
-			tileOffsetY = -maxTileOffset;
-		else if (tileOffsetY > maxTileOffset)
-			tileOffsetY = maxTileOffset;
+		switch (direction) {
+		case 0:
+			if (tileOffsetX > 14)
+				tileOffsetX = 14;
+			break;
+		case 1:
+			if (tileOffsetY < -14)
+				tileOffsetY = -14;
+			break;
+		case 2:
+			if (tileOffsetX < -14)
+				tileOffsetX = -14;
+			break;
+		case 3:
+			if (tileOffsetY > 14)
+				tileOffsetY = 14;
+			break;
+		}
 	}
 	else {
 		tileOffsetX = 0;
@@ -461,7 +547,7 @@ sint32 peep_move_one_tile_messy(sint32 x, sint32 y, uint8 direction, rct_peep* p
 	peep->destination_y = y + tileOffsetY + 16;
 	peep->destination_tolerence = 2;
 	if (peep->state != PEEP_STATE_QUEUING) {
-		peep->destination_tolerence = 4;
+		peep->destination_tolerence = 2;
 	}
 	else {
 		peep->destination_tolerence = 2;

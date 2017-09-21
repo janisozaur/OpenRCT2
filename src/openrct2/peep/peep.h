@@ -560,7 +560,7 @@ typedef struct rct_peep {
         uint16 next_in_queue;       // 0x74
     };
     uint8 var_76;
-    uint8 pad_77;
+    uint8 peepex_wide_path_blocker;
     union{
         uint8 maze_last_edge;           // 0x78
         uint8 direction;    //Direction ?
@@ -633,7 +633,7 @@ typedef struct rct_peep {
     uint8 hat_colour;               // 0xF8
     uint8 favourite_ride;           // 0xF9
     uint8 favourite_ride_rating;    // 0xFA
-    uint8 pad_FB;
+    uint8 peepex_path_limits;
     uint32 item_standard_flags;     // 0xFC
 } rct_peep;
 assert_struct_size(rct_peep, 0x100);

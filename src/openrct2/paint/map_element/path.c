@@ -694,7 +694,7 @@ void path_paint(paint_session * session, uint8 direction, uint16 height, rct_map
         sceneryImageFlags = construction_markers[gConfigGeneral.construction_marker_colour];
     }
 
-    if (map_element->flags & MAP_ELEMENT_FLAG_GHOST) {
+    if (map_element->flags & MAP_ELEMENT_FLAG_GHOST) { // || footpath_element_is_wide(map_element)) {
         session->InteractionType = VIEWPORT_INTERACTION_ITEM_NONE;
         imageFlags = construction_markers[gConfigGeneral.construction_marker_colour];
     }
