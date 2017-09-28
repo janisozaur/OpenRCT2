@@ -108,6 +108,7 @@ void scenery_paint(paint_session * session, uint8 direction, sint32 height, rct_
 void fence_paint(paint_session * session, uint8 direction, sint32 height, rct_map_element* mapElement);
 void scenery_multiple_paint(paint_session * session, uint8 direction, uint16 height, rct_map_element *mapElement);
 void track_paint(paint_session * session, uint8 direction, sint32 height, rct_map_element *mapElement);
+void virtual_floor_paint(paint_session * session);
 
 #ifdef __cplusplus
 }

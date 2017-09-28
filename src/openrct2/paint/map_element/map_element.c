@@ -16,6 +16,7 @@
 
 #include "../paint.h"
 #include "../../interface/viewport.h"
+#include "../../input.h"
 #include "map_element.h"
 #include "../../drawing/drawing.h"
 #include "../../ride/ride_data.h"
@@ -282,6 +283,8 @@ static void sub_68B3FB(paint_session * session, sint32 x, sint32 y)
         }
         session->MapPosition = dword_9DE574;
     } while (!map_element_is_last_for_tile(map_element++));
+    
+    virtual_floor_paint(session);
 
     if (!gShowSupportSegmentHeights) {
         return;
@@ -320,6 +323,33 @@ static void sub_68B3FB(paint_session * session, sint32 x, sint32 y)
 
         }
     }
+}
+
+void virtual_floor_paint(paint_session * session)
+{
+    sint16 virtualFloorSize = 128;
+
+    if (session->MapPosition.x + virtualFloorSize < gMapSelectPositionA.x ||
+        session->MapPosition.x - virtualFloorSize > gMapSelectPositionB.x ||
+        session->MapPosition.y + virtualFloorSize < gMapSelectPositionA.y ||
+        session->MapPosition.y - virtualFloorSize > gMapSelectPositionB.y)
+    {
+        return;
+    }
+
+    sint32 height = gSceneryPlaceZ & 0xFFF8;
+    if (input_test_place_object_modifier((PLACE_OBJECT_MODIFIER) (PLACE_OBJECT_MODIFIER_COPY_Z)))
+    {
+        height = gSceneryCtrlPressZ;
+        if (input_test_place_object_modifier((PLACE_OBJECT_MODIFIER) (PLACE_OBJECT_MODIFIER_SHIFT_Z)))
+        {
+            height += gSceneryCtrlPressZ + gSceneryShiftPressZOffset;
+        }
+    }
+
+    session->InteractionType = VIEWPORT_INTERACTION_ITEM_NONE;
+    uint32 image_id = SPR_TERRAIN_SELECTION_SQUARE | (COLOUR_BORDEAUX_RED << 19) | IMAGE_TYPE_REMAP;
+    sub_98196C(session, image_id, 0, 0, 10, 10, -1, height, get_current_rotation());
 }
 
 void paint_util_push_tunnel_left(paint_session * session, uint16 height, uint8 type)
