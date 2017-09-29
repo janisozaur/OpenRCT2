@@ -1266,6 +1266,9 @@ static void sub_6E1F34(sint16 x, sint16 y, uint16 selected_scenery, sint16* grid
             *parameter_1 = (selected_scenery & 0xFF) << 8;
             *parameter_2 = (cl ^ (1 << 1)) | (gWindowSceneryPrimaryColour << 8);
             *parameter_3 = rotation | (gWindowScenerySecondaryColour << 16);
+            
+            map_set_virtual_floor_height(gSceneryPlaceZ);
+
             return;
         }
 
@@ -1514,6 +1517,8 @@ static void sub_6E1F34(sint16 x, sint16 y, uint16 selected_scenery, sint16* grid
         break;
     }
     }
+
+    map_set_virtual_floor_height(gSceneryPlaceZ);
 }
 
 void game_command_callback_place_banner(sint32 eax, sint32 ebx, sint32 ecx, sint32 edx, sint32 esi, sint32 edi, sint32 ebp)
