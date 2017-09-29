@@ -22,6 +22,7 @@
 #include "../game.h"
 #include "../interface/Cursors.h"
 #include "../interface/window.h"
+#include "../input.h"
 #include "../localisation/date.h"
 #include "../localisation/localisation.h"
 #include "../management/finance.h"
@@ -79,6 +80,9 @@ rct_xy16        gMapSelectPositionA;
 rct_xy16        gMapSelectPositionB;
 rct_xyz16       gMapSelectArrowPosition;
 uint8           gMapSelectArrowDirection;
+
+uint16          gMapVirtualFloorBaseSize = 5*32;
+uint16          gMapVirtualFloorHeight;
 
 uint8 gMapGroundFlags;
 
@@ -4623,4 +4627,18 @@ uint16 check_max_allowable_land_rights_for_tile(uint8 x, uint8 y, uint8 base_z)
     while (!map_element_is_last_for_tile(mapElement++));
 
     return destOwnership;
+}
+
+void map_set_virtual_floor_height(sint16 height)
+{
+    if (gMapVirtualFloorHeight != height && input_test_place_object_modifier(PLACE_OBJECT_MODIFIER_COPY_Z | PLACE_OBJECT_MODIFIER_SHIFT_Z));
+    {
+        map_invalidate_virtual_floor_tiles();
+    }
+
+    gMapVirtualFloorHeight      = height;
+}
+
+void map_invalidate_virtual_floor_tiles()
+{
 }
