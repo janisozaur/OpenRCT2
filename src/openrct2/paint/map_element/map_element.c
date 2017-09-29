@@ -18,6 +18,7 @@
 #include "../../interface/viewport.h"
 #include "../../input.h"
 #include "map_element.h"
+#include "surface.h"
 #include "../../drawing/drawing.h"
 #include "../../ride/ride_data.h"
 #include "../../ride/track_data.h"
@@ -327,29 +328,60 @@ static void sub_68B3FB(paint_session * session, sint32 x, sint32 y)
 
 void virtual_floor_paint(paint_session * session)
 {
-    sint16 virtualFloorSize = 128;
-
-    if (session->MapPosition.x + virtualFloorSize < gMapSelectPositionA.x ||
-        session->MapPosition.x - virtualFloorSize > gMapSelectPositionB.x ||
-        session->MapPosition.y + virtualFloorSize < gMapSelectPositionA.y ||
-        session->MapPosition.y - virtualFloorSize > gMapSelectPositionB.y)
+    if (!input_test_place_object_modifier(PLACE_OBJECT_MODIFIER_COPY_Z | PLACE_OBJECT_MODIFIER_SHIFT_Z))
     {
         return;
     }
 
-    sint32 height = gSceneryPlaceZ & 0xFFF8;
-    if (input_test_place_object_modifier((PLACE_OBJECT_MODIFIER) (PLACE_OBJECT_MODIFIER_COPY_Z)))
+    bool    showFade = false;
+    bool    showLit = false;
+
+    if ((gMapSelectFlags & MAP_SELECT_FLAG_ENABLE) &&
+        session->MapPosition.x >= gMapSelectPositionA.x - gMapVirtualFloorBaseSize &&
+        session->MapPosition.y >= gMapSelectPositionA.y - gMapVirtualFloorBaseSize &&
+        session->MapPosition.x <= gMapSelectPositionB.x + gMapVirtualFloorBaseSize &&
+        session->MapPosition.y <= gMapSelectPositionB.y + gMapVirtualFloorBaseSize)
     {
-        height = gSceneryCtrlPressZ;
-        if (input_test_place_object_modifier((PLACE_OBJECT_MODIFIER) (PLACE_OBJECT_MODIFIER_SHIFT_Z)))
+        showFade = true;
+    }
+
+    if (!showFade && !(gMapSelectFlags & MAP_SELECT_FLAG_ENABLE_CONSTRUCT))
+    {
+        return;
+    }
+
+    rct_xy16 * tile;
+    for (tile = gMapSelectionTiles; tile->x != -1; tile++) {
+        if (session->MapPosition.x >= tile->x - gMapVirtualFloorBaseSize &&
+            session->MapPosition.y >= tile->y - gMapVirtualFloorBaseSize &&
+            session->MapPosition.x <= tile->x + gMapVirtualFloorBaseSize &&
+            session->MapPosition.y <= tile->y + gMapVirtualFloorBaseSize)
         {
-            height += gSceneryCtrlPressZ + gSceneryShiftPressZOffset;
+            showFade = true;
+        }
+    }
+
+    if (!showFade)
+    {
+        return;
+    }
+        
+    for (tile = gMapSelectionTiles; tile->x != -1; tile++) {
+        if (session->MapPosition.x == tile->x &&
+            session->MapPosition.y == tile->y)
+        {
+            showLit = true;
+            break;
         }
     }
 
     session->InteractionType = VIEWPORT_INTERACTION_ITEM_NONE;
-    uint32 image_id = SPR_TERRAIN_SELECTION_SQUARE | (COLOUR_BORDEAUX_RED << 19) | IMAGE_TYPE_REMAP;
-    sub_98196C(session, image_id, 0, 0, 10, 10, -1, height, get_current_rotation());
+    uint32 image_id = SPR_TERRAIN_SELECTION_SQUARE | COLOUR_GREY << 24 | COLOUR_DARK_PURPLE << 19 | IMAGE_TYPE_REMAP;
+    if (showLit)
+    {
+        image_id = SPR_TERRAIN_SELECTION_PATROL_AREA | COLOUR_YELLOW << 19 | IMAGE_TYPE_REMAP;
+    }
+    sub_98196C(session, image_id, 0, 0, 10, 10, -1, gMapVirtualFloorHeight, get_current_rotation());
 }
 
 void paint_util_push_tunnel_left(paint_session * session, uint16 height, uint8 type)
