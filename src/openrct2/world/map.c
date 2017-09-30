@@ -4631,7 +4631,7 @@ uint16 check_max_allowable_land_rights_for_tile(uint8 x, uint8 y, uint8 base_z)
 
 void map_set_virtual_floor_height(sint16 height)
 {
-    if (gMapVirtualFloorHeight != height && input_test_place_object_modifier(PLACE_OBJECT_MODIFIER_COPY_Z | PLACE_OBJECT_MODIFIER_SHIFT_Z));
+    if (gMapVirtualFloorHeight != height && input_test_place_object_modifier(PLACE_OBJECT_MODIFIER_COPY_Z | PLACE_OBJECT_MODIFIER_SHIFT_Z))
     {
         map_invalidate_virtual_floor_tiles();
     }
