@@ -2797,7 +2797,8 @@ money32 _place_provisional_track_piece(sint32 rideIndex, sint32 trackType, sint3
         
         if (!scenery_tool_is_active())
         {
-            map_set_virtual_floor_height(z - z_begin + std::max((sint16)0, z_end));
+                // Set height to where the next track piece would begin  
+            map_set_virtual_floor_height(z - z_begin + z_end);
         }
 
         return result;
