@@ -35,9 +35,11 @@ void virtual_floor_paint(paint_session * session)
     {
         return;
     }
+    
+    rct_xy16 * tile;
 
-    bool    showFade = false;
-    bool    showLit = false;
+    bool    show        = false;
+    bool    weAreLit    = false;
 
     if ((gMapSelectFlags & MAP_SELECT_FLAG_ENABLE) &&
         session->MapPosition.x >= gMapSelectPositionA.x - gMapVirtualFloorBaseSize &&
@@ -45,41 +47,60 @@ void virtual_floor_paint(paint_session * session)
         session->MapPosition.x <= gMapSelectPositionB.x + gMapVirtualFloorBaseSize &&
         session->MapPosition.y <= gMapSelectPositionB.y + gMapVirtualFloorBaseSize)
     {
-        showFade = true;
+        show = true;
         if (session->MapPosition.x >= gMapSelectPositionA.x &&
             session->MapPosition.y >= gMapSelectPositionA.y &&
             session->MapPosition.x <= gMapSelectPositionB.x &&
             session->MapPosition.y <= gMapSelectPositionB.y)
         {
-            showLit = true;
+            weAreLit = true;
         }
     }
 
-    if (!showFade && !(gMapSelectFlags & MAP_SELECT_FLAG_ENABLE_CONSTRUCT))
+    if (!show)
     {
-        return;
-    }
-
-    rct_xy16 * tile;
-    for (tile = gMapSelectionTiles; tile->x != -1; tile++) {
-        if (session->MapPosition.x >= tile->x - gMapVirtualFloorBaseSize &&
-            session->MapPosition.y >= tile->y - gMapVirtualFloorBaseSize &&
-            session->MapPosition.x <= tile->x + gMapVirtualFloorBaseSize &&
-            session->MapPosition.y <= tile->y + gMapVirtualFloorBaseSize)
+        if (gMapSelectFlags & MAP_SELECT_FLAG_ENABLE_CONSTRUCT)
         {
-            showFade = true;
+            for (tile = gMapSelectionTiles; tile->x != -1; tile++)
+            {
+                if (session->MapPosition.x >= tile->x - gMapVirtualFloorBaseSize &&
+                    session->MapPosition.y >= tile->y - gMapVirtualFloorBaseSize &&
+                    session->MapPosition.x <= tile->x + gMapVirtualFloorBaseSize &&
+                    session->MapPosition.y <= tile->y + gMapVirtualFloorBaseSize)
+                {
+                    show = true;
+                }
+            }
+            if (!show)
+            {
+                return;
+            }
+        }
+        else
+        {
+            return;
         }
     }
-
-    if (!showFade)
+    
+    if (gMapSelectFlags & MAP_SELECT_FLAG_ENABLE_CONSTRUCT)
     {
-        return;
+        for (tile = gMapSelectionTiles; tile->x != -1; tile++)
+        {
+            if (session->MapPosition.x == tile->x &&
+                session->MapPosition.y == tile->y &&
+                session->MapPosition.x == tile->x &&
+                session->MapPosition.y == tile->y)
+            {
+                weAreLit = true;
+            }
+        }
     }
     
     session->InteractionType = VIEWPORT_INTERACTION_ITEM_NONE;
 
     sint16 virtualFloorClipHeight = gMapVirtualFloorHeight / 8;
     uint8 occupiedEdges = 0;
+    uint8 litEdges = 0;
 
         // Check for occupation and walls
 
@@ -90,11 +111,6 @@ void virtual_floor_paint(paint_session * session)
     do
     {
         sint32 elementType = map_element_get_type(mapElement);
-        
-        if (mapElement->flags & MAP_ELEMENT_FLAG_GHOST)
-        {
-            continue;
-        }
 
         if (elementType == MAP_ELEMENT_TYPE_SURFACE)
         {
@@ -123,6 +139,12 @@ void virtual_floor_paint(paint_session * session)
             occupiedEdges   |= 1 << ((direction + get_current_rotation()) % 4);
             continue;
         }
+        
+        if (mapElement->flags & MAP_ELEMENT_FLAG_GHOST)
+        {
+            weAreLit = true;
+            continue;
+        }
 
         weAreOccupied = true;
     }
@@ -136,15 +158,34 @@ void virtual_floor_paint(paint_session * session)
 
         bool theyAreOccupied        = false;
         bool theyAreBelowGround     = false;
+        bool theyAreLit             = false;
+        
+        if ((gMapSelectFlags & MAP_SELECT_FLAG_ENABLE) &&
+            theirLocationX >= gMapSelectPositionA.x &&
+            theirLocationY >= gMapSelectPositionA.y &&
+            theirLocationX <= gMapSelectPositionB.x &&
+            theirLocationY <= gMapSelectPositionB.y)
+        {
+            theyAreLit = true;
+        }
+        if (!theyAreLit)
+        {
+            if (gMapSelectFlags & MAP_SELECT_FLAG_ENABLE_CONSTRUCT)
+            {
+                for (tile = gMapSelectionTiles; tile->x != -1; tile++)
+                {
+                    if (theirLocationX == tile->x &&
+                        theirLocationY == tile->y)
+                    {
+                        theyAreLit = true;
+                    }
+                }
+            }
+        }
 
         mapElement = map_get_first_element_at(theirLocationX >> 5, theirLocationY >> 5);
         do
         {
-            if (mapElement->flags & MAP_ELEMENT_FLAG_GHOST)
-            {
-                continue;
-            }
-
             sint32 elementType = map_element_get_type(mapElement);
 
             if (elementType == MAP_ELEMENT_TYPE_SURFACE)
@@ -178,8 +219,15 @@ void virtual_floor_paint(paint_session * session)
                 }
                 continue;
             }
-            
-            theyAreOccupied = true;
+
+            if (mapElement->flags & MAP_ELEMENT_FLAG_GHOST)
+            {
+                theyAreLit = true;
+            }
+            else
+            {
+                theyAreOccupied = true;
+            }
         }
         while (!map_element_is_last_for_tile(mapElement++));
 
@@ -187,28 +235,47 @@ void virtual_floor_paint(paint_session * session)
             weAreBelowGround != theyAreBelowGround)
         {
             occupiedEdges   |= 1 << i;
-            continue;
+        }
+        if (weAreLit != theyAreLit)
+        {
+            litEdges        |= 1 << i;
         }
     }
 
     uint32 remap_base = COLOUR_DARK_PURPLE << 19 | IMAGE_TYPE_REMAP;
     uint32 remap_edge = COLOUR_WHITE << 19 | IMAGE_TYPE_REMAP;
+    uint32 remap_lit  = COLOUR_YELLOW << 19 | IMAGE_TYPE_REMAP;
+
+    uint8 dullEdges = 0xF & ~occupiedEdges & ~litEdges;
+    uint8 paintEdges = (weAreOccupied || weAreLit)? ~dullEdges : 0xF;
 
     if (weAreOccupied)
     {
         remap_base = COLOUR_BLACK << 19 | IMAGE_TYPE_REMAP;
     }
-    if (showLit)
+    if (weAreLit)
     {
-        remap_base = COLOUR_YELLOW << 19 | IMAGE_TYPE_REMAP;
-        if (weAreOccupied)
-        {
-            remap_base = COLOUR_DARK_YELLOW << 19 | IMAGE_TYPE_REMAP;
-        }
+        remap_base = COLOUR_BLACK << 19 | IMAGE_TYPE_REMAP;
     }
-
-    sub_98197C(session, SPR_G2_SELECTION_EDGE_NW | ((occupiedEdges & 0x8)? remap_edge : remap_base), 0, 0, 1, 1, 1, gMapVirtualFloorHeight,  5, 16, gMapVirtualFloorHeight + 0, get_current_rotation());
-    sub_98197C(session, SPR_G2_SELECTION_EDGE_SW | ((occupiedEdges & 0x4)? remap_edge : remap_base), 0, 0, 1, 1, 1, gMapVirtualFloorHeight, 27, 16, gMapVirtualFloorHeight + 0, get_current_rotation());
-    sub_98197C(session, SPR_G2_SELECTION_EDGE_NE | ((occupiedEdges & 0x1)? remap_edge : remap_base), 0, 0, 1, 1, 1, gMapVirtualFloorHeight, 16,  5, gMapVirtualFloorHeight + 0, get_current_rotation());
-    sub_98197C(session, SPR_G2_SELECTION_EDGE_SE | ((occupiedEdges & 0x2)? remap_edge : remap_base), 0, 0, 1, 1, 1, gMapVirtualFloorHeight, 16, 27, gMapVirtualFloorHeight + 0, get_current_rotation());
+    
+    if (paintEdges & 0x8)
+    {
+        sub_98197C(session, SPR_G2_SELECTION_EDGE_NW | (!(occupiedEdges & 0x8)? ((litEdges & 0x8)? remap_lit : remap_base) : remap_edge),
+            0, 0, 1, 1, 1, gMapVirtualFloorHeight,  1,  5, gMapVirtualFloorHeight + ((dullEdges & 0x8)? -2 : 0), get_current_rotation());
+    }
+    if (paintEdges & 0x4)
+    {
+        sub_98197C(session, SPR_G2_SELECTION_EDGE_SW | (!(occupiedEdges & 0x4)? ((litEdges & 0x4)? remap_lit : remap_base) : remap_edge),
+            0, 0, 1, 1, 1, gMapVirtualFloorHeight, 27, 16, gMapVirtualFloorHeight + ((dullEdges & 0x4)? -2 : 0), get_current_rotation());
+    }
+    if (paintEdges & 0x1)
+    {
+        sub_98197C(session, SPR_G2_SELECTION_EDGE_NE | (!(occupiedEdges & 0x1)? ((litEdges & 0x1)? remap_lit : remap_base) : remap_edge),
+            0, 0, 1, 1, 1, gMapVirtualFloorHeight,  5,  1, gMapVirtualFloorHeight + ((dullEdges & 0x1)? -2 : 0), get_current_rotation());
+    }
+    if (paintEdges & 0x2)
+    {
+        sub_98197C(session, SPR_G2_SELECTION_EDGE_SE | (!(occupiedEdges & 0x2)? ((litEdges & 0x2)? remap_lit : remap_base) : remap_edge),
+            0, 0, 1, 1, 1, gMapVirtualFloorHeight, 16, 27, gMapVirtualFloorHeight + ((dullEdges & 0x2)? -2 : 0), get_current_rotation());
+    }
 }
