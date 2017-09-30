@@ -803,6 +803,11 @@ enum {
     SPR_G2_MINI_RC_BOOSTER_NE_SW = SPR_G2_BEGIN + 91,
     SPR_G2_MINI_RC_BOOSTER_NW_SE = SPR_G2_BEGIN + 92,
 
+    SPR_G2_SELECTION_EDGE_NW = SPR_G2_BEGIN + 93,
+    SPR_G2_SELECTION_EDGE_NE = SPR_G2_BEGIN + 94,
+    SPR_G2_SELECTION_EDGE_SW = SPR_G2_BEGIN + 95,
+    SPR_G2_SELECTION_EDGE_SE = SPR_G2_BEGIN + 96,
+
     // 0x60000, chosen because it's a round hex number
     // of the last possible range of image ID values that is large enough to fit all csg1 sprites.
     SPR_CSG_BEGIN = 393216,
