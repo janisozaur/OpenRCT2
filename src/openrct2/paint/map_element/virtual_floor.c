@@ -242,38 +242,31 @@ void virtual_floor_paint(paint_session * session)
             }
         }
         while (!map_element_is_last_for_tile(mapElement++));
-
-        if (weAreOccupied != theyAreOccupied ||
-            weAreBelowGround != theyAreBelowGround)
-        {
-            occupiedEdges   |= 1 << i;
-        }
+        
         if (weAreLit != theyAreLit)
         {
             litEdges        |= 1 << i;
+        }
+        else if (weAreOccupied != theyAreOccupied ||
+                 weAreBelowGround != theyAreBelowGround)
+        {
+            occupiedEdges   |= 1 << i;
         }
     }
 
     uint32 remap_base = COLOUR_DARK_PURPLE << 19 | IMAGE_TYPE_REMAP;
     uint32 remap_edge = COLOUR_WHITE << 19 | IMAGE_TYPE_REMAP;
-    uint32 remap_lit  = COLOUR_YELLOW << 19 | IMAGE_TYPE_REMAP;
+    uint32 remap_lit  = COLOUR_DARK_BROWN << 19 | IMAGE_TYPE_REMAP;
 
+        // Edges which are internal to objects (i.e., the tile on both sides
+        //  is occupied/lit) are not rendered to provide visual clarity.
     uint8 dullEdges = 0xF & ~occupiedEdges & ~litEdges;
     uint8 paintEdges = (weAreOccupied || weAreLit)? ~dullEdges : 0xF;
-
-    if (weAreOccupied)
-    {
-        remap_base = COLOUR_BLACK << 19 | IMAGE_TYPE_REMAP;
-    }
-    if (weAreLit)
-    {
-        remap_base = COLOUR_BLACK << 19 | IMAGE_TYPE_REMAP;
-    }
     
     if (paintEdges & 0x8)
     {
         sub_98197C(session, SPR_G2_SELECTION_EDGE_NW | (!(occupiedEdges & 0x8)? ((litEdges & 0x8)? remap_lit : remap_base) : remap_edge),
-            0, 0, 1, 1, 1, gMapVirtualFloorHeight,  1,  5, gMapVirtualFloorHeight + ((dullEdges & 0x8)? -2 : 0), get_current_rotation());
+            0, 0, 1, 1, 1, gMapVirtualFloorHeight,  5,  5, gMapVirtualFloorHeight + ((dullEdges & 0x8)? -2 : 0), get_current_rotation());
     }
     if (paintEdges & 0x4)
     {
@@ -283,7 +276,7 @@ void virtual_floor_paint(paint_session * session)
     if (paintEdges & 0x1)
     {
         sub_98197C(session, SPR_G2_SELECTION_EDGE_NE | (!(occupiedEdges & 0x1)? ((litEdges & 0x1)? remap_lit : remap_base) : remap_edge),
-            0, 0, 1, 1, 1, gMapVirtualFloorHeight,  5,  1, gMapVirtualFloorHeight + ((dullEdges & 0x1)? -2 : 0), get_current_rotation());
+            0, 0, 1, 1, 1, gMapVirtualFloorHeight,  5,  5, gMapVirtualFloorHeight + ((dullEdges & 0x1)? -2 : 0), get_current_rotation());
     }
     if (paintEdges & 0x2)
     {
