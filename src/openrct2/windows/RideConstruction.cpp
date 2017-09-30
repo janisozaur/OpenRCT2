@@ -2766,7 +2766,10 @@ money32 _place_provisional_track_piece(sint32 rideIndex, sint32 trackType, sint3
         if (_currentTrackSlopeEnd != 0)
             viewport_set_visibility(2);
         
-        map_set_virtual_floor_height(z);
+        if (!scenery_tool_is_active())
+        {
+            map_set_virtual_floor_height(z);
+        }
 
         return result;
     } else {
@@ -2791,8 +2794,11 @@ money32 _place_provisional_track_piece(sint32 rideIndex, sint32 trackType, sint3
         viewport_set_visibility((gTrackGroundFlags & TRACK_ELEMENT_LOCATION_IS_UNDERGROUND) ? 1 : 3);
         if (_currentTrackSlopeEnd != 0)
             viewport_set_visibility(2);
-
-        map_set_virtual_floor_height(z - z_begin + std::max((sint16)0, z_end));
+        
+        if (!scenery_tool_is_active())
+        {
+            map_set_virtual_floor_height(z - z_begin + std::max((sint16)0, z_end));
+        }
 
         return result;
     }
@@ -2865,7 +2871,10 @@ void sub_6C94D8()
         if (sub_6C683D(&x, &y, &z, direction, type, 0, &mapElement, _currentTrackSelectionFlags & TRACK_SELECTION_FLAG_ARROW ? 2 : 1)) {
             ride_construction_remove_ghosts();
             _rideConstructionState = RIDE_CONSTRUCTION_STATE_0;
-            map_set_virtual_floor_height(mapElement->base_height << 3);
+            if (!scenery_tool_is_active())
+            {
+                map_set_virtual_floor_height(mapElement->base_height << 3);
+            }
         }
         break;
     case 6:
@@ -2877,7 +2886,10 @@ void sub_6C94D8()
 
         _rideConstructionArrowPulseTime = 5;
         _currentTrackSelectionFlags ^= TRACK_SELECTION_FLAG_ARROW;
-        map_set_virtual_floor_height(_currentTrackBeginZ << 3);
+        if (!scenery_tool_is_active())
+        {
+            map_set_virtual_floor_height(_currentTrackBeginZ << 3);
+        }
         x = _currentTrackBeginX & 0xFFE0;
         y = _currentTrackBeginY & 0xFFE0;
         z = _currentTrackBeginZ + 15;
