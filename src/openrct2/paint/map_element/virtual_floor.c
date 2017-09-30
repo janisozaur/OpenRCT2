@@ -31,6 +31,7 @@ const rct_xy_element offsets[4] =
 
 void virtual_floor_paint(paint_session * session)
 {
+        // We only show when the placement modifier keys are active
     if (!input_test_place_object_modifier(PLACE_OBJECT_MODIFIER_COPY_Z | PLACE_OBJECT_MODIFIER_SHIFT_Z))
     {
         return;
@@ -41,6 +42,8 @@ void virtual_floor_paint(paint_session * session)
     bool    show        = false;
     bool    weAreLit    = false;
 
+        // Check if map selection (usually single tiles) are enabled
+        //  and if the current tile is near or on them
     if ((gMapSelectFlags & MAP_SELECT_FLAG_ENABLE) &&
         session->MapPosition.x >= gMapSelectPositionA.x - gMapVirtualFloorBaseSize &&
         session->MapPosition.y >= gMapSelectPositionA.y - gMapVirtualFloorBaseSize &&
@@ -59,6 +62,7 @@ void virtual_floor_paint(paint_session * session)
 
     if (!show)
     {
+            // Check if we are anywhere near the selection tiles (larger scenery / rides)
         if (gMapSelectFlags & MAP_SELECT_FLAG_ENABLE_CONSTRUCT)
         {
             for (tile = gMapSelectionTiles; tile->x != -1; tile++)
@@ -82,6 +86,7 @@ void virtual_floor_paint(paint_session * session)
         }
     }
     
+        // See if we are on top of the selectiontiles
     if (gMapSelectFlags & MAP_SELECT_FLAG_ENABLE_CONSTRUCT)
     {
         for (tile = gMapSelectionTiles; tile->x != -1; tile++)
@@ -96,6 +101,7 @@ void virtual_floor_paint(paint_session * session)
         }
     }
     
+        // This is a virtual floor, so no interactions
     session->InteractionType = VIEWPORT_INTERACTION_ITEM_NONE;
 
     sint16 virtualFloorClipHeight = gMapVirtualFloorHeight / 8;
@@ -107,6 +113,10 @@ void virtual_floor_paint(paint_session * session)
     bool    weAreOccupied       = false;
     bool    weAreBelowGround    = false;
 
+        // Iterate through the map elements of the current tile to find:
+        //  * Surfaces, which may put us underground
+        //  * Walls / banners, which are displayed as occupied edges
+        //  * Ghost objects, which are displayed as lit squares
     rct_map_element * mapElement = map_get_first_element_at(session->MapPosition.x >> 5, session->MapPosition.y >> 5);
     do
     {
@@ -150,6 +160,8 @@ void virtual_floor_paint(paint_session * session)
     }
     while (!map_element_is_last_for_tile(mapElement++));
 
+        // Try the four tiles next to us for the same parameters as above,
+        //  if our parameters differ we set an edge towards that tile
     for (uint8 i = 0; i < 4; i++)
     {
         uint8 effectiveRotation = (4 + i - get_current_rotation()) % 4;
