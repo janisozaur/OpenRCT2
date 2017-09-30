@@ -15,6 +15,7 @@
 #pragma endregion
 
 #include "paint.h"
+#include "Paint2.h"
 #include "../drawing/drawing.h"
 #include "../localisation/localisation.h"
 #include "../config/Config.h"
@@ -60,10 +61,6 @@ bool gShowDirtyVisuals;
 bool gPaintBoundingBoxes;
 
 static void paint_session_init(paint_session * session, rct_drawpixelinfo * dpi);
-static void paint_attached_ps(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 viewFlags);
-static void paint_ps_image_with_bounding_boxes(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 imageId, sint16 x, sint16 y);
-static void paint_ps_image(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 imageId, sint16 x, sint16 y);
-static uint32 paint_ps_colourify_image(uint32 imageId, uint8 spriteType, uint32 viewFlags);
 
 paint_session * paint_session_alloc(rct_drawpixelinfo * dpi)
 {
@@ -736,194 +733,12 @@ void paint_session_generate(paint_session * session)
     }
 }
 
-static bool is_bbox_intersecting(uint8 rotation, const paint_struct_bound_box *initialBBox,
-                                 const paint_struct_bound_box *currentBBox) {
-    bool result = false;
-    switch (rotation) {
-    case 0:
-        if ((*initialBBox).z_end >= (*currentBBox).z && (*initialBBox).y_end >= (*currentBBox).y && (*initialBBox).x_end >= (*currentBBox).x
-            && !((*initialBBox).z < (*currentBBox).z_end && (*initialBBox).y < (*currentBBox).y_end && (*initialBBox).x < (*currentBBox).x_end))
-            result = true;
-        break;
-    case 1:
-        if ((*initialBBox).z_end >= (*currentBBox).z && (*initialBBox).y_end >= (*currentBBox).y && (*initialBBox).x_end < (*currentBBox).x
-            && !((*initialBBox).z < (*currentBBox).z_end && (*initialBBox).y < (*currentBBox).y_end && (*initialBBox).x >= (*currentBBox).x_end))
-            result = true;
-        break;
-    case 2:
-        if ((*initialBBox).z_end >= (*currentBBox).z && (*initialBBox).y_end < (*currentBBox).y && (*initialBBox).x_end < (*currentBBox).x
-            && !((*initialBBox).z < (*currentBBox).z_end && (*initialBBox).y >= (*currentBBox).y_end && (*initialBBox).x >= (*currentBBox).x_end))
-            result = true;
-        break;
-    case 3:
-        if ((*initialBBox).z_end >= (*currentBBox).z && (*initialBBox).y_end < (*currentBBox).y && (*initialBBox).x_end >= (*currentBBox).x
-            && !((*initialBBox).z < (*currentBBox).z_end && (*initialBBox).y >= (*currentBBox).y_end && (*initialBBox).x < (*currentBBox).x_end))
-            result = true;
-        break;
-    }
-    return result;
-}
-
-paint_struct * paint_arrange_structs_helper(paint_struct * ps_next, uint16 quadrantIndex, uint8 flag)
-{
-    paint_struct * ps;
-    paint_struct * ps_temp;
-    do {
-        ps = ps_next;
-        ps_next = ps_next->next_quadrant_ps;
-        if (ps_next == NULL) return ps;
-    } while (quadrantIndex > ps_next->quadrant_index);
-
-    // Cache the last visited node so we don't have to walk the whole list again
-    paint_struct * ps_cache = ps;
-
-    ps_temp = ps;
-    do {
-        ps = ps->next_quadrant_ps;
-        if (ps == NULL) break;
-
-        if (ps->quadrant_index > quadrantIndex + 1) {
-            ps->quadrant_flags = PAINT_QUADRANT_FLAG_BIGGER;
-        }
-        else if (ps->quadrant_index == quadrantIndex + 1) {
-            ps->quadrant_flags = PAINT_QUADRANT_FLAG_NEXT | PAINT_QUADRANT_FLAG_IDENTICAL;
-        }
-        else if (ps->quadrant_index == quadrantIndex) {
-            ps->quadrant_flags = flag | PAINT_QUADRANT_FLAG_IDENTICAL;
-        }
-    } while (ps->quadrant_index <= quadrantIndex + 1);
-    ps = ps_temp;
-
-    uint8 rotation = get_current_rotation();
-    while (true) {
-        while (true) {
-            ps_next = ps->next_quadrant_ps;
-            if (ps_next == NULL) return ps_cache;
-            if (ps_next->quadrant_flags & PAINT_QUADRANT_FLAG_BIGGER) return ps_cache;
-            if (ps_next->quadrant_flags & PAINT_QUADRANT_FLAG_IDENTICAL) break;
-            ps = ps_next;
-        }
-
-        ps_next->quadrant_flags &= ~PAINT_QUADRANT_FLAG_IDENTICAL;
-        ps_temp = ps;
-
-        const paint_struct_bound_box initialBBox = {
-            .x = ps_next->bound_box_x,
-            .y = ps_next->bound_box_y,
-            .z = ps_next->bound_box_z,
-            .x_end = ps_next->bound_box_x_end,
-            .y_end = ps_next->bound_box_y_end,
-            .z_end = ps_next->bound_box_z_end
-        };
-
-
-        while (true) {
-            ps = ps_next;
-            ps_next = ps_next->next_quadrant_ps;
-            if (ps_next == NULL) break;
-            if (ps_next->quadrant_flags & PAINT_QUADRANT_FLAG_BIGGER) break;
-            if (!(ps_next->quadrant_flags & PAINT_QUADRANT_FLAG_NEXT)) continue;
-
-            const paint_struct_bound_box currentBBox = {
-                    .x = ps_next->bound_box_x,
-                    .y = ps_next->bound_box_y,
-                    .z = ps_next->bound_box_z,
-                    .x_end = ps_next->bound_box_x_end,
-                    .y_end = ps_next->bound_box_y_end,
-                    .z_end = ps_next->bound_box_z_end
-            };
-
-            bool compareResult = is_bbox_intersecting(rotation, &initialBBox, &currentBBox);
-
-            if (compareResult) {
-                ps->next_quadrant_ps = ps_next->next_quadrant_ps;
-                paint_struct *ps_temp2 = ps_temp->next_quadrant_ps;
-                ps_temp->next_quadrant_ps = ps_next;
-                ps_next->next_quadrant_ps = ps_temp2;
-                ps_next = ps;
-            }
-        }
-
-        ps = ps_temp;
-    }
-}
-
-/**
- *
- *  rct2: 0x00688217
- */
-paint_struct paint_session_arrange(paint_session * session)
-{
-    paint_struct psHead = { 0 };
-    paint_struct * ps = &psHead;
-    ps->next_quadrant_ps = NULL;
-    uint32 quadrantIndex = session->QuadrantBackIndex;
-    if (quadrantIndex != UINT32_MAX) {
-        do {
-            paint_struct * ps_next = session->Quadrants[quadrantIndex];
-            if (ps_next != NULL) {
-                ps->next_quadrant_ps = ps_next;
-                do {
-                    ps = ps_next;
-                    ps_next = ps_next->next_quadrant_ps;
-                } while (ps_next != NULL);
-            }
-        } while (++quadrantIndex <= session->QuadrantFrontIndex);
-
-        paint_struct * ps_cache = paint_arrange_structs_helper(&psHead, session->QuadrantBackIndex & 0xFFFF, PAINT_QUADRANT_FLAG_NEXT);
-
-        quadrantIndex = session->QuadrantBackIndex;
-        while (++quadrantIndex < session->QuadrantFrontIndex) {
-            ps_cache = paint_arrange_structs_helper(ps_cache, quadrantIndex & 0xFFFF, 0);
-        }
-    }
-    return psHead;
-}
-
-/**
- *
- *  rct2: 0x00688485
- */
-void paint_draw_structs(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 viewFlags)
-{
-    paint_struct* previous_ps = ps->next_quadrant_ps;
-    for (ps = ps->next_quadrant_ps; ps;) {
-        sint16 x = ps->x;
-        sint16 y = ps->y;
-        if (ps->sprite_type == VIEWPORT_INTERACTION_ITEM_SPRITE) {
-            if (dpi->zoom_level >= 1) {
-                x = floor2(x, 2);
-                y = floor2(y, 2);
-                if (dpi->zoom_level >= 2) {
-                    x = floor2(x, 4);
-                    y = floor2(y, 4);
-                }
-            }
-        }
-
-        uint32 imageId = paint_ps_colourify_image(ps->image_id, ps->sprite_type, viewFlags);
-        if (gPaintBoundingBoxes && dpi->zoom_level == 0) {
-            paint_ps_image_with_bounding_boxes(dpi, ps, imageId, x, y);
-        } else {
-            paint_ps_image(dpi, ps, imageId, x, y);
-        }
-
-        if (ps->var_20 != 0) {
-            ps = ps->var_20;
-        } else {
-            paint_attached_ps(dpi, ps, viewFlags);
-            ps = previous_ps->next_quadrant_ps;
-            previous_ps = ps;
-        }
-    }
-}
-
 /**
  *
  *  rct2: 0x00688596
  *  Part of 0x688485
  */
-static void paint_attached_ps(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 viewFlags)
+void paint_attached_ps(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 viewFlags)
 {
     attached_paint_struct * attached_ps = ps->attached_ps;
     for (; attached_ps; attached_ps = attached_ps->next) {
@@ -939,7 +754,7 @@ static void paint_attached_ps(rct_drawpixelinfo * dpi, paint_struct * ps, uint32
     }
 }
 
-static void paint_ps_image_with_bounding_boxes(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 imageId, sint16 x, sint16 y)
+void paint_ps_image_with_bounding_boxes(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 imageId, sint16 x, sint16 y)
 {
     uint8 colour = BoundBoxDebugColours[ps->sprite_type];
 
@@ -988,7 +803,7 @@ static void paint_ps_image_with_bounding_boxes(rct_drawpixelinfo * dpi, paint_st
     gfx_draw_line(dpi, screenCoordFrontTop.x, screenCoordFrontTop.y, screenCoordRightTop.x, screenCoordRightTop.y, colour);
 }
 
-static void paint_ps_image(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 imageId, sint16 x, sint16 y)
+void paint_ps_image(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 imageId, sint16 x, sint16 y)
 {
     if (ps->flags & PAINT_STRUCT_FLAG_IS_MASKED) {
         gfx_draw_sprite_raw_masked(dpi, x, y, imageId, ps->colour_image_id);
@@ -997,7 +812,7 @@ static void paint_ps_image(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 im
     }
 }
 
-static uint32 paint_ps_colourify_image(uint32 imageId, uint8 spriteType, uint32 viewFlags)
+uint32 paint_ps_colourify_image(uint32 imageId, uint8 spriteType, uint32 viewFlags)
 {
     if (viewFlags & VIEWPORT_FLAG_SEETHROUGH_RIDES) {
         if (spriteType == VIEWPORT_INTERACTION_ITEM_RIDE) {

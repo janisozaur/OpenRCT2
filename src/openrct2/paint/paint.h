@@ -76,12 +76,16 @@ struct paint_struct {
     attached_paint_struct* attached_ps; //0x1C
     paint_struct* var_20;
     paint_struct* next_quadrant_ps; // 0x24
+    paint_struct* prevBehind;
+    paint_struct* nextBehind;
+    paint_struct* lastBehind;
     uint8 sprite_type;      //0x28
     uint8 var_29;
     uint16 pad_2A;
     uint16 map_x;           // 0x2C
     uint16 map_y;           // 0x2E
     rct_map_element *mapElement; // 0x30 (or sprite pointer)
+    sint32 isoDepth;
 };
 #ifdef PLATFORM_32BIT
 // TODO: drop packing from this when all rendering is done.
@@ -235,6 +239,11 @@ paint_struct paint_session_arrange(paint_session * session);
 paint_struct * paint_arrange_structs_helper(paint_struct * ps_next, uint16 quadrantIndex, uint8 flag);
 void paint_draw_structs(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 viewFlags);
 void paint_draw_money_structs(rct_drawpixelinfo * dpi, paint_string_struct * ps);
+
+uint32 paint_ps_colourify_image(uint32 imageId, uint8 spriteType, uint32 viewFlags);
+void paint_ps_image_with_bounding_boxes(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 imageId, sint16 x, sint16 y);
+void paint_ps_image(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 imageId, sint16 x, sint16 y);
+void paint_attached_ps(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 viewFlags);
 
 // TESTING
 #ifdef __TESTPAINT__

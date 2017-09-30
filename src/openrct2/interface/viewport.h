@@ -127,7 +127,7 @@ void viewport_update_position(rct_window *window);
 void viewport_update_sprite_follow(rct_window *window);
 void viewport_render(rct_drawpixelinfo *dpi, rct_viewport *viewport, sint32 left, sint32 top, sint32 right, sint32 bottom);
 void viewport_paint(rct_viewport* viewport, rct_drawpixelinfo* dpi, sint16 left, sint16 top, sint16 right, sint16 bottom);
-
+void viewport_paint_weather_gloom(rct_drawpixelinfo * dpi);
 void viewport_adjust_for_map_height(sint16* x, sint16* y, sint16 *z);
 
 rct_xy16 screen_coord_to_viewport_coord(rct_viewport *viewport, uint16 x, uint16 y);

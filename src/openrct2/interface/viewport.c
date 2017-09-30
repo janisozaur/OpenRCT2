@@ -32,6 +32,7 @@
 #include "../world/map.h"
 #include "../world/scenery.h"
 #include "../world/sprite.h"
+#include "../paint/Paint2.h"
 #include "colour.h"
 #include "viewport.h"
 #include "window.h"
@@ -67,7 +68,6 @@ static sint16 _interactionMapY;
 static uint16 _unk9AC154;
 
 static void viewport_paint_column(rct_drawpixelinfo * dpi, uint32 viewFlags);
-static void viewport_paint_weather_gloom(rct_drawpixelinfo * dpi);
 
 /**
  * This is not a viewport function. It is used to setup many variables for
@@ -733,35 +733,10 @@ void viewport_paint(rct_viewport* viewport, rct_drawpixelinfo* dpi, sint16 left,
 
 static void viewport_paint_column(rct_drawpixelinfo * dpi, uint32 viewFlags)
 {
-    gCurrentViewportFlags = viewFlags;
-
-    if (viewFlags & (VIEWPORT_FLAG_HIDE_VERTICAL | VIEWPORT_FLAG_HIDE_BASE | VIEWPORT_FLAG_UNDERGROUND_INSIDE | VIEWPORT_FLAG_PAINT_CLIP_TO_HEIGHT)) {
-        uint8 colour = 10;
-        if (viewFlags & VIEWPORT_FLAG_INVISIBLE_SPRITES) {
-            colour = 0;
-        }
-        gfx_clear(dpi, colour);
-    }
-
-    paint_session * session = paint_session_alloc(dpi);
-    paint_session_generate(session);
-    paint_struct ps = paint_session_arrange(session);
-    paint_draw_structs(dpi, &ps, viewFlags);
-    paint_session_free(session);
-
-    if (gConfigGeneral.render_weather_gloom &&
-        !gTrackDesignSaveMode &&
-        !(viewFlags & VIEWPORT_FLAG_INVISIBLE_SPRITES)
-    ) {
-        viewport_paint_weather_gloom(dpi);
-    }
-
-    if (session->PSStringHead != NULL) {
-        paint_draw_money_structs(dpi, session->PSStringHead);
-    }
+    paint_viewport(dpi, viewFlags);
 }
 
-static void viewport_paint_weather_gloom(rct_drawpixelinfo * dpi)
+void viewport_paint_weather_gloom(rct_drawpixelinfo * dpi)
 {
     uint8 gloom = gClimateCurrentWeatherGloom;
     if (gloom != 0) {
