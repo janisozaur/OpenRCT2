@@ -285,7 +285,9 @@ static void sub_68B3FB(paint_session * session, sint32 x, sint32 y)
         session->MapPosition = dword_9DE574;
     } while (!map_element_is_last_for_tile(map_element++));
     
+#ifndef __TESTPAINT__
     virtual_floor_paint(session);
+#endif // __TESTPAINT__
 
     if (!gShowSupportSegmentHeights) {
         return;
