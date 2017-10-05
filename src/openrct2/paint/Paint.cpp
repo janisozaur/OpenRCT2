@@ -404,6 +404,44 @@ static bool is_bbox_intersecting(uint8 rotation, const paint_struct& left,
     return result;
 }
 
+
+static bool is_bbox_intersecting2(uint8 rotation, const paint_struct &left,
+                                  const paint_struct &right)
+{
+    const paint_struct_bound_box &initialBBox = left.bbox;
+    const paint_struct_bound_box &currentBBox = right.bbox;
+    bool result = false;
+    if (initialBBox.x_end >= currentBBox.x && initialBBox.x <= currentBBox.x_end && // overlap in X?
+        initialBBox.y_end >= currentBBox.y && initialBBox.y <= currentBBox.y_end && // overlap in Y?
+        initialBBox.z_end >= currentBBox.z && initialBBox.z <= currentBBox.z_end)
+    { // overlap in Z?
+        /* Use X+Y+Z as the sorting order, so sprites closer to the bottom of
+         * the screen and with higher Z elevation, are drawn in front.
+         * Here X,Y,Z are the coordinates of the "center of mass" of the sprite,
+         * i.e. X=(left+right)/2, etc.
+         * However, since we only care about order, don't actually divide / 2
+         */
+        if (initialBBox.x + initialBBox.x_end + initialBBox.y + initialBBox.y_end + initialBBox.z + initialBBox.z_end <=
+            currentBBox.x + currentBBox.x_end + currentBBox.y + currentBBox.y_end + currentBBox.z + currentBBox.z_end)
+        {
+            result = true;
+        }
+    } else
+    {
+        /* We only change the order, if it is definite.
+         * I.e. every single order of X, Y, Z says ps2 is behind ps or they overlap.
+         * That is: If one partial order says ps behind ps2, do not change the order.
+         */
+        if (initialBBox.x_end < currentBBox.x ||
+            initialBBox.y_end < currentBBox.y ||
+            initialBBox.z_end < currentBBox.z)
+        {
+            result = true;
+        }
+    }
+    return !result;
+}
+
 paint_struct * paint_arrange_structs_helper(paint_struct * ps_next, uint16 quadrantIndex, uint8 flag)
 {
     paint_struct * ps;
@@ -512,7 +550,7 @@ paint_struct paint_session_arrange(paint_session * session)
         {
             ps_cache = paint_arrange_structs_helper(ps_cache, quadrantIndex & 0xFFFF, 0);
         }*/
-        psHead = *listbase_sort_impl(&psHead, get_current_rotation(), is_bbox_intersecting);
+        psHead = *listbase_sort_impl(&psHead, get_current_rotation(), is_bbox_intersecting2);
     }
     return psHead;
 }
