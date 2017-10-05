@@ -339,7 +339,7 @@ static paint_struct *listbase_sort_impl(struct paint_struct *head, uint8 directi
             {
                 struct paint_struct *s;
                 /* Using <= instead of < gives us sort stability */
-                if (r_empty || (!l_empty && cmp(direction, *l, *r) <= 0))
+                if (r_empty || (!l_empty && !cmp(direction, *l, *r)))
                 {
                     s = l;
                     l = l->next_quadrant_ps;
