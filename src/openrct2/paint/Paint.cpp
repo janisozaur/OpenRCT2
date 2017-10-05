@@ -306,9 +306,78 @@ void paint_session_generate(paint_session * session)
     }
 }
 
-static bool is_bbox_intersecting(uint8 rotation, const paint_struct_bound_box& initialBBox,
-    const paint_struct_bound_box& currentBBox)
+static paint_struct *listbase_sort_impl(struct paint_struct *head, uint8 direction,
+                                        bool (*cmp)(uint8, const paint_struct &, const paint_struct &))
 {
+    int block_size = 1, block_count;
+    do
+    {
+        /* Maintain two lists pointing to two blocks, 'l' and 'r' */
+        struct paint_struct *l = head, *r = head, **tail_p;
+
+        head = NULL; /* Start a new list */
+        tail_p = &head;
+
+        block_count = 0;
+
+        /* Walk through entire list in blocks of 'block_size'*/
+        while (l != NULL)
+        {
+            /* Move 'r' to start of next block, measure size of 'l' list while doing so */
+            int l_size, r_size = block_size;
+
+            block_count++;
+            for (l_size = 0; (l_size < block_size) && (r != NULL); l_size++)
+            {
+                r = r->next_quadrant_ps;
+            }
+
+            /* Merge two list until their individual ends */
+            bool l_empty = (l_size == 0);
+            bool r_empty = (r_size == 0 || r == NULL);
+            while (!l_empty || !r_empty)
+            {
+                struct paint_struct *s;
+                /* Using <= instead of < gives us sort stability */
+                if (r_empty || (!l_empty && cmp(direction, *l, *r) <= 0))
+                {
+                    s = l;
+                    l = l->next_quadrant_ps;
+                    l_size--;
+                    l_empty = (l_size == 0);
+                } else
+                {
+                    s = r;
+                    r = r->next_quadrant_ps;
+                    r_size--;
+                    r_empty = (r_size == 0) || (r == NULL);
+                }
+
+                /* Update new list */
+                (*tail_p) = s;
+                tail_p = &(s->next_quadrant_ps);
+            }
+
+            /* 'r' now points to next block for 'l' */
+            l = r;
+        }
+
+        /* terminate new list, take care of case when input list is NULL */
+        *tail_p = NULL;
+
+        /* Lg n iterations */
+        block_size <<= 1;
+
+    } while (block_count > 1);
+
+    return head;
+}
+
+static bool is_bbox_intersecting(uint8 rotation, const paint_struct& left,
+    const paint_struct& right)
+{
+    const paint_struct_bound_box& initialBBox = left.bbox;
+    const paint_struct_bound_box& currentBBox = right.bbox;
     bool result = false;
     switch (rotation) {
     case 0:
@@ -383,17 +452,7 @@ paint_struct * paint_arrange_structs_helper(paint_struct * ps_next, uint16 quadr
 
         ps_next->quadrant_flags &= ~PAINT_QUADRANT_FLAG_IDENTICAL;
         ps_temp = ps;
-
-        const paint_struct_bound_box initialBBox =
-        {
-            ps_next->bound_box_x,
-            ps_next->bound_box_y,
-            ps_next->bound_box_z,
-            ps_next->bound_box_x_end,
-            ps_next->bound_box_y_end,
-            ps_next->bound_box_z_end
-        };
-
+        paint_struct * initial_ps = ps_next;
 
         while (true)
         {
@@ -403,17 +462,7 @@ paint_struct * paint_arrange_structs_helper(paint_struct * ps_next, uint16 quadr
             if (ps_next->quadrant_flags & PAINT_QUADRANT_FLAG_BIGGER) break;
             if (!(ps_next->quadrant_flags & PAINT_QUADRANT_FLAG_NEXT)) continue;
 
-            const paint_struct_bound_box currentBBox =
-            {
-                ps_next->bound_box_x,
-                ps_next->bound_box_y,
-                ps_next->bound_box_z,
-                ps_next->bound_box_x_end,
-                ps_next->bound_box_y_end,
-                ps_next->bound_box_z_end
-            };
-
-            bool compareResult = is_bbox_intersecting(rotation, initialBBox, currentBBox);
+            bool compareResult = is_bbox_intersecting(rotation, *initial_ps, *ps_next);
 
             if (compareResult)
             {
@@ -455,13 +504,15 @@ paint_struct paint_session_arrange(paint_session * session)
             }
         } while (++quadrantIndex <= session->QuadrantFrontIndex);
 
+        /*
         paint_struct * ps_cache = paint_arrange_structs_helper(&psHead, session->QuadrantBackIndex & 0xFFFF, PAINT_QUADRANT_FLAG_NEXT);
 
         quadrantIndex = session->QuadrantBackIndex;
         while (++quadrantIndex < session->QuadrantFrontIndex)
         {
             ps_cache = paint_arrange_structs_helper(ps_cache, quadrantIndex & 0xFFFF, 0);
-        }
+        }*/
+        psHead = *listbase_sort_impl(&psHead, get_current_rotation(), is_bbox_intersecting);
     }
     return psHead;
 }
