@@ -28,6 +28,15 @@ typedef struct attached_paint_struct attached_paint_struct;
 typedef struct paint_struct paint_struct;
 typedef union paint_entry paint_entry;
 
+typedef struct paint_struct_bound_box {
+    uint16 x;
+    uint16 y;
+    uint16 z;
+    uint16 x_end;
+    uint16 y_end;
+    uint16 z_end;
+} paint_struct_bound_box;
+
 #pragma pack(push, 1)
 /* size 0x12 */
 struct attached_paint_struct {
@@ -62,12 +71,19 @@ struct paint_struct {
         // If masked image_id is masked_id
         uint32 colour_image_id; // 0x04
     };
-    uint16 bound_box_x;     // 0x08
-    uint16 bound_box_y;     // 0x0A
-    uint16 bound_box_z; // 0x0C
-    uint16 bound_box_z_end; // 0x0E
-    uint16 bound_box_x_end; // 0x10
-    uint16 bound_box_y_end; // 0x12
+    union
+    {
+        struct
+        {
+            uint16 bound_box_x;     // 0x08
+            uint16 bound_box_y;     // 0x0A
+            uint16 bound_box_z; // 0x0C
+            uint16 bound_box_x_end; // 0x10
+            uint16 bound_box_y_end; // 0x12
+            uint16 bound_box_z_end; // 0x0E
+        };
+        paint_struct_bound_box bbox;
+    };
     uint16 x;               // 0x14
     uint16 y;               // 0x16
     uint16 quadrant_index;
@@ -116,15 +132,6 @@ typedef struct sprite_bb {
     rct_xyz16 bb_offset;
     rct_xyz16 bb_size;
 } sprite_bb;
-
-typedef struct paint_struct_bound_box {
-    uint16 x;
-    uint16 y;
-    uint16 z;
-    uint16 x_end;
-    uint16 y_end;
-    uint16 z_end;
-} paint_struct_bound_box;
 
 enum PAINT_STRUCT_FLAGS {
     PAINT_STRUCT_FLAG_IS_MASKED = (1 << 0)
