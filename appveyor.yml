@@ -5,6 +5,8 @@ cache:
 - C:\ProgramData\chocolatey\bin -> scripts\ps\appveyor_install.ps1
 - C:\ProgramData\chocolatey\lib -> scripts\ps\appveyor_install.ps1
 - secure-file -> scripts\ps\appveyor_install.ps1
+init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 environment:
   OPENRCT2_ORG_TOKEN:
     secure: leQX3xCQpmBLGuMqrxjFlzexDt96ypNRMM5TTRVHbGE8PwVg9crgeykLc2BIZU6HDHveJCHqh2cGMdHtHYJYcw==
@@ -34,3 +36,5 @@ artifacts:
 deploy_script:
 - ps: >-
     .\scripts\ps\appveyor_deploy.ps1
+on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
