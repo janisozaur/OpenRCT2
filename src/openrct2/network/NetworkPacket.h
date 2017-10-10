@@ -56,7 +56,9 @@ public:
         }
         else
         {
-            value = ByteSwapBE(*((T *)&GetData()[BytesRead]));
+            T bytes;
+            memcpy(&bytes, &GetData()[BytesRead], sizeof(T));
+            value = ByteSwapBE(bytes);
             BytesRead += sizeof(value);
         }
         return *this;

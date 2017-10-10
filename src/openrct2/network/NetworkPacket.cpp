@@ -38,7 +38,9 @@ uint32 NetworkPacket::GetCommand()
 {
     if (Data->size() >= sizeof(uint32))
     {
-        return ByteSwapBE(*(uint32 *)(&(*Data)[0]));
+        uint32 cmd;
+        memcpy(&cmd, GetData(), sizeof(cmd));
+        return ByteSwapBE(cmd);
     }
     else
     {
