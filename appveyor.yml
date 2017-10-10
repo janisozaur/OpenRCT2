@@ -17,7 +17,7 @@ install:
 platform:
   - Win32
   - x64
-configuration: Release
+configuration: Debug
 build:
   project: openrct2.proj
 test_script:
