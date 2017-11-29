@@ -107,10 +107,15 @@ file(GLOB_RECURSE LIBOPENRCT2_SOURCES
     "${ORCT2_ROOT}/src/openrct2/*.hpp")
 
 file(GLOB_RECURSE OPENRCT2_GUI_SOURCES
-    "${ORCT2_ROOT}/src/openrct2-ui/*.c"
     "${ORCT2_ROOT}/src/openrct2-ui/*.cpp"
     "${ORCT2_ROOT}/src/openrct2-ui/*.h"
     "${ORCT2_ROOT}/src/openrct2-ui/*.hpp")
+
+
+file(GLOB_RECURSE OPENRCT2_CLI_SOURCES
+    "${ORCT2_ROOT}/src/openrct2-cli/*.cpp"
+    "${ORCT2_ROOT}/src/openrct2-cli/*.h"
+    "${ORCT2_ROOT}/src/openrct2-cli/*.hpp")
 
 add_library(openrct2 SHARED ${LIBOPENRCT2_SOURCES})
 target_link_libraries(openrct2
@@ -119,5 +124,10 @@ target_link_libraries(openrct2
                       )
 
 add_library(openrct2-ui SHARED ${OPENRCT2_GUI_SOURCES})
+add_executable(openrct2-cli ${OPENRCT2_CLI_SOURCES})
+
 target_link_libraries(openrct2-ui openrct2 SDL2main)
+target_link_libraries(openrct2-cli openrct2)
+
 target_include_directories(openrct2-ui PRIVATE "${ORCT2_ROOT}/src")
+target_include_directories(openrct2-cli PRIVATE "${ORCT2_ROOT}/src")
