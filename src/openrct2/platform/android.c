@@ -59,18 +59,7 @@ uint8 platform_get_locale_measurement_format() {
 }
 
 float platform_get_default_scale() {
-    JNIEnv *env = SDL_AndroidGetJNIEnv();
-
-    jobject *activity = (jobject *) SDL_AndroidGetActivity();
-    jclass *activityClass = (*env)->GetObjectClass(env, activity);
-    jmethodID getDefaultScale = (*env)->GetMethodID(env, activityClass, "getDefaultScale", "()F");
-
-    jfloat displayScale = (*env)->CallFloatMethod(env, activity, getDefaultScale);
-
-    (*env)->DeleteLocalRef(env, activity);
-    (*env)->DeleteLocalRef(env, activityClass);
-
-    return displayScale;
+    return 1.;
 }
 
 void platform_get_changelog_path(utf8 *outPath, size_t outSize)
