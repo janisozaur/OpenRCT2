@@ -41,7 +41,7 @@ script:
     # Android jobs are triggered from cron and overwrite `script` part
     - if [[ "$TRAVIS_EVENT_TYPE" == "cron" ]] ; then exit 0 ; fi
     - if [[ $TRAVIS_OS_NAME == "linux" ]]; then bash scripts/linux/build.sh ; fi
-    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then $CC -dM -E -fomit-frame-pointer - < /dev/null ; set -o pipefail && xcodebuild | xcpretty -f `xcpretty-travis-formatter`; fi
+    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then $CC -dM -E -fomit-frame-pointer - < /dev/null ; echo done ; echo done ; echo done ; $CC -dM -E -fomit-frame-pointer -mmacosx-version-min=10.8 - < /dev/null; set -o pipefail && xcodebuild | xcpretty -f `xcpretty-travis-formatter`; fi
 
 notifications:
     on_failure: change
