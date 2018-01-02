@@ -156,13 +156,13 @@ set(COMMON_COMPILE_OPTIONS "${COMMON_COMPILE_OPTIONS} -DDEBUG=${DEBUG_LEVEL}")
 
 # On mingw all code is already PIC, this will avoid compiler error on redefining this option
 if (NOT MINGW)
-    set(COMMON_COMPILE_OPTIONS "${COMMON_COMPILE_OPTIONS} -fPIC")
+    set(COMMON_COMPILE_OPTIONS "${COMMON_COMPILE_OPTIONS} -fno-PIC")
 endif ()
 
 if (APPLE AND NOT USE_MMAP)
     set(PIE_FLAG "-fno-pie")
 else ()
-    set(PIE_FLAG "-fpie")
+    set(PIE_FLAG "-fno-pie")
 endif ()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11 ${COMMON_COMPILE_OPTIONS} -Wimplicit")
