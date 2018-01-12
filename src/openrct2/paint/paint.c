@@ -764,6 +764,38 @@ static bool is_bbox_intersecting(uint8 rotation, const paint_struct_bound_box *i
     return result;
 }
 
+
+static const uint8 _paintBBoxOverlaps[256] =
+        {
+                1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+                0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+                0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+                0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+                1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+                0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+                0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0,
+                0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+                0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+                0, 0, 0, 0,
+        };
+
+static uint32 _rotl(const uint32 value, sint8 shift) {
+    if ((shift &= sizeof(value)*8 - 1) == 0)
+        return value;
+    return (value << shift) | (value >> (sizeof(value)*8 - shift));
+}
+
+static uint32 _rotl16(const uint32 value, sint8 shift) {
+    if ((shift &= sizeof(value)*8 - 1) == 0)
+        return value;
+    return (value << shift) | (value >> (sizeof(value)*8 - shift));
+}
+
 paint_struct * paint_arrange_structs_helper(paint_struct * ps_next, uint16 quadrantIndex, uint8 flag)
 {
     paint_struct * ps;
@@ -775,13 +807,12 @@ paint_struct * paint_arrange_structs_helper(paint_struct * ps_next, uint16 quadr
     } while (quadrantIndex > ps_next->quadrant_index);
 
     // Cache the last visited node so we don't have to walk the whole list again
-    paint_struct * ps_cache = ps;
+    paint_struct * ps_cache = ps_next;
 
     ps_temp = ps;
     do {
         ps = ps->next_quadrant_ps;
         if (ps == NULL) break;
-
         if (ps->quadrant_index > quadrantIndex + 1) {
             ps->quadrant_flags = PAINT_QUADRANT_FLAG_BIGGER;
         }
@@ -807,15 +838,12 @@ paint_struct * paint_arrange_structs_helper(paint_struct * ps_next, uint16 quadr
         ps_next->quadrant_flags &= ~PAINT_QUADRANT_FLAG_IDENTICAL;
         ps_temp = ps;
 
-        const paint_struct_bound_box initialBBox = {
-            .x = ps_next->bound_box_x,
-            .y = ps_next->bound_box_y,
-            .z = ps_next->bound_box_z,
-            .x_end = ps_next->bound_box_x_end,
-            .y_end = ps_next->bound_box_y_end,
-            .z_end = ps_next->bound_box_z_end
-        };
-
+        const uint16 initialBoundsX = ps_next->bound_box_x;
+        const uint16 initialBoundsY = ps_next->bound_box_y;
+        const uint16 initialBoundsXEnd = ps_next->bound_box_x_end;
+        const uint16 initialBoundsYEnd = ps_next->bound_box_y_end;
+        sint32 initialBoundsZ = 0;
+        memcpy(&initialBoundsZ, &ps_next->bound_box_z, 4);
 
         while (true) {
             ps = ps_next;
@@ -824,18 +852,21 @@ paint_struct * paint_arrange_structs_helper(paint_struct * ps_next, uint16 quadr
             if (ps_next->quadrant_flags & PAINT_QUADRANT_FLAG_BIGGER) break;
             if (!(ps_next->quadrant_flags & PAINT_QUADRANT_FLAG_NEXT)) continue;
 
-            const paint_struct_bound_box currentBBox = {
-                    .x = ps_next->bound_box_x,
-                    .y = ps_next->bound_box_y,
-                    .z = ps_next->bound_box_z,
-                    .x_end = ps_next->bound_box_x_end,
-                    .y_end = ps_next->bound_box_y_end,
-                    .z_end = ps_next->bound_box_z_end
-            };
+#define __RCL__(n, c) (_rotl16(n, 1) | (c))
 
-            bool compareResult = is_bbox_intersecting(rotation, &initialBBox, &currentBBox);
+            uint16 bboxIntersects = __RCL__(rotation, initialBoundsX < ps_next->bound_box_x_end);
+            bboxIntersects = __RCL__(bboxIntersects, initialBoundsY < ps_next->bound_box_y_end);
+            bboxIntersects = __RCL__(bboxIntersects, (uint16)initialBoundsZ < ps_next->bound_box_z_end);
+            bboxIntersects = __RCL__(bboxIntersects, initialBoundsXEnd < ps_next->bound_box_x);
+            bboxIntersects = __RCL__(bboxIntersects, initialBoundsYEnd < ps_next->bound_box_y);
 
-            if (compareResult) {
+            const sint32 tempZ = _rotl(initialBoundsZ, 16);
+            uint32 bboxTestIndex = __RCL__(bboxIntersects, (uint16)tempZ < ps_next->bound_box_z);
+
+            initialBoundsZ = _rotl(tempZ, 16);
+
+            if (_paintBBoxOverlaps[bboxTestIndex])
+            {
                 ps->next_quadrant_ps = ps_next->next_quadrant_ps;
                 paint_struct *ps_temp2 = ps_temp->next_quadrant_ps;
                 ps_temp->next_quadrant_ps = ps_next;
@@ -847,6 +878,7 @@ paint_struct * paint_arrange_structs_helper(paint_struct * ps_next, uint16 quadr
         ps = ps_temp;
     }
 }
+
 
 /**
  *
