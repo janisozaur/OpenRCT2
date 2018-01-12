@@ -24,7 +24,7 @@ struct paint_struct_sorted
     size_t isoDepth;
 };
 
-void visitNode(paint_struct_sorted& node, size_t& sortDepth)
+static void visitNode(paint_struct_sorted& node, size_t& sortDepth)
 {
     if (node.visited == true)
         return;
@@ -91,8 +91,7 @@ inline bool is_bbox_behind(uint8 rotation, const paint_struct_bound_fbox &a,
     return result;
 }
 
-extern "C"
-void paint_sort_new(paint_session * session, uint8 rotation, std::vector<paint_struct_sorted>& group)
+static void paint_sort_new(paint_session * session, uint8 rotation, std::vector<paint_struct_sorted>& group)
 {
     group.clear();
 
@@ -203,7 +202,7 @@ void paint_draw_structs(rct_drawpixelinfo * dpi, paint_struct * ps, uint32 viewF
     }
 }
 
-void paint_draw_structs_new(rct_drawpixelinfo * dpi, const std::vector<paint_struct_sorted>& groups, uint32 viewFlags)
+static void paint_draw_structs_new(rct_drawpixelinfo * dpi, const std::vector<paint_struct_sorted>& groups, uint32 viewFlags)
 {
     paint_struct* previous_ps = nullptr;
 
