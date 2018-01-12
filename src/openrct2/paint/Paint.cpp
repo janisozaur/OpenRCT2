@@ -465,12 +465,12 @@ paint_struct paint_session_arrange(paint_session * session)
             }
         } while (++quadrantIndex <= session->QuadrantFrontIndex);
 
-        paint_struct * ps_cache = paint_arrange_structs_helper(&psHead, session->QuadrantBackIndex & 0xFFFF, PAINT_QUADRANT_FLAG_NEXT, rotation);
+        [[maybe_unused]] paint_struct * ps_cache = paint_arrange_structs_helper(&psHead, session->QuadrantBackIndex & 0xFFFF, PAINT_QUADRANT_FLAG_NEXT, rotation);
 
         quadrantIndex = session->QuadrantBackIndex;
         while (++quadrantIndex < session->QuadrantFrontIndex)
         {
-            ps_cache = paint_arrange_structs_helper(ps_cache, quadrantIndex & 0xFFFF, 0, rotation);
+            ps_cache = paint_arrange_structs_helper(&psHead, quadrantIndex & 0xFFFF, 0, rotation);
         }
     }
 
