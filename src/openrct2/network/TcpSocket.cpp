@@ -441,7 +441,7 @@ private:
         std::string serviceName = std::to_string(port);
 
         addrinfo hints = { 0 };
-        hints.ai_family = AF_UNSPEC;
+        hints.ai_family = AF_INET;
         if (address == nullptr)
         {
             hints.ai_flags = AI_PASSIVE;
