@@ -80,8 +80,13 @@ void vehicle_visual_observation_tower(paint_session * session, sint32 x, sint32 
 }
 
 /** rct2: 0x0070DD6C */
-static void paint_observation_tower_base(paint_session * session, uint8 rideIndex, uint8 trackSequence, uint8 direction,
-                                         sint32 height, const rct_tile_element * tileElement)
+static void paint_observation_tower_base(
+    paint_session *          session,
+    uint8                    rideIndex,
+    uint8                    trackSequence,
+    uint8                    direction,
+    sint32                   height,
+    const rct_tile_element * tileElement)
 {
     trackSequence = track_map_3x3[direction][trackSequence];
 
@@ -153,8 +158,13 @@ static void paint_observation_tower_base(paint_session * session, uint8 rideInde
 }
 
 /** rct2: 0x0070DD7C */
-static void paint_observation_tower_section(paint_session * session, uint8 rideIndex, uint8 trackSequence, uint8 direction,
-                                            sint32 height, const rct_tile_element * tileElement)
+static void paint_observation_tower_section(
+    paint_session *          session,
+    uint8                    rideIndex,
+    uint8                    trackSequence,
+    uint8                    direction,
+    sint32                   height,
+    const rct_tile_element * tileElement)
 {
     if (trackSequence == 1)
     {

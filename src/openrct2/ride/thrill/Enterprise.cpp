@@ -22,8 +22,8 @@
 #include "../TrackPaint.h"
 
 /** rct2: 0x008A2ABC */
-static void paint_enterprise_structure(paint_session * session, Ride * ride, sint8 xOffset, sint8 yOffset, uint16 height,
-                                       const rct_tile_element * tileElement)
+static void paint_enterprise_structure(
+    paint_session * session, Ride * ride, sint8 xOffset, sint8 yOffset, uint16 height, const rct_tile_element * tileElement)
 {
     height += 7;
 
@@ -84,8 +84,13 @@ static void paint_enterprise_structure(paint_session * session, Ride * ride, sin
 }
 
 /** rct2: 0x008A1584 */
-static void paint_enterprise(paint_session * session, uint8 rideIndex, uint8 trackSequence, uint8 direction, sint32 height,
-                             const rct_tile_element * tileElement)
+static void paint_enterprise(
+    paint_session *          session,
+    uint8                    rideIndex,
+    uint8                    trackSequence,
+    uint8                    direction,
+    sint32                   height,
+    const rct_tile_element * tileElement)
 {
     trackSequence = track_map_4x4[direction][trackSequence];
 

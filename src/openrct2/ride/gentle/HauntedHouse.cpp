@@ -90,8 +90,13 @@ static void paint_haunted_house_structure(paint_session * session, uint8 rideInd
 /**
  * rct2: 0x0076E9B0
  */
-static void paint_haunted_house(paint_session * session, uint8 rideIndex, uint8 trackSequence, uint8 direction, sint32 height,
-                                const rct_tile_element * tileElement)
+static void paint_haunted_house(
+    paint_session *          session,
+    uint8                    rideIndex,
+    uint8                    trackSequence,
+    uint8                    direction,
+    sint32                   height,
+    const rct_tile_element * tileElement)
 {
     trackSequence = track_map_3x3[direction][trackSequence];
 

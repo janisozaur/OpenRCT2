@@ -68,8 +68,13 @@ static void paint_crooked_house_structure(paint_session * session, uint8 directi
                boundBox.offset_y, height + 3, get_current_rotation());
 }
 
-static void paint_crooked_house(paint_session * session, uint8 rideIndex, uint8 trackSequence, uint8 direction, sint32 height,
-                                const rct_tile_element * tileElement)
+static void paint_crooked_house(
+    paint_session *          session,
+    uint8                    rideIndex,
+    uint8                    trackSequence,
+    uint8                    direction,
+    sint32                   height,
+    const rct_tile_element * tileElement)
 {
     trackSequence = track_map_3x3[direction][trackSequence];
 

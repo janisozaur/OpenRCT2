@@ -47,8 +47,14 @@ static sint8 TopSpinSeatPositionOffset[] = {
  *
  *  rct2: 0x0076750D
  */
-static void top_spin_paint_vehicle(paint_session * session, sint8 al, sint8 cl, uint8 rideIndex, uint8 direction, sint32 height,
-                                   const rct_tile_element * tileElement)
+static void top_spin_paint_vehicle(
+    paint_session *          session,
+    sint8                    al,
+    sint8                    cl,
+    uint8                    rideIndex,
+    uint8                    direction,
+    sint32                   height,
+    const rct_tile_element * tileElement)
 {
     uint16 boundBoxOffsetX, boundBoxOffsetY, boundBoxOffsetZ;
     // As we will be drawing a vehicle we need to backup the tileElement that
@@ -247,8 +253,13 @@ static void top_spin_paint_vehicle(paint_session * session, sint8 al, sint8 cl, 
 /**
  * rct2: 0x0076679C
  */
-static void paint_top_spin(paint_session * session, uint8 rideIndex, uint8 trackSequence, uint8 direction, sint32 height,
-                           const rct_tile_element * tileElement)
+static void paint_top_spin(
+    paint_session *          session,
+    uint8                    rideIndex,
+    uint8                    trackSequence,
+    uint8                    direction,
+    sint32                   height,
+    const rct_tile_element * tileElement)
 {
     trackSequence = track_map_3x3[direction][trackSequence];
 

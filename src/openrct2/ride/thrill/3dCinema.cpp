@@ -60,8 +60,13 @@ static void paint_3d_cinema_structure(paint_session * session, uint8 rideIndex, 
 /**
  * rct2: 0x0076574C
  */
-static void paint_3d_cinema(paint_session * session, uint8 rideIndex, uint8 trackSequence, uint8 direction, sint32 height,
-                            const rct_tile_element * tileElement)
+static void paint_3d_cinema(
+    paint_session *          session,
+    uint8                    rideIndex,
+    uint8                    trackSequence,
+    uint8                    direction,
+    sint32                   height,
+    const rct_tile_element * tileElement)
 {
     trackSequence = track_map_3x3[direction][trackSequence];
 

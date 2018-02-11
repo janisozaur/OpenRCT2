@@ -113,8 +113,13 @@ static void paint_merry_go_round_structure(paint_session * session, uint8 rideIn
 /**
  * rct2: 0x00761B0C
  */
-static void paint_merry_go_round(paint_session * session, uint8 rideIndex, uint8 trackSequence, uint8 direction, sint32 height,
-                                 const rct_tile_element * tileElement)
+static void paint_merry_go_round(
+    paint_session *          session,
+    uint8                    rideIndex,
+    uint8                    trackSequence,
+    uint8                    direction,
+    sint32                   height,
+    const rct_tile_element * tileElement)
 {
     trackSequence = track_map_3x3[direction][trackSequence];
 
