@@ -392,9 +392,9 @@ bool wooden_a_supports_paint_setup(paint_session * session, sint32 supportType, 
         } else {
             imageId += word_97B3C4[slope & TILE_ELEMENT_SURFACE_SLOPE_MASK];
             imageId |= imageColourFlags;
-            sub_98197C(session, imageId, 0, 0, 32, 32, 11, z, 0, 0, z + 2, rotation);
+            sub_98197C(session, imageId, 0, 0, 32, 32, 11, z, 0, 0, z + 2);
 
-            sub_98197C(session, imageId + 4, 0, 0, 32, 32, 11, z + 16, 0, 0, z + 16 + 2, rotation);
+            sub_98197C(session, imageId + 4, 0, 0, 32, 32, 11, z + 16, 0, 0, z + 16 + 2);
 
             hasSupports = true;
         }
@@ -416,7 +416,7 @@ bool wooden_a_supports_paint_setup(paint_session * session, sint32 supportType, 
             imageId += word_97B3C4[slope & TILE_ELEMENT_SURFACE_SLOPE_MASK];
             imageId |= imageColourFlags;
 
-            sub_98197C(session, imageId, 0, 0, 32, 32, 11, z, 0, 0, z + 2, rotation);
+            sub_98197C(session, imageId, 0, 0, 32, 32, 11, z, 0, 0, z + 2);
             hasSupports = true;
         }
         z += 16;
@@ -462,7 +462,7 @@ bool wooden_a_supports_paint_setup(paint_session * session, sint32 supportType, 
             unk_supports_desc_bound_box bBox = byte_97B23C[special].bounding_box;
 
             if (byte_97B23C[special].var_6 == 0 || session->WoodenSupportsPrependTo == nullptr) {
-                sub_98197C(session, imageId, 0, 0, bBox.length.x, bBox.length.y, bBox.length.z, z, bBox.offset.x, bBox.offset.y, bBox.offset.z + z, rotation);
+                sub_98197C(session, imageId, 0, 0, bBox.length.x, bBox.length.y, bBox.length.z, z, bBox.offset.x, bBox.offset.y, bBox.offset.z + z);
                 hasSupports = true;
             } else {
                 hasSupports = true;
@@ -537,8 +537,7 @@ bool wooden_b_supports_paint_setup(paint_session * session, sint32 supportType, 
                 0, 0,
                 32, 32, 11,
                 baseHeight,
-                0, 0, baseHeight + 2,
-                get_current_rotation()
+                0, 0, baseHeight + 2
             );
             baseHeight += 16;
 
@@ -547,8 +546,7 @@ bool wooden_b_supports_paint_setup(paint_session * session, sint32 supportType, 
                 0, 0,
                 32, 32, 3,
                 baseHeight,
-                0, 0, baseHeight + 2,
-                get_current_rotation()
+                0, 0, baseHeight + 2
             );
             baseHeight += 16;
 
@@ -573,8 +571,7 @@ bool wooden_b_supports_paint_setup(paint_session * session, sint32 supportType, 
                 0, 0,
                 32, 32, 3,
                 baseHeight,
-                0, 0, baseHeight + 2,
-                get_current_rotation()
+                0, 0, baseHeight + 2
             );
             baseHeight += 16;
 
@@ -643,8 +640,7 @@ bool wooden_b_supports_paint_setup(paint_session * session, sint32 supportType, 
                     0, 0,
                     boundBox.length.x, boundBox.length.y, boundBox.length.z,
                     baseHeight,
-                    boundBox.offset.x, boundBox.offset.y, boundBox.offset.z + baseHeight,
-                    get_current_rotation()
+                    boundBox.offset.x, boundBox.offset.y, boundBox.offset.z + baseHeight
                 );
                 _9E32B1 = true;
             } else {
@@ -844,7 +840,7 @@ bool metal_a_supports_paint_setup(paint_session * session, uint8 supportType, ui
         image_id += z - 1;
         image_id |= imageColourFlags;
 
-        sub_98197C(session, image_id, xOffset, yOffset, 0, 0, 0, height, boundBoxOffsetX, boundBoxOffsetY, boundBoxOffsetZ, rotation);
+        sub_98197C(session, image_id, xOffset, yOffset, 0, 0, 0, height, boundBoxOffsetX, boundBoxOffsetY, boundBoxOffsetZ);
 
         height += z;
     }
@@ -1026,8 +1022,7 @@ bool metal_b_supports_paint_setup(paint_session * session, uint8 supportType, ui
                 loc_97AF20[originalSegment].x, loc_97AF20[originalSegment].y,
                 0, 0, 0,
                 baseHeight,
-                loc_97AF20[originalSegment].x, loc_97AF20[originalSegment].y, height,
-                get_current_rotation()
+                loc_97AF20[originalSegment].x, loc_97AF20[originalSegment].y, height
             );
             baseHeight += beamLength;
         }
@@ -1098,8 +1093,7 @@ bool path_a_supports_paint_setup(paint_session * session, sint32 supportType, si
             0, 0,
             32, 32, 11,
             baseHeight,
-            0, 0, baseHeight + 2,
-            get_current_rotation()
+            0, 0, baseHeight + 2
         );
         baseHeight += 16;
 
@@ -1108,8 +1102,7 @@ bool path_a_supports_paint_setup(paint_session * session, sint32 supportType, si
             0, 0,
             32, 32, 11,
             baseHeight,
-            0, 0, baseHeight + 2,
-            get_current_rotation()
+            0, 0, baseHeight + 2
         );
         baseHeight += 16;
 
@@ -1129,8 +1122,7 @@ bool path_a_supports_paint_setup(paint_session * session, sint32 supportType, si
             0, 0,
             32, 32, 11,
             baseHeight,
-            0, 0, baseHeight + 2,
-            get_current_rotation()
+            0, 0, baseHeight + 2
         );
 
         hasSupports = true;
@@ -1182,8 +1174,7 @@ bool path_a_supports_paint_setup(paint_session * session, sint32 supportType, si
                 0, 0,
                 boundBox.length.y, boundBox.length.x, boundBox.length.z,
                 baseHeight,
-                boundBox.offset.x, boundBox.offset.y, baseHeight + boundBox.offset.z,
-                get_current_rotation()
+                boundBox.offset.x, boundBox.offset.y, baseHeight + boundBox.offset.z
             );
             hasSupports = true;
         } else {
@@ -1354,8 +1345,7 @@ bool path_b_supports_paint_setup(paint_session * session, sint32 segment, sint32
                 loc_97AF20[segment].x, loc_97AF20[segment].y,
                 0, 0, 0,
                 baseHeight,
-                loc_97AF20[segment].x, loc_97AF20[segment].y, baseHeight,
-                get_current_rotation()
+                loc_97AF20[segment].x, loc_97AF20[segment].y, baseHeight
             );
 
             baseHeight += z;

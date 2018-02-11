@@ -90,7 +90,7 @@ static void paint_session_add_ps_to_quadrant(paint_session * session, paint_stru
 /**
 * Extracted from 0x0098196c, 0x0098197c, 0x0098198c, 0x0098199c
 */
-static paint_struct * sub_9819_c(paint_session * session, uint32 image_id, LocationXYZ16 offset, LocationXYZ16 boundBoxSize, LocationXYZ16 boundBoxOffset, uint8 rotation)
+static paint_struct * sub_9819_c(paint_session * session, uint32 image_id, LocationXYZ16 offset, LocationXYZ16 boundBoxSize, LocationXYZ16 boundBoxOffset)
 {
     if (session->NextFreePaintStruct >= session->EndOfPaintStructArray) return nullptr;
     auto g1 = gfx_get_g1_element(image_id & 0x7FFFF);
@@ -102,7 +102,7 @@ static paint_struct * sub_9819_c(paint_session * session, uint32 image_id, Locat
     paint_struct * ps = &session->NextFreePaintStruct->basic;
     ps->image_id = image_id;
 
-    switch (rotation)
+    switch (session->CurrentRotation)
     {
     case 0:
         rotate_map_coordinates(&offset.x, &offset.y, 0);
@@ -120,7 +120,7 @@ static paint_struct * sub_9819_c(paint_session * session, uint32 image_id, Locat
     offset.x += session->SpritePosition.x;
     offset.y += session->SpritePosition.y;
 
-    LocationXY16 map = coordinate_3d_to_2d(&offset, rotation);
+    LocationXY16 map = coordinate_3d_to_2d(&offset, session->CurrentRotation);
 
     ps->x = map.x;
     ps->y = map.y;
@@ -140,7 +140,7 @@ static paint_struct * sub_9819_c(paint_session * session, uint32 image_id, Locat
 
 
     // This probably rotates the variables so they're relative to rotation 0.
-    switch (rotation)
+    switch (session->CurrentRotation)
     {
     case 0:
         boundBoxSize.x--;
@@ -909,8 +909,7 @@ paint_struct * sub_98197C(
         sint8 x_offset, sint8 y_offset,
         sint16 bound_box_length_x, sint16 bound_box_length_y, sint8 bound_box_length_z,
         sint16 z_offset,
-        sint16 bound_box_offset_x, sint16 bound_box_offset_y, sint16 bound_box_offset_z,
-        uint32 rotation)
+        sint16 bound_box_offset_x, sint16 bound_box_offset_y, sint16 bound_box_offset_z)
 {
     session->UnkF1AD28 = nullptr;
     session->UnkF1AD2C = nullptr;
@@ -918,7 +917,7 @@ paint_struct * sub_98197C(
     LocationXYZ16 offset = { x_offset, y_offset, z_offset };
     LocationXYZ16 boundBoxSize = { bound_box_length_x, bound_box_length_y, bound_box_length_z };
     LocationXYZ16 boundBoxOffset = { bound_box_offset_x, bound_box_offset_y, bound_box_offset_z };
-    paint_struct * ps = sub_9819_c(session, image_id, offset, boundBoxSize, boundBoxOffset, rotation);
+    paint_struct * ps = sub_9819_c(session, image_id, offset, boundBoxSize, boundBoxOffset);
 
     if (ps == nullptr) {
         return nullptr;
@@ -932,8 +931,8 @@ paint_struct * sub_98197C(
         (sint16)ps->bounds.y
     };
 
-    rotate_map_coordinates(&attach.x, &attach.y, rotation);
-    switch (rotation)
+    rotate_map_coordinates(&attach.x, &attach.y, session->CurrentRotation);
+    switch (session->CurrentRotation)
     {
     case 0:
         break;
@@ -988,7 +987,7 @@ paint_struct * sub_98198C(
     LocationXYZ16 offset = { x_offset, y_offset, z_offset };
     LocationXYZ16 boundBoxSize = { bound_box_length_x, bound_box_length_y, bound_box_length_z };
     LocationXYZ16 boundBoxOffset = { bound_box_offset_x, bound_box_offset_y, bound_box_offset_z };
-    paint_struct * ps = sub_9819_c(session, image_id, offset, boundBoxSize, boundBoxOffset, rotation);
+    paint_struct * ps = sub_9819_c(session, image_id, offset, boundBoxSize, boundBoxOffset);
 
     if (ps == nullptr) {
         return nullptr;
@@ -1035,15 +1034,14 @@ paint_struct * sub_98199C(
             x_offset, y_offset,
             bound_box_length_x, bound_box_length_y, bound_box_length_z,
             z_offset,
-            bound_box_offset_x, bound_box_offset_y, bound_box_offset_z,
-            rotation
+            bound_box_offset_x, bound_box_offset_y, bound_box_offset_z
         );
     }
 
     LocationXYZ16 offset = { x_offset, y_offset, z_offset };
     LocationXYZ16 boundBox = { bound_box_length_x, bound_box_length_y, bound_box_length_z };
     LocationXYZ16 boundBoxOffset = { bound_box_offset_x, bound_box_offset_y, bound_box_offset_z };
-    paint_struct * ps = sub_9819_c(session, image_id, offset, boundBox, boundBoxOffset, rotation);
+    paint_struct * ps = sub_9819_c(session, image_id, offset, boundBox, boundBoxOffset);
 
     if (ps == nullptr)
     {

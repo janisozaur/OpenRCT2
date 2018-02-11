@@ -731,7 +731,7 @@ static void viewport_surface_draw_tile_side_bottom(paint_session * session, enum
         }
 
         uint32 image_id = _terrainEdgeTunnelSpriteIds[edgeStyle][tunnelType] + (edge == EDGE_BOTTOMRIGHT ? 2 : 0);
-        sub_98197C(session, image_id, offset.x, offset.y, tunnelBounds.x, tunnelBounds.y, boundBoxLength - 1, zOffset, 0, 0, boundBoxOffsetZ, rotation);
+        sub_98197C(session, image_id, offset.x, offset.y, tunnelBounds.x, tunnelBounds.y, boundBoxLength - 1, zOffset, 0, 0, boundBoxOffsetZ);
 
         boundBoxOffsetZ = curHeight * 16;
         boundBoxLength = stru_97B570[tunnelType][1] * 16;
@@ -743,7 +743,7 @@ static void viewport_surface_draw_tile_side_bottom(paint_session * session, enum
         }
 
         image_id = _terrainEdgeTunnelSpriteIds[edgeStyle][tunnelType] + (edge == EDGE_BOTTOMRIGHT ? 2 : 0) + 1;
-        sub_98197C(session, image_id, offset.x, offset.y, tunnelBounds.x, tunnelBounds.y, boundBoxLength - 1, curHeight * 16, tunnelTopBoundBoxOffset.x, tunnelTopBoundBoxOffset.y, boundBoxOffsetZ, rotation);
+        sub_98197C(session, image_id, offset.x, offset.y, tunnelBounds.x, tunnelBounds.y, boundBoxLength - 1, curHeight * 16, tunnelTopBoundBoxOffset.x, tunnelTopBoundBoxOffset.y, boundBoxOffsetZ);
 
         curHeight += stru_97B570[tunnelType][0];
         tunnelIndex++;
@@ -1014,10 +1014,10 @@ void surface_paint(paint_session * session, uint8 direction, uint16 height, cons
     if (session->VerticalTunnelHeight * 16 == height)
     {
         // Vertical tunnels
-        sub_98197C(session, 1575, 0, 0, 1, 30, 39, height, -2, 1, height - 40, rotation);
-        sub_98197C(session, 1576, 0, 0, 30, 1, 0, height, 1, 31, height, rotation);
-        sub_98197C(session, 1577, 0, 0, 1, 30, 0, height, 31, 1, height, rotation);
-        sub_98197C(session, 1578, 0, 0, 30, 1, 39, height, 1, -2, height - 40, rotation);
+        sub_98197C(session, 1575, 0, 0, 1, 30, 39, height, -2, 1, height - 40);
+        sub_98197C(session, 1576, 0, 0, 30, 1, 0, height, 1, 31, height);
+        sub_98197C(session, 1577, 0, 0, 1, 30, 0, height, 31, 1, height);
+        sub_98197C(session, 1578, 0, 0, 30, 1, 39, height, 1, -2, height - 40);
     }
     else
     {
@@ -1451,8 +1451,7 @@ void surface_paint(paint_session * session, uint8 direction, uint16 height, cons
                 local_height,
                 fenceData.box_offset.x,
                 fenceData.box_offset.y,
-                local_height + 1,
-                rotation);
+                local_height + 1);
         }
     }
 
