@@ -430,7 +430,7 @@ static void wooden_rc_track_paint_bb(paint_session * session, const sprite_bb_2 
     uint32 railsImageId = bb->sprite_id_b | wooden_rc_get_rails_colour(session);
 
     sub_98197C(session, imageId, (sint8)bb->offset.x, (sint8)bb->offset.y, bb->bb_size.x, bb->bb_size.y, (sint8)bb->bb_size.z,
-               height + bb->offset.z, bb->bb_offset.x, bb->bb_offset.y, height + bb->bb_offset.z, get_current_rotation());
+               height + bb->offset.z, bb->bb_offset.x, bb->bb_offset.y, height + bb->bb_offset.z);
     sub_98199C(session, railsImageId, (sint8)bb->offset.x, (sint8)bb->offset.y, bb->bb_size.x, bb->bb_size.y,
                (sint8)bb->bb_size.z, height + bb->offset.z, bb->bb_offset.x, bb->bb_offset.y, height + bb->bb_offset.z,
                get_current_rotation());

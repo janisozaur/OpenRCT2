@@ -65,7 +65,7 @@ static void paint_crooked_house_structure(paint_session * session, uint8 directi
 
     rct_crooked_house_bound_box boundBox = crooked_house_data[segment];
     sub_98197C(session, image_id, x_offset, y_offset, boundBox.length_x, boundBox.length_y, 127, height + 3, boundBox.offset_x,
-               boundBox.offset_y, height + 3, get_current_rotation());
+               boundBox.offset_y, height + 3);
 }
 
 static void paint_crooked_house(
