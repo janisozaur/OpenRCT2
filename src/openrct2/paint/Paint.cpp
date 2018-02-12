@@ -748,16 +748,10 @@ void paint_session_free(paint_session * session)
 * @param bound_box_length_y (si)
 * @param bound_box_length_z (ah)
 * @param z_offset (dx)
-* @param rotation (ebp)
 * @return (ebp) paint_struct on success (CF == 0), nullptr on failure (CF == 1)
 */
-paint_struct * sub_98196C(
-        paint_session * session,
-        uint32 image_id,
-        sint8 x_offset, sint8 y_offset,
-        sint16 bound_box_length_x, sint16 bound_box_length_y, sint8 bound_box_length_z,
-        sint16 z_offset,
-        uint32 rotation)
+paint_struct *sub_98196C(paint_session *session, uint32 image_id, sint8 x_offset, sint8 y_offset, sint16 bound_box_length_x,
+                         sint16 bound_box_length_y, sint8 bound_box_length_z, sint16 z_offset)
 {
     assert((uint16)bound_box_length_x == (sint16)bound_box_length_x);
     assert((uint16)bound_box_length_y == (sint16)bound_box_length_y);
@@ -793,7 +787,7 @@ paint_struct * sub_98196C(
         bound_box_length_z,
     };
 
-    switch (rotation)
+    switch (session->CurrentRotation)
     {
     case 0:
         rotate_map_coordinates(&coord_3d.x, &coord_3d.y, TILE_ELEMENT_DIRECTION_WEST);
@@ -833,7 +827,7 @@ paint_struct * sub_98196C(
     ps->bounds.z = coord_3d.z;
     ps->bounds.z_end = (boundBox.z + coord_3d.z);
 
-    LocationXY16 map = coordinate_3d_to_2d(&coord_3d, rotation);
+    LocationXY16 map = coordinate_3d_to_2d(&coord_3d, session->CurrentRotation);
 
     ps->x = map.x;
     ps->y = map.y;
@@ -865,7 +859,7 @@ paint_struct * sub_98196C(
     session->UnkF1AD28 = ps;
 
     sint32 positionHash = 0;
-    switch (rotation)
+    switch (session->CurrentRotation)
     {
     case 0:
         positionHash = coord_3d.y + coord_3d.x;
@@ -966,17 +960,11 @@ paint_struct * sub_98197C(
 * @param bound_box_offset_x (0x009DEA52)
 * @param bound_box_offset_y (0x009DEA54)
 * @param bound_box_offset_z (0x009DEA56)
-* @param rotation (ebp)
 * @return (ebp) paint_struct on success (CF == 0), nullptr on failure (CF == 1)
 */
-paint_struct * sub_98198C(
-        paint_session * session,
-        uint32 image_id,
-        sint8 x_offset, sint8 y_offset,
-        sint16 bound_box_length_x, sint16 bound_box_length_y, sint8 bound_box_length_z,
-        sint16 z_offset,
-        sint16 bound_box_offset_x, sint16 bound_box_offset_y, sint16 bound_box_offset_z,
-        uint32 rotation)
+paint_struct *sub_98198C(paint_session *session, uint32 image_id, sint8 x_offset, sint8 y_offset, sint16 bound_box_length_x,
+                         sint16 bound_box_length_y, sint8 bound_box_length_z, sint16 z_offset, sint16 bound_box_offset_x,
+                         sint16 bound_box_offset_y, sint16 bound_box_offset_z)
 {
     assert((uint16)bound_box_length_x == (sint16)bound_box_length_x);
     assert((uint16)bound_box_length_y == (sint16)bound_box_length_y);
@@ -1012,17 +1000,11 @@ paint_struct * sub_98198C(
 * @param bound_box_offset_x (0x009DEA52)
 * @param bound_box_offset_y (0x009DEA54)
 * @param bound_box_offset_z (0x009DEA56)
-* @param rotation (ebp)
 * @return (ebp) paint_struct on success (CF == 0), nullptr on failure (CF == 1)
 */
-paint_struct * sub_98199C(
-        paint_session * session,
-        uint32 image_id,
-        sint8 x_offset, sint8 y_offset,
-        sint16 bound_box_length_x, sint16 bound_box_length_y, sint8 bound_box_length_z,
-        sint16 z_offset,
-        sint16 bound_box_offset_x, sint16 bound_box_offset_y, sint16 bound_box_offset_z,
-        uint32 rotation)
+paint_struct *sub_98199C(paint_session *session, uint32 image_id, sint8 x_offset, sint8 y_offset, sint16 bound_box_length_x,
+                         sint16 bound_box_length_y, sint8 bound_box_length_z, sint16 z_offset, sint16 bound_box_offset_x,
+                         sint16 bound_box_offset_y, sint16 bound_box_offset_z)
 {
     assert((uint16)bound_box_length_x == (sint16)bound_box_length_x);
     assert((uint16)bound_box_length_y == (sint16)bound_box_length_y);

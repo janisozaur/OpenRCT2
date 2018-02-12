@@ -976,8 +976,8 @@ static void paint_miniature_railway_track_right_quarter_turn_5_tiles(
             LocationXY16  boundsLength = miniature_railway_right_quarter_turn_5_tiles_bound_lengths[direction][index];
             LocationXYZ16 boundsOffset = { offset.x, offset.y, 0 };
 
-            sub_98199C(session, imageId, (sint8)offset.x, (sint8)offset.y, boundsLength.x, boundsLength.y, 2, height,
-                       boundsOffset.x, boundsOffset.y, height + boundsOffset.z, get_current_rotation());
+            sub_98199C(session, imageId, (sint8) offset.x, (sint8) offset.y, boundsLength.x, boundsLength.y, 2, height,
+                       boundsOffset.x, boundsOffset.y, height + boundsOffset.z);
         }
     }
     if (direction == 0 && trackSequence == 0)
@@ -1332,8 +1332,8 @@ static void paint_miniature_railway_track_right_quarter_turn_3_tiles(
         LocationXY16  boundsLength = defaultRightQuarterTurn3TilesBoundLengths[direction][index];
         LocationXYZ16 boundsOffset = { offset.x, offset.y, 0 };
 
-        sub_98199C(session, imageId, (sint8)offset.x, (sint8)offset.y, boundsLength.x, boundsLength.y, 3, height,
-                   boundsOffset.x, boundsOffset.y, height + boundsOffset.z, get_current_rotation());
+        sub_98199C(session, imageId, (sint8) offset.x, (sint8) offset.y, boundsLength.x, boundsLength.y, 3, height,
+                   boundsOffset.x, boundsOffset.y, height + boundsOffset.z);
     }
     track_paint_util_right_quarter_turn_3_tiles_tunnel(session, height, direction, trackSequence, TUNNEL_6);
 
@@ -1493,8 +1493,7 @@ static void paint_miniature_railway_track_left_eighth_to_diag(
             imageId = miniature_railway_track_pieces_left_eight_to_diag[direction][index] | session->TrackColours[SCHEME_TRACK];
             offset  = miniature_railway_track_pieces_left_eight_to_diag_offset[direction][index];
             bounds  = miniature_railway_track_pieces_left_eight_to_diag_bounds[direction][index];
-            sub_98199C(session, imageId, 0, 0, bounds.x, bounds.y, (sint8)bounds.z, height, offset.x, offset.y, height,
-                       get_current_rotation());
+            sub_98199C(session, imageId, 0, 0, bounds.x, bounds.y, (sint8) bounds.z, height, offset.x, offset.y, height);
         }
     }
 
@@ -1637,8 +1636,7 @@ static void paint_miniature_railway_track_right_eighth_to_diag(
                 miniature_railway_track_pieces_right_eight_to_diag[direction][index] | session->TrackColours[SCHEME_TRACK];
             offset = miniature_railway_track_pieces_right_eight_to_diag_offset[direction][index];
             bounds = miniature_railway_track_pieces_right_eight_to_diag_bounds[direction][index];
-            sub_98199C(session, imageId, 0, 0, bounds.x, bounds.y, (sint8)bounds.z, height, offset.x, offset.y, height,
-                       get_current_rotation());
+            sub_98199C(session, imageId, 0, 0, bounds.x, bounds.y, (sint8) bounds.z, height, offset.x, offset.y, height);
         }
     }
 
@@ -1762,8 +1760,8 @@ static void miniature_railway_track_diag_flat(
                    (drawRail ? 2 : 0), height, floorBoundOffset.x, floorBoundOffset.y, height);
         if (drawRail)
         {
-            sub_98199C(session, imageId | session->TrackColours[SCHEME_TRACK], -16, -16, 32, 32, 2, height, -16, -16, height,
-                       get_current_rotation());
+            sub_98199C(session, imageId | session->TrackColours[SCHEME_TRACK], -16, -16, 32, 32, 2, height, -16, -16,
+                       height);
         }
     }
     else if (drawRail)
@@ -1859,7 +1857,7 @@ static void miniature_railway_track_diag_25_deg_up(
         if (drawRail)
         {
             sub_98199C(session, imageId | session->TrackColours[SCHEME_TRACK], -16, -16, 32, 32, 2, height, -16, -16,
-                       height + offsetB[direction], get_current_rotation());
+                       height + offsetB[direction]);
         }
     }
     else if (drawRail)
@@ -1911,8 +1909,8 @@ static void miniature_railway_track_diag_flat_to_25_deg_up(
                    (drawRail ? 2 : 0), height, floorBoundOffset.x, floorBoundOffset.y, height);
         if (drawRail)
         {
-            sub_98199C(session, imageId | session->TrackColours[SCHEME_TRACK], -16, -16, 32, 32, 2, height, -16, -16, height,
-                       get_current_rotation());
+            sub_98199C(session, imageId | session->TrackColours[SCHEME_TRACK], -16, -16, 32, 32, 2, height, -16, -16,
+                       height);
         }
     }
     else if (drawRail)
@@ -1988,7 +1986,7 @@ static void miniature_railway_track_diag_25_deg_up_to_flat(
         if (drawRail)
         {
             sub_98199C(session, imageId | session->TrackColours[SCHEME_TRACK], -16, -16, 32, 32, 2, height, -16, -16,
-                       height + railOffsets[direction], get_current_rotation());
+                       height + railOffsets[direction]);
         }
     }
     else if (drawRail)
@@ -2064,7 +2062,7 @@ static void miniature_railway_track_diag_25_deg_down(
         if (drawRail)
         {
             sub_98199C(session, imageId | session->TrackColours[SCHEME_TRACK], -16, -16, 32, 32, 2, height, -16, -16,
-                       height + railOffsets[direction], get_current_rotation());
+                       height + railOffsets[direction]);
         }
     }
     else if (drawRail)
@@ -2139,7 +2137,7 @@ static void miniature_railway_track_diag_flat_to_25_deg_down(
         if (drawRail)
         {
             sub_98199C(session, imageId | session->TrackColours[SCHEME_TRACK], -16, -16, 32, 32, 2, height, -16, -16,
-                       height + railOffsets[direction], get_current_rotation());
+                       height + railOffsets[direction]);
         }
     }
     else if (drawRail)
@@ -2189,8 +2187,8 @@ static void miniature_railway_track_diag_25_deg_down_to_flat(
                    (drawRail ? 2 : 0), height, floorBoundOffset.x, floorBoundOffset.y, height);
         if (drawRail)
         {
-            sub_98199C(session, imageId | session->TrackColours[SCHEME_TRACK], -16, -16, 32, 32, 2, height, -16, -16, height,
-                       get_current_rotation());
+            sub_98199C(session, imageId | session->TrackColours[SCHEME_TRACK], -16, -16, 32, 32, 2, height, -16, -16,
+                       height);
         }
     }
     else if (drawRail)
