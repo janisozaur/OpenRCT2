@@ -17,16 +17,13 @@
 #pragma once
 
 #include <algorithm>
-#include "../core/Memory.hpp"
-#include "../core/MemoryStream.h"
 #include "../localisation/StringIds.h"
 #include "GameAction.h"
 
-#include "../localisation/Date.h"
 #include "../Cheats.h"
 #include "../interface/Window.h"
+#include "../management/NewsItem.h"
 #include "../world/Park.h"
-#include "../rct1/RCT1.h"
 #include "../ride/RideData.h"
 #include "../ride/Ride.h"
 #include "../ride/Station.h"
