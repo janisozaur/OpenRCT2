@@ -43,6 +43,7 @@
     <Link>
       <AdditionalDependencies>libopenrct2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
+      <LinkTimeCodeGeneration>False</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /EIY "$(ProjectDir)testdata" "$(OutputPath)testdata"</Command>
