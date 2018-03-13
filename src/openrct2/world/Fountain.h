@@ -18,8 +18,8 @@
 
 #include "../common.h"
 
-#include "Map.h"
-#include "Sprite.h"
+struct rct_tile_element;
+struct rct_jumping_fountain;
 
 enum
 {
