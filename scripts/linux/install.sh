@@ -111,7 +111,7 @@ elif [[ $(uname) == "Linux" ]]; then
 			docker pull openrct2/openrct2:mingw-arch
 			;;
 		"docker64")
-			docker pull openrct2/openrct2:64bit-only
+			docker pull janisozaur/openrct2:64bit-only
 			;;
 		*)
 			echo "unkown target $TARGET"
