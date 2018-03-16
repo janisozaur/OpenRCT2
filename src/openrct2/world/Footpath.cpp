@@ -1119,7 +1119,7 @@ struct rct_neighbour {
 
 struct rct_neighbour_list {
     rct_neighbour items[8];
-    sint32 count;
+    size_t count;
 };
 
 static sint32 rct_neighbour_compare(const void *a, const void *b)
@@ -1164,9 +1164,10 @@ static bool neighbour_list_pop(rct_neighbour_list *neighbourList, rct_neighbour 
     return true;
 }
 
-static void neighbour_list_remove(rct_neighbour_list *neighbourList, sint32 index)
+static void neighbour_list_remove(rct_neighbour_list *neighbourList, size_t index)
 {
-    sint32 itemsRemaining = neighbourList->count - index - 1;
+    Guard::ArgumentInRange<size_t>(index, 0, neighbourList->count - 1);
+    sint32 itemsRemaining = (sint32)(neighbourList->count - index) - 1;
     if (itemsRemaining > 0) {
         memmove(&neighbourList->items[index], &neighbourList->items[index + 1], sizeof(rct_neighbour) * itemsRemaining);
     }
@@ -1457,7 +1458,7 @@ void footpath_connect_edges(sint32 x, sint32 y, rct_tile_element *tileElement, s
             }
         }
 
-        neighbourList.count = std::min(neighbourList.count, 2);
+        neighbourList.count = std::min<size_t>(neighbourList.count, 2);
     }
 
     while (neighbour_list_pop(&neighbourList, &neighbour)) {
