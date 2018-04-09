@@ -95,7 +95,7 @@ matrix:
           after_success:
             # Android jobs are triggered from cron and overwrite `after_sucess` part
             - if [[ "$TRAVIS_EVENT_TYPE" == "cron" ]] ; then exit 0 ; fi
-            - cd build/Release
+            - cd build/Debug
             - zip -r openrct2-macos.zip OpenRCT2.app
             - if [[ "z${TRAVIS_TAG}" != "z" ]] ; then
               export PUSH_BRANCH=master ;
@@ -182,7 +182,7 @@ script:
     # Android jobs are triggered from cron and overwrite `script` part
     - if [[ "$OPENRCT2_ANDROID" == "true" ]] ; then exit 0 ; fi
     - if [[ $TRAVIS_OS_NAME == "linux" ]]; then bash scripts/linux/build.sh ; fi
-    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then set -o pipefail && xcodebuild | xcpretty -f `xcpretty-travis-formatter`; fi
+    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then set -o pipefail && xcodebuild -configuration Debug | xcpretty -f `xcpretty-travis-formatter`; fi
 
 notifications:
     on_failure: change
