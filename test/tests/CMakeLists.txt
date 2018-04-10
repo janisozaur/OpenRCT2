@@ -87,6 +87,7 @@ add_library(test-common STATIC ${COMMON_TEST_SOURCES})
 
 # Setup testdata. It should be fine here, as the only way to reach here is by explicitly requesting tests.
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_CURRENT_LIST_DIR}/testdata" "${CMAKE_CURRENT_BINARY_DIR}/testdata")
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${ROOT_DIR}/data" "${CMAKE_CURRENT_BINARY_DIR}/data")
 
 # Start of our tests
 
