@@ -399,7 +399,7 @@ static exitcode_t HandleCommandScanObjects([[maybe_unused]] CommandLineArgEnumer
     // HACK: set gCurrentLanguage otherwise it be wrong for the index file
     gCurrentLanguage = gConfigGeneral.language;
 
-    auto objectRepository = CreateObjectRepository(env);
+    auto objectRepository = CreateObjectRepository(std::move(env));
     objectRepository->Construct();
     return EXITCODE_OK;
 }

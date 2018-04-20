@@ -447,7 +447,6 @@ sint32 cmdline_for_screenshot(const char * * argv, sint32 argc, ScreenshotOption
         {
             std::printf("%s\n", e.what());
             drawing_engine_dispose();
-            delete context;
             return -1;
         }
 
@@ -517,7 +516,6 @@ sint32 cmdline_for_screenshot(const char * * argv, sint32 argc, ScreenshotOption
             {
                 std::printf("Weather can only be set to an integer value from 1 till 6.");
                 drawing_engine_dispose();
-                delete context;
                 return -1;
             }
 
@@ -582,6 +580,5 @@ sint32 cmdline_for_screenshot(const char * * argv, sint32 argc, ScreenshotOption
         free(dpi.bits);
         drawing_engine_dispose();
     }
-    delete context;
     return 1;
 }
