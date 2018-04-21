@@ -80,7 +80,7 @@ namespace OpenRCT2 { namespace Drawing
     interface IDrawingEngineFactory
     {
         virtual ~IDrawingEngineFactory() { }
-        virtual IDrawingEngine * Create(DRAWING_ENGINE_TYPE type, std::shared_ptr<OpenRCT2::Ui::IUiContext> uiContext) abstract;
+        virtual std::unique_ptr<IDrawingEngine> Create(DRAWING_ENGINE_TYPE type, std::shared_ptr<OpenRCT2::Ui::IUiContext> uiContext) abstract;
     };
 
     interface IRainDrawer
