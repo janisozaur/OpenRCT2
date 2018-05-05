@@ -137,9 +137,13 @@ Network::Network()
 
 Network::~Network()
 {
+    std::puts("~Network() begin");
+
     CloseChatLog();
     CloseServerLog();
     CloseConnection();
+
+    std::puts("~Network() end");
 }
 
 void Network::SetEnvironment(const std::shared_ptr<IPlatformEnvironment>& env)

@@ -41,6 +41,7 @@ KeyboardShortcuts::KeyboardShortcuts(const std::shared_ptr<IPlatformEnvironment>
 KeyboardShortcuts::~KeyboardShortcuts()
 {
     _instance = nullptr;
+    std::puts("~KeyboardShortcuts()");
 }
 
 void KeyboardShortcuts::Reset()

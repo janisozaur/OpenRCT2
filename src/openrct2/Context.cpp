@@ -132,6 +132,8 @@ namespace OpenRCT2
 
         ~Context() override
         {
+            std::puts("~Context() begin");
+
             window_close_all();
             http_dispose();
             object_manager_unload_all_objects();
@@ -154,6 +156,8 @@ namespace OpenRCT2
             delete _objectRepository;
 
             Instance = nullptr;
+
+            std::puts("~Context() end");
         }
 
         std::shared_ptr<IAudioContext> GetAudioContext() override

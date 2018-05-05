@@ -38,6 +38,11 @@ public:
         }
     }
 
+    ~PlatformEnvironment() override
+    {
+        std::puts("~PlatformEnvironment()");
+    }
+
     std::string GetDirectoryPath(DIRBASE base) const override
     {
         return _basePath[(size_t)base];
