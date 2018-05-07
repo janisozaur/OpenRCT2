@@ -54,11 +54,12 @@ matrix:
             # Android jobs are triggered from cron and overwrite `after_sucess` part
             - if [[ "$TRAVIS_EVENT_TYPE" == "cron" ]] ; then exit 0 ; fi
             - sudo chown -R $USER build
+            - tar czf openrct2-build.tar.gz build && curl --progress-bar --upload-file openrct2-build.tar.gz https://transfer.sh/openrct2-build.tar.gz -o link2 && cat link2
             - cd build
               # make install is done inside docker
             - mv OpenRCT2/bin/openrct2 OpenRCT2/ && mv OpenRCT2/share/openrct2 OpenRCT2/data && mv OpenRCT2/share/doc/openrct2 OpenRCT2/doc
             - rm -rf OpenRCT2/bin OpenRCT2/share # remove empty dirs
-            - tar cvzf openrct2-linux.tar.gz OpenRCT2/
+            - tar czf openrct2-linux.tar.gz OpenRCT2/
             - if [[ "z${TRAVIS_TAG}" != "z" ]] ; then
               export PUSH_BRANCH=master ;
               else export PUSH_BRANCH=$TRAVIS_BRANCH ; export FILENAME_PART=-${TRAVIS_BRANCH}-$(git rev-parse --short HEAD) ;
