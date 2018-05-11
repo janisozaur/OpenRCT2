@@ -17,6 +17,7 @@ protected:
         std::string parkPath = TestData::GetParkPath("tile-element-tests.sv6");
         gOpenRCT2Headless    = true;
         gOpenRCT2NoGraphics  = true;
+        gOpenRCT2NoDiscord   = true;
         _context             = CreateContext();
         bool initialised     = _context->Initialise();
         ASSERT_TRUE(initialised);

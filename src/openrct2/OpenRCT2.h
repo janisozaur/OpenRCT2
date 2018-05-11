@@ -56,6 +56,7 @@ extern bool gOpenRCT2Headless;
 extern bool gOpenRCT2NoGraphics;
 extern bool gOpenRCT2ShowChangelog;
 extern bool gOpenRCT2SilentBreakpad;
+extern bool gOpenRCT2NoDiscord;
 
 #ifndef DISABLE_NETWORK
 extern EVP_MD_CTX * gHashCTX;

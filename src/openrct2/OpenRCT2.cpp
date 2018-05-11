@@ -27,6 +27,7 @@ utf8 gCustomPassword[MAX_PATH] = { 0 };
 
 bool gOpenRCT2Headless = false;
 bool gOpenRCT2NoGraphics = false;
+bool gOpenRCT2NoDiscord;
 
 bool gOpenRCT2ShowChangelog;
 bool gOpenRCT2SilentBreakpad;
