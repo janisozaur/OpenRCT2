@@ -351,10 +351,7 @@ namespace OpenRCT2
             _trackDesignRepository = CreateTrackDesignRepository(_env);
             _scenarioRepository = CreateScenarioRepository(_env);
 #ifdef __ENABLE_DISCORD__
-            if (!gOpenRCT2NoDiscord)
-            {
-                _discordService = std::make_unique<DiscordService>();
-            }
+            _discordService = std::make_unique<DiscordService>();
 #endif
 
             try
