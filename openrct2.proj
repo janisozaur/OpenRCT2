@@ -62,9 +62,9 @@
   <!-- 3rd party libraries / dependencies -->
   <PropertyGroup>
     <DependenciesCheckFile>$(RootDir).dependencies</DependenciesCheckFile>
-    <LibsUrl Condition="'$(Platform)'=='Win32'">https://github.com/OpenRCT2/Dependencies/releases/download/v16/openrct2-libs-v16-x86-windows-static-winssl.zip</LibsUrl>
+    <LibsUrl Condition="'$(Platform)'=='Win32'">https://github.com/OpenRCT2/Dependencies/releases/download/v17/openrct2-libs-v17-x86-windows-static-winssl.zip</LibsUrl>
     <LibsSha1 Condition="'$(Platform)'=='Win32'">827d86c1571bb73504b23929746b20d8094aae40</LibsSha1>
-    <LibsUrl Condition="'$(Platform)'=='x64'">https://github.com/OpenRCT2/Dependencies/releases/download/v16/openrct2-libs-v16-x64-windows-static-winssl.zip</LibsUrl>
+    <LibsUrl Condition="'$(Platform)'=='x64'">https://github.com/OpenRCT2/Dependencies/releases/download/v17/openrct2-libs-v17-x64-windows-static-winssl.zip</LibsUrl>
     <LibsSha1 Condition="'$(Platform)'=='x64'">5904b7e0562ace419b7c87d618e5ad00ba664b36</LibsSha1>
     <GtestVersion>1.8.0</GtestVersion>
     <GtestUrl>https://github.com/google/googletest/archive/release-1.8.0.zip</GtestUrl>
