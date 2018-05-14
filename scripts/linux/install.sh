@@ -106,16 +106,16 @@ elif [[ $(uname) == "Linux" ]]; then
 	# prevent build.sh from re-doing all the steps again
 	case "$TARGET" in
 		"ubuntu_i686")
-			docker pull openrct2/openrct2:ubuntu_i686
+			docker pull janisozaur/openrct2:ubuntu_i686
 			;;
 		"ubuntu_amd64")
-			docker pull openrct2/openrct2:ubuntu_amd64
+			docker pull janisozaur/openrct2:ubuntu_amd64
 			;;
 		"windows")
 			docker pull openrct2/openrct2:mingw-arch
 			;;
 		"docker64")
-			docker pull openrct2/openrct2:64bit-only
+			docker pull janisozaur/openrct2:64bit-only
 			;;
 		*)
 			echo "unkown target $TARGET"
