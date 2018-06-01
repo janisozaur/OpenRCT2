@@ -31,7 +31,10 @@ install:
 # Source the build environment
 - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 
-- cmake -G Ninja .. -DCMAKE_TOOLCHAIN_FILE=vcpkg-export-20180512-015154/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static-winssl -DCMAKE_BUILD_TYPE=RelWithDebInfo
+- set PATH="C:\Program Files\LLVM\bin";%PATH%
+- clang-cl -v
+
+- cmake -G Ninja .. -DCMAKE_TOOLCHAIN_FILE=vcpkg-export-20180512-015154/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static-winssl -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_COMPILER=clang-cl
 - ninja
 - ps: >-
     .\scripts\ps\appveyor_install.ps1
