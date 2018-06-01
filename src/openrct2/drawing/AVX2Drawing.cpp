@@ -50,7 +50,6 @@ void mask_avx2(sint32 width, sint32 height, const uint8 * RESTRICT maskSrc, cons
 #else
 
 #ifdef OPENRCT2_X86
-#error You have to compile this file with AVX2 enabled, when targeting x86!
 #endif
 
 void mask_avx2(sint32 width, sint32 height, const uint8 * RESTRICT maskSrc, const uint8 * RESTRICT colourSrc,

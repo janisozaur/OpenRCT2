@@ -65,7 +65,6 @@ void mask_sse4_1(sint32 width, sint32 height, const uint8 * RESTRICT maskSrc, co
 #else
 
 #ifdef OPENRCT2_X86
-#error You have to compile this file with SSE4.1 enabled, when targetting x86!
 #endif
 
 void mask_sse4_1(sint32 width, sint32 height, const uint8 * RESTRICT maskSrc, const uint8 * RESTRICT colourSrc,
