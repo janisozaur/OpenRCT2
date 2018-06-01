@@ -11,10 +11,30 @@ environment:
   BUILD_SERVER: AppVeyor
   PATH: C:\ProgramData\chocolatey\bin;$(PATH);C:\Program Files (x86)\Windows Kits\10\bin\x86;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin
 install:
+- mkdir C:\projects\deps
+- cd C:\projects\deps
+
+# Install Ninja
+- set NINJA_URL="https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip"
+- appveyor DownloadFile %NINJA_URL% -FileName ninja.zip
+- 7z x ninja.zip -oC:\projects\deps\ninja > nul
+- set PATH=C:\projects\deps\ninja;%PATH%
+- ninja --version
+
+- mkdir C:\projects\openrct2\build
+- cd C:\projects\openrct2\build
+# Download deps
+- set DEPS_URL="https://ci.appveyor.com/api/buildjobs/cd0g76g8u8dhrra2/artifacts/vcpkg%2Fvcpkg-export-20180512-013716.zip"
+- appveyor DownloadFile %DEPS_URL% -FileName deps.zip
+- 7z x deps.zip -oC:\projects\openrct2\build
+
+# Source the build environment
+- "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+
+- cmake -G Ninja .. -DCMAKE_TOOLCHAIN_FILE=vcpkg-export/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static-winssl -DCMAKE_BUILD_TYPE=RelWithDebInfo
 - ps: >-
     .\scripts\ps\appveyor_install.ps1
 platform:
-  - Win32
   - x64
 configuration: Release
 build:
