@@ -59,8 +59,8 @@ if (NOT DISABLE_TTF)
 endif ()
 
 # Sources
-file(GLOB_RECURSE OPENRCT2_CORE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/*.cpp"
-                                        "${CMAKE_CURRENT_LIST_DIR}/*.h"
+file(GLOB_RECURSE OPENRCT2_CORE_SOURCES "${CMAKE_CURRENT_LIST_DIR}/*.cpp")
+file(GLOB_RECURSE OPENRCT2_CORE_HEADERS "${CMAKE_CURRENT_LIST_DIR}/*.h"
                                         "${CMAKE_CURRENT_LIST_DIR}/*.hpp")
 if (APPLE)
     file(GLOB_RECURSE OPENRCT2_CORE_MM_SOURCES "${CMAKE_CURRENT_LIST_DIR}/*.mm")
@@ -71,6 +71,10 @@ endif ()
 set(PROJECT libopenrct2)
 project(${PROJECT} CXX)
 add_library(${PROJECT} ${OPENRCT2_CORE_SOURCES} ${OPENRCT2_CORE_MM_SOURCES} ${RCT2_SECTIONS})
+add_library(${PROJECT}-headers-check ${OPENRCT2_CORE_HEADERS})
+set_target_properties(${PROJECT}-headers-check PROPERTIES LINKER_LANGUAGE CXX)
+set_source_files_properties(${OPENRCT2_CORE_HEADERS} PROPERTIES LANGUAGE CXX)
+add_definitions("-x c++ -Wno-pragma-once-outside-header -Wno-unused-const-variable -Wno-pragmas")
 set_target_properties(${PROJECT} PROPERTIES PREFIX "")
 
 if (MSVC)
@@ -151,19 +155,27 @@ endif()
 
 # Includes
 target_include_directories(${PROJECT} SYSTEM PRIVATE ${LIBZIP_INCLUDE_DIRS})
+target_include_directories(${PROJECT}-headers-check SYSTEM PRIVATE ${LIBZIP_INCLUDE_DIRS})
 target_include_directories(${PROJECT} PUBLIC ${JANSSON_INCLUDE_DIRS})
+target_include_directories(${PROJECT}-headers-check PUBLIC ${JANSSON_INCLUDE_DIRS})
 target_include_directories(${PROJECT} PRIVATE ${PNG_INCLUDE_DIRS}
+                                              ${ZLIB_INCLUDE_DIRS})
+target_include_directories(${PROJECT}-headers-check PRIVATE ${PNG_INCLUDE_DIRS}
                                               ${ZLIB_INCLUDE_DIRS})
 if (NOT DISABLE_HTTP_TWITCH OR NOT DISABLE_NETWORK)
     target_include_directories(${PROJECT} PRIVATE ${LIBCURL_INCLUDE_DIRS})
+    target_include_directories(${PROJECT}-headers-check PRIVATE ${LIBCURL_INCLUDE_DIRS})
 endif ()
 if (NOT DISABLE_NETWORK)
     target_include_directories(${PROJECT} PUBLIC ${OPENSSL_INCLUDE_DIR})
+    target_include_directories(${PROJECT}-headers-check PUBLIC ${OPENSSL_INCLUDE_DIR})
 endif ()
 if (NOT DISABLE_TTF)
     target_include_directories(${PROJECT} PRIVATE ${FREETYPE_INCLUDE_DIRS})
+    target_include_directories(${PROJECT}-headers-check PRIVATE ${FREETYPE_INCLUDE_DIRS})
     if (UNIX AND NOT APPLE)
         target_include_directories(${PROJECT} PRIVATE ${FONTCONFIG_INCLUDE_DIRS})
+        target_include_directories(${PROJECT}-headers-check PRIVATE ${FONTCONFIG_INCLUDE_DIRS})
     endif ()
 endif ()
 
