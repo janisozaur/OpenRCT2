@@ -24,7 +24,7 @@ install:
 - mkdir C:\projects\openrct2\build
 - cd C:\projects\openrct2\build
 # Download deps
-- set DEPS_URL="https://ci.appveyor.com/api/buildjobs/cd0g76g8u8dhrra2/artifacts/vcpkg%2Fvcpkg-export-20180512-013716.zip"
+- set DEPS_URL="https://ci.appveyor.com/api/buildjobs/cd0g76g8u8dhrra2/artifacts/vcpkg/vcpkg-export-20180512-013716.zip"
 - appveyor DownloadFile %DEPS_URL% -FileName deps.zip
 - 7z x deps.zip -oC:\projects\openrct2\build
 
