@@ -73,6 +73,10 @@ project(${PROJECT} CXX)
 add_library(${PROJECT} ${OPENRCT2_CORE_SOURCES} ${OPENRCT2_CORE_MM_SOURCES} ${RCT2_SECTIONS})
 set_target_properties(${PROJECT} PROPERTIES PREFIX "")
 
+if (MSVC)
+target_link_libraries(libopenrct2 mincore imm32 version winmm)
+endif()
+
 # Libraries
 if (STATIC)
     target_link_libraries(${PROJECT} ${JANSSON_STATIC_LIBRARIES}
