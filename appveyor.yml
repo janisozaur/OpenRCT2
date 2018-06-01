@@ -29,7 +29,7 @@ install:
 - 7z x deps.zip -oC:\projects\openrct2\build
 
 # Source the build environment
-- C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat x64
+- call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
 
 - cmake -G Ninja .. -DCMAKE_TOOLCHAIN_FILE=vcpkg-export/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static-winssl -DCMAKE_BUILD_TYPE=RelWithDebInfo
 - ps: >-
