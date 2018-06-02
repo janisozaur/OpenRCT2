@@ -35,18 +35,15 @@ install:
 - clang-cl -v
 
 - cmake -G Ninja .. -DCMAKE_TOOLCHAIN_FILE=vcpkg-export-20180512-015154/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static-winssl -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_COMPILER=clang-cl
-- ninja -k0 install
-- ctest --output-on-failure
-- ps: >-
-    .\scripts\ps\appveyor_install.ps1
 platform:
   - x64
 configuration: Release
-build:
-  parallel: true
-  project: openrct2.proj
+build_script:
+  - ninja -k0 install
 test_script:
-- ps: msbuild openrct2.proj /t:Test /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - ctest --output-on-failure
+on_failure:
+  - type C:\projects\openrct2\build\cmake_install.cmake
 after_test:
 - ps: (new-object net.webclient).UploadFile("https://ci.appveyor.com/api/testresults/junit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\artifacts\test-results.xml))
 artifacts:
