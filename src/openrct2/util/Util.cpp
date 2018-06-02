@@ -259,7 +259,7 @@ static sint32 bitcount_popcnt(uint32 source)
         sint32 rv;
         asm volatile ("popcnt %1,%0" : "=r"(rv) : "rm"(source) : "cc");
         return rv;
-    #elif defined(OpenRCT2_CPUID_MSVC_X86)
+    #elif defined(OpenRCT2_CPUID_MSVC_X86aaa)
         return _mm_popcnt_u32(source);
     #else
         openrct2_assert(false, "bitcount_popcnt() called, without support compiled in");
