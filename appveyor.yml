@@ -35,7 +35,7 @@ install:
 - clang-cl -v
 
 - cmake -G Ninja .. -DCMAKE_TOOLCHAIN_FILE=vcpkg-export-20180512-015154/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static-winssl -DCMAKE_BUILD_TYPE=RelWithDebInfo -DWITH_TESTS=on -DCMAKE_CXX_COMPILER=clang-cl
-- ninja -k0
+- ninja -k0 install
 - ctest --output-on-failure
 - ps: >-
     .\scripts\ps\appveyor_install.ps1
