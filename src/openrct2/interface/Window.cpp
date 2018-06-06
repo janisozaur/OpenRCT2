@@ -429,14 +429,6 @@ void window_set_window_limit(sint32 value)
 /**
  * Opens a new window.
  *  rct2: 0x006EACA4
- *
- * @param x (ax)
- * @param y (eax >> 16)
- * @param width (bx)
- * @param height (ebx >> 16)
- * @param events (edx)
- * @param flags (ch)
- * @param class (cl)
  */
 rct_window *window_create(sint32 x, sint32 y, sint32 width, sint32 height, rct_window_event_list *event_handlers, rct_windowclass cls, uint16 flags)
 {
@@ -587,12 +579,6 @@ static bool window_fits_between_others(sint32 x, sint32 y, sint32 width, sint32 
 /**
  * Opens a new window, supposedly automatically positioned
  *  rct2: 0x006EA9B1
- *
- * @param width (bx)
- * @param height (ebx >> 16)
- * @param events (edx)
- * @param flags (ch)
- * @param class (cl)
  */
 rct_window *window_create_auto_pos(sint32 width, sint32 height, rct_window_event_list *event_handlers, rct_windowclass cls, uint16 flags)
 {
@@ -1001,9 +987,6 @@ void window_invalidate_by_class(rct_windowclass cls)
 /**
  * Invalidates all windows with the specified window class and number.
  *  rct2: 0x006EC3AC
- * @param (ah) widget index
- * @param cls (al) without bit 14 set
- * @param number (bx)
  */
 void window_invalidate_by_number(rct_windowclass cls, rct_windownumber number)
 {
@@ -1062,9 +1045,6 @@ void widget_invalidate_by_class(rct_windowclass cls, rct_widgetindex widgetIndex
 /**
  * Invalidates the specified widget of all windows that match the specified window class and number.
  *  rct2: 0x006EC3AC
- * @param (ah) widget index
- * @param cls (al) with bit 15 set
- * @param number (bx)
  */
 void widget_invalidate_by_number(rct_windowclass cls, rct_windownumber number, rct_widgetindex widgetIndex)
 {
@@ -1078,8 +1058,6 @@ void widget_invalidate_by_number(rct_windowclass cls, rct_windownumber number, r
 /**
  * Initialises scroll widgets to their virtual size.
  *  rct2: 0x006EAEB8
- *
- * @param window The window (esi).
  */
 void window_init_scroll_widgets(rct_window *w)
 {
@@ -1778,9 +1756,6 @@ static void window_draw_single(rct_drawpixelinfo *dpi, rct_window *w, sint32 lef
 /**
  *
  *  rct2: 0x006EB15C
- *
- * @param window (esi)
- * @param dpi (edi)
  */
 void window_draw_widgets(rct_window *w, rct_drawpixelinfo *dpi)
 {
