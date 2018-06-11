@@ -62,7 +62,7 @@ namespace OpenRCT2
 #include <set>
 #include <vector>
 #include <functional>
-#include <fstream>
+#include <iosfwd>
 #include <map>
 #include "../actions/GameAction.h"
 #include "../core/Json.hpp"
