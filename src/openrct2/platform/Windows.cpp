@@ -8,9 +8,6 @@
  *****************************************************************************/
 
 #ifdef __MINGW32__
-// 0x0600 == vista
-#    define WINVER 0x0600
-#    define _WIN32_WINNT 0x0600
 #endif // __MINGW32__
 
 #ifdef _WIN32
@@ -46,17 +43,6 @@
 #    define SINGLE_INSTANCE_MUTEX_NAME "RollerCoaster Tycoon 2_GSKMUTEX"
 
 #    define OPENRCT2_DLL_MODULE_NAME "openrct2.dll"
-
-static HMODULE _dllModule = nullptr;
-
-static HMODULE plaform_get_dll_module()
-{
-    if (_dllModule == nullptr)
-    {
-        _dllModule = GetModuleHandle(NULL);
-    }
-    return _dllModule;
-}
 
 void platform_get_date_local(rct2_date* out_date)
 {
@@ -375,51 +361,6 @@ uint8_t platform_get_locale_temperature_format()
 
 uint8_t platform_get_locale_date_format()
 {
-    // Retrieve short date format, eg "MM/dd/yyyy"
-    wchar_t dateFormat[20];
-    if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SSHORTDATE, dateFormat, sizeof(dateFormat)) == 0)
-    {
-        return DATE_FORMAT_DAY_MONTH_YEAR;
-    }
-
-    // The only valid characters for format types are: dgyM
-    // We try to find 3 strings of format types, ignore any characters in between.
-    // We also ignore 'g', as it represents 'era' and we don't have that concept
-    // in our date formats.
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/dd317787(v=vs.85).aspx
-    //
-    wchar_t first[sizeof(dateFormat)];
-    wchar_t second[sizeof(dateFormat)];
-    if (swscanf_s(
-            dateFormat, L"%l[dyM]%*l[^dyM]%l[dyM]%*l[^dyM]%*l[dyM]", first, (uint32_t)Util::CountOf(first), second,
-            (uint32_t)Util::CountOf(second))
-        != 2)
-    {
-        return DATE_FORMAT_DAY_MONTH_YEAR;
-    }
-
-    if (wcsncmp(L"d", first, 1) == 0)
-    {
-        return DATE_FORMAT_DAY_MONTH_YEAR;
-    }
-    else if (wcsncmp(L"M", first, 1) == 0)
-    {
-        return DATE_FORMAT_MONTH_DAY_YEAR;
-    }
-    else if (wcsncmp(L"y", first, 1) == 0)
-    {
-        if (wcsncmp(L"d", second, 1) == 0)
-        {
-            return DATE_FORMAT_YEAR_DAY_MONTH;
-        }
-        else
-        {
-            // Closest possible option
-            return DATE_FORMAT_YEAR_MONTH_DAY;
-        }
-    }
-
-    // Default fallback
     return DATE_FORMAT_DAY_MONTH_YEAR;
 }
 
@@ -528,119 +469,14 @@ bool platform_process_is_elevated()
 #    define SOFTWARE_CLASSES L"Software\\Classes"
 #    define MUI_CACHE L"Local Settings\\Software\\Microsoft\\Windows\\Shell\\MuiCache"
 
-static void get_progIdName(wchar_t* dst, const utf8* extension)
-{
-    utf8 progIdName[128];
-    safe_strcpy(progIdName, OPENRCT2_NAME, sizeof(progIdName));
-    safe_strcat(progIdName, extension, sizeof(progIdName));
-
-    wchar_t* progIdNameW = utf8_to_widechar(progIdName);
-    lstrcpyW(dst, progIdNameW);
-    free(progIdNameW);
-}
-
 static bool windows_setup_file_association(
     const utf8* extension, const utf8* fileTypeText, const utf8* commandText, const utf8* commandArgs, const uint32_t iconIndex)
 {
-    wchar_t exePathW[MAX_PATH];
-    wchar_t dllPathW[MAX_PATH];
-
-    [[maybe_unused]] int32_t printResult;
-
-    GetModuleFileNameW(NULL, exePathW, sizeof(exePathW));
-    GetModuleFileNameW(plaform_get_dll_module(), dllPathW, sizeof(dllPathW));
-
-    wchar_t* extensionW = utf8_to_widechar(extension);
-    wchar_t* fileTypeTextW = utf8_to_widechar(fileTypeText);
-    wchar_t* commandTextW = utf8_to_widechar(commandText);
-    wchar_t* commandArgsW = utf8_to_widechar(commandArgs);
-
-    wchar_t progIdNameW[128];
-    get_progIdName(progIdNameW, extension);
-
-    bool result = false;
-    HKEY hKey = nullptr;
-    HKEY hRootKey = nullptr;
-
-    // [HKEY_CURRENT_USER\Software\Classes]
-    if (RegOpenKeyW(HKEY_CURRENT_USER, SOFTWARE_CLASSES, &hRootKey) != ERROR_SUCCESS)
-    {
-        goto fail;
-    }
-
-    // [hRootKey\.ext]
-    if (RegSetValueW(hRootKey, extensionW, REG_SZ, progIdNameW, 0) != ERROR_SUCCESS)
-    {
-        goto fail;
-    }
-
-    if (RegCreateKeyW(hRootKey, progIdNameW, &hKey) != ERROR_SUCCESS)
-    {
-        goto fail;
-    }
-
-    // [hRootKey\OpenRCT2.ext]
-    if (RegSetValueW(hKey, NULL, REG_SZ, fileTypeTextW, 0) != ERROR_SUCCESS)
-    {
-        goto fail;
-    }
-    // [hRootKey\OpenRCT2.ext\DefaultIcon]
-    wchar_t szIconW[MAX_PATH];
-    printResult = swprintf_s(szIconW, MAX_PATH, L"\"%s\",%d", dllPathW, iconIndex);
-    assert(printResult >= 0);
-    if (RegSetValueW(hKey, L"DefaultIcon", REG_SZ, szIconW, 0) != ERROR_SUCCESS)
-    {
-        goto fail;
-    }
-
-    // [hRootKey\OpenRCT2.sv6\shell]
-    if (RegSetValueW(hKey, L"shell", REG_SZ, L"open", 0) != ERROR_SUCCESS)
-    {
-        goto fail;
-    }
-
-    // [hRootKey\OpenRCT2.sv6\shell\open]
-    if (RegSetValueW(hKey, L"shell\\open", REG_SZ, commandTextW, 0) != ERROR_SUCCESS)
-    {
-        goto fail;
-    }
-
-    // [hRootKey\OpenRCT2.sv6\shell\open\command]
-    wchar_t szCommandW[MAX_PATH];
-    printResult = swprintf_s(szCommandW, MAX_PATH, L"\"%s\" %s", exePathW, commandArgsW);
-    assert(printResult >= 0);
-    if (RegSetValueW(hKey, L"shell\\open\\command", REG_SZ, szCommandW, 0) != ERROR_SUCCESS)
-    {
-        goto fail;
-    }
-
-    result = true;
-fail:
-    free(extensionW);
-    free(fileTypeTextW);
-    free(commandTextW);
-    free(commandArgsW);
-    RegCloseKey(hKey);
-    RegCloseKey(hRootKey);
-    return result;
+    return true;
 }
 
 static void windows_remove_file_association(const utf8* extension)
 {
-    // [HKEY_CURRENT_USER\Software\Classes]
-    HKEY hRootKey;
-    if (RegOpenKeyW(HKEY_CURRENT_USER, SOFTWARE_CLASSES, &hRootKey) == ERROR_SUCCESS)
-    {
-        // [hRootKey\.ext]
-        RegDeleteTreeA(hRootKey, extension);
-
-        // [hRootKey\OpenRCT2.ext]
-        wchar_t progIdName[128];
-        get_progIdName(progIdName, extension);
-        RegDeleteTreeW(hRootKey, progIdName);
-
-        RegCloseKey(hRootKey);
-    }
 }
 
 void platform_setup_file_associations()
@@ -679,50 +515,7 @@ void platform_remove_file_associations()
 
 bool platform_setup_uri_protocol()
 {
-    log_verbose("Setting up URI protocol...");
-
-    // [HKEY_CURRENT_USER\Software\Classes]
-    HKEY hRootKey;
-    if (RegOpenKeyW(HKEY_CURRENT_USER, SOFTWARE_CLASSES, &hRootKey) == ERROR_SUCCESS)
-    {
-        // [hRootKey\openrct2]
-        HKEY hClassKey;
-        if (RegCreateKeyA(hRootKey, "openrct2", &hClassKey) == ERROR_SUCCESS)
-        {
-            if (RegSetValueA(hClassKey, NULL, REG_SZ, "URL:openrct2", 0) == ERROR_SUCCESS)
-            {
-                if (RegSetKeyValueA(hClassKey, NULL, "URL Protocol", REG_SZ, "", 0) == ERROR_SUCCESS)
-                {
-                    // [hRootKey\openrct2\shell\open\command]
-                    wchar_t exePath[MAX_PATH];
-                    GetModuleFileNameW(NULL, exePath, MAX_PATH);
-
-                    wchar_t buffer[512];
-                    swprintf_s(buffer, sizeof(buffer), L"\"%s\" handle-uri \"%%1\"", exePath);
-                    if (RegSetValueW(hClassKey, L"shell\\open\\command", REG_SZ, buffer, 0) == ERROR_SUCCESS)
-                    {
-                        // Not compulsory, but gives the application a nicer name
-                        // [HKEY_CURRENT_USER\SOFTWARE\Classes\Local Settings\Software\Microsoft\Windows\Shell\MuiCache]
-                        HKEY hMuiCacheKey;
-                        if (RegCreateKeyW(hRootKey, MUI_CACHE, &hMuiCacheKey) == ERROR_SUCCESS)
-                        {
-                            swprintf_s(buffer, sizeof(buffer), L"%s.FriendlyAppName", exePath);
-                            // mingw-w64 used to define RegSetKeyValueW's signature incorrectly
-                            // You need at least mingw-w64 5.0 including this commit:
-                            //   https://sourceforge.net/p/mingw-w64/mingw-w64/ci/da9341980a4b70be3563ac09b5927539e7da21f7/
-                            RegSetKeyValueW(hMuiCacheKey, NULL, buffer, REG_SZ, L"OpenRCT2", sizeof(L"OpenRCT2") + 1);
-                        }
-
-                        log_verbose("URI protocol setup successful");
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-
-    log_verbose("URI protocol setup failed");
-    return false;
+    return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

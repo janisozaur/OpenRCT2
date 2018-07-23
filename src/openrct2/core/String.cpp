@@ -8,9 +8,6 @@
  *****************************************************************************/
 
 #ifdef __MINGW32__
-// 0x0600 == vista
-#    define WINVER 0x0600
-#    define _WIN32_WINNT 0x0600
 #endif // __MINGW32__
 
 #include <cwctype>
@@ -705,31 +702,7 @@ namespace String
     std::string ToUpper(const std::string_view& src)
     {
 #ifdef _WIN32
-        auto srcW = ToUtf16(src);
-
-        // Measure how long the destination needs to be
-        auto requiredSize = LCMapStringEx(
-            LOCALE_NAME_USER_DEFAULT, LCMAP_UPPERCASE | LCMAP_LINGUISTIC_CASING, srcW.c_str(), (int)srcW.length(), nullptr, 0,
-            nullptr, nullptr, 0);
-
-        auto dstW = std::wstring();
-        dstW.resize(requiredSize);
-
-        // Transform the string
-        auto result = LCMapStringEx(
-            LOCALE_NAME_USER_DEFAULT, LCMAP_UPPERCASE | LCMAP_LINGUISTIC_CASING, srcW.c_str(), (int)srcW.length(), dstW.data(),
-            (int)dstW.length(), nullptr, nullptr, 0);
-        if (result == 0)
-        {
-            // Check the error
-            auto error = GetLastError();
-            log_warning("LCMapStringEx failed with %d", error);
-            return std::string(src);
-        }
-        else
-        {
-            return String::ToUtf8(dstW);
-        }
+        return std::string(src);
 #else
         icu::UnicodeString str = icu::UnicodeString::fromUTF8(std::string(src));
         str.toUpper();

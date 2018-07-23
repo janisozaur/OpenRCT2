@@ -1545,7 +1545,7 @@ void window_event_scroll_mouseover_call(rct_window* w, int32_t scrollIndex, int3
 
 void window_event_textinput_call(rct_window* w, rct_widgetindex widgetIndex, char* text)
 {
-    if (w->event_handlers->text_input != nullptr)
+    if (w != nullptr && w->event_handlers->text_input != nullptr)
         w->event_handlers->text_input(w, widgetIndex, text);
 }
 
