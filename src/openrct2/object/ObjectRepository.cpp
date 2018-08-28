@@ -635,8 +635,8 @@ bool IsObjectCustom(const ObjectRepositoryItem* object)
 const rct_object_entry* object_list_find(rct_object_entry* entry)
 {
     const rct_object_entry* result = nullptr;
-    auto objRepo = GetContext()->GetObjectRepository();
-    auto item = objRepo->FindObject(entry);
+    auto& objRepo = GetContext()->GetObjectRepository();
+    auto item = objRepo.FindObject(entry);
     if (item != nullptr)
     {
         result = &item->ObjectEntry;
@@ -648,21 +648,21 @@ void object_list_load()
 {
     auto context = GetContext();
     const auto& localisationService = context->GetLocalisationService();
-    auto objectRepository = context->GetObjectRepository();
-    objectRepository->LoadOrConstruct(localisationService.GetCurrentLanguage());
+    auto& objectRepository = context->GetObjectRepository();
+    objectRepository.LoadOrConstruct(localisationService.GetCurrentLanguage());
 
-    auto objectManager = context->GetObjectManager();
-    objectManager->UnloadAll();
+    auto& objectManager = context->GetObjectManager();
+    objectManager.UnloadAll();
 }
 
 void* object_repository_load_object(const rct_object_entry* objectEntry)
 {
     Object* object = nullptr;
-    auto objRepository = GetContext()->GetObjectRepository();
-    const ObjectRepositoryItem* ori = objRepository->FindObject(objectEntry);
+    auto& objRepository = GetContext()->GetObjectRepository();
+    const ObjectRepositoryItem* ori = objRepository.FindObject(objectEntry);
     if (ori != nullptr)
     {
-        object = objRepository->LoadObject(ori);
+        object = objRepository.LoadObject(ori);
         if (object != nullptr)
         {
             object->Load();
@@ -690,11 +690,11 @@ void scenario_translate(scenario_index_entry* scenarioEntry, const rct_object_en
         // Checks for a scenario string object (possibly for localisation)
         if ((stexObjectEntry->flags & 0xFF) != 255)
         {
-            auto objectRepository = GetContext()->GetObjectRepository();
-            const ObjectRepositoryItem* ori = objectRepository->FindObject(stexObjectEntry);
+            auto& objectRepository = GetContext()->GetObjectRepository();
+            const ObjectRepositoryItem* ori = objectRepository.FindObject(stexObjectEntry);
             if (ori != nullptr)
             {
-                Object* object = objectRepository->LoadObject(ori);
+                Object* object = objectRepository.LoadObject(ori);
                 if (object != nullptr)
                 {
                     auto stexObject = static_cast<StexObject*>(object);
@@ -713,26 +713,26 @@ void scenario_translate(scenario_index_entry* scenarioEntry, const rct_object_en
 
 size_t object_repository_get_items_count()
 {
-    auto objectRepository = GetContext()->GetObjectRepository();
-    return objectRepository->GetNumObjects();
+    auto& objectRepository = GetContext()->GetObjectRepository();
+    return objectRepository.GetNumObjects();
 }
 
 const ObjectRepositoryItem* object_repository_get_items()
 {
-    auto objectRepository = GetContext()->GetObjectRepository();
-    return objectRepository->GetObjects();
+    auto& objectRepository = GetContext()->GetObjectRepository();
+    return objectRepository.GetObjects();
 }
 
 const ObjectRepositoryItem* object_repository_find_object_by_entry(const rct_object_entry* entry)
 {
-    auto objectRepository = GetContext()->GetObjectRepository();
-    return objectRepository->FindObject(entry);
+    auto& objectRepository = GetContext()->GetObjectRepository();
+    return objectRepository.FindObject(entry);
 }
 
 const ObjectRepositoryItem* object_repository_find_object_by_name(const char* name)
 {
-    auto objectRepository = GetContext()->GetObjectRepository();
-    return objectRepository->FindObject(name);
+    auto& objectRepository = GetContext()->GetObjectRepository();
+    return objectRepository.FindObject(name);
 }
 
 void object_delete(void* object)
