@@ -483,45 +483,6 @@ char* safe_strtrimleft(char* destination, const char* source, size_t size)
     return safe_strcpy(destination, source, size);
 }
 
-#if !(defined(_GNU_SOURCE) || (defined(__DARWIN_C_LEVEL) && __DARWIN_C_LEVEL >= 200809L))
-char* strcasestr(const char* haystack, const char* needle)
-{
-    const char* p1 = haystack;
-    const char* p2 = needle;
-    const char* r = *p2 == 0 ? haystack : nullptr;
-
-    while (*p1 != 0 && *p2 != 0)
-    {
-        if (tolower((unsigned char)*p1) == tolower((unsigned char)*p2))
-        {
-            if (r == nullptr)
-                r = p1;
-            p2++;
-        }
-        else
-        {
-            p2 = needle;
-            if (r != nullptr)
-                p1 = r + 1;
-
-            if (tolower((unsigned char)*p1) == tolower((unsigned char)*p2))
-            {
-                r = p1;
-                p2++;
-            }
-            else
-            {
-                r = nullptr;
-            }
-        }
-
-        p1++;
-    }
-
-    return *p2 == 0 ? (char*)r : nullptr;
-}
-#endif
-
 bool utf8_is_bom(const char* str)
 {
     return str[0] == (char)(uint8_t)0xEF && str[1] == (char)(uint8_t)0xBB && str[2] == (char)(uint8_t)0xBF;
