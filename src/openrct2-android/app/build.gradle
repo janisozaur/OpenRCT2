@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion '25.0.2'
+    buildToolsVersion '28.0.2'
 
     defaultConfig {
         applicationId 'website.openrct2'
@@ -45,6 +45,13 @@ android {
         }
     }
 
+    flavorDimensions "version"
+    productFlavors {
+        full {
+            dimension "version"
+        }
+    }
+
     externalNativeBuild {
         cmake {
             path 'src/main/CMakeLists.txt'
@@ -52,19 +59,9 @@ android {
     }
 
     productFlavors {
-        arm7 {
-            ndk {
-                abiFilters 'armeabi-v7a'
-            }
-        }
         arm {
             ndk {
                 abiFilters 'armeabi-v7a', 'arm64-v8a'
-            }
-        }
-        x86 {
-            ndk {
-                abiFilters 'x86', 'x86_64'
             }
         }
     }
