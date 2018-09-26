@@ -22,7 +22,7 @@ endif()
 
 include(ExternalProject)
 ExternalProject_Add(libs
-    URL https://github.com/OpenRCT2/openrct2-dependencies-android/releases/download/v0.9/openrct2-libs-android-${ANDROID_ABI}.tar.gz
+    URL https://transfer.sh/11t9C3/openrct2-libs-android-arm64-v8a.tar.gz
 
     SOURCE_DIR "${CMAKE_BINARY_DIR}/libs"
 
