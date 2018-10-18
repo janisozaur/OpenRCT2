@@ -127,7 +127,7 @@ static bool OnCrash(
         return succeeded;
     }
 
-    constexpr wchar_t* MessageFormat = L"A crash has occurred and a dump was created at\n%s.\n\nPlease file an issue "
+    constexpr const wchar_t* MessageFormat = L"A crash has occurred and a dump was created at\n%s.\n\nPlease file an issue "
                                        L"with OpenRCT2 on GitHub, and provide "
                                        L"the dump and saved game there.\n\nVersion: %s\nCommit: %s\n\n"
                                        L"We would like to upload the crash dump for automated analysis, do you agree?\n";
