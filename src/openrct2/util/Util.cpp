@@ -630,6 +630,55 @@ uint8_t* util_zlib_deflate(const uint8_t* data, size_t data_in_size, size_t* dat
     return buffer;
 }
 
+// Compress an source to gzip-compatible stream, write to dest.
+// Mainly used for compressing the crashdumps
+bool util_gzip_compress(FILE* source, FILE* dest)
+{
+    int ret, flush;
+    unsigned have;
+    z_stream strm{};
+    strm.zalloc = Z_NULL;
+    strm.zfree = Z_NULL;
+    strm.opaque = Z_NULL;
+    unsigned char in[CHUNK];
+    unsigned char out[CHUNK];
+    int windowBits = 15;
+    int GZIP_ENCODING = 16;
+    ret = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, windowBits | GZIP_ENCODING, 8, Z_DEFAULT_STRATEGY);
+    if (ret != Z_OK)
+    {
+        return false;
+    }
+    do
+    {
+        strm.avail_in = fread(in, 1, CHUNK, source);
+        if (ferror(source))
+        {
+            (void)deflateEnd(&strm);
+            return Z_ERRNO;
+        }
+        flush = feof(source) ? Z_FINISH : Z_NO_FLUSH;
+        strm.next_in = in;
+        do
+        {
+            strm.avail_out = CHUNK;
+            strm.next_out = out;
+            ret = deflate(&strm, flush);
+            if (ret != Z_OK)
+            {
+                return false;
+            }
+            have = CHUNK - strm.avail_out;
+            if (fwrite(out, 1, have, dest) != have || ferror(dest))
+            {
+                (void)deflateEnd(&strm);
+                return Z_ERRNO;
+            }
+        } while (strm.avail_out == 0);
+    } while (flush != Z_FINISH);
+    return true;
+}
+
 // Type-independent code left as macro to reduce duplicate code.
 #define add_clamp_body(value, value_to_add, min_cap, max_cap)                                                                  \
     if ((value_to_add > 0) && (value > (max_cap - (value_to_add))))                                                            \

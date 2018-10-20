@@ -100,6 +100,8 @@ static bool OnCrash(
         std::wcscpy(dumpFilePath, dumpFilePathNew);
     }
 
+    // Compress to gzip-compatible stream
+
     // Log information to output
     wprintf(L"Dump Path: %s\n", dumpPath);
     wprintf(L"Dump File Path: %s\n", dumpFilePath);
