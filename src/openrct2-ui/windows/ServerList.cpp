@@ -140,6 +140,8 @@ static bool is_version_valid(const std::string& version);
 
 rct_window* window_server_list_open()
 {
+    std::shared_ptr<int> test;
+    *test = 42;
     rct_window* window;
 
     // Check if window is already open
