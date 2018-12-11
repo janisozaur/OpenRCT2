@@ -1,6 +1,6 @@
 version: 0.2.1.{build}
 image:
-  - Visual Studio 2017
+  - Visual Studio 2019 Preview
 cache:
 - C:\ProgramData\chocolatey\bin -> scripts\ps\appveyor_install.ps1
 - C:\ProgramData\chocolatey\lib -> scripts\ps\appveyor_install.ps1
