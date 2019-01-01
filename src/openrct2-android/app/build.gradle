@@ -59,19 +59,9 @@ android {
     }
 
     productFlavors {
-        arm7 {
-            ndk {
-                abiFilters 'armeabi-v7a'
-            }
-        }
         arm {
             ndk {
-                abiFilters 'armeabi-v7a', 'arm64-v8a'
-            }
-        }
-        x86 {
-            ndk {
-                abiFilters 'x86', 'x86_64'
+                abiFilters 'arm64-v8a'
             }
         }
     }
