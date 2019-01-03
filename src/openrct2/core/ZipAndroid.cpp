@@ -23,6 +23,7 @@ private:
 public:
     ZipArchive(const std::string_view& path, ZIP_ACCESS access)
     {
+        SDL_AndroidGetExternalStorageState();
         // retrieve the JNI environment.
         JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
 
