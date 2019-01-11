@@ -263,7 +263,9 @@ static void colour_char(uint8_t colour, const uint16_t* current_font_flags, uint
     const rct_g1_element* g1 = gfx_get_g1_element(SPR_TEXT_PALETTE);
     if (g1 != nullptr)
     {
-        colour32 = ((uint32_t*)g1->offset)[colour & 0xFF];
+        uint32_t idx = (colour & 0xFF) * 4;
+        const uint8_t* ptr8 = &g1->offset[idx];
+        colour32 = ptr8[0] | (ptr8[1] << 8) | (ptr8[2] << 16) | (ptr8[3] << 24);
     }
 
     if (!(*current_font_flags & TEXT_DRAW_FLAG_OUTLINE))
