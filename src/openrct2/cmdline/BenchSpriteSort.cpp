@@ -65,8 +65,7 @@ static void fixup_pointers(paint_session* s, size_t paint_session_entries, size_
     }
 }
 
-// This function is based on benchgfx_render_screenshots
-static void BM_paint_session_arrange(benchmark::State& state)
+static std::vector<paint_session> extract_paint_session()
 {
     core_init();
     gOpenRCT2Headless = true;
@@ -78,7 +77,8 @@ static void BM_paint_session_arrange(benchmark::State& state)
         drawing_engine_init();
         if (!context->LoadParkFromFile("data.sv6"))
         {
-            return;
+            log_error("Failed to load park!");
+            return {};
         }
 
         gIntroState = INTRO_STATE_NONE;
@@ -132,6 +132,12 @@ static void BM_paint_session_arrange(benchmark::State& state)
         drawing_engine_dispose();
     }
     log_info("Got %u paint sessions.", std::size(sessions));
+    return sessions;
+}
+
+// This function is based on benchgfx_render_screenshots
+static void BM_paint_session_arrange(benchmark::State& state)
+{
     // Fixing up the pointers continuously is wasteful. Fix it up once for `sessions` and store a copy.
     // Keep in mind we need bit-exact copy, as the lists use pointers.
     // Once sorted, just restore the copy with the original fixed-up version.
