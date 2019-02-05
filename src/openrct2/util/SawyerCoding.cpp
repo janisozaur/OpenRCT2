@@ -164,7 +164,8 @@ size_t sawyercoding_encode_td6(const uint8_t* src, uint8_t* dst, size_t length)
 /* Based off of rct2: 0x006770C1 */
 int32_t sawyercoding_validate_track_checksum(const uint8_t* src, size_t length)
 {
-    uint32_t file_checksum = *((uint32_t*)&src[length - 4]);
+    uint32_t file_checksum;
+    std::memcpy(&file_checksum, &src[length - 4], sizeof(file_checksum));
 
     uint32_t checksum = 0;
     for (size_t i = 0; i < length - 4; i++)
