@@ -1497,7 +1497,7 @@ static void sub_6E1F34(
             *parameter_2 |= (tile_element->AsPath()->GetPathEntryIndex() << 8);
             if (tile_element->AsPath()->IsQueue())
             {
-                *parameter_2 |= LOCATION_NULL;
+                *parameter_2 |= (uint32_t)LOCATION_NULL;
             }
             *parameter_3 = selected_scenery + 1;
             break;
