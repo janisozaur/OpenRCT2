@@ -296,7 +296,7 @@ void update_palette_effects()
             }
         }
 
-        j = ((uint16_t)(gPaletteEffectFrame * -960) * 3) >> 16;
+        //j = ((uint16_t)(gPaletteEffectFrame * -960) * 3) >> 16;
         waterId = SPR_GAME_PALETTE_4;
         g1 = gfx_get_g1_element(shade + waterId);
         if (g1 != nullptr)
