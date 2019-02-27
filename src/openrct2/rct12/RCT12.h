@@ -339,10 +339,7 @@ private:
     BannerIndex index; // 4
     uint8_t position;  // 5
     uint8_t flags;     // 6
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-private-field"
     uint8_t unused; // 7
-#pragma clang diagnostic pop
 public:
     BannerIndex GetIndex() const;
     uint8_t GetPosition() const;
