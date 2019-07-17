@@ -863,6 +863,7 @@ namespace OpenRCT2
             {
                 RunFixedFrame();
             }
+	    printf("frame: %u\n", platform_get_ticks());
         }
 
         void RunFixedFrame()
