@@ -256,6 +256,7 @@ namespace OpenRCT2::Audio
 
         void MixChannel(ISDLAudioChannel* channel, uint8_t* data, size_t length)
         {
+#if 0
             int32_t byteRate = _format.GetByteRate();
             int32_t numSamples = (int32_t)(length / byteRate);
             double rate = 1;
@@ -332,6 +333,7 @@ namespace OpenRCT2::Audio
             SDL_MixAudioFormat(data, (const uint8_t*)buffer, _format.format, (uint32_t)dstLength, mixVolume);
 
             channel->UpdateOldVolume();
+#endif
         }
 
         /**
