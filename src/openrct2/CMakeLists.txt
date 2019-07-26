@@ -73,7 +73,7 @@ if (NOT DISABLE_TTF)
     endif ()
 endif ()
 
-find_package(benchmark 1.4 QUIET)
+find_package(benchmark 1.5.0 QUIET)
 if (benchmark_FOUND)
     message("Found Google benchmark, enabling support")
     set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_DEFINITIONS USE_BENCHMARK)

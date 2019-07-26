@@ -830,6 +830,172 @@ void FASTCALL
     mask_fn(width, height, maskSrc, colourSrc, dst, maskWrap, colourWrap, dstWrap);
 }
 
+#if 0
+static void DecompressRLE(const uint8_t* sourceBuffer, uint8_t* destBuffer, const rct_drawpixelinfo* dpi, int32_t height, int32_t width)
+{
+    // The distance between two samples in the source image.
+    // We draw the image at 1 / (2^zoom_level) scale.
+    int32_t zoom_amount = 1;
+
+    // Width of one screen line in the dest buffer
+    int32_t line_width = (dpi->width >> 0) + dpi->pitch;
+
+    // For every line in the image
+    for (int32_t i = 0; i < height; i += zoom_amount)
+    {
+        int32_t y = i;
+
+        // The first part of the source pointer is a list of offsets to different lines
+        // This will move the pointer to the correct source line.
+        const uint16_t lineOffset = sourceBuffer[y * 2] | (sourceBuffer[y * 2 + 1] << 8);
+        const uint8_t* lineData = sourceBuffer + lineOffset;
+        uint8_t* loop_dest_pointer = destBuffer + line_width * (i >> 0);
+
+        uint8_t isEndOfLine = 0;
+
+        // For every data chunk in the line
+        while (!isEndOfLine)
+        {
+            const uint8_t* copySrc = lineData;
+            // uint8_t* copyDest = loop_dest_pointer;
+
+            // Read chunk metadata
+            uint8_t dataSize = *copySrc++;
+            uint8_t firstPixelX = *copySrc++;
+
+            isEndOfLine = dataSize & 0x80; // If the last bit in dataSize is set, then this is the last line
+            dataSize &= 0x7F;              // The rest of the bits are the actual size
+
+            // Have our next source pointer point to the next data section
+            lineData = copySrc + dataSize;
+
+            int32_t x_start = firstPixelX;
+            int32_t numPixels = dataSize;
+
+            if (x_start > 0)
+            {
+                int mod = x_start & (zoom_amount - 1); // x_start modulo zoom_amount
+
+                // If x_start is not a multiple of zoom_amount, round it up to a multiple
+                if (mod != 0)
+                {
+                    int offset = zoom_amount - mod;
+                    x_start += offset;
+                    copySrc += offset;
+                    numPixels -= offset;
+                }
+            }
+            else if (x_start < 0)
+            {
+                // Clamp x_start to zero if negative
+                int offset = 0 - x_start;
+                x_start = 0;
+                copySrc += offset;
+                numPixels -= offset;
+            }
+
+            // If the end position is further out than the whole image
+            // end position then we need to shorten the line again
+            if (x_start + numPixels > width)
+                numPixels = width - x_start;
+
+            uint8_t* copyDest = loop_dest_pointer + (x_start >> 0);
+
+            // Since we're sampling each pixel at this zoom level, just do a straight std::memcpy
+            if (numPixels > 0)
+                std::memcpy(copyDest, copySrc, numPixels);
+        }
+    }
+}
+#endif
+
+static const rct_g1_element* gfx_get_g1_element_unpacked(int32_t image_id, rct_g1_element* original)
+{
+    if ((original->flags & G1_FLAG_RLE_COMPRESSION) == 0)
+        return original;
+
+    size_t imageSize = (static_cast<size_t>(original->height) * original->width) * sizeof(uint8_t) * 4;
+
+    const uint8_t* srcOffset = original->offset;
+    original->offset = new uint8_t[imageSize];
+    std::memset(original->offset, 0x00, imageSize);
+    original->flags &= ~G1_FLAG_RLE_COMPRESSION;
+    int32_t image_type = image_id & 0xE0000000;
+
+    rct_drawpixelinfo dpi;
+    dpi.bits = original->offset;
+    dpi.x = 0;
+    dpi.y = 0;
+    dpi.width = original->width;
+    dpi.height = original->height;
+    dpi.pitch = 0;
+    dpi.zoom_level = 0;
+
+    // This will be the height of the drawn image
+    int32_t height = original->height;
+    // This is the start y coordinate on the destination
+    int16_t dest_start_y = original->y_offset;
+
+    // This is the start y coordinate on the source
+    int32_t source_start_y = 0;
+    if (dest_start_y < 0)
+    {
+        // If the destination y is negative reduce the height of the
+        // image as we will cut off the bottom
+        height += dest_start_y;
+        // The source image will start a further up the image
+        source_start_y -= dest_start_y;
+        // The destination start is now reset to 0
+        dest_start_y = 0;
+    }
+    int32_t dest_end_y = dest_start_y + height;
+
+    if (dest_end_y > dpi.height)
+    {
+        // If the destination y is outside of the drawing
+        // image reduce the height of the image
+        height -= dest_end_y - dpi.height;
+    }
+
+    // This will be the width of the drawn image
+    int32_t width = original->width;
+    // This is the source start x coordinate
+    int32_t source_start_x = 0;
+    int32_t zoom_mask = 0xFFFFFFFF;
+    // This is the destination start x coordinate
+    int16_t dest_start_x = ((original->x_offset + ~zoom_mask) & zoom_mask);
+    if (dest_start_x < 0)
+    {
+        // If the destination is negative reduce the width
+        // image will cut off the side
+        width += dest_start_x;
+        // The source start will also need to cut off the side
+        source_start_x -= dest_start_x;
+        // Reset the destination to 0
+        dest_start_x = 0;
+    }
+    int32_t dest_end_x = dest_start_x + width;
+    if (dest_end_x > dpi.width)
+    {
+        // If the destination x is outside of the drawing area
+        // reduce the image width.
+        width -= dest_end_x - dpi.width;
+        // If there is no image to draw.
+    }
+    uint8_t palette[256];
+    for (int i = 0; i < 256; i++)
+    {
+        palette[i] = i;
+    }
+    printf("height %d\n", height);
+    gfx_rle_sprite_to_buffer(
+            srcOffset, original->offset, palette, &dpi, image_type, source_start_y, height, source_start_x, width);
+
+    //DecompressRLE(srcOffset, original->offset, &dpi, original->height, original->width);
+
+    return original;
+}
+
 const rct_g1_element* gfx_get_g1_element(int32_t image_id)
 {
     openrct2_assert(!gOpenRCT2NoGraphics, "gfx_get_g1_element called on headless instance");
@@ -849,7 +1015,7 @@ const rct_g1_element* gfx_get_g1_element(int32_t image_id)
         {
             return nullptr;
         }
-        return &_g1.elements[image_id];
+        return gfx_get_g1_element_unpacked(image_id, & _g1.elements[image_id]);
     }
     if (image_id < SPR_CSG_BEGIN)
     {
@@ -859,7 +1025,7 @@ const rct_g1_element* gfx_get_g1_element(int32_t image_id)
             log_warning("Invalid entry in g2.dat requested, idx = %u. You may have to update your g2.dat.", idx);
             return nullptr;
         }
-        return &_g2.elements[idx];
+        return gfx_get_g1_element_unpacked(image_id, & _g2.elements[idx]);
     }
 
     if (is_csg_loaded())
@@ -870,8 +1036,9 @@ const rct_g1_element* gfx_get_g1_element(int32_t image_id)
             openrct2_assert(idx < _csg.header.num_entries, "Invalid entry in csg.dat requested, idx = %u.", idx);
             return nullptr;
         }
-        return &_csg.elements[idx];
+        return gfx_get_g1_element_unpacked(image_id, & _csg.elements[idx]);
     }
+
     return nullptr;
 }
 

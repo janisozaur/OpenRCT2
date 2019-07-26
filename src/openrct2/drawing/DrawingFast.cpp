@@ -12,6 +12,7 @@
 #include "Drawing.h"
 
 #include <cstring>
+#include <cstdio>
 
 template<int32_t image_type, int32_t zoom_level>
 static void FASTCALL DrawRLESprite2(
@@ -36,6 +37,7 @@ static void FASTCALL DrawRLESprite2(
     // For every line in the image
     for (int32_t i = 0; i < height; i += zoom_amount)
     {
+        printf("line %d\n", i);
         int32_t y = source_y_start + i;
 
         // The first part of the source pointer is a list of offsets to different lines
@@ -102,6 +104,7 @@ static void FASTCALL DrawRLESprite2(
                 {
                     if (image_type & IMAGE_TYPE_TRANSPARENT)
                     {
+                        printf("tr\n");
                         uint16_t color = ((*copySrc << 8) | *copyDest) - 0x100;
                         *copyDest = palette_pointer[color];
                     }
@@ -113,6 +116,7 @@ static void FASTCALL DrawRLESprite2(
             }
             else if (image_type & IMAGE_TYPE_TRANSPARENT) // single alpha blended color (used for glass)
             {
+                        printf("tr2\n");
                 for (int j = 0; j < numPixels; j += zoom_amount, copyDest++)
                 {
                     uint8_t pixel = *copyDest;
