@@ -48,7 +48,7 @@ private:
 public:
     JobPool(size_t maxThreads = 255)
     {
-        maxThreads = std::min<size_t>(maxThreads, std::thread::hardware_concurrency());
+        maxThreads = std::min<size_t>(maxThreads, 1);
         for (size_t n = 0; n < maxThreads; n++)
         {
             _threads.emplace_back(&JobPool::ProcessQueue, this);

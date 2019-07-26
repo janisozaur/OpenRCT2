@@ -914,7 +914,8 @@ static const rct_g1_element* gfx_get_g1_element_unpacked(int32_t image_id, rct_g
     if ((original->flags & G1_FLAG_RLE_COMPRESSION) == 0)
         return original;
 
-    size_t imageSize = (static_cast<size_t>(original->height) * original->width) * sizeof(uint8_t) * 4;
+    printf("image id = %d\n", image_id);
+    size_t imageSize = (static_cast<size_t>(original->height) * original->width) * sizeof(uint8_t) * 40;
 
     const uint8_t* srcOffset = original->offset;
     original->offset = new uint8_t[imageSize];
@@ -933,8 +934,10 @@ static const rct_g1_element* gfx_get_g1_element_unpacked(int32_t image_id, rct_g
 
     // This will be the height of the drawn image
     int32_t height = original->height;
+    printf("height0 %d\n", height);
     // This is the start y coordinate on the destination
     int16_t dest_start_y = original->y_offset;
+    printf("dest_start_y = %d\n", dest_start_y);
 
     // This is the start y coordinate on the source
     int32_t source_start_y = 0;
@@ -943,6 +946,7 @@ static const rct_g1_element* gfx_get_g1_element_unpacked(int32_t image_id, rct_g
         // If the destination y is negative reduce the height of the
         // image as we will cut off the bottom
         height += dest_start_y;
+        printf("height1 %d\n", height);
         // The source image will start a further up the image
         source_start_y -= dest_start_y;
         // The destination start is now reset to 0
@@ -955,6 +959,7 @@ static const rct_g1_element* gfx_get_g1_element_unpacked(int32_t image_id, rct_g
         // If the destination y is outside of the drawing
         // image reduce the height of the image
         height -= dest_end_y - dpi.height;
+        printf("height2 %d\n", height);
     }
 
     // This will be the width of the drawn image
