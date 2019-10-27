@@ -210,7 +210,12 @@ notifications:
     on_success: change
 
 cache:
-    directories:
-        - .cache
-        - $HOME/.ccache
-    apt: true
+  directories:
+  - ".cache"
+  - "$HOME/.ccache"
+  apt: true
+deploy:
+  provider: releases
+  api_key:
+    secure: Dztbm5VKNCHmxEmCQ+hM5kAGbgnJCxueRsARb6SCAiN99tncPSMhDK81OYvXDy5iQWRV8r3PdpUEBSZa939SKJjpv0l7EpvPHpor1gObQGj7htZqjMEmB9f641o2cJ64e3Xff4ncvzGRZztR576T8YFfWLHDUH852DF6OGq+3fIf73hYc9W+qo6ewzvb7j1kB+/KW5Q8bQWGDnCykh1MGnzXQSKiFK7YL1bgOHjBE4M3/SQad5984NKeSFLdef2Kp6IRh3n+oypy225BRJxja9OYcMZDlbeFtZPWAHcz/2O3puqvFgaDJTKc+ql680wF+zwfcQ7Wpg38Jh9m0dWXaLbtl3YUwlAkoZapPcBOIPEGN0EVdi/mQoLmEPwY/TKXBBIXOJG5Dua6K9III9QPLmGfhf8IC02jHKjjAzv8KaNao9X6NE/pN3aDVf5qBbj1yeiiu+3cDLGsqQ23iiOQgsp9dZn6SgP5rZPs22tE3csRqMDOAmfWpTqP8AjLJvbFcqhx9qc8gUf2F/vMficiYA35rWRmBbvv7Scr5KIlWFnlGUzypv6FU7m7hF2ATQ7vJc5+TD6D83SRDvka3XIWYxG6biqWKXzpYtyYM7VIVuzL32wvBUIIy06+RoVmPK/jfLv8lBmHmfp3CGUGOA78L8M0ovBh5+TxRfYkCHcED4M=
+  file: openrct2.tar.gz
