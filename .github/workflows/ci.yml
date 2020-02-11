@@ -161,6 +161,8 @@ jobs:
   linux-appimage:
     name: Linux (x64, AppImage)
     runs-on: ubuntu-latest
+    env:
+      VERSION: $OPENRCT2_VERSION
     container:
       image: openrct2/openrct2-build:0.2.4-bionic
     steps:
