@@ -23,32 +23,32 @@
 
 using namespace OpenRCT2;
 
-static void BM_update(benchmark::State& state, const std::string& filename)
+static void BM_update(benchmark::State& state, const std::string& filename, IContext* context)
 {
-    std::unique_ptr<IContext> context(CreateContext());
-    if (context->Initialise())
+    if (!filename.empty() && !context->LoadParkFromFile(filename))
     {
-        if (!filename.empty() && !context->LoadParkFromFile(filename))
-        {
-            state.SkipWithError("Failed to load file!");
-        }
+        state.SkipWithError("Failed to load file!");
+    }
 
-        for (auto _ : state)
-        {
-            context->GetGameState()->UpdateLogic();
-        }
-        state.SetItemsProcessed(state.iterations());
-    }
-    else
+    for (auto _ : state)
     {
-        state.SkipWithError("Context initialization failed.");
+        context->GetGameState()->UpdateLogic();
     }
+    state.SetItemsProcessed(state.iterations());
 }
 
 static int cmdline_for_bench_sprite_sort(int argc, const char** argv)
 {
+    core_init();
+    gOpenRCT2Headless = true;
+    std::unique_ptr<IContext> context(CreateContext());
+    if (!context->Initialise())
+    {
+        return -1;
+    }
+
     // Add a baseline test on an empty park
-    benchmark::RegisterBenchmark("baseline", BM_update, std::string{});
+    benchmark::RegisterBenchmark("baseline", BM_update, std::string{}, context.get());
 
     // Google benchmark does stuff to argv. It doesn't modify the pointees,
     // but it wants to reorder the pointers, so present a copy of them.
@@ -63,7 +63,7 @@ static int cmdline_for_bench_sprite_sort(int argc, const char** argv)
         if (platform_file_exists(argv[i]))
         {
             // Register benchmark for sv6 if valid
-            benchmark::RegisterBenchmark(argv[i], BM_update, argv[i]);
+            benchmark::RegisterBenchmark(argv[i], BM_update, argv[i], context.get());
         }
         else
         {
@@ -75,9 +75,6 @@ static int cmdline_for_bench_sprite_sort(int argc, const char** argv)
     ::benchmark::Initialize(&argc, &argv_for_benchmark[0]);
     if (::benchmark::ReportUnrecognizedArguments(argc, &argv_for_benchmark[0]))
         return -1;
-
-    core_init();
-    gOpenRCT2Headless = true;
 
     ::benchmark::RunSpecifiedBenchmarks();
     return 0;
