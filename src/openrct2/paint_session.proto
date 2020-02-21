@@ -1,0 +1,38 @@
+syntax = "proto3";
+package openrct2;
+
+// [START messages]
+message PaintStructType {
+  uint32 ImageId = 1;
+  uint32 X = 2; // Really uint16_t
+  uint32 Y = 3; // Really uint16_t
+  uint32 QuadrantIndex = 4; // Really uint16_t
+  uint32 NextQuadrant = 5;
+  uint32 QuadrantFlags = 6;
+
+  message BoundsType {
+    // All are really uint16_t's
+    uint32 X = 1;
+    uint32 Y = 2;
+    uint32 Z = 3;
+    uint32 XEnd = 4;
+    uint32 YEnd = 5;
+    uint32 ZEnd = 6;
+  }
+
+  BoundsType Bounds = 7;
+}
+
+// Our address book file is just one of these.
+message PaintSessionType {
+  repeated PaintStructType PaintStructs = 1;
+  repeated uint32 Quadrants = 2;
+  PaintStructType PaintHead = 3;
+  uint32 QuadrantBackIndex = 4;
+  uint32 QaudrantFrontIndex = 5;
+  string ParkName = 6;
+}
+
+message Sessions {
+  repeated PaintSessionType session = 1;
+}

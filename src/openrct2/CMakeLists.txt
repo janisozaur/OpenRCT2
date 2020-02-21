@@ -13,7 +13,7 @@ if (APPLE)
     set_source_files_properties(${OPENRCT2_CORE_MM_SOURCES} PROPERTIES COMPILE_FLAGS "-x objective-c++ -fmodules")
 endif ()
 
-add_library(${PROJECT_NAME} ${OPENRCT2_CORE_SOURCES} ${OPENRCT2_CORE_MM_SOURCES} ${RCT2_SECTIONS})
+add_library(${PROJECT_NAME} ${PROTO_SRCS} ${OPENRCT2_CORE_SOURCES} ${OPENRCT2_CORE_MM_SOURCES} ${RCT2_SECTIONS})
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 SET_CHECK_CXX_FLAGS(${PROJECT_NAME})
 
@@ -141,6 +141,7 @@ endif ()
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 target_link_libraries(${PROJECT_NAME} Threads::Threads)
+target_link_libraries(${PROJECT_NAME} ${Protobuf_LIBRARIES})
 
 if (NOT MINGW AND NOT MSVC)
     # For unicode code page conversion.
