@@ -28,11 +28,13 @@
 #    include "../world/Map.h"
 #    include "../world/Park.h"
 #    include "../world/Surface.h"
+#    include "paint_session.pb.h"
 
 #    include <benchmark/benchmark.h>
 #    include <cstdint>
 #    include <iterator>
 #    include <vector>
+#    include <zlib.h>
 
 static void fixup_pointers(paint_session* s, size_t paint_session_entries, size_t paint_struct_entries, size_t quadrant_entries)
 {
@@ -157,6 +159,23 @@ static void BM_paint_session_arrange(benchmark::State& state, const std::vector<
     delete[] local_s;
 }
 
+static void add_paint_struct(openrct2::PaintStructType* added_ps, const paint_struct& ps)
+{
+    auto bounds = added_ps->mutable_bounds();
+    bounds->set_x(ps.bounds.x);
+    bounds->set_y(ps.bounds.y);
+    bounds->set_z(ps.bounds.z);
+    bounds->set_xend(ps.bounds.x_end);
+    bounds->set_yend(ps.bounds.y_end);
+    bounds->set_zend(ps.bounds.z_end);
+    added_ps->set_nextquadrant((uintptr_t)ps.next_quadrant_ps);
+    added_ps->set_quadrantflags(ps.quadrant_flags);
+    added_ps->set_quadrantindex(ps.quadrant_index);
+    added_ps->set_x(ps.x);
+    added_ps->set_y(ps.y);
+    added_ps->set_imageid(ps.image_id);
+}
+
 static int cmdline_for_bench_sprite_sort(int argc, const char** argv)
 {
     {
@@ -180,6 +199,8 @@ static int cmdline_for_bench_sprite_sort(int argc, const char** argv)
     // argv[0] is expected to contain the binary name. It's only for logging purposes, don't bother.
     argv_for_benchmark.push_back(nullptr);
 
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
+
     // Extract file names from argument list. If there is no such file, consider it benchmark option.
     for (int i = 0; i < argc; i++)
     {
@@ -188,13 +209,52 @@ static int cmdline_for_bench_sprite_sort(int argc, const char** argv)
             // Register benchmark for sv6 if valid
             std::vector<paint_session> sessions = extract_paint_session(argv[i]);
             if (!sessions.empty())
+            {
                 benchmark::RegisterBenchmark(argv[i], BM_paint_session_arrange, sessions);
+                openrct2::Sessions pb_sessions;
+                for (const auto& session : sessions)
+                {
+                    auto added_session = pb_sessions.add_session();
+                    for (const auto& ps : session.PaintStructs)
+                    {
+                        auto added_ps = added_session->add_paintstructs();
+                        add_paint_struct(added_ps, ps.basic);
+                    }
+                    for (const auto& quad : session.Quadrants)
+                    {
+                        added_session->add_quadrants((uintptr_t)quad);
+                    }
+                    auto pb_painthead = added_session->mutable_painthead();
+                    add_paint_struct(pb_painthead, session.PaintHead);
+                    added_session->set_qaudrantfrontindex(session.QuadrantFrontIndex);
+                    added_session->set_quadrantbackindex(session.QuadrantBackIndex);
+                    added_session->set_parkname(argv[i]);
+                }
+                std::string pbname(argv[i]);
+                pbname += ".pb";
+                std::cout << "saving pb to " << pbname << std::endl;
+                auto buffer = std::make_unique<uint8_t[]>(pb_sessions.ByteSizeLong());
+                pb_sessions.SerializeToArray(buffer.get(), pb_sessions.ByteSizeLong());
+                auto cb = compressBound(pb_sessions.ByteSizeLong());
+                auto compressedBuffer = std::make_unique<uint8_t[]>(cb);
+                std::cout << "cb pre " << cb << " bytes" << std::endl;
+                compress(compressedBuffer.get(), &cb, buffer.get(), pb_sessions.ByteSizeLong());
+                FILE* file = fopen(pbname.c_str(), "w");
+                fwrite(&cb, sizeof(cb), 1, file);
+                fwrite(compressedBuffer.get(), cb, 1, file);
+                std::cout << "ByteSizeLong " << pb_sessions.ByteSizeLong() << " bytes" << std::endl;
+                std::cout << "cb " << cb << " bytes" << std::endl;
+                fclose(file);
+            }
         }
         else
         {
             argv_for_benchmark.push_back((char*)argv[i]);
         }
     }
+
+    google::protobuf::ShutdownProtobufLibrary();
+
     // Update argc with all the changes made
     argc = (int)argv_for_benchmark.size();
     ::benchmark::Initialize(&argc, &argv_for_benchmark[0]);
