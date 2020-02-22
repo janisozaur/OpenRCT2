@@ -18,6 +18,7 @@
 #    include "../audio/audio.h"
 #    include "../core/Console.hpp"
 #    include "../core/Imaging.h"
+#    include "../core/MemoryStream.h"
 #    include "../drawing/Drawing.h"
 #    include "../interface/Viewport.h"
 #    include "../localisation/Localisation.h"
@@ -28,11 +29,11 @@
 #    include "../world/Map.h"
 #    include "../world/Park.h"
 #    include "../world/Surface.h"
-#    include "paint_session.pb.h"
 
 #    include <benchmark/benchmark.h>
 #    include <cstdint>
 #    include <iterator>
+#    include <iostream>
 #    include <vector>
 #    include <zlib.h>
 
@@ -159,21 +160,20 @@ static void BM_paint_session_arrange(benchmark::State& state, const std::vector<
     delete[] local_s;
 }
 
-static void add_paint_struct(openrct2::PaintStructType* added_ps, const paint_struct& ps)
+static void add_paint_struct(MemoryStream &ms, const paint_struct& ps)
 {
-    auto bounds = added_ps->mutable_bounds();
-    bounds->set_x(ps.bounds.x);
-    bounds->set_y(ps.bounds.y);
-    bounds->set_z(ps.bounds.z);
-    bounds->set_xend(ps.bounds.x_end);
-    bounds->set_yend(ps.bounds.y_end);
-    bounds->set_zend(ps.bounds.z_end);
-    added_ps->set_nextquadrant((uintptr_t)ps.next_quadrant_ps);
-    added_ps->set_quadrantflags(ps.quadrant_flags);
-    added_ps->set_quadrantindex(ps.quadrant_index);
-    added_ps->set_x(ps.x);
-    added_ps->set_y(ps.y);
-    added_ps->set_imageid(ps.image_id);
+    ms.Write2(&ps.bounds.x);
+    ms.Write2(&ps.bounds.y);
+    ms.Write2(&ps.bounds.z);
+    ms.Write2(&ps.bounds.x_end);
+    ms.Write2(&ps.bounds.y_end);
+    ms.Write2(&ps.bounds.z_end);
+    ms.Write4(&ps.next_quadrant_ps);
+    ms.Write1(&ps.quadrant_flags);
+    ms.Write1(&ps.quadrant_index);
+    ms.Write2(&ps.x);
+    ms.Write2(&ps.y);
+    ms.Write4(&ps.image_id);
 }
 
 static int cmdline_for_bench_sprite_sort(int argc, const char** argv)
@@ -199,8 +199,6 @@ static int cmdline_for_bench_sprite_sort(int argc, const char** argv)
     // argv[0] is expected to contain the binary name. It's only for logging purposes, don't bother.
     argv_for_benchmark.push_back(nullptr);
 
-    GOOGLE_PROTOBUF_VERIFY_VERSION;
-
     // Extract file names from argument list. If there is no such file, consider it benchmark option.
     for (int i = 0; i < argc; i++)
     {
@@ -211,38 +209,38 @@ static int cmdline_for_bench_sprite_sort(int argc, const char** argv)
             if (!sessions.empty())
             {
                 benchmark::RegisterBenchmark(argv[i], BM_paint_session_arrange, sessions);
-                openrct2::Sessions pb_sessions;
+                MemoryStream ms;
+                uint32_t sessions_count = sessions.size();
+                ms.WriteString("paint session v1");
+                ms.WriteString(argv[i]);
+                ms.Write4(&sessions_count);
                 for (const auto& session : sessions)
                 {
-                    auto added_session = pb_sessions.add_session();
                     for (const auto& ps : session.PaintStructs)
                     {
-                        auto added_ps = added_session->add_paintstructs();
-                        add_paint_struct(added_ps, ps.basic);
+                        add_paint_struct(ms, ps.basic);
                     }
                     for (const auto& quad : session.Quadrants)
                     {
-                        added_session->add_quadrants((uintptr_t)quad);
+                        ms.Write4(&quad);
                     }
-                    auto pb_painthead = added_session->mutable_painthead();
-                    add_paint_struct(pb_painthead, session.PaintHead);
-                    added_session->set_qaudrantfrontindex(session.QuadrantFrontIndex);
-                    added_session->set_quadrantbackindex(session.QuadrantBackIndex);
-                    added_session->set_parkname(argv[i]);
+                    add_paint_struct(ms, session.PaintHead);
+                    ms.Write4(&session.QuadrantFrontIndex);
+                    ms.Write4(&session.QuadrantBackIndex);
                 }
                 std::string pbname(argv[i]);
                 pbname += ".pb";
                 std::cout << "saving pb to " << pbname << std::endl;
-                auto buffer = std::make_unique<uint8_t[]>(pb_sessions.ByteSizeLong());
-                pb_sessions.SerializeToArray(buffer.get(), pb_sessions.ByteSizeLong());
-                auto cb = compressBound(pb_sessions.ByteSizeLong());
+                uint64_t mslen = ms.GetLength();
+                auto buffer = std::make_unique<uint8_t[]>(mslen);
+                auto cb = compressBound(mslen);
                 auto compressedBuffer = std::make_unique<uint8_t[]>(cb);
                 std::cout << "cb pre " << cb << " bytes" << std::endl;
-                compress(compressedBuffer.get(), &cb, buffer.get(), pb_sessions.ByteSizeLong());
+                compress(compressedBuffer.get(), &cb, (const Bytef *)ms.GetData(), mslen);
                 FILE* file = fopen(pbname.c_str(), "w");
-                fwrite(&cb, sizeof(cb), 1, file);
+                fwrite(&mslen, 4, 1, file);
                 fwrite(compressedBuffer.get(), cb, 1, file);
-                std::cout << "ByteSizeLong " << pb_sessions.ByteSizeLong() << " bytes" << std::endl;
+                std::cout << "ByteSizeLong " << mslen << " bytes" << std::endl;
                 std::cout << "cb " << cb << " bytes" << std::endl;
                 fclose(file);
             }
@@ -252,8 +250,6 @@ static int cmdline_for_bench_sprite_sort(int argc, const char** argv)
             argv_for_benchmark.push_back((char*)argv[i]);
         }
     }
-
-    google::protobuf::ShutdownProtobufLibrary();
 
     // Update argc with all the changes made
     argc = (int)argv_for_benchmark.size();

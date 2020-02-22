@@ -98,12 +98,6 @@ execute_process(
     ERROR_QUIET
 )
 
-
-find_package(Protobuf REQUIRED)
-include_directories(${Protobuf_INCLUDE_DIRS})
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS src/openrct2/paint_session.proto)
-
 # Defines
 if (USE_MMAP)
     add_definitions(-DUSE_MMAP)
