@@ -275,42 +275,63 @@ static bool check_bounding_box(const paint_struct_bound_box& initialBBox, const 
 
 template<> bool check_bounding_box<0>(const paint_struct_bound_box& initialBBox, const paint_struct_bound_box& currentBBox)
 {
-    if (initialBBox.z_end >= currentBBox.z && initialBBox.y_end >= currentBBox.y && initialBBox.x_end >= currentBBox.x
-        && !(initialBBox.z < currentBBox.z_end && initialBBox.y < currentBBox.y_end && initialBBox.x < currentBBox.x_end))
-    {
-        return true;
-    }
-    return false;
+    const static uint8_t directions[64] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0 };
+    bool c1 = initialBBox.z_end >= currentBBox.z;
+    bool c2 = initialBBox.y_end >= currentBBox.y;
+    bool c3 = initialBBox.x_end >= currentBBox.x;
+    bool c4 = initialBBox.z < currentBBox.z_end;
+    bool c5 = initialBBox.y < currentBBox.y_end;
+    bool c6 = initialBBox.x < currentBBox.x_end;
+    uint8_t c_all = (c1 << 5) | (c2 << 4) | (c3 << 3) | (c4 << 2) | (c5 << 1) | (c6 << 0);
+
+    return directions[c_all];
 }
 
 template<> bool check_bounding_box<1>(const paint_struct_bound_box& initialBBox, const paint_struct_bound_box& currentBBox)
 {
-    if (initialBBox.z_end >= currentBBox.z && initialBBox.y_end >= currentBBox.y && initialBBox.x_end < currentBBox.x
-        && !(initialBBox.z < currentBBox.z_end && initialBBox.y < currentBBox.y_end && initialBBox.x >= currentBBox.x_end))
-    {
-        return true;
-    }
-    return false;
+    const static uint8_t directions[64] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                            0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
+    bool c1 = initialBBox.z_end >= currentBBox.z;
+    bool c2 = initialBBox.y_end >= currentBBox.y;
+    bool c3 = initialBBox.x_end >= currentBBox.x;
+    bool c4 = initialBBox.z < currentBBox.z_end;
+    bool c5 = initialBBox.y < currentBBox.y_end;
+    bool c6 = initialBBox.x < currentBBox.x_end;
+    uint8_t c_all = (c1 << 5) | (c2 << 4) | (c3 << 3) | (c4 << 2) | (c5 << 1) | (c6 << 0);
+    return directions[c_all];
 }
 
 template<> bool check_bounding_box<2>(const paint_struct_bound_box& initialBBox, const paint_struct_bound_box& currentBBox)
 {
-    if (initialBBox.z_end >= currentBBox.z && initialBBox.y_end < currentBBox.y && initialBBox.x_end < currentBBox.x
-        && !(initialBBox.z < currentBBox.z_end && initialBBox.y >= currentBBox.y_end && initialBBox.x >= currentBBox.x_end))
-    {
-        return true;
-    }
-    return false;
+    const static uint8_t directions[64] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0,
+                                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    bool c1 = initialBBox.z_end >= currentBBox.z;
+    bool c2 = initialBBox.y_end >= currentBBox.y;
+    bool c3 = initialBBox.x_end >= currentBBox.x;
+    bool c4 = initialBBox.z < currentBBox.z_end;
+    bool c5 = initialBBox.y < currentBBox.y_end;
+    bool c6 = initialBBox.x < currentBBox.x_end;
+    uint8_t c_all = (c1 << 5) | (c2 << 4) | (c3 << 3) | (c4 << 2) | (c5 << 1) | (c6 << 0);
+    return directions[c_all];
 }
 
 template<> bool check_bounding_box<3>(const paint_struct_bound_box& initialBBox, const paint_struct_bound_box& currentBBox)
 {
-    if (initialBBox.z_end >= currentBBox.z && initialBBox.y_end < currentBBox.y && initialBBox.x_end >= currentBBox.x
-        && !(initialBBox.z < currentBBox.z_end && initialBBox.y >= currentBBox.y_end && initialBBox.x < currentBBox.x_end))
-    {
-        return true;
-    }
-    return false;
+    const static uint8_t directions[64] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,
+                                            1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    bool c1 = initialBBox.z_end >= currentBBox.z;
+    bool c2 = initialBBox.y_end >= currentBBox.y;
+    bool c3 = initialBBox.x_end >= currentBBox.x;
+    bool c4 = initialBBox.z < currentBBox.z_end;
+    bool c5 = initialBBox.y < currentBBox.y_end;
+    bool c6 = initialBBox.x < currentBBox.x_end;
+    uint8_t c_all = (c1 << 5) | (c2 << 4) | (c3 << 3) | (c4 << 2) | (c5 << 1) | (c6 << 0);
+    return directions[c_all];
 }
 
 template<uint8_t _TRotation>
