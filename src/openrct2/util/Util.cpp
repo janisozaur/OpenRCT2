@@ -355,6 +355,10 @@ int32_t strlogicalcmp(char const* a, char const* b)
                 return result;
             }
         }
+        else if (!*b)
+        {
+            return 1;
+        }
     }
 }
 
