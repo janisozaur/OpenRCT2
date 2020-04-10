@@ -151,7 +151,11 @@ TEST_F(StringTest, ToUpper_Japanese)
 
 TEST_F(StringTest, strlogicalcmp)
 {
-    auto res1 = strlogicalcmp("foo1", "foo1_2");
-    auto res2 = strlogicalcmp("foo1_2", "foo1");
-    ASSERT_NE(res1, res2);
+    auto res_logical_1 = strlogicalcmp("foo1", "foo1_2");
+    auto res_logical_2 = strlogicalcmp("foo1_2", "foo1");
+    auto res_1 = strcmp("foo1", "foo1_2");
+    auto res_2 = strcmp("foo1_2", "foo1");
+    ASSERT_EQ(res_1, res_logical_1);
+    ASSERT_EQ(res_2, res_logical_2);
+    ASSERT_NE(res_logical_1, res_logical_2);
 }

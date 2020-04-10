@@ -316,6 +316,32 @@ int32_t strcicmp(char const* a, char const* b)
     }
 }
 
+#if 1
+int strlogicalcmp(const char *s1, const char *s2) {
+  for (;;) {
+    if (*s2 == '\0')
+      return *s1 != '\0';
+    else if (*s1 == '\0')
+      return 1;
+    else if (!(isdigit(*s1) && isdigit(*s2))) {
+      if (*s1 != *s2)
+        return (int)*s1 - (int)*s2;
+      else
+        (++s1, ++s2);
+    } else {
+      char *lim1, *lim2;
+      unsigned long n1 = strtoul(s1, &lim1, 10);
+      unsigned long n2 = strtoul(s2, &lim2, 10);
+      if (n1 > n2)
+        return 1;
+      else if (n1 < n2)
+        return -1;
+      s1 = lim1;
+      s2 = lim2;
+    }
+  }
+}
+#else
 /* Case insensitive logical compare */
 // Example:
 // - Guest 10
@@ -325,8 +351,18 @@ int32_t strcicmp(char const* a, char const* b)
 // - John v2.1
 int32_t strlogicalcmp(char const* a, char const* b)
 {
+    int i = 0;
+    char const* a_org = a;
+    char const* b_org = b;
     for (;; a++, b++)
     {
+        printf("i = %d, a_delta = %ld, b_delta = %ld\n", i++, a - a_org, b - b_org);
+        bool not_a = !*a;
+        bool not_b = !*b;
+        if (not_a || not_b)
+        {
+            return !!*a - !!*b;
+        }
         int32_t result = tolower(*a) - tolower(*b);
         bool both_numeric = *a >= '0' && *a <= '9' && *b >= '0' && *b <= '9';
         if (result != 0 || !*a || both_numeric)
@@ -355,12 +391,9 @@ int32_t strlogicalcmp(char const* a, char const* b)
                 return result;
             }
         }
-        else if (!*b)
-        {
-            return 1;
-        }
     }
 }
+#endif
 
 utf8* safe_strtrunc(utf8* text, size_t size)
 {
