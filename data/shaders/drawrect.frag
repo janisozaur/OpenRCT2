@@ -1,4 +1,8 @@
-#version 150
+#version 300 es
+
+precision mediump float;
+precision mediump usampler2DArray;
+precision mediump usampler2D;
 
 const int MASK_REMAP_COUNT          = 3;
 const int FLAG_NO_TEXTURE           = (1 << 2);

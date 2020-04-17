@@ -1,4 +1,4 @@
-#version 150
+#version 300 es
 
 flat in uint fColour;
 

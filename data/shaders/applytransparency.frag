@@ -1,4 +1,7 @@
-#version 150
+#version 300 es
+
+precision mediump float;
+precision mediump usampler2D;
 
 uniform usampler2D      uOpaqueTex;
 uniform sampler2D       uOpaqueDepth;
