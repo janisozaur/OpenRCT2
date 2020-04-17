@@ -1,4 +1,7 @@
-#version 150
+#version 300 es
+
+precision mediump float;
+precision mediump usampler2D;
 
 uniform vec4 uPalette[256];
 uniform usampler2D uTexture;

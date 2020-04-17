@@ -1,4 +1,6 @@
-#version 150
+#version 300 es
+
+precision mediump float;
 
 // Allows for about 8 million draws per frame
 const float DEPTH_INCREMENT = 1.0 / float(1u << 22u);

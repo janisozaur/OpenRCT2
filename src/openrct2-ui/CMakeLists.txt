@@ -21,7 +21,7 @@ if (NOT DISABLE_OPENGL)
     if (APPLE)
         find_package(OpenGL REQUIRED)
     elseif (NOT WIN32)
-        PKG_CHECK_MODULES(GL REQUIRED gl)
+        PKG_CHECK_MODULES(GL REQUIRED glesv2)
     endif ()
 endif ()
 
