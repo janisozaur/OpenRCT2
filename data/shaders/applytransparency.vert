@@ -1,4 +1,4 @@
-#version 150
+#version 300 es
 
 in vec4 vPosition;
 in vec2 vTextureCoordinate;
