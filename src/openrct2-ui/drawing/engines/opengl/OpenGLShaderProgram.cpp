@@ -95,7 +95,7 @@ OpenGLShaderProgram::OpenGLShaderProgram(const char* name)
     _id = glCreateProgram();
     glAttachShader(_id, _vertexShader->GetShaderId());
     glAttachShader(_id, _fragmentShader->GetShaderId());
-    glBindFragDataLocation(_id, 0, "oColour");
+    //glBindFragDataLocation(_id, 0, "oColour");
 
     if (!Link())
     {
