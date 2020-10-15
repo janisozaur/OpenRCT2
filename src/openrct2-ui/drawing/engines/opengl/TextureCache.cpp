@@ -247,7 +247,17 @@ void TextureCache::EnlargeAtlasesTexture(GLuint newEntries)
         oldPixels.resize(_atlasesTextureDimensions * _atlasesTextureDimensions * _atlasesTextureCapacity);
         if (!oldPixels.empty())
         {
-            glGetTexImage(GL_TEXTURE_2D_ARRAY, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, oldPixels.data());
+            //glGetTexImage(GL_TEXTURE_2D_ARRAY, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, oldPixels.data());
+            GLuint fbo;
+            glGenFramebuffers(1, &fbo);
+            glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _atlasesTexture, 0);
+
+            glReadPixels(0, 0, _atlasesTextureDimensions, _atlasesTextureDimensions, GL_RGBA, GL_UNSIGNED_BYTE, oldPixels.data());
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glDeleteFramebuffers(1, &fbo);
+
         }
 
         // Initial capacity will be 12 which covers most cases of a fully visible park.
