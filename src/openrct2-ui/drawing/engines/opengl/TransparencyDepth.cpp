@@ -43,11 +43,9 @@ static inline SweepLine CreateXList(const RectCommandBatch& transparent)
         int32_t right = std::min(std::max(command.bounds.z, command.clip.x), command.clip.z);
         int32_t bottom = std::min(std::max(command.bounds.w, command.clip.y), command.clip.w);
 
-        assert(left <= right);
-        assert(top <= bottom);
-        if (left == right)
+        if (left >= right)
             continue;
-        if (top == bottom)
+        if (top >= bottom)
             continue;
 
         x_sweep.push_back({ left, true, top, bottom });
