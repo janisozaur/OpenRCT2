@@ -101,7 +101,7 @@ void OpenGLFramebuffer::GetPixels(rct_drawpixelinfo& dpi) const
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDeleteFramebuffers(1, &fbo);
-    //glGetTexImage(GL_TEXTURE_2D, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pixels.get());
+    // glGetTexImage(GL_TEXTURE_2D, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pixels.get());
 
     // Flip pixels vertically on copy
     uint8_t* src = pixels.get() + ((_height - 1) * _width);
