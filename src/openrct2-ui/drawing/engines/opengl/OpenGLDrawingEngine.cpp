@@ -228,26 +228,33 @@ public:
 
     void Initialise() override
     {
+        Console::WriteLine("Initialising OpenGL");
         OpenGLVersion requiredVersion = OPENGL_MINIMUM_REQUIRED_VERSION;
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, requiredVersion.Major);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, requiredVersion.Minor);
 
+        Console::WriteLine("Creating OpenGL Context");
         _context = SDL_GL_CreateContext(_window);
         if (_context == nullptr)
         {
             char szRequiredVersion[32];
             snprintf(szRequiredVersion, 32, "OpenGL %d.%d", requiredVersion.Major, requiredVersion.Minor);
+            Console::Error::WriteLine("Required OpenGL context version not available");
             throw std::runtime_error(std::string(szRequiredVersion) + std::string(" not available."));
         }
+        Console::WriteLine("Making current");
         SDL_GL_MakeCurrent(_window, _context);
 
         if (!OpenGLAPI::Initialise())
         {
+            Console::Error::WriteLine("Initialising OpenGL failed");
             throw std::runtime_error("Unable to initialise OpenGL.");
         }
 
+        Console::WriteLine("drawig context init");
         _drawingContext->Initialise();
+        Console::WriteLine("drawig context init done");
 
         _applyPaletteShader = new ApplyPaletteShader();
     }
