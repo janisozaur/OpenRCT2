@@ -259,7 +259,7 @@ public:
         glGetIntegerv(GL_NUM_EXTENSIONS, &num_exts);
         for (int i = 0; i < num_exts; i++)
         {
-            //Console::WriteLine("OpenGL extension %03d: %s", i, glGetStringi(GL_EXTENSIONS, i));
+            Console::WriteLine("OpenGL extension %03d: %s", i, glGetStringi(GL_EXTENSIONS, i));
         }
 
         Console::WriteLine("drawing context init");
