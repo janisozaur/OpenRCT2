@@ -27,22 +27,6 @@ using namespace OpenRCT2;
 
 void StdInOutConsole::Start()
 {
-    auto env = GetContext()->GetPlatformEnvironment();
-    auto str = env->GetDirectoryPath(DIRBASE::USER);
-    str = Path::Combine(str, "OpenRCT2.log");
-    _log_stream.open(str, std::ios::out);
-
-    if (_log_stream)
-    {
-        auto date = Platform::GetDateLocal();
-        auto time = Platform::GetTimeLocal();
-        char formatted[64];
-        snprintf(
-            formatted, sizeof(formatted), "%4d-%02d-%02d %02d:%02d:%02d", date.year, date.month, date.day, time.hour,
-            time.minute, time.second);
-        _log_stream << "OpenRCT2 " << gVersionInfoFull << " started on " << formatted << std::endl;
-    }
-
     // Only start if stdin/stdout is a TTY
     if (!isatty(fileno(stdin)) || !isatty(fileno(stdout)))
     {
@@ -126,11 +110,6 @@ void StdInOutConsole::Clear()
 
 void StdInOutConsole::Close()
 {
-    if (_log_stream)
-    {
-        _log_stream << "OpenRCT2 closing" << std::endl;
-        _log_stream.close();
-    }
     openrct2_finish();
 }
 
@@ -147,11 +126,6 @@ void StdInOutConsole::WriteLine(const std::string& s, FormatToken colourFormat)
             break;
         default:
             break;
-    }
-
-    if (_log_stream)
-    {
-        _log_stream << s << std::endl;
     }
 
     if (!Platform::IsColourTerminalSupported())
