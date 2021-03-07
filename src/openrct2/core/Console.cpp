@@ -31,6 +31,7 @@ namespace
             auto env = OpenRCT2::GetContext()->GetPlatformEnvironment();
             auto str = env->GetDirectoryPath(OpenRCT2::DIRBASE::USER);
             str = Path::Combine(str, "OpenRCT2.log");
+            printf("Logging to %s\n", str.c_str());
             _log_stream.open(str, std::ios::out);
             auto date = Platform::GetDateLocal();
             auto time = Platform::GetTimeLocal();
