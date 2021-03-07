@@ -10,6 +10,7 @@
 #pragma once
 
 #include <openrct2/common.h>
+#include <openrct2/core/Console.hpp>
 
 #ifdef OPENGL_NO_LINK
 
@@ -113,12 +114,12 @@ using PFNGLGETTEXIMAGEPROC = void(APIENTRYP)(GLenum target, GLint level, GLenum 
 
 #endif /* OPENGL_NO_LINK */
 
-inline void CheckGLError()
+inline void CheckGLError(const char* tag = "")
 {
     GLenum error = glGetError();
     while (error != GL_NO_ERROR)
     {
-        log_error("OpenGL Error 0x%04X", error);
+        Console::Error::WriteLine("OpenGL Error (tag: %s) 0x%04X", tag, error);
         error = glGetError();
     }
 }
