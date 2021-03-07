@@ -10,10 +10,38 @@
 #include "Console.hpp"
 
 #include "../Context.h"
+#include "../PlatformEnvironment.h"
+#include "../Version.h"
+#include "../core/Path.hpp"
+#include "../platform/Platform2.h"
 #include "../platform/platform.h"
 
 #include <cstdio>
+#include <fstream>
 #include <string>
+
+static std::ofstream _log_stream;
+
+namespace
+{
+    void consoleinit()
+    {
+        if (!_log_stream)
+        {
+            auto env = OpenRCT2::GetContext()->GetPlatformEnvironment();
+            auto str = env->GetDirectoryPath(OpenRCT2::DIRBASE::USER);
+            str = Path::Combine(str, "OpenRCT2.log");
+            _log_stream.open(str, std::ios::out);
+            auto date = Platform::GetDateLocal();
+            auto time = Platform::GetTimeLocal();
+            char formatted[64];
+            snprintf(
+                formatted, sizeof(formatted), "%4d-%02d-%02d %02d:%02d:%02d", date.year, date.month, date.day, time.hour,
+                time.minute, time.second);
+            _log_stream << "OpenRCT2 " << gVersionInfoFull << " started on " << formatted << std::endl;
+        }
+    }
+} // namespace
 
 namespace Console
 {
@@ -49,6 +77,7 @@ namespace Console
 
     void WriteLine(const utf8* format, ...)
     {
+        consoleinit();
         va_list args;
         va_start(args, format);
 
@@ -59,6 +88,8 @@ namespace Console
             ctx->WriteLine(buffer);
         else
             std::printf("%s\n", buffer);
+
+        _log_stream << buffer << std::endl;
 
         va_end(args);
     }
@@ -99,6 +130,7 @@ namespace Console
 
         void WriteLine_VA(const utf8* format, va_list args)
         {
+            consoleinit();
             char buffer[4096];
             std::vsnprintf(buffer, sizeof(buffer), format, args);
             auto ctx = OpenRCT2::GetContext();
@@ -106,6 +138,7 @@ namespace Console
                 ctx->WriteErrorLine(buffer);
             else
                 std::printf("%s\n", buffer);
+            _log_stream << buffer << std::endl;
         }
     } // namespace Error
 } // namespace Console
