@@ -38,6 +38,8 @@
 #    define glTexSubImage3D __static__glTexSubImage3D
 #    define glTexImage3D __static__glTexImage3D
 #    define glGetIntegerv __static__glGetIntegerv
+#    define glGetString __static__glGetString
+#    define glGetStringi __static__glGetStringi
 #    define glGetTexImage __static__glGetTexImage
 
 #endif
@@ -74,6 +76,8 @@
 #    undef glTexSubImage3D
 #    undef glTexImage3D
 #    undef glGetIntegerv
+#    undef glGetString
+#    undef glGetStringi
 #    undef glGetTexImage
 
 // 1.1 function signatures
@@ -106,6 +110,8 @@ using PFNGLTEXIMAGE3DPROC = void(APIENTRYP)(
     GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format,
     GLenum type, const GLvoid* data);
 using PFNGLGETINTERGERVPROC = void(APIENTRYP)(GLenum pname, GLint* data);
+using PFNGLGETSTRINGPROC = const GLubyte*(APIENTRYP)(GLenum pname);
+using PFNGLGETSTRINGIPROC = const GLubyte*(APIENTRYP)(GLenum pname, GLuint index);
 using PFNGLGETTEXIMAGEPROC = void(APIENTRYP)(GLenum target, GLint level, GLenum format, GLenum type, GLvoid* img);
 
 #    define OPENGL_PROC(TYPE, PROC) extern TYPE PROC;
