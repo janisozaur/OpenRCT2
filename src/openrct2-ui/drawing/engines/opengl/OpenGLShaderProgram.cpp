@@ -24,18 +24,25 @@ OpenGLShader::OpenGLShader(const char* name, GLenum type)
 {
     _type = type;
 
+    Console::WriteLine("OpenGLShader::OpenGLShader %s, type %d", name, type);
+    CheckGLError("gls1");
     auto path = GetPath(name);
     auto sourceCode = ReadSourceCode(path);
     auto sourceCodeStr = sourceCode.c_str();
+    Console::WriteLine("OpenGLShader source: >>>\n%s\n<<<", sourceCodeStr);
 
     _id = glCreateShader(type);
     glShaderSource(_id, 1, static_cast<const GLchar**>(&sourceCodeStr), nullptr);
     glCompileShader(_id);
+    Console::WriteLine("OpenGLShader %s received id = %u", name, _id);
+    CheckGLError("gls2");
 
     GLint status;
     glGetShaderiv(_id, GL_COMPILE_STATUS, &status);
+    CheckGLError("gls3");
     if (status != GL_TRUE)
     {
+        Console::WriteLine("OpenGLShader %s miscompiled", name);
         char buffer[512];
         glGetShaderInfoLog(_id, sizeof(buffer), nullptr, buffer);
         glDeleteShader(_id);
@@ -45,6 +52,8 @@ OpenGLShader::OpenGLShader(const char* name, GLenum type)
 
         throw std::runtime_error("Error compiling shader.");
     }
+    Console::WriteLine("OpenGLShader %s compiled fine", name);
+    CheckGLError("gls4");
 }
 
 OpenGLShader::~OpenGLShader()
@@ -90,6 +99,8 @@ std::string OpenGLShader::ReadSourceCode(const std::string& path)
 
 OpenGLShaderProgram::OpenGLShaderProgram(const char* name)
 {
+    Console::WriteLine("OpenGLShaderProgram::OpenGLShaderProgram %s", name);
+    CheckGLError("glsp1");
     _vertexShader = new OpenGLShader(name, GL_VERTEX_SHADER);
     _fragmentShader = new OpenGLShader(name, GL_FRAGMENT_SHADER);
 
@@ -97,6 +108,11 @@ OpenGLShaderProgram::OpenGLShaderProgram(const char* name)
     glAttachShader(_id, _vertexShader->GetShaderId());
     glAttachShader(_id, _fragmentShader->GetShaderId());
     glBindFragDataLocation(_id, 0, "oColour");
+    CheckGLError("glsp2");
+
+    Console::WriteLine(
+        "OpenGLShaderProgram::OpenGLShaderProgram id = %u, v = %u, f = %u", _id, _vertexShader->GetShaderId(),
+        _fragmentShader->GetShaderId());
 
     if (!Link())
     {
@@ -109,10 +125,13 @@ OpenGLShaderProgram::OpenGLShaderProgram(const char* name)
 
         throw std::runtime_error("Failed to link OpenGL shader.");
     }
+    Console::WriteLine("OpenGLShaderProgram::OpenGLShaderProgram id = %u linked correctly", _id);
 }
 
 OpenGLShaderProgram::~OpenGLShaderProgram()
 {
+    Console::WriteLine("OpenGLShaderProgram::~OpenGLShaderProgram id = %u", _id);
+
     if (_vertexShader != nullptr)
     {
         glDetachShader(_id, _vertexShader->GetShaderId());
@@ -128,29 +147,48 @@ OpenGLShaderProgram::~OpenGLShaderProgram()
 
 GLuint OpenGLShaderProgram::GetAttributeLocation(const char* name)
 {
-    return glGetAttribLocation(_id, name);
+    auto loc = glGetAttribLocation(_id, name);
+    Console::WriteLine("OpenGLShaderProgram::GetAttributeLocation id = %u, name = %s, loc = %d", _id, name, loc);
+    CheckGLError("glsp attr");
+    return loc;
 }
 
 GLuint OpenGLShaderProgram::GetUniformLocation(const char* name)
 {
-    return glGetUniformLocation(_id, name);
+    auto loc = glGetUniformLocation(_id, name);
+    Console::WriteLine("OpenGLShaderProgram::GetAttributeLocation id = %u, name = %s, loc = %d", _id, name, loc);
+    CheckGLError("glsp uniform");
+    return loc;
 }
 
 void OpenGLShaderProgram::Use()
 {
+    Console::WriteLine("OpenGLShaderProgram::Use");
+    CheckGLError("glsp use");
     if (OpenGLState::CurrentProgram != _id)
     {
         OpenGLState::CurrentProgram = _id;
+
+        Console::WriteLine("OpenGLShaderProgram::Use using = %d", _id);
         glUseProgram(_id);
+        CheckGLError("glsp use 2");
     }
+    else
+    {
+        Console::WriteLine("OpenGLShaderProgram::Use %d already current", _id);
+    }
+    Console::WriteLine("OpenGLShaderProgram::Use %d now in use", _id);
 }
 
 bool OpenGLShaderProgram::Link()
 {
+    CheckGLError("glsp link");
     glLinkProgram(_id);
 
     GLint linkStatus;
     glGetProgramiv(_id, GL_LINK_STATUS, &linkStatus);
+    CheckGLError("glsp link 2");
+    Console::WriteLine("OpenGLShaderProgram::Link status = %d", linkStatus);
     return linkStatus == GL_TRUE;
 }
 
