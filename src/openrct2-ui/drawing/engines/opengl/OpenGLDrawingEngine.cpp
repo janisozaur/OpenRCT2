@@ -252,12 +252,22 @@ public:
             Console::Error::WriteLine("Initialising OpenGL failed");
             throw std::runtime_error("Unable to initialise OpenGL.");
         }
+        Console::WriteLine("OpenGL version: %s", glGetString(GL_VERSION));
+        Console::WriteLine("OpenGL vendor: %s", glGetString(GL_VENDOR));
+        Console::WriteLine("OpenGL renderer: %s", glGetString(GL_RENDERER));
+        GLint num_exts{};
+        glGetIntegerv(GL_NUM_EXTENSIONS, &num_exts);
+        for (int i = 0; i < num_exts; i++)
+        {
+            //Console::WriteLine("OpenGL extension %03d: %s", i, glGetStringi(GL_EXTENSIONS, i));
+        }
 
-        Console::WriteLine("drawig context init");
+        Console::WriteLine("drawing context init");
         _drawingContext->Initialise();
-        Console::WriteLine("drawig context init done");
+        Console::WriteLine("drawing context init done");
 
         _applyPaletteShader = new ApplyPaletteShader();
+        Console::WriteLine("drawing context apply shader done");
     }
 
     void Resize(uint32_t width, uint32_t height) override

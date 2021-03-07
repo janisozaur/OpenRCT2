@@ -55,7 +55,6 @@ class StdInOutConsole final : public InteractiveConsole
 private:
     std::queue<std::tuple<std::promise<void>, std::string>> _evalQueue;
     bool _isPromptShowing{};
-    std::ofstream _log_stream;
 
 public:
     void Start();
