@@ -65,7 +65,7 @@ ApplyPaletteShader::ApplyPaletteShader()
     Use();
 
     CheckGLError("apply shader 11");
-    glUniform1i(uTexture, 0);
+    glUniform1i(uPaletteTexture, 0);
     CheckGLError("apply shader 12");
     Console::WriteLine("ApplyPaletteShader::ApplyPaletteShader done");
 }
@@ -78,7 +78,7 @@ ApplyPaletteShader::~ApplyPaletteShader()
 
 void ApplyPaletteShader::GetLocations()
 {
-    uTexture = GetUniformLocation("uTexture");
+    uPaletteTexture = GetUniformLocation("uPaletteTexture");
     uPalette = GetUniformLocation("uPalette");
 
     vPosition = GetAttributeLocation("vPosition");
