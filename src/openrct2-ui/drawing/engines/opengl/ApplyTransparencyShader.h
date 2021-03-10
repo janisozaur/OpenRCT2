@@ -19,7 +19,7 @@ private:
     GLuint uOpaqueDepth;
     GLuint uTransparentTex;
     GLuint uTransparentDepth;
-    GLuint uPaletteTex;
+    GLuint uTransparencyPaletteTex;
 
     GLuint vPosition;
     GLuint vTextureCoordinate;

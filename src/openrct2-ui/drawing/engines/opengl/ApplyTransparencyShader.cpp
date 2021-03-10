@@ -53,7 +53,7 @@ ApplyTransparencyShader::ApplyTransparencyShader()
     glUniform1i(uOpaqueDepth, 1);
     glUniform1i(uTransparentTex, 2);
     glUniform1i(uTransparentDepth, 3);
-    glUniform1i(uPaletteTex, 4);
+    glUniform1i(uTransparencyPaletteTex, 4);
 }
 
 ApplyTransparencyShader::~ApplyTransparencyShader()
@@ -68,7 +68,7 @@ void ApplyTransparencyShader::GetLocations()
     uOpaqueDepth = GetUniformLocation("uOpaqueDepth");
     uTransparentTex = GetUniformLocation("uTransparentTex");
     uTransparentDepth = GetUniformLocation("uTransparentDepth");
-    uPaletteTex = GetUniformLocation("uPaletteTex");
+    uTransparencyPaletteTex = GetUniformLocation("uTransparencyPaletteTex");
 
     vPosition = GetAttributeLocation("vPosition");
     vTextureCoordinate = GetAttributeLocation("vTextureCoordinate");

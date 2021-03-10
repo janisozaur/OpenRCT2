@@ -15,7 +15,7 @@
 class ApplyPaletteShader final : public OpenGLShaderProgram
 {
 private:
-    GLuint uTexture;
+    GLuint uPaletteTexture;
     GLuint uPalette;
 
     GLuint vPosition;
