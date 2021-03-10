@@ -156,7 +156,7 @@ GLuint OpenGLShaderProgram::GetAttributeLocation(const char* name)
 GLuint OpenGLShaderProgram::GetUniformLocation(const char* name)
 {
     auto loc = glGetUniformLocation(_id, name);
-    Console::WriteLine("OpenGLShaderProgram::GetAttributeLocation id = %u, name = %s, loc = %d", _id, name, loc);
+    Console::WriteLine("OpenGLShaderProgram::GetUniformLocation id = %u, name = %s, loc = %d", _id, name, loc);
     CheckGLError("glsp uniform");
     return loc;
 }
