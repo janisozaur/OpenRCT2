@@ -1109,7 +1109,9 @@ void S6Exporter::RebuildEntitySpatialLocation(const TileCoordsXY& loc)
 void S6Exporter::ExportStaffPatrolAreas()
 {
     std::fill(std::begin(_s6.staff_modes), std::end(_s6.staff_modes), RCT2StaffMode::None);
-    std::fill(std::begin(_s6.patrol_areas), std::end(_s6.patrol_areas), 0);
+    // Cannot use std::fill here because the pointer is misaligned
+    // https://github.com/OpenRCT2/OpenRCT2/issues/15941
+    memset(_s6.patrol_areas, 0, sizeof(_s6.patrol_areas));
 
     auto staffId = 0;
     for (auto* staff : EntityList<Staff>())
