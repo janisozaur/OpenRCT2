@@ -75,6 +75,7 @@ std::future<void> StdInOutConsole::Eval(const std::string& s)
     // on the main thead at the right time.
     std::promise<void> barrier;
     auto future = barrier.get_future();
+    std::lock_guard<std::mutex> queueLock(_queueMutex);
     _evalQueue.emplace(std::move(barrier), s);
     return future;
 #endif
@@ -83,6 +84,7 @@ std::future<void> StdInOutConsole::Eval(const std::string& s)
 void StdInOutConsole::ProcessEvalQueue()
 {
 #ifndef ENABLE_SCRIPTING
+    std::lock_guard<std::mutex> queueLock(_queueMutex);
     while (_evalQueue.size() > 0)
     {
         auto item = std::move(_evalQueue.front());

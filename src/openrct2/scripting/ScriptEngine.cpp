@@ -919,6 +919,7 @@ void ScriptEngine::CheckAndStartPlugins()
 
 void ScriptEngine::ProcessREPL()
 {
+    std::lock_guard<std::mutex> queueLock(_queueMutex);
     while (_evalQueue.size() > 0)
     {
         auto item = std::move(_evalQueue.front());
@@ -945,6 +946,7 @@ std::future<void> ScriptEngine::Eval(const std::string& s)
 {
     std::promise<void> barrier;
     auto future = barrier.get_future();
+    std::lock_guard<std::mutex> queueLock(_queueMutex);
     _evalQueue.emplace(std::move(barrier), s);
     return future;
 }

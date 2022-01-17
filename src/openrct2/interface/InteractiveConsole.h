@@ -14,6 +14,7 @@
 
 #include <atomic>
 #include <future>
+#include <mutex>
 #include <queue>
 #include <string>
 
@@ -53,6 +54,7 @@ public:
 class StdInOutConsole final : public InteractiveConsole
 {
 private:
+    std::mutex _queueMutex;
     std::queue<std::tuple<std::promise<void>, std::string>> _evalQueue;
     std::atomic<bool> _isPromptShowing{};
 

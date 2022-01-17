@@ -1072,9 +1072,10 @@ static CompletionCallback completionCallback;
 #ifndef _WIN32
 static struct termios orig_termios; /* In order to restore at exit.*/
 #endif
-static bool rawmode = false; /* For atexit() function to check if restore is needed*/
-static bool mlmode = false;  /* Multi line mode. Default is single line. */
-static bool atexit_registered = false; /* Register atexit just 1 time. */
+static std::atomic<bool> rawmode = false; /* For atexit() function to check if restore is needed*/
+static std::atomic<bool> mlmode = false;  /* Multi line mode. Default is single line. */
+static std::atomic<bool> atexit_registered = false; /* Register atexit just 1 time. */
+static std::mutex _historyMutex;
 static size_t history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
 static std::vector<std::string> history;
 
@@ -2032,6 +2033,7 @@ inline void linenoiseEditMoveEnd(struct linenoiseState *l) {
 #define LINENOISE_HISTORY_NEXT 0
 #define LINENOISE_HISTORY_PREV 1
 inline void linenoiseEditHistoryNext(struct linenoiseState *l, int dir) {
+    std::lock_guard<std::mutex> historyLock(_historyMutex);
     if (history.size() > 1) {
         /* Update the current history entry before to
          * overwrite it with the next one. */
@@ -2365,6 +2367,7 @@ inline void linenoiseAtExit(void) {
  *
  * Using a circular buffer is smarter, but a bit more complex to handle. */
 inline bool AddHistory(const char* line) {
+    std::lock_guard<std::mutex> historyLock(_historyMutex);
     if (history_max_len == 0) return false;
 
     /* Don't add duplicated lines. */
@@ -2384,6 +2387,7 @@ inline bool AddHistory(const char* line) {
  * just the latest 'len' elements if the new history length value is smaller
  * than the amount of items already inside the history. */
 inline bool SetHistoryMaxLen(size_t len) {
+    std::lock_guard<std::mutex> historyLock(_historyMutex);
     if (len < 1) return false;
     history_max_len = len;
     if (len < history.size()) {
@@ -2397,6 +2401,7 @@ inline bool SetHistoryMaxLen(size_t len) {
 inline bool SaveHistory(const char* path) {
     std::ofstream f(path); // TODO: need 'std::ios::binary'?
     if (!f) return false;
+    std::lock_guard<std::mutex> historyLock(_historyMutex);
     for (const auto& h: history) {
         f << h << std::endl;
     }
@@ -2416,10 +2421,6 @@ inline bool LoadHistory(const char* path) {
         AddHistory(line.c_str());
     }
     return true;
-}
-
-inline const std::vector<std::string>& GetHistory() {
-    return history;
 }
 
 } // namespace linenoise

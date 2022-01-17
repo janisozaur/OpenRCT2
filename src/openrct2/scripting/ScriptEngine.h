@@ -149,6 +149,7 @@ namespace OpenRCT2::Scripting
         bool _transientPluginsEnabled{};
         bool _transientPluginsStarted{};
         bool _intransientPluginsStarted{};
+        std::mutex _queueMutex;
         std::queue<std::tuple<std::promise<void>, std::string>> _evalQueue;
         std::vector<std::shared_ptr<Plugin>> _plugins;
         uint32_t _lastHotReloadCheckTick{};

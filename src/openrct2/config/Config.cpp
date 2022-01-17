@@ -35,6 +35,8 @@
 #include "IniReader.hpp"
 #include "IniWriter.hpp"
 
+#include <mutex>
+
 using namespace OpenRCT2;
 using namespace OpenRCT2::Ui;
 
@@ -771,6 +773,8 @@ NotificationConfiguration gConfigNotifications;
 FontConfiguration gConfigFonts;
 PluginConfiguration gConfigPlugin;
 
+static std::mutex _configMutex;
+
 void config_set_defaults()
 {
     config_release();
@@ -795,11 +799,13 @@ bool config_open(u8string_view path)
 
 bool config_save(u8string_view path)
 {
+    std::lock_guard<std::mutex> lock(_configMutex);
     return Config::WriteFile(path);
 }
 
 void config_release()
 {
+    std::lock_guard<std::mutex> lock(_configMutex);
     SafeFree(gConfigGeneral.custom_currency_symbol);
     SafeFree(gConfigInterface.current_theme_preset);
     SafeFree(gConfigInterface.current_title_sequence_preset);

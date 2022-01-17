@@ -12,6 +12,7 @@
 #include "IStream.hpp"
 
 #include <algorithm>
+#include <mutex>
 #ifndef __ANDROID__
 #    include <zip.h>
 #endif
@@ -77,6 +78,8 @@ private:
 public:
     ZipArchive(std::string_view path, ZIP_ACCESS access)
     {
+        static std::mutex mktimeMutex;
+        std::lock_guard<std::mutex> lock(mktimeMutex);
         auto zipOpenMode = ZIP_RDONLY;
         if (access == ZIP_ACCESS::WRITE)
         {
