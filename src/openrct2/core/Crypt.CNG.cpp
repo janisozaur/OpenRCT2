@@ -520,6 +520,12 @@ private:
         Reset();
         auto blob = params.ToBlob();
         _keyBlobType = params.GetMagic() == BCRYPT_RSAFULLPRIVATE_MAGIC ? BCRYPT_RSAFULLPRIVATE_BLOB : BCRYPT_RSAPUBLIC_BLOB;
+        if (params.GetMagic() == BCRYPT_RSAFULLPRIVATE_MAGIC)
+            printf("ImportKey keyBlobType: BCRYPT_RSAFULLPRIVATE_BLOB\n");
+        else
+            printf("ImportKey keyBlobType: BCRYPT_RSAPUBLIC_BLOB\n");
+        auto str = EncodeBase64(blob);
+        printf("Blob: %s\n", str.c_str());
         auto status = BCryptImportKeyPair(_hAlg, NULL, _keyBlobType, &_hKey, blob.data(), static_cast<ULONG>(blob.size()), 0);
         CngThrowOnBadStatus("BCryptImportKeyPair", status);
     }
@@ -569,6 +575,7 @@ private:
         return input;
     }
 
+public:
     static std::string EncodeBase64(const std::vector<uint8_t>& input)
     {
         DWORD flags = CRYPT_STRING_BASE64 | CRYPT_STRING_NOCR;
@@ -618,6 +625,9 @@ public:
         try
         {
             BCRYPT_PKCS1_PADDING_INFO paddingInfo{ BCRYPT_SHA256_ALGORITHM };
+            std::vector<uint8_t> hashData(static_cast<uint8_t*>(pbHash), static_cast<uint8_t*>(pbHash + cbHash));
+            auto str = CngRsaKey::EncodeBase64(hashData);
+            printf("pbHash: %s\n", str.c_str());
             auto status = BCryptSignHash(hKey, &paddingInfo, pbHash, cbHash, NULL, 0, &cbSignature, BCRYPT_PAD_PKCS1);
             CngThrowOnBadStatus("BCryptSignHash", status);
             pbSignature = reinterpret_cast<PBYTE>(HeapAlloc(GetProcessHeap(), 0, cbSignature));
