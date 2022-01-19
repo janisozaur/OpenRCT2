@@ -630,6 +630,7 @@ public:
             printf("pbHash: %s\n", str.c_str());
             auto status = BCryptSignHash(hKey, &paddingInfo, pbHash, cbHash, NULL, 0, &cbSignature, BCRYPT_PAD_PKCS1);
             CngThrowOnBadStatus("BCryptSignHash", status);
+            printf("cbSignature: %lu\n", cbSignature);
             pbSignature = reinterpret_cast<PBYTE>(HeapAlloc(GetProcessHeap(), 0, cbSignature));
             ThrowBadAllocOnNull(pbSignature);
             status = BCryptSignHash(
