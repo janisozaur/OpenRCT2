@@ -50,8 +50,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Run clang-format
-        run: scripts/check-code-formatting
+  windows-vcpkg-arm:
+    name: Windows vcpkg ARM
+    runs-on: windows-latest
+    env:
+      VCPKG_DEFAULT_TRIPLET: arm64-windows
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Run vcpkg
+        uses: lukka/run-vcpkg@v10
+        with:
+          vcpkgGitCommitId: '6ad0750a86e5f9ee9f30ac792c3750965f5676fc'
+          runVcpkgInstall: true
   windows:
     name: Windows
     runs-on: windows-latest
@@ -59,7 +70,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [win32, x64]
+        platform: [win32, x64, arm64]
     env:
       CONFIGURATION: Release
       PLATFORM: ${{ matrix.platform }}
