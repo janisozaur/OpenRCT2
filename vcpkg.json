@@ -1,0 +1,18 @@
+{
+  "name": "openrct2-libs",
+  "version-string": "1.0.0",
+  "dependencies": [
+	  "discord-rpc",
+	  "freetype",
+	  "gtest",
+	  "libpng",
+	  {
+		  "name": "libzip",
+		  "features": "core"
+	  },
+	  "nlohmann-json",
+	  "sdl2",
+	  "speexdsp",
+	  "zlib"
+  ]
+}
