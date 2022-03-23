@@ -6,10 +6,7 @@
 	  "freetype",
 	  "gtest",
 	  "libpng",
-	  {
-		  "name": "libzip",
-		  "features": "core"
-	  },
+	  "libzip",
 	  "nlohmann-json",
 	  "sdl2",
 	  "speexdsp",
