@@ -2,6 +2,7 @@
   "name": "openrct2-libs",
   "version-string": "1.0.0",
   "dependencies": [
+          "breakpad",
 	  "discord-rpc",
 	  "freetype",
 	  "gtest",
