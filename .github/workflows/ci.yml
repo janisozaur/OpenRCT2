@@ -60,6 +60,8 @@ jobs:
     env:
       CONFIGURATION: Release
       PLATFORM: ${{ matrix.platform }}
+      CCACHE_DEBUG: true
+      CCACHE_DEBUGDIR: /c/Users/runneradmin/ccache-debug
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -74,6 +76,15 @@ jobs:
         run: |
           printenv
           . scripts/setenv && build
+      - name: Tar ccache logs
+        run: |
+          tar czf ~/log.tgz /c/Users/runneradmin/ccache-debug
+      - name: Upload artifacts (CI)
+        uses: actions/upload-artifact@v3
+        with:
+          name: OpenRCT2-Windows-${{ matrix.platform }}
+          path: ~/log.tgz
+          if-no-files-found: error
   windows-mingw:
     name: Windows (${{ matrix.platform_name }}) using mingw
     runs-on: ubuntu-latest
