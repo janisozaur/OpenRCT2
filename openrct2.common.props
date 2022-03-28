@@ -59,7 +59,6 @@
       <RuntimeLibrary Condition="'$(UseSharedLibs)'=='true'">MultiThreadedDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <ObjectFileName>$(IntDir)%(Filename).obj</ObjectFileName>
       <AdditionalOptions>/utf-8 /std:c++17 /permissive- /Zc:externConstexpr</AdditionalOptions>
     </ClCompile>
     <Link>
