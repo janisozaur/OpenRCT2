@@ -75,7 +75,7 @@ int32_t bitscanforward(int32_t source)
 
 int32_t bitscanforward(int64_t source)
 {
-#if defined(_MSC_VER) && (_MSC_VER >= 1400) && defined(_M_X64) // Visual Studio 2005
+#if defined(_MSC_VER) && (_MSC_VER >= 1400) && (defined(_M_X64) || defined(_M_ARM64)) // Visual Studio 2005
     DWORD i;
     uint8_t success = _BitScanForward64(&i, static_cast<uint64_t>(source));
     return success != 0 ? i : -1;
