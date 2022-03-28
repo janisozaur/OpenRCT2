@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
 set -e
+set -x
+
+which ccache || echo "no ccache found"
 
 # This sets up more environment variables using the existing environment
 # It should be dot sourced into your environment

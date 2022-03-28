@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
+set -x
 
 # Ensure we are in root directory
 if [[ $(uname) == "Darwin" ]]; then
@@ -9,6 +10,8 @@ else
     basedir="$(readlink -f `dirname $0`/..)"
 fi
 cd $basedir
+
+printenv
 
 if [[ "$OSTYPE" == "cygwin" || "$OSTYPE" == "msys" ]]; then
     # Patch version.h

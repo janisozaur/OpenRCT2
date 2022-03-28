@@ -68,32 +68,9 @@ jobs:
         with:
           key: windows-msvc-${{ matrix.platform }}
       - name: Build OpenRCT2
-        run: . scripts/setenv && build
-      - name: Build artifacts
         run: |
-          . scripts/setenv -q
-          build-portable
-          build-symbols
-          build-installer -i
-      - name: Upload artifacts (CI)
-        uses: actions/upload-artifact@v3
-        with:
-          name: OpenRCT2-${{ runner.os }}-${{ matrix.platform }}
-          path: artifacts
-          if-no-files-found: error
-      - name: Run Tests
-        run: . scripts/setenv -q && run-tests
-      - name: Upload artifacts (openrct2.org)
-        run: |
-          . scripts/setenv -q
-          if [[ "$OPENRCT2_PUSH" == "true" ]]; then
-            upload-build artifacts/openrct2-portable-*.zip "windows-portable-$PLATFORM" $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
-            upload-build artifacts/openrct2-installer-*.exe "windows-installer-$PLATFORM" $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
-            upload-build artifacts/openrct2-symbols-*.zip "windows-symbols-$PLATFORM" $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
-            upload-backtrace-symbols artifacts/openrct2-symbols-*.zip
-          else
-              echo 'Not going to push build'
-          fi
+          printenv
+          . scripts/setenv && build
   windows-mingw:
     name: Windows (${{ matrix.platform_name }}) using mingw
     runs-on: ubuntu-latest
