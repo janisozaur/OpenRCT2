@@ -69,7 +69,7 @@ jobs:
           key: windows-msvc-${{ matrix.platform }}
       - name: copy ccache
         run: |
-          copy C:\Users\runneradmin\.cargo\bin\ccache.exe C:\Users\runneradmin\.cargo\bin\cl.exe
+          cp /c/Users/runneradmin/.cargo/bin/ccache.exe /c/Users/runneradmin/.cargo/bin/cl.exe
       - name: Build OpenRCT2
         run: |
           printenv
