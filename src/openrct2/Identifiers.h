@@ -13,7 +13,7 @@
 #include "core/Identifier.hpp"
 
 #include <limits>
-
+#error here
 using BannerIndex = TIdentifier<uint16_t, std::numeric_limits<uint16_t>::max(), struct BannerIndexTag>;
 using ParkEntranceIndex = TIdentifier<uint8_t, std::numeric_limits<uint8_t>::max(), struct ParkEntranceIndexTag>;
 using RideId = TIdentifier<uint16_t, std::numeric_limits<uint16_t>::max(), struct RideIdTag>;
