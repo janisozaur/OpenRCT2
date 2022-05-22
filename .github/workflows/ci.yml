@@ -285,7 +285,6 @@ jobs:
       - name: Run Tests
         run: . scripts/setenv -q && run-tests
       - name: Upload artifacts (openrct2.org)
-        if: matrix.distro == 'bionic' # Need to get openrct2.org updated before other distros can be enabled
         run: |
           . scripts/setenv -q
           if [[ "$OPENRCT2_PUSH" == "true" ]]; then
