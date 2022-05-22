@@ -244,19 +244,19 @@ jobs:
           - platform: x86_64
             distro: bionic
             image: openrct2/openrct2-build:4-bionic
-            build_flags: -DCMAKE_POSITION_INDEPENDENT_CODE=on -DCMAKE_CXX_FLAGS="-g -gz" -DWITH_TESTS=off
+            build_flags: -DCMAKE_CXX_FLAGS="-g -gz" -DWITH_TESTS=off
           - platform: x86_64
             distro: focal
             image: openrct2/openrct2-build:8-focal
-            build_flags: -DCMAKE_POSITION_INDEPENDENT_CODE=on -DCMAKE_CXX_FLAGS="-g -gz"
+            build_flags: -DCMAKE_CXX_FLAGS="-g -gz"
           - platform: x86_64
             distro: jammy
             image: openrct2/openrct2-build:8-jammy
-            build_flags: -DCMAKE_POSITION_INDEPENDENT_CODE=on -DCMAKE_CXX_FLAGS="-g -gz"
+            build_flags: -DCMAKE_CXX_FLAGS="-g -gz"
           - platform: x86_64
             distro: bullseye
             image: openrct2/openrct2-build:8-bullseye
-            build_flags: -DCMAKE_POSITION_INDEPENDENT_CODE=on -DCMAKE_CXX_FLAGS="-g -gz"
+            build_flags: -DCMAKE_CXX_FLAGS="-g -gz"
           - platform: i686
             distro: focal
             image: openrct2/openrct2-build:8-focal32
