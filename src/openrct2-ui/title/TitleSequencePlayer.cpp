@@ -296,8 +296,8 @@ namespace OpenRCT2::Title
                     auto parkImporter = ParkImporter::Create(path);
                     auto result = parkImporter->Load(path);
 
-                    auto& objectManager = GetContext()->GetObjectManager();
-                    objectManager.LoadObjects(result.RequiredObjects);
+                    auto* objectManager = GetContext()->GetObjectManager();
+                    objectManager->LoadObjects(result.RequiredObjects);
 
                     parkImporter->Import();
                 }
@@ -334,8 +334,8 @@ namespace OpenRCT2::Title
                     auto parkImporter = ParkImporter::Create(hintPath);
                     auto result = parkImporter->LoadFromStream(stream, isScenario);
 
-                    auto& objectManager = GetContext()->GetObjectManager();
-                    objectManager.LoadObjects(result.RequiredObjects);
+                    auto* objectManager = GetContext()->GetObjectManager();
+                    objectManager->LoadObjects(result.RequiredObjects);
 
                     parkImporter->Import();
                 }

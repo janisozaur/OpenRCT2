@@ -1992,7 +1992,7 @@ static void WindowRideMainFollowRide(rct_window* w)
 
 static void PopulateVehicleTypeDropdown(Ride* ride, bool forceRefresh)
 {
-    auto& objManager = GetContext()->GetObjectManager();
+    auto* objManager = GetContext()->GetObjectManager();
     rct_ride_entry* rideEntry = ride->GetRideEntry();
 
     bool selectionShouldBeExpanded;
@@ -2028,7 +2028,7 @@ static void PopulateVehicleTypeDropdown(Ride* ride, bool forceRefresh)
         if (selectionShouldBeExpanded && (rideTypeIterator == RIDE_TYPE_MAZE || rideTypeIterator == RIDE_TYPE_MINI_GOLF))
             continue;
 
-        auto& rideEntries = objManager.GetAllRideEntries(rideTypeIterator);
+        auto& rideEntries = objManager->GetAllRideEntries(rideTypeIterator);
         for (auto rideEntryIndex : rideEntries)
         {
             const auto* currentRideEntry = get_ride_entry(rideEntryIndex);
@@ -4401,10 +4401,10 @@ static void WindowRideColourMousedown(rct_window* w, rct_widgetindex widgetIndex
         case WIDX_ENTRANCE_STYLE_DROPDOWN:
         {
             auto ddIndex = 0;
-            auto& objManager = GetContext()->GetObjectManager();
+            auto* objManager = GetContext()->GetObjectManager();
             for (i = 0; i < MAX_STATION_OBJECTS; i++)
             {
-                auto stationObj = static_cast<StationObject*>(objManager.GetLoadedObject(ObjectType::Station, i));
+                auto stationObj = static_cast<StationObject*>(objManager->GetLoadedObject(ObjectType::Station, i));
                 if (stationObj != nullptr)
                 {
                     gDropdownItems[ddIndex].Format = STR_DROPDOWN_MENU_LABEL;
@@ -4521,10 +4521,10 @@ static void WindowRideColourDropdown(rct_window* w, rct_widgetindex widgetIndex,
         case WIDX_ENTRANCE_STYLE_DROPDOWN:
         {
             auto ddIndex = 0;
-            auto& objManager = GetContext()->GetObjectManager();
+            auto* objManager = GetContext()->GetObjectManager();
             for (auto i = 0; i < MAX_STATION_OBJECTS; i++)
             {
-                auto stationObj = static_cast<StationObject*>(objManager.GetLoadedObject(ObjectType::Station, i));
+                auto stationObj = static_cast<StationObject*>(objManager->GetLoadedObject(ObjectType::Station, i));
                 if (stationObj != nullptr)
                 {
                     if (ddIndex == dropdownIndex)
@@ -5083,8 +5083,8 @@ static void WindowRideMusicResize(rct_window* w)
 
 static std::string GetMusicString(ObjectEntryIndex musicObjectIndex)
 {
-    auto& objManager = GetContext()->GetObjectManager();
-    auto musicObj = static_cast<MusicObject*>(objManager.GetLoadedObject(ObjectType::Music, musicObjectIndex));
+    auto* objManager = GetContext()->GetObjectManager();
+    auto musicObj = static_cast<MusicObject*>(objManager->GetLoadedObject(ObjectType::Music, musicObjectIndex));
 
     auto name = musicObj->NameStringId;
     return format_string(name, {});
@@ -5107,10 +5107,10 @@ static void WindowRideMusicMousedown(rct_window* w, rct_widgetindex widgetIndex,
     // Construct list of available music
     auto& musicOrder = window_ride_current_music_style_order;
     musicOrder.clear();
-    auto& objManager = GetContext()->GetObjectManager();
+    auto* objManager = GetContext()->GetObjectManager();
     for (ObjectEntryIndex i = 0; i < MAX_MUSIC_OBJECTS; i++)
     {
-        auto musicObj = static_cast<MusicObject*>(objManager.GetLoadedObject(ObjectType::Music, i));
+        auto musicObj = static_cast<MusicObject*>(objManager->GetLoadedObject(ObjectType::Music, i));
         if (musicObj != nullptr)
         {
             // Hide custom music if the WAV file does not exist
@@ -5149,7 +5149,7 @@ static void WindowRideMusicMousedown(rct_window* w, rct_widgetindex widgetIndex,
     auto numItems = musicOrder.size();
     for (size_t i = 0; i < numItems; i++)
     {
-        auto musicObj = static_cast<MusicObject*>(objManager.GetLoadedObject(ObjectType::Music, musicOrder[i]));
+        auto musicObj = static_cast<MusicObject*>(objManager->GetLoadedObject(ObjectType::Music, musicOrder[i]));
         gDropdownItems[i].Format = STR_DROPDOWN_MENU_LABEL;
         gDropdownItems[i].Args = musicObj->NameStringId;
     }
@@ -5217,8 +5217,8 @@ static void WindowRideMusicInvalidate(rct_window* w)
 
     // Set selected music
     rct_string_id musicName = STR_NONE;
-    auto& objManager = GetContext()->GetObjectManager();
-    auto musicObj = static_cast<MusicObject*>(objManager.GetLoadedObject(ObjectType::Music, ride->music));
+    auto* objManager = GetContext()->GetObjectManager();
+    auto musicObj = static_cast<MusicObject*>(objManager->GetLoadedObject(ObjectType::Music, ride->music));
     if (musicObj != nullptr)
     {
         musicName = musicObj->NameStringId;

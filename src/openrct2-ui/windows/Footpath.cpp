@@ -610,13 +610,13 @@ static void WindowFootpathDrawDropdownButtons(rct_window* w, rct_drawpixelinfo* 
     }
     else
     {
-        auto& objManager = OpenRCT2::GetContext()->GetObjectManager();
+        auto* objManager = OpenRCT2::GetContext()->GetObjectManager();
 
         // Set footpath and queue type button images
         auto pathImage = static_cast<uint32_t>(SPR_NONE);
         auto queueImage = static_cast<uint32_t>(SPR_NONE);
         auto pathObj = static_cast<FootpathObject*>(
-            objManager.GetLoadedObject(ObjectType::Paths, gFootpathSelection.LegacyPath));
+            objManager->GetLoadedObject(ObjectType::Paths, gFootpathSelection.LegacyPath));
         if (pathObj != nullptr)
         {
             auto pathEntry = reinterpret_cast<rct_footpath_entry*>(pathObj->GetLegacyData());
@@ -665,9 +665,9 @@ static void WindowFootpathPaint(rct_window* w, rct_drawpixelinfo* dpi)
         }
         else
         {
-            auto& objManager = OpenRCT2::GetContext()->GetObjectManager();
+            auto* objManager = OpenRCT2::GetContext()->GetObjectManager();
             auto* pathObj = static_cast<FootpathObject*>(
-                objManager.GetLoadedObject(ObjectType::Paths, gFootpathSelection.LegacyPath));
+                objManager->GetLoadedObject(ObjectType::Paths, gFootpathSelection.LegacyPath));
             if (pathObj != nullptr)
             {
                 auto pathEntry = reinterpret_cast<const rct_footpath_entry*>(pathObj->GetLegacyData());
@@ -716,7 +716,7 @@ static void WindowFootpathPaint(rct_window* w, rct_drawpixelinfo* dpi)
  */
 static void WindowFootpathShowFootpathTypesDialog(rct_window* w, rct_widget* widget, bool showQueues)
 {
-    auto& objManager = OpenRCT2::GetContext()->GetObjectManager();
+    auto* objManager = OpenRCT2::GetContext()->GetObjectManager();
 
     uint32_t numPathTypes = 0;
     // If the game is in sandbox mode, also show paths that are normally restricted to the scenario editor
@@ -726,7 +726,7 @@ static void WindowFootpathShowFootpathTypesDialog(rct_window* w, rct_widget* wid
     std::optional<size_t> defaultIndex;
     for (ObjectEntryIndex i = 0; i < MAX_FOOTPATH_SURFACE_OBJECTS; i++)
     {
-        const auto* pathType = static_cast<FootpathSurfaceObject*>(objManager.GetLoadedObject(ObjectType::FootpathSurface, i));
+        const auto* pathType = static_cast<FootpathSurfaceObject*>(objManager->GetLoadedObject(ObjectType::FootpathSurface, i));
         if (pathType == nullptr)
         {
             continue;
@@ -753,7 +753,7 @@ static void WindowFootpathShowFootpathTypesDialog(rct_window* w, rct_widget* wid
 
     for (ObjectEntryIndex i = 0; i < MAX_PATH_OBJECTS; i++)
     {
-        auto* pathObj = static_cast<FootpathObject*>(objManager.GetLoadedObject(ObjectType::Paths, i));
+        auto* pathObj = static_cast<FootpathObject*>(objManager->GetLoadedObject(ObjectType::Paths, i));
         if (pathObj == nullptr)
         {
             continue;

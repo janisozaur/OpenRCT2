@@ -174,9 +174,9 @@ namespace OpenRCT2::RideAudio
 
     void DefaultStartRideMusicChannel(const ViewportRideMusicInstance& instance)
     {
-        auto& objManager = GetContext()->GetObjectManager();
+        auto* objManager = GetContext()->GetObjectManager();
         auto ride = get_ride(instance.RideId);
-        auto musicObj = static_cast<MusicObject*>(objManager.GetLoadedObject(ObjectType::Music, ride->music));
+        auto musicObj = static_cast<MusicObject*>(objManager->GetLoadedObject(ObjectType::Music, ride->music));
         if (musicObj != nullptr)
         {
             auto track = musicObj->GetTrack(instance.TrackIndex);
@@ -202,9 +202,9 @@ namespace OpenRCT2::RideAudio
     }
     void CircusStartRideMusicChannel(const ViewportRideMusicInstance& instance)
     {
-        auto& objManager = GetContext()->GetObjectManager();
+        auto* objManager = GetContext()->GetObjectManager();
         ObjectEntryDescriptor desc(ObjectType::Audio, AudioObjectIdentifiers::Rct2Circus);
-        auto audioObj = static_cast<AudioObject*>(objManager.GetLoadedObject(desc));
+        auto audioObj = static_cast<AudioObject*>(objManager->GetLoadedObject(desc));
         if (audioObj != nullptr)
         {
             auto source = audioObj->GetSample(0);
@@ -290,8 +290,8 @@ namespace OpenRCT2::RideAudio
             return { 1378, 12427456 };
         }
 
-        auto& objManager = GetContext()->GetObjectManager();
-        auto musicObj = static_cast<MusicObject*>(objManager.GetLoadedObject(ObjectType::Music, ride.music));
+        auto* objManager = GetContext()->GetObjectManager();
+        auto musicObj = static_cast<MusicObject*>(objManager->GetLoadedObject(ObjectType::Music, ride.music));
         if (musicObj != nullptr)
         {
             auto numTracks = musicObj->GetTrackCount();
