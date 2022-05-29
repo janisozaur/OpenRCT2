@@ -77,8 +77,8 @@ namespace Editor
 
         // Scan objects if necessary
         const auto& localisationService = context->GetLocalisationService();
-        auto& objectRepository = context->GetObjectRepository();
-        objectRepository.LoadOrConstruct(localisationService.GetCurrentLanguage());
+        auto* objectRepository = context->GetObjectRepository();
+        objectRepository->LoadOrConstruct(localisationService.GetCurrentLanguage());
 
         Audio::LoadAudioObjects();
 
