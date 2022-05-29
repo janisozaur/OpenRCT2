@@ -590,8 +590,8 @@ namespace OpenRCT2
             {
 #ifdef ENABLE_SCRIPTING
                 // Dump the plugin storage to JSON (stored in park)
-                auto& scriptEngine = GetContext()->GetScriptEngine();
-                park.PluginStorage = scriptEngine.GetParkStorageAsJSON();
+                auto* scriptEngine = GetContext()->GetScriptEngine();
+                park.PluginStorage = scriptEngine->GetParkStorageAsJSON();
 #endif
                 if (park.PluginStorage.empty() || park.PluginStorage == "{}")
                 {
@@ -606,8 +606,8 @@ namespace OpenRCT2
             if (os.GetMode() == OrcaStream::Mode::READING)
             {
 #ifdef ENABLE_SCRIPTING
-                auto& scriptEngine = GetContext()->GetScriptEngine();
-                scriptEngine.SetParkStorageFromJSON(park.PluginStorage);
+                auto* scriptEngine = GetContext()->GetScriptEngine();
+                scriptEngine->SetParkStorageFromJSON(park.PluginStorage);
 #endif
             }
         }
