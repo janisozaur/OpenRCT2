@@ -74,6 +74,8 @@
   </Target>
 
   <Target Name="BeforeBuild" BeforeTargets="Build;Rebuild" DependsOnTargets="DownloadLibs">
+    <Message Importance="High" Condition="'$(Breakpad)'=='true' and ('$(Platform)'=='Win32' or '$(Platform)'=='x64')" Text="Breakpad enabled" />
+    <Message Importance="High" Condition="'$(Breakpad)'=='false' or ('$(Platform)'!='Win32' and '$(Platform)'!='x64')" Text="Breakpad disabled" />
     <PropertyGroup>
       <BuildString Condition="'$(OPENRCT2_SHA1_SHORT)'!=''">$(OPENRCT2_SHA1_SHORT)</BuildString>
       <BuildString Condition="'$(OPENRCT2_BRANCH)'!=''">$(BuildString) ($(OPENRCT2_BRANCH))</BuildString>
