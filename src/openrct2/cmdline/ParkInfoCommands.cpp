@@ -67,7 +67,7 @@ static exitcode_t HandleObjectsInfo(CommandLineArgEnumerator* argEnumerator)
         return EXITCODE_FAIL;
     }
 
-    auto& objectRepository = context->GetObjectRepository();
+    auto* objectRepository = context->GetObjectRepository();
     std::unique_ptr<IParkImporter> parkImporter;
     if (info.Type == FILE_TYPE::PARK)
     {
@@ -126,7 +126,7 @@ static exitcode_t HandleObjectsInfo(CommandLineArgEnumerator* argEnumerator)
                 // Empty object slot don't output anything
                 continue;
             }
-            auto* ori = OpenRCT2::GetContext()->GetObjectRepository().FindObject(obj);
+            auto* ori = OpenRCT2::GetContext()->GetObjectRepository()->FindObject(obj);
             Console::WriteFormat("%s Object: ", sourceGameToName[EnumValue(ori->GetFirstSourceGame())].c_str());
 
             std::string name{ obj.GetName() };
