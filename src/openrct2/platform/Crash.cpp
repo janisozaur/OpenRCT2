@@ -100,16 +100,20 @@ static bool OnCrash(
     const wchar_t* dumpPath, const wchar_t* miniDumpId, void* context, EXCEPTION_POINTERS* exinfo,
     MDRawAssertionInfo* assertion, bool succeeded)
 {
+    printf("janis: starting OnCrash %s:%d\n", __FILE__, __LINE__);
     if (!succeeded)
     {
+        printf("janis: %s:%d\n", __FILE__, __LINE__);
         constexpr const char* DumpFailedMessage = "Failed to create the dump. Please file an issue with OpenRCT2 on GitHub and "
                                                   "provide latest save, and provide "
                                                   "information about what you did before the crash occurred.";
         printf("%s\n", DumpFailedMessage);
         if (!gOpenRCT2SilentBreakpad)
         {
+            printf("janis: %s:%d\n", __FILE__, __LINE__);
             MessageBoxA(nullptr, DumpFailedMessage, OPENRCT2_NAME, MB_OK | MB_ICONERROR);
         }
+        printf("janis: %s:%d\n", __FILE__, __LINE__);
         return succeeded;
     }
 
@@ -132,14 +136,17 @@ static bool OnCrash(
 
     wchar_t dumpFilePathGZIP[MAX_PATH];
     swprintf_s(dumpFilePathGZIP, std::size(dumpFilePathGZIP), L"%s.gz", dumpFilePathNew);
+    printf("janis: %s:%d\n", __FILE__, __LINE__);
 
     // Compress the dump
     {
+        printf("janis: compressing dump %s:%d\n", __FILE__, __LINE__);
         FILE* input = _wfopen(dumpFilePath, L"rb");
         FILE* dest = _wfopen(dumpFilePathGZIP, L"wb");
 
         if (util_gzip_compress(input, dest))
         {
+            printf("janis: dump compressed %s:%d\n", __FILE__, __LINE__);
             // TODO: enable upload of gzip-compressed dumps once supported on
             // backtrace.io (uncomment the line below). For now leave compression
             // on, as GitHub will accept .gz files, even though it does not
@@ -158,6 +165,7 @@ static bool OnCrash(
     // Try to rename the files
     if (_wrename(dumpFilePath, dumpFilePathNew) == 0)
     {
+        printf("janis: rename files %s:%d\n", __FILE__, __LINE__);
         std::wcscpy(dumpFilePath, dumpFilePathNew);
     }
     uploadFiles[L"upload_file_minidump"] = dumpFilePath;
@@ -173,47 +181,64 @@ static bool OnCrash(
 
     bool savedGameDumped = false;
     auto saveFilePathUTF8 = String::ToUtf8(saveFilePath);
+    printf("janis: start dumping map %s:%d\n", __FILE__, __LINE__);
     try
     {
+        printf("janis: dump map start %s:%d\n", __FILE__, __LINE__);
         PrepareMapForSave();
+        printf("janis: map prepared %s:%d\n", __FILE__, __LINE__);
 
         // Export all loaded objects to avoid having custom objects missing in the reports.
         auto exporter = std::make_unique<ParkFileExporter>();
+        printf("janis: exporter prepared %s:%d\n", __FILE__, __LINE__);
         auto ctx = OpenRCT2::GetContext();
+        printf("janis: context obrtained %s:%d\n", __FILE__, __LINE__);
         auto& objManager = ctx->GetObjectManager();
+        printf("janis: obj manager obtained %s:%d\n", __FILE__, __LINE__);
         exporter->ExportObjectsList = objManager.GetPackableObjects();
+        printf("janis: packable object list done %s:%d\n", __FILE__, __LINE__);
 
         exporter->Export(saveFilePathUTF8.c_str());
+        printf("janis: save exported %s:%d\n", __FILE__, __LINE__);
         savedGameDumped = true;
     }
     catch (const std::exception& e)
     {
         printf("Failed to export save. Error: %s\n", e.what());
     }
+    printf("janis: map dump completed %s:%d\n", __FILE__, __LINE__);
 
     // Compress the save
     if (savedGameDumped)
     {
+        printf("janis: %s:%d\n", __FILE__, __LINE__);
         uploadFiles[L"attachment_park.park"] = saveFilePath;
     }
 
     auto configFilePathUTF8 = String::ToUtf8(configFilePath);
+    printf("janis: saving config %s:%d\n", __FILE__, __LINE__);
     if (config_save(configFilePathUTF8))
     {
+        printf("janis: config saved %s:%d\n", __FILE__, __LINE__);
         uploadFiles[L"attachment_config.ini"] = configFilePath;
     }
 
+    printf("janis: saving screenshot %s:%d\n", __FILE__, __LINE__);
     std::string screenshotPath = screenshot_dump();
     if (!screenshotPath.empty())
     {
+        printf("janis: screenshot saved %s:%d\n", __FILE__, __LINE__);
         auto screenshotPathW = String::ToWideChar(screenshotPath.c_str());
         uploadFiles[L"attachment_screenshot.png"] = screenshotPathW;
     }
 
+    printf("janis: saving replay %s:%d\n", __FILE__, __LINE__);
     if (with_record)
     {
+        printf("janis: replay available %s:%d\n", __FILE__, __LINE__);
         auto parkReplayPathW = String::ToWideChar(gSilentRecordingName);
         bool record_copied = CopyFileW(parkReplayPathW.c_str(), recordFilePathNew, true);
+        printf("janis: replay copied %s:%d\n", __FILE__, __LINE__);
         if (record_copied)
         {
             uploadFiles[L"attachment_replay.parkrep"] = recordFilePathNew;
@@ -223,6 +248,7 @@ static bool OnCrash(
             with_record = false;
         }
     }
+    printf("janis: replay done %s:%d\n", __FILE__, __LINE__);
 
     if (gOpenRCT2SilentBreakpad)
     {
@@ -232,6 +258,7 @@ static bool OnCrash(
         UploadMinidump(uploadFiles, error, response);
         return succeeded;
     }
+    printf("janis: %s:%d\n", __FILE__, __LINE__);
 
     constexpr const wchar_t* MessageFormat = L"A crash has occurred and a dump was created at\n%s.\n\nPlease file an issue "
                                              L"with OpenRCT2 on GitHub, and provide "
@@ -245,11 +272,13 @@ static bool OnCrash(
     int answer = MessageBoxW(nullptr, message, WSZ(OPENRCT2_NAME), MB_YESNO | MB_ICONERROR);
     if (answer == IDYES)
     {
+        printf("janis: %s:%d\n", __FILE__, __LINE__);
         int error;
         std::wstring response;
         bool ok = UploadMinidump(uploadFiles, error, response);
         if (!ok)
         {
+            printf("janis: %s:%d\n", __FILE__, __LINE__);
             const wchar_t* MessageFormat2 = L"There was a problem while uploading the dump. Please upload it manually to "
                                             L"GitHub. It should be highlighted for you once you close this message.\n"
                                             L"It might be because you are using outdated build and we have disabled its "
@@ -263,12 +292,15 @@ static bool OnCrash(
         }
         else
         {
+            printf("janis: %s:%d\n", __FILE__, __LINE__);
             MessageBoxW(nullptr, L"Dump uploaded successfully.", WSZ(OPENRCT2_NAME), MB_OK | MB_ICONINFORMATION);
         }
     }
+    printf("janis: %s:%d\n", __FILE__, __LINE__);
     HRESULT coInitializeResult = CoInitialize(nullptr);
     if (SUCCEEDED(coInitializeResult))
     {
+        printf("janis: %s:%d\n", __FILE__, __LINE__);
         LPITEMIDLIST pidl = ILCreateFromPathW(dumpPath);
         LPITEMIDLIST files[6];
         uint32_t numFiles = 0;
@@ -297,6 +329,7 @@ static bool OnCrash(
         }
         CoUninitialize();
     }
+    printf("janis: %s:%d\n", __FILE__, __LINE__);
 
     // Return whether the dump was successful
     return succeeded;
@@ -304,8 +337,11 @@ static bool OnCrash(
 
 static std::wstring GetDumpDirectory()
 {
+    printf("janis: %s:%d\n", __FILE__, __LINE__);
     auto env = GetContext()->GetPlatformEnvironment();
+    printf("janis: %s:%d\n", __FILE__, __LINE__);
     auto crashPath = env->GetDirectoryPath(DIRBASE::USER, DIRID::CRASH);
+    printf("janis: %s:%d\n", __FILE__, __LINE__);
 
     auto result = String::ToWideChar(crashPath);
     return result;
@@ -319,9 +355,11 @@ constexpr const wchar_t* PipeName = L"openrct2-bpad";
 CExceptionHandler crash_init()
 {
 #ifdef USE_BREAKPAD
+    printf("janis: %s:%d\n", __FILE__, __LINE__);
     // Path must exist and be RW!
     auto exHandler = new google_breakpad::ExceptionHandler(
         GetDumpDirectory(), 0, OnCrash, 0, google_breakpad::ExceptionHandler::HANDLER_ALL, MiniDumpWithDataSegs, PipeName, 0);
+    printf("janis: %s:%d\n", __FILE__, __LINE__);
     return reinterpret_cast<CExceptionHandler>(exHandler);
 #else  // USE_BREAKPAD
     return nullptr;
