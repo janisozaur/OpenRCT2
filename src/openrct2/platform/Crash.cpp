@@ -188,7 +188,7 @@ static bool OnCrash(
     }
     catch (const std::exception& e)
     {
-        printf("Failed to export save. Error: %s\n", e.what().c_str());
+        printf("Failed to export save. Error: %s\n", e.what());
     }
 
     // Compress the save
