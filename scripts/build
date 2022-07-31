@@ -32,6 +32,8 @@ if [[ "$OSTYPE" == "cygwin" || "$OSTYPE" == "msys" ]]; then
     cp bin/openrct2.exe bin/openrct2.com
     vstool editbin //subsystem:console bin/openrct2.com
     vstool editbin //subsystem:windows bin/openrct2.exe
+
+    bin/openrct2.com --version
 else
     echo -e "\033[0;36mBuilding OpenRCT2...\033[0m"
     mkdir -p bin && cd bin
@@ -39,4 +41,10 @@ else
     cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX=/usr "$@"
 
     ninja -k0 all install
+
+    if [[ $(uname) == "Darwin" ]]; then
+        OpenRCT2.app/Contents/MacOS/OpenRCT2
+    else
+        ./openrct2 --version
+    fi
 fi
