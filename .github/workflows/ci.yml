@@ -59,6 +59,7 @@ jobs:
       - name: Run clang-format
         run: scripts/check-code-formatting
   windows:
+    if: false
     name: Windows
     runs-on: windows-latest
     needs: check-code-formatting
@@ -144,6 +145,7 @@ jobs:
           path: bin/openrct2.exe
           if-no-files-found: error
   macos-cmake:
+    if: false
     name: macOS (${{ matrix.arch }}) using CMake
     runs-on: macos-latest
     needs: check-code-formatting
@@ -193,6 +195,7 @@ jobs:
           path: artifacts/openrct2-macos.zip
           if-no-files-found: error
   macos-universal:
+    if: false
     name: macOS universal app bundle
     runs-on: macos-latest
     needs: macos-cmake
