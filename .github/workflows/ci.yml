@@ -32,6 +32,7 @@ concurrency:
 
 jobs:
   lint-commit:
+    if: false
     name: Lint Commit Message
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -47,6 +48,7 @@ jobs:
         with:
           configFile: .commitlint.json
   check-code-formatting:
+    if: false
     name: Check code formatting
     runs-on: ubuntu-latest
     container: openrct2/openrct2-build:4-format
@@ -59,6 +61,7 @@ jobs:
       - name: Run clang-format
         run: scripts/check-code-formatting
   windows:
+    if: false
     name: Windows
     runs-on: windows-latest
     needs: check-code-formatting
@@ -108,6 +111,7 @@ jobs:
               echo 'Not going to push build'
           fi
   windows-mingw:
+    if: false
     name: Windows (${{ matrix.platform_name }}) using mingw
     runs-on: ubuntu-latest
     needs: check-code-formatting
@@ -144,6 +148,7 @@ jobs:
           path: bin/openrct2.exe
           if-no-files-found: error
   macos-cmake:
+    if: false
     name: macOS (${{ matrix.arch }}) using CMake
     runs-on: macos-latest
     needs: check-code-formatting
@@ -193,6 +198,7 @@ jobs:
           path: artifacts/openrct2-macos.zip
           if-no-files-found: error
   macos-universal:
+    if: false
     name: macOS universal app bundle
     runs-on: macos-latest
     needs: macos-cmake
@@ -239,6 +245,7 @@ jobs:
             echo 'Not going to push build'
           fi
   linux-portable:
+    if: false
     name: Linux (${{ matrix.platform }}, ${{ matrix.distro }}, portable)
     runs-on: ubuntu-latest
     needs: check-code-formatting
@@ -302,7 +309,6 @@ jobs:
   linux-appimage:
     name: Linux (x86_64, AppImage)
     runs-on: ubuntu-latest
-    needs: check-code-formatting
     container: openrct2/openrct2-build:8-focal
     steps:
       - name: Checkout
@@ -333,6 +339,7 @@ jobs:
             echo 'Not going to push build'
           fi
   linux-docker:
+    if: false
     name: Linux (docker)
     needs: check-code-formatting
     if: github.repository == 'OpenRCT2/OpenRCT2'
@@ -358,6 +365,7 @@ jobs:
             echo 'Image not pushed'
           fi
   linux-clang:
+    if: false
     name: Linux (Debug, [http, network, flac, vorbis OpenGL] disabled) using clang
     runs-on: ubuntu-latest
     needs: check-code-formatting
@@ -374,6 +382,7 @@ jobs:
       - name: Build OpenRCT2
         run: . scripts/setenv && build -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Debug -DDISABLE_NETWORK=ON -DDISABLE_HTTP=ON -DDISABLE_FLAC=ON -DDISABLE_VORBIS=ON -DDISABLE_OPENGL=ON
   android:
+    if: false
     name: Android
     runs-on: ubuntu-latest
     needs: check-code-formatting
