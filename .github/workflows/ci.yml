@@ -259,7 +259,7 @@ jobs:
           - platform: x86_64
             distro: focal
             image: openrct2/openrct2-build:8-focal
-            build_flags: -DCMAKE_POSITION_INDEPENDENT_CODE=on -DCMAKE_CXX_FLAGS="-g -gz -fno-var-tracking-assignments"
+            build_flags: -DCMAKE_POSITION_INDEPENDENT_CODE=on -DCMAKE_CXX_FLAGS="-g1 -gz -fno-var-tracking-assignments"
           - platform: x86_64
             distro: jammy
             image: openrct2/openrct2-build:8-jammy
@@ -271,7 +271,7 @@ jobs:
           - platform: i686
             distro: focal
             image: openrct2/openrct2-build:8-focal32
-            build_flags: -DFORCE32=ON -DENABLE_SCRIPTING=OFF -DCMAKE_CXX_FLAGS="-m32 -g -gz -fno-var-tracking-assignments" -DWITH_TESTS=off
+            build_flags: -DFORCE32=ON -DENABLE_SCRIPTING=OFF -DCMAKE_CXX_FLAGS="-m32 -g1 -gz -fno-var-tracking-assignments" -DWITH_TESTS=off
     steps:
       - name: Checkout
         uses: actions/checkout@v3
