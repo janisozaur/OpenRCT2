@@ -414,6 +414,7 @@ jobs:
           path: |
             bin/*profdata*
             bin/coverage.json*
+            bin/OpenRCT2Tests
           if-no-files-found: error
   android:
     name: Android
