@@ -158,6 +158,7 @@
 #include <vector>
 #include <iostream>
 #include <mutex>
+#include <atomic>
 
 namespace linenoise {
 
@@ -208,7 +209,7 @@ BOOL  shifted;
 // http://vt100.net/docs/vt220-rm/table2-4.html
 // Some of these may not look right, depending on the font and code page (in
 // particular, the Control Pictures probably won't work at all).
-const WCHAR G1[] =
+static const WCHAR G1[] =
 {
     ' ',          // _ - blank
     L'\x2666',    // ` - Black Diamond Suit
@@ -1072,11 +1073,12 @@ static CompletionCallback completionCallback;
 #ifndef _WIN32
 static struct termios orig_termios; /* In order to restore at exit.*/
 #endif
-static bool rawmode = false; /* For atexit() function to check if restore is needed*/
+static std::atomic<bool> rawmode = false; /* For atexit() function to check if restore is needed*/
 static bool mlmode = false;  /* Multi line mode. Default is single line. */
 static bool atexit_registered = false; /* Register atexit just 1 time. */
 static size_t history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
 static std::vector<std::string> history;
+std::mutex historyMutex;
 
 /* The linenoiseState structure represents the state during line editing.
  * We pass this state to functions implementing specific editing
@@ -1093,6 +1095,7 @@ struct linenoiseState {
     int cols;           /* Number of columns in terminal. */
     int maxrows;        /* Maximum num of rows used so far (multiline mode) */
     int history_index;  /* The history index we are currently editing. */
+    ~linenoiseState() { std::lock_guard<std::mutex> lock(historyMutex); }
 };
 
 static std::mutex lnstate_mutex;
@@ -1120,13 +1123,13 @@ enum KEY_ACTION {
     BACKSPACE =  127    /* Backspace */
 };
 
-void linenoiseAtExit(void);
-bool AddHistory(const char *line);
-void refreshLine(struct linenoiseState *l);
+static void linenoiseAtExit(void);
+static bool AddHistory(const char *line);
+static void refreshLine(struct linenoiseState *l);
 
 /* ============================ UTF8 utilities ============================== */
 
-static unsigned long unicodeWideCharTable[][2] = {
+static const unsigned long unicodeWideCharTable[][2] = {
     { 0x1100, 0x115F }, { 0x2329, 0x232A }, { 0x2E80, 0x2E99, }, { 0x2E9B, 0x2EF3, },
     { 0x2F00, 0x2FD5, }, { 0x2FF0, 0x2FFB, }, { 0x3000, 0x303E, }, { 0x3041, 0x3096, },
     { 0x3099, 0x30FF, }, { 0x3105, 0x312D, }, { 0x3131, 0x318E, }, { 0x3190, 0x31BA, },
@@ -1151,7 +1154,7 @@ static int unicodeIsWideChar(unsigned long cp)
     return 0;
 }
 
-static unsigned long unicodeCombiningCharTable[] = {
+static const unsigned long unicodeCombiningCharTable[] = {
     0x0300,0x0301,0x0302,0x0303,0x0304,0x0305,0x0306,0x0307,
     0x0308,0x0309,0x030A,0x030B,0x030C,0x030D,0x030E,0x030F,
     0x0310,0x0311,0x0312,0x0313,0x0314,0x0315,0x0316,0x0317,
@@ -1353,7 +1356,7 @@ static unsigned long unicodeCombiningCharTable[] = {
 
 static int unicodeCombiningCharTableSize = sizeof(unicodeCombiningCharTable) / sizeof(unicodeCombiningCharTable[0]);
 
-inline int unicodeIsCombiningChar(unsigned long cp)
+static inline int unicodeIsCombiningChar(unsigned long cp)
 {
     int i;
     for (i = 0; i < unicodeCombiningCharTableSize; i++) {
@@ -1366,7 +1369,7 @@ inline int unicodeIsCombiningChar(unsigned long cp)
 
 /* Get length of previous UTF8 character
  */
-inline int unicodePrevUTF8CharLen(char* buf, int pos)
+static inline int unicodePrevUTF8CharLen(char* buf, int pos)
 {
     int end = pos--;
     while (pos >= 0 && ((unsigned char)buf[pos] & 0xC0) == 0x80) {
@@ -1377,7 +1380,7 @@ inline int unicodePrevUTF8CharLen(char* buf, int pos)
 
 /* Get length of previous UTF8 character
  */
-inline int unicodeUTF8CharLen(char* buf, int buf_len, int pos)
+static inline int unicodeUTF8CharLen(char* buf, int buf_len, int pos)
 {
     if (pos == buf_len) { return 0; }
     unsigned char ch = buf[pos];
@@ -1389,7 +1392,7 @@ inline int unicodeUTF8CharLen(char* buf, int buf_len, int pos)
 
 /* Convert UTF8 to Unicode code point
  */
-inline int unicodeUTF8CharToCodePoint(
+static inline int unicodeUTF8CharToCodePoint(
    const char* buf,
    int         len,
    int*        cp)
@@ -1427,7 +1430,7 @@ inline int unicodeUTF8CharToCodePoint(
 
 /* Get length of grapheme
  */
-inline int unicodeGraphemeLen(char* buf, int buf_len, int pos)
+static inline int unicodeGraphemeLen(char* buf, int buf_len, int pos)
 {
     if (pos == buf_len) {
         return 0;
@@ -1448,7 +1451,7 @@ inline int unicodeGraphemeLen(char* buf, int buf_len, int pos)
 
 /* Get length of previous grapheme
  */
-inline int unicodePrevGraphemeLen(char* buf, int pos)
+static inline int unicodePrevGraphemeLen(char* buf, int pos)
 {
     if (pos == 0) {
         return 0;
@@ -2032,6 +2035,7 @@ inline void linenoiseEditMoveEnd(struct linenoiseState *l) {
 #define LINENOISE_HISTORY_NEXT 0
 #define LINENOISE_HISTORY_PREV 1
 inline void linenoiseEditHistoryNext(struct linenoiseState *l, int dir) {
+    std::lock_guard<std::mutex> historyLock(historyMutex);
     if (history.size() > 1) {
         /* Update the current history entry before to
          * overwrite it with the next one. */
@@ -2169,7 +2173,10 @@ inline int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, int buflen, con
 
         switch(c) {
         case ENTER:    /* enter */
-            history.pop_back();
+            {
+                std::lock_guard<std::mutex> historyLock(historyMutex);
+                history.pop_back();
+            }
             if (mlmode) linenoiseEditMoveEnd(&l);
             return (int)l.len;
         case CTRL_C:     /* ctrl-c */
@@ -2184,6 +2191,7 @@ inline int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, int buflen, con
             if (l.len > 0) {
                 linenoiseEditDelete(&l);
             } else {
+                std::lock_guard<std::mutex> historyLock(historyMutex);
                 history.pop_back();
                 return -1;
             }
@@ -2365,6 +2373,7 @@ inline void linenoiseAtExit(void) {
  *
  * Using a circular buffer is smarter, but a bit more complex to handle. */
 inline bool AddHistory(const char* line) {
+    std::lock_guard<std::mutex> historyLock(historyMutex);
     if (history_max_len == 0) return false;
 
     /* Don't add duplicated lines. */
@@ -2385,6 +2394,7 @@ inline bool AddHistory(const char* line) {
  * than the amount of items already inside the history. */
 inline bool SetHistoryMaxLen(size_t len) {
     if (len < 1) return false;
+    std::lock_guard<std::mutex> historyLock(historyMutex);
     history_max_len = len;
     if (len < history.size()) {
         history.resize(len);
@@ -2397,6 +2407,7 @@ inline bool SetHistoryMaxLen(size_t len) {
 inline bool SaveHistory(const char* path) {
     std::ofstream f(path); // TODO: need 'std::ios::binary'?
     if (!f) return false;
+    std::lock_guard<std::mutex> historyLock(historyMutex);
     for (const auto& h: history) {
         f << h << std::endl;
     }
@@ -2416,10 +2427,6 @@ inline bool LoadHistory(const char* path) {
         AddHistory(line.c_str());
     }
     return true;
-}
-
-inline const std::vector<std::string>& GetHistory() {
-    return history;
 }
 
 } // namespace linenoise
