@@ -690,6 +690,12 @@ static bool currentElementNoLongerWide(const Peep& peep, TileCoordsXYZ loc, Tile
     return true;
 }
 
+static bool rideIsShopOrFacility(TileElement* tileElement, RideId& rideIndex)
+{
+    rideIndex = tileElement->AsTrack()->GetRideIndex();
+    auto ride = GetRide(rideIndex);
+    return ride == nullptr || !ride->GetRideTypeDescriptor().HasFlag(RIDE_TYPE_FLAG_IS_SHOP_OR_FACILITY);
+}
 static void PeepPathfindHeuristicSearch(
     TileCoordsXYZ loc, Peep& peep, TileElement* currentTileElement, bool inPatrolArea, uint8_t counter, uint16_t* endScore,
     Direction test_edge, uint8_t* endJunctions, TileCoordsXYZ junctionList[16], uint8_t directionList[16],
@@ -766,9 +772,7 @@ static void PeepPathfindHeuristicSearch(
                     continue;
                 /* For peeps heading for a shop, the goal is the shop
                  * tile. */
-                rideIndex = tileElement->AsTrack()->GetRideIndex();
-                auto ride = GetRide(rideIndex);
-                if (ride == nullptr || !ride->GetRideTypeDescriptor().HasFlag(RIDE_TYPE_FLAG_IS_SHOP_OR_FACILITY))
+                if (rideIsShopOrFacility(tileElement, rideIndex))
                     continue;
 
                 found = true;
