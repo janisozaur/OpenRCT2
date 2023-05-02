@@ -681,15 +681,6 @@ static constexpr const char* PathSearchToString(uint8_t pathFindSearchResult)
  *
  *  rct2: 0x0069A997
  */
-
-static bool currentElementNoLongerWide(const Peep& peep, TileCoordsXYZ loc, TileElement* currentTileElement)
-{
-    const Staff* staff = peep.As<Staff>();
-    if (staff != nullptr && staff->CanIgnoreWideFlag(loc.ToCoordsXYZ(), currentTileElement))
-        return false;
-    return true;
-}
-
 static void PeepPathfindHeuristicSearch(
     TileCoordsXYZ loc, Peep& peep, TileElement* currentTileElement, bool inPatrolArea, uint8_t counter, uint16_t* endScore,
     Direction test_edge, uint8_t* endJunctions, TileCoordsXYZ junctionList[16], uint8_t directionList[16],
@@ -700,7 +691,9 @@ static void PeepPathfindHeuristicSearch(
     bool currentElementIsWide = currentTileElement->AsPath()->IsWide();
     if (currentElementIsWide)
     {
-        currentElementIsWide = currentElementNoLongerWide(peep, loc, currentTileElement);
+        const Staff* staff = peep.As<Staff>();
+        if (staff != nullptr && staff->CanIgnoreWideFlag(loc.ToCoordsXYZ(), currentTileElement))
+            currentElementIsWide = false;
     }
 
     loc += TileDirectionDelta[test_edge];
