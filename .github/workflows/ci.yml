@@ -186,9 +186,9 @@ jobs:
       - name: Build OpenRCT2
         run: |
           HOMEBREW_NO_ANALYTICS=1 brew install ninja pkg-config
-          export CCACHE_DEBUG=1 CCACHE_DEBUGDIR=$(pwd)/ccache-debug-1-${{ matrix.arch }}
+          export CCACHE_DEBUG=1 CCACHE_DEBUGDIR=$(pwd)/ccache-debug-2-${{ matrix.arch }}
           . scripts/setenv -q && build -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=on ${{ matrix.build_flags }}
-          tar czf ccache-debug-1-${{ matrix.arch }}.tgz ccache-debug-1-${{ matrix.arch }}
+          tar czf ccache-debug-2-${{ matrix.arch }}.tgz ccache-debug-2-${{ matrix.arch }}
       - name: Run Tests
         if: ${{matrix.run_tests}}
         run: . scripts/setenv -q && run-tests
@@ -209,7 +209,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: OpenRCT2-ccache-${{ matrix.arch }}
-          path: ccache-debug-1-${{ matrix.arch }}.tgz
+          path: ccache-debug-2-${{ matrix.arch }}.tgz
           if-no-files-found: error
       - name: Upload artifacts (CI)
         uses: actions/upload-artifact@v3
