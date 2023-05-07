@@ -264,3 +264,5 @@ if(MACOS_BUNDLE)
         "  BUNDLE DESTINATION ${CMAKE_BINARY_DIR}
     )
 endif ()
+
+target_link_libraries(${PROJECT_NAME} vpx)
