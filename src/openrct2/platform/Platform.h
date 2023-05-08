@@ -14,6 +14,7 @@
 #include "../core/StringTypes.h"
 
 #include <bit>
+#include <cmath>
 #include <ctime>
 #include <optional>
 #include <sfl/static_vector.hpp>
@@ -174,6 +175,8 @@ namespace OpenRCT2::Platform
 
     std::optional<RCT2Variant> classifyGamePath(std::string_view path);
     bool OriginalGameDataExists(std::string_view path);
+
+    void AdvanceTicks();
 
     std::string GetUsername();
 
