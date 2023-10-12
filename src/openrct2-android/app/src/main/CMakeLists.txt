@@ -10,6 +10,7 @@ file(MAKE_DIRECTORY ${lib_build_DIR})
 
 set(DEBUG_LEVEL 0 CACHE STRING "Select debug level for compilation. Use value in range 0–3.")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG=${DEBUG_LEVEL}")
+set(CMAKE_BUILD_TYPE "Debug")
 
 # Copied from https://github.com/opencv/opencv/blob/dcdd6af5a856826fe62c95322145731e702e54c5/cmake/OpenCVDetectCXXCompiler.cmake#L63-L70
 if(MSVC64 OR MINGW64)
