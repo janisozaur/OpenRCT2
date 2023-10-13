@@ -144,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
         String[] list = assets.list(srcPath);
 
         if (list.length == 0) {
+            Log.d(TAG, String.format("Copying asset '%s' to '%s'", srcPath, destPath));
             InputStream input = assets.open(srcPath);
             File extractedFile = new File(dataDir, destPath);
             File parentFile = extractedFile.getParentFile();
