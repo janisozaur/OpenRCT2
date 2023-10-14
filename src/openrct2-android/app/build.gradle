@@ -47,6 +47,8 @@ dependencies {
 }
 
 androidComponents {
-    packaging.jniLibs.keepDebugSymbols.add("**/libopenrct2.so")
-    packaging.jniLibs.keepDebugSymbols.add("**/libopenrct2-ui.so")
+    onVariants(selector().all()) {
+        packaging.jniLibs.keepDebugSymbols.add("**/libopenrct2.so")
+        packaging.jniLibs.keepDebugSymbols.add("**/libopenrct2-ui.so")
+    }
 }
