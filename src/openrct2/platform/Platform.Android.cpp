@@ -173,6 +173,10 @@ namespace Platform
         return displayScale;
     }
 
+    void AndroidInitClassLoader()
+    {
+    }
+
     jclass AndroidFindClass(JNIEnv* env, std::string_view name)
     {
         return static_cast<jclass>(env->CallObjectMethod(
