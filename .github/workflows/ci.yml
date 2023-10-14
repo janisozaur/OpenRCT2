@@ -48,10 +48,10 @@ jobs:
         run: |
           . scripts/setenv
           pushd src/openrct2-android
-            ./gradlew app:assembleRelease
+            ./gradlew app:assembleDebug
           popd
           mkdir -p artifacts
-          mv src/openrct2-android/app/build/outputs/apk/release/app-release.apk artifacts/openrct2-arm.apk
+          mv src/openrct2-android/app/build/outputs/apk/debug/app-debug.apk artifacts/openrct2-arm.apk
       - name: Upload artifacts (CI)
         uses: actions/upload-artifact@v3
         with:
