@@ -22,6 +22,8 @@ android {
     buildTypes {
         release {
             signingConfig signingConfigs.debug
+            packaging.jniLibs.keepDebugSymbols.add("**/libopenrct2.so")
+            packaging.jniLibs.keepDebugSymbols.add("**/libopenrct2-ui.so")
         }
     }
 
@@ -44,11 +46,4 @@ dependencies {
     implementation 'commons-io:commons-io:2.6'
     implementation 'androidx.appcompat:appcompat:1.4.0'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-}
-
-androidComponents {
-    onVariants(selector().all()) {
-        packaging.jniLibs.keepDebugSymbols.add("**/libopenrct2.so")
-        packaging.jniLibs.keepDebugSymbols.add("**/libopenrct2-ui.so")
-    }
 }
