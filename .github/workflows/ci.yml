@@ -339,6 +339,8 @@ jobs:
         run: . scripts/setenv -q && get-discord-rpc
       - name: Build OpenRCT2
         run: . scripts/setenv -q && build -DCMAKE_BUILD_TYPE=Release -DAPPIMAGE=ON -DOPENRCT2_USE_CCACHE=on
+      - name: List installed files
+        run: ls -lR bin/install
       - name: Build AppImage
         run: . scripts/setenv -q && build-appimage
       - name: Upload artifacts (CI)
