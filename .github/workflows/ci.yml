@@ -341,6 +341,12 @@ jobs:
         run: . scripts/setenv -q && build -DCMAKE_BUILD_TYPE=Release -DAPPIMAGE=ON -DOPENRCT2_USE_CCACHE=on
       - name: List installed files
         run: find bin/install -type f
+      - name: Upload data (CI)
+        uses: actions/upload-artifact@v3
+        with:
+          name: OpenRCT2-data
+          path: bin/install/usr/share/openrct2
+          if-no-files-found: error
       - name: Build AppImage
         run: . scripts/setenv -q && build-appimage
       - name: Upload artifacts (CI)
