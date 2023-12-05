@@ -1052,10 +1052,18 @@ namespace OpenRCT2
 
         void RunFrame()
         {
-            WindowClose(*WindowFindByClass(WindowClass::TitleLogo));
-            WindowClose(*WindowFindByClass(WindowClass::TitleOptions));
-            WindowClose(*WindowFindByClass(WindowClass::TitleMenu));
-            WindowClose(*WindowFindByClass(WindowClass::TitleExit));
+            auto windowCloser = [](WindowClass cls)
+	    {
+                auto *window = WindowFindByClass(cls);
+                if (window)
+                {
+                    WindowClose(*window);
+                }
+            };
+            windowCloser(WindowClass::TitleLogo);
+            windowCloser(WindowClass::TitleOptions);
+            windowCloser(WindowClass::TitleMenu);
+            windowCloser(WindowClass::TitleExit);
             TitleSetHideVersionInfo(true);
             gConfigGeneral.ShowFPS = true;
             Platform::AdvanceTicks();

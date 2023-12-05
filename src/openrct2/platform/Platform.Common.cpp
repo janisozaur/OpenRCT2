@@ -139,13 +139,4 @@ namespace Platform
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(ms));
     }
-
-    static const auto _processStartTime = std::chrono::high_resolution_clock::now();
-
-    uint32_t GetTicks()
-    {
-        const auto processTime = std::chrono::high_resolution_clock::now() - _processStartTime;
-        return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(processTime).count());
-    }
-
 } // namespace Platform
