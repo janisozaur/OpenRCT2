@@ -5025,20 +5025,17 @@ void Guest::UpdateRideLeaveExit()
         return;
     }
 
-    if (ride != nullptr)
+    OnExitRide(*ride);
+
+    if (ride != nullptr && (PeepFlags & PEEP_FLAGS_TRACKING))
     {
-        OnExitRide(*ride);
+        auto ft = Formatter();
+        FormatNameTo(ft);
+        ride->FormatNameTo(ft);
 
-        if (PeepFlags & PEEP_FLAGS_TRACKING)
+        if (gConfigNotifications.GuestLeftRide)
         {
-            auto ft = Formatter();
-            FormatNameTo(ft);
-            ride->FormatNameTo(ft);
-
-            if (gConfigNotifications.GuestLeftRide)
-            {
-                News::AddItemToQueue(News::ItemType::PeepOnRide, STR_PEEP_TRACKING_LEFT_RIDE_X, Id, ft);
-            }
+            News::AddItemToQueue(News::ItemType::PeepOnRide, STR_PEEP_TRACKING_LEFT_RIDE_X, Id, ft);
         }
     }
 
