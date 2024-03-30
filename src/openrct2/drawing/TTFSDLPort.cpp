@@ -38,9 +38,12 @@ misrepresented as being the original software.
 #    include <algorithm>
 #    include <cmath>
 #    include <cstring>
+#    include <fstream>
+#    include <iostream>
 #    include <stdio.h>
 #    include <stdlib.h>
 #    include <string.h>
+#    include <thread>
 
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wdocumentation"
@@ -172,6 +175,56 @@ static int TTF_initialized = 0;
             TTF_SetError("Passed a NULL pointer");                                                                             \
             return errval;                                                                                                     \
         }
+
+// Logger class to handle logging
+class FTLogger
+{
+public:
+    static std::ofstream logFile;
+
+    // Initialize the logger
+    static void Init(const std::string& logFileName)
+    {
+        logFile.open(logFileName);
+    }
+
+    // Generic log function
+    template<typename... Args> static void LogCall(const std::string& functionName, Args... args)
+    {
+        std::stringstream ss;
+        ss << functionName << "(" << FormatArgs(args...) << ");\n";
+        logFile << ss.str();
+        std::cout << ss.str(); // Also echo to stdout for immediate feedback
+    }
+
+    // Close the logger
+    static void Close()
+    {
+        if (logFile.is_open())
+        {
+            logFile.close();
+        }
+    }
+
+private:
+    // Base case for argument formatting
+    static std::string FormatArgs()
+    {
+        return "";
+    }
+
+    // Recursive variadic template to format arguments
+    template<typename T, typename... Args> static std::string FormatArgs(T first, Args... args)
+    {
+        std::stringstream ss;
+        ss << first;
+        if constexpr (sizeof...(args) > 0)
+        {
+            ss << ", " << FormatArgs(args...);
+        }
+        return ss.str();
+    }
+};
 
 /* Gets the top row of the underline. The outline
 is taken into account.
@@ -309,6 +362,8 @@ static void TTF_SetFTError(const char* msg, [[maybe_unused]] FT_Error error)
 
 int TTF_Init(void)
 {
+    FTLogger::Init("ft_calls_log.txt");
+    FTLogger::LogCall("__FUNCTION__");
     int status = 0;
 
     if (!TTF_initialized)
