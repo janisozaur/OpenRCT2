@@ -9,8 +9,7 @@
 
 #ifndef NO_TTF
 
-#    include <atomic>
-#    include <mutex>
+#    include "TTF.h"
 
 #    include "../OpenRCT2.h"
 #    include "../config/Config.h"
@@ -19,7 +18,9 @@
 #    include "../localisation/Localisation.h"
 #    include "../localisation/LocalisationService.h"
 #    include "../platform/Platform.h"
-#    include "TTF.h"
+
+#    include <atomic>
+#    include <mutex>
 
 static bool _ttfInitialised = false;
 
