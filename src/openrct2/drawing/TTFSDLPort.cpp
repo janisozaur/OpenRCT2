@@ -40,6 +40,7 @@ misrepresented as being the original software.
 #    include <cstring>
 #    include <fstream>
 #    include <iostream>
+#    include <sstream>
 #    include <stdio.h>
 #    include <stdlib.h>
 #    include <string.h>
@@ -181,19 +182,37 @@ class FTLogger
 {
 public:
     static std::ofstream logFile;
+    static bool initialised;
 
     // Initialize the logger
     static void Init(const std::string& logFileName)
     {
-        logFile.open(logFileName);
+        if (!initialised)
+        {
+            logFile.open(logFileName);
+            initialised = true;
+        }
     }
 
     // Generic log function
     template<typename... Args> static void LogCall(const std::string& functionName, Args... args)
     {
         std::stringstream ss;
-        ss << functionName << "(" << FormatArgs(args...) << ");\n";
+        auto threadId = std::this_thread::get_id();
+        ss << functionName << "(" << FormatArgs(args...) << "); // Thread ID: " << threadId << "\n";
         logFile << ss.str();
+        logFile.flush();
+        std::cout << ss.str(); // Also echo to stdout for immediate feedback
+    }
+
+    // Generic log function
+    template<typename... Args> static void LogResult(const std::string& functionName, Args... args)
+    {
+        std::stringstream ss;
+        auto threadId = std::this_thread::get_id();
+        ss << "// result of " << functionName << " in thread " << threadId << ": " << FormatArgs(args...) << "\n";
+        logFile << ss.str();
+        logFile.flush();
         std::cout << ss.str(); // Also echo to stdout for immediate feedback
     }
 
@@ -225,6 +244,9 @@ private:
         return ss.str();
     }
 };
+
+std::ofstream FTLogger::logFile;
+bool FTLogger::initialised{};
 
 /* Gets the top row of the underline. The outline
 is taken into account.
@@ -362,8 +384,8 @@ static void TTF_SetFTError(const char* msg, [[maybe_unused]] FT_Error error)
 
 int TTF_Init(void)
 {
-    FTLogger::Init("ft_calls_log.txt");
-    FTLogger::LogCall("__FUNCTION__");
+    FTLogger::Init("ft_calls_log.cpp");
+    FTLogger::LogCall(__FUNCTION__);
     int status = 0;
 
     if (!TTF_initialized)
@@ -379,6 +401,7 @@ int TTF_Init(void)
     {
         ++TTF_initialized;
     }
+    FTLogger::LogResult(__FUNCTION__, status);
     return status;
 }
 
@@ -598,7 +621,10 @@ static TTF_Font* TTF_OpenFontIndex(const char* file, int ptsize, long index)
 
 TTF_Font* TTF_OpenFont(const char* file, int ptsize)
 {
-    return TTF_OpenFontIndex(file, ptsize, 0);
+    FTLogger::LogCall(__FUNCTION__, file, ptsize);
+    TTF_Font* font = TTF_OpenFontIndex(file, ptsize, 0);
+    FTLogger::LogResult(__FUNCTION__, font);
+    return font;
 }
 
 static void Flush_Glyph(c_glyph* glyph)
@@ -1042,6 +1068,7 @@ static FT_Error Find_Glyph(TTF_Font* font, uint16_t ch, int want)
 
 void TTF_CloseFont(TTF_Font* font)
 {
+    FTLogger::LogCall(__FUNCTION__, font);
     if (font)
     {
         Flush_Cache(font);
@@ -1178,7 +1205,10 @@ static uint32_t UTF8_getch(const char** src, size_t* srclen)
 
 int TTF_GlyphIsProvided(const TTF_Font* font, codepoint_t ch)
 {
-    return (FT_Get_Char_Index(font->face, ch));
+    FTLogger::LogCall(__FUNCTION__, font, ch);
+    int status = (FT_Get_Char_Index(font->face, ch));
+    FTLogger::LogResult(__FUNCTION__, status);
+    return status;
 }
 
 int TTF_SizeUTF8(TTF_Font* font, const char* text, int* w, int* h)
@@ -1320,6 +1350,7 @@ int TTF_SizeUTF8(TTF_Font* font, const char* text, int* w, int* h)
 
 TTFSurface* TTF_RenderUTF8(TTF_Font* font, const char* text, bool shaded)
 {
+    FTLogger::LogCall(__FUNCTION__, font, text, shaded);
     bool first;
     int xstart;
     int width;
@@ -1343,6 +1374,7 @@ TTFSurface* TTF_RenderUTF8(TTF_Font* font, const char* text, bool shaded)
     if ((TTF_SizeUTF8(font, text, &width, &height) < 0) || !width)
     {
         TTF_SetError("Text has zero width");
+        FTLogger::LogResult(__FUNCTION__, nullptr, "Text has zero width");
         return NULL;
     }
 
@@ -1350,6 +1382,7 @@ TTFSurface* TTF_RenderUTF8(TTF_Font* font, const char* text, bool shaded)
     textbuf = static_cast<TTFSurface*>(calloc(1, sizeof(TTFSurface)));
     if (textbuf == NULL)
     {
+        FTLogger::LogResult(__FUNCTION__, nullptr, "Allocation failed");
         return NULL;
     }
     textbuf->w = width;
@@ -1381,6 +1414,7 @@ TTFSurface* TTF_RenderUTF8(TTF_Font* font, const char* text, bool shaded)
         {
             TTF_SetFTError("Couldn't find glyph", error);
             TTFFreeSurface(textbuf);
+            FTLogger::LogResult(__FUNCTION__, nullptr, "Couldn't find glyph");
             return NULL;
         }
         glyph = font->current;
@@ -1455,11 +1489,13 @@ TTFSurface* TTF_RenderUTF8(TTF_Font* font, const char* text, bool shaded)
         else
             TTF_drawLine_Solid(font, textbuf, row);
     }
+    FTLogger::LogResult(__FUNCTION__, textbuf);
     return textbuf;
 }
 
 void TTF_SetFontHinting(TTF_Font* font, int hinting)
 {
+    FTLogger::LogCall(__FUNCTION__, font, hinting);
     if (hinting == TTF_HINTING_LIGHT)
         font->hinting = FT_LOAD_TARGET_ALT(FT_RENDER_MODE_LIGHT);
     else if (hinting == TTF_HINTING_MONO)
@@ -1474,17 +1510,21 @@ void TTF_SetFontHinting(TTF_Font* font, int hinting)
 
 int TTF_GetFontHinting(const TTF_Font* font)
 {
+    FTLogger::LogCall(__FUNCTION__, font);
+    int status = 0;
     if (font->hinting == FT_LOAD_TARGET_ALT(FT_RENDER_MODE_LIGHT))
-        return TTF_HINTING_LIGHT;
+        status = TTF_HINTING_LIGHT;
     if (font->hinting == FT_LOAD_TARGET_ALT(FT_RENDER_MODE_MONO))
-        return TTF_HINTING_MONO;
+        status = TTF_HINTING_MONO;
     if (font->hinting == FT_LOAD_NO_HINTING)
-        return TTF_HINTING_NONE;
-    return 0;
+        status = TTF_HINTING_NONE;
+    FTLogger::LogResult(__FUNCTION__, status);
+    return status;
 }
 
 void TTF_Quit(void)
 {
+    FTLogger::LogCall(__FUNCTION__);
     if (TTF_initialized)
     {
         if (--TTF_initialized == 0)
