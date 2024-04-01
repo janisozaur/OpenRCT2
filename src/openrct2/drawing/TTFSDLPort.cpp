@@ -40,6 +40,7 @@ misrepresented as being the original software.
 #    include <cstring>
 #    include <fstream>
 #    include <iostream>
+#include <map>
 #    include <sstream>
 #    include <stdio.h>
 #    include <stdlib.h>
@@ -183,6 +184,7 @@ class FTLogger
 public:
     static std::ofstream logFile;
     static bool initialised;
+    static std::map<const TTF_Font*, std::string> fontNames;
 
     // Initialize the logger
     static void Init(const std::string& logFileName)
@@ -194,10 +196,28 @@ public:
         }
     }
 
+    // Open log function
+    template<typename... Args> static void LogOpen(const std::string& functionName, TTF_Font* font, Args... args)
+    {
+        std::stringstream ss;
+        ss << "// LogOpen, font: " << font << "\n";
+        if (font) {
+            std::string fontname = "font" + std::to_string(fontNames.size());
+            fontNames[font] = fontname;
+            ss << "TTF_Font* " << fontname << " = ";
+        }
+        auto threadId = std::this_thread::get_id();
+        ss << functionName << "(" << FormatArgs(args...) << "); // Thread ID: " << threadId << "\n";
+        logFile << ss.str();
+        logFile.flush();
+        std::cout << ss.str(); // Also echo to stdout for immediate feedback
+    }
+
     // Generic log function
     template<typename... Args> static void LogCall(const std::string& functionName, Args... args)
     {
         std::stringstream ss;
+        ss << "// LogCall\n";
         auto threadId = std::this_thread::get_id();
         ss << functionName << "(" << FormatArgs(args...) << "); // Thread ID: " << threadId << "\n";
         logFile << ss.str();
@@ -233,6 +253,54 @@ private:
     }
 
     // Recursive variadic template to format arguments
+    template<typename... Args> static std::string FormatArgs(const TTF_Font* font, Args... args)
+    {
+        std::stringstream ss;
+        ss << fontNames[font];
+        if constexpr (sizeof...(args) > 0)
+        {
+            ss << ", " << FormatArgs(args...);
+        }
+        return ss.str();
+    }
+
+    // Recursive variadic template to format arguments
+    template<typename... Args> static std::string FormatArgs(TTF_Font* font, Args... args)
+    {
+        std::stringstream ss;
+        ss << fontNames[font];
+        if constexpr (sizeof...(args) > 0)
+        {
+            ss << ", " << FormatArgs(args...);
+        }
+        return ss.str();
+    }
+
+    // Recursive variadic template to format arguments
+    template<typename... Args> static std::string FormatArgs(const std::string first, Args... args)
+    {
+        std::stringstream ss;
+        ss << "\"" << first << "\"";
+        if constexpr (sizeof...(args) > 0)
+        {
+            ss << ", " << FormatArgs(args...);
+        }
+        return ss.str();
+    }
+
+    // Recursive variadic template to format arguments
+    template<typename... Args> static std::string FormatArgs(const char* first, Args... args)
+    {
+        std::stringstream ss;
+        ss << "\"" << first << "\"";
+        if constexpr (sizeof...(args) > 0)
+        {
+            ss << ", " << FormatArgs(args...);
+        }
+        return ss.str();
+    }
+
+    // Recursive variadic template to format arguments
     template<typename T, typename... Args> static std::string FormatArgs(T first, Args... args)
     {
         std::stringstream ss;
@@ -247,6 +315,7 @@ private:
 
 std::ofstream FTLogger::logFile;
 bool FTLogger::initialised{};
+std::map<const TTF_Font*, std::string> FTLogger::fontNames{};
 
 /* Gets the top row of the underline. The outline
 is taken into account.
@@ -621,9 +690,8 @@ static TTF_Font* TTF_OpenFontIndex(const char* file, int ptsize, long index)
 
 TTF_Font* TTF_OpenFont(const char* file, int ptsize)
 {
-    FTLogger::LogCall(__FUNCTION__, file, ptsize);
     TTF_Font* font = TTF_OpenFontIndex(file, ptsize, 0);
-    FTLogger::LogResult(__FUNCTION__, font);
+    FTLogger::LogOpen(__FUNCTION__, font, file, ptsize);
     return font;
 }
 
