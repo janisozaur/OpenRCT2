@@ -104,6 +104,7 @@ jobs:
     steps:
       - name: Setup environment
         run: |
+          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/mozilla/dump_syms/releases/download/v2.3.1/dump_syms-installer.sh | sh
           BRANCH=$(echo $GITHUB_REF | cut -d'/' -f 3)
           if [[ $BRANCH == 'develop' || $BRANCH == 'master' ]]; then
              echo "CONFIGURATION=ReleaseLTCG" >> "$GITHUB_ENV"
