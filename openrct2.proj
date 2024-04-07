@@ -38,11 +38,11 @@
   <PropertyGroup>
     <DependenciesCheckFile>$(RootDir).dependencies</DependenciesCheckFile>
     <LibsUrl Condition="'$(Platform)'=='ARM64'">https://github.com/janisozaur/Dependencies/releases/download/v999-vcpkg-manifest-mode-v5/openrct2-libs-v999-vcpkg-manifest-mode-v5-arm64-windows-static.zip</LibsUrl>
-    <LibsSha1 Condition="'$(Platform)'=='ARM64'">a3f38962ba7748222cc34885b64aa3b94c40831f</LibsSha1>
+    <LibsSha1 Condition="'$(Platform)'=='ARM64'">6cacafec8c08b12d447c9643944b477ebb5a982f</LibsSha1>
     <LibsUrl Condition="'$(Platform)'=='x64'">https://github.com/janisozaur/Dependencies/releases/download/v999-vcpkg-manifest-mode-v5/openrct2-libs-v999-vcpkg-manifest-mode-v5-x64-windows-static.zip</LibsUrl>
-    <LibsSha1 Condition="'$(Platform)'=='x64'">acd41f2bae28547e14a98a8433e95f4822e22bd1</LibsSha1>
+    <LibsSha1 Condition="'$(Platform)'=='x64'">ca476b68d8133e1438358e3f9f2036e75c066fc3</LibsSha1>
     <LibsUrl Condition="'$(Platform)'=='Win32'">https://github.com/janisozaur/Dependencies/releases/download/v999-vcpkg-manifest-mode-v5/openrct2-libs-v999-vcpkg-manifest-mode-v5-x86-windows-static.zip</LibsUrl>
-    <LibsSha1 Condition="'$(Platform)'=='Win32'">12279593d6661b8522f0fd975c2d7ea5b60a16af</LibsSha1>
+    <LibsSha1 Condition="'$(Platform)'=='Win32'">9ea2a93a021fef5ed3ab36d36efe15f3c9b5de60</LibsSha1>
     <TitleSequencesUrl>https://github.com/OpenRCT2/title-sequences/releases/download/v0.4.6/title-sequences.zip</TitleSequencesUrl>
     <TitleSequencesSha1>80fefc6ebbabc42a6f4703412daa5c62f661420d</TitleSequencesSha1>
     <ObjectsUrl>https://github.com/OpenRCT2/objects/releases/download/v1.4.3/objects.zip</ObjectsUrl>
