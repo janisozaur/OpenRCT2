@@ -37,11 +37,11 @@
   <!-- 3rd party libraries / dependencies -->
   <PropertyGroup>
     <DependenciesCheckFile>$(RootDir).dependencies</DependenciesCheckFile>
-    <LibsUrl Condition="'$(Platform)'=='ARM64'">https://github.com/janisozaur/Dependencies/releases/download/v999-vcpkg-manifest-mode-v4/openrct2-libs-v34-arm64-windows-static.zip</LibsUrl>
+    <LibsUrl Condition="'$(Platform)'=='ARM64'">https://github.com/janisozaur/Dependencies/releases/download/v999-vcpkg-manifest-mode-v5/openrct2-libs-v34-arm64-windows-static.zip</LibsUrl>
     <LibsSha1 Condition="'$(Platform)'=='ARM64'">a3f38962ba7748222cc34885b64aa3b94c40831f</LibsSha1>
-    <LibsUrl Condition="'$(Platform)'=='x64'">https://github.com/janisozaur/Dependencies/releases/download/v999-vcpkg-manifest-mode-v4/openrct2-libs-v34-x64-windows-static.zip</LibsUrl>
+    <LibsUrl Condition="'$(Platform)'=='x64'">https://github.com/janisozaur/Dependencies/releases/download/v999-vcpkg-manifest-mode-v5/openrct2-libs-v34-x64-windows-static.zip</LibsUrl>
     <LibsSha1 Condition="'$(Platform)'=='x64'">acd41f2bae28547e14a98a8433e95f4822e22bd1</LibsSha1>
-    <LibsUrl Condition="'$(Platform)'=='Win32'">https://github.com/janisozaur/Dependencies/releases/download/v999-vcpkg-manifest-mode-v4/openrct2-libs-v34-x86-windows-static.zip</LibsUrl>
+    <LibsUrl Condition="'$(Platform)'=='Win32'">https://github.com/janisozaur/Dependencies/releases/download/v999-vcpkg-manifest-mode-v5/openrct2-libs-v34-x86-windows-static.zip</LibsUrl>
     <LibsSha1 Condition="'$(Platform)'=='Win32'">12279593d6661b8522f0fd975c2d7ea5b60a16af</LibsSha1>
     <TitleSequencesUrl>https://github.com/OpenRCT2/title-sequences/releases/download/v0.4.6/title-sequences.zip</TitleSequencesUrl>
     <TitleSequencesSha1>80fefc6ebbabc42a6f4703412daa5c62f661420d</TitleSequencesSha1>
