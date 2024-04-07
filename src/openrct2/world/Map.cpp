@@ -301,7 +301,14 @@ int32_t TileElementIteratorNext(TileElementIterator* it)
     if (it->element == nullptr)
     {
         it->element = MapGetFirstElementAt(TileCoordsXY{ it->x, it->y });
-        return 1;
+        if (it->element == nullptr)
+        {
+            return 0;
+        }
+        else
+        {
+            return 1;
+        }
     }
 
     if (!it->element->IsLastForTile())
@@ -315,7 +322,14 @@ int32_t TileElementIteratorNext(TileElementIterator* it)
     {
         it->y++;
         it->element = MapGetFirstElementAt(TileCoordsXY{ it->x, it->y });
-        return 1;
+        if (it->element == nullptr)
+        {
+            return 0;
+        }
+        else
+        {
+            return 1;
+        }
     }
 
     if (it->x < (gameState.MapSize.x - 2))
@@ -323,7 +337,14 @@ int32_t TileElementIteratorNext(TileElementIterator* it)
         it->y = 1;
         it->x++;
         it->element = MapGetFirstElementAt(TileCoordsXY{ it->x, it->y });
-        return 1;
+        if (it->element == nullptr)
+        {
+            return 0;
+        }
+        else
+        {
+            return 1;
+        }
     }
 
     return 0;
