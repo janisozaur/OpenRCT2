@@ -131,7 +131,7 @@ if (MACOS_USE_DEPENDENCIES)
     
     set(MACOS_DYLIBS_VERSION "998-vcpkg-manifest-mode-versioned")
     set(MACOS_DYLIBS_ZIPFILE "openrct2-libs-v${MACOS_DYLIBS_VERSION}-universal-macos-dylibs.zip")
-    set(MACOS_DYLIBS_SHA1 "eda877f1c4baae9b99ba92e14cf423ecca4ec75f")
+    set(MACOS_DYLIBS_SHA1 "44e5740689ec64e58360f428ebb8ad53ac2f6790")
     set(MACOS_DYLIBS_DIR "${ROOT_DIR}/lib/macos")
     set(MACOS_DYLIBS_URL "https://github.com/janisozaur/Dependencies/releases/download/test-release-20240408/openrct2-libs-v-universal-macos-dylibs.zip")
 
