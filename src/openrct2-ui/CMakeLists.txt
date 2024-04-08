@@ -263,8 +263,8 @@ if(MACOS_BUNDLE)
     install(CODE "
         include(BundleUtilities)
         message(\"janis: Doing fixup\")
-        execute_process(COMMAND_ECHO echo janis: test)
-        execute_process(COMMAND_ECHO find ${CMAKE_CURRENT_SOURCE_DIR} -name \"*.dylib\")
+        execute_process(COMMAND_ECHO STDOUT echo janis: test)
+        execute_process(COMMAND_ECHO STDOUT find ${CMAKE_CURRENT_SOURCE_DIR} -name \"*.dylib\")
         fixup_bundle(${CMAKE_BINARY_DIR}/${MACOS_APP_NAME} \"\" \"\")
         "  BUNDLE DESTINATION ${CMAKE_BINARY_DIR}
     )
