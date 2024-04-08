@@ -262,6 +262,11 @@ if(MACOS_BUNDLE)
 
     install(CODE "
         include(BundleUtilities)
+        message(\"janis: Doing fixup\")
+        execute_process(COMMAND echo janis: test \"\$ENV{DESTDIR}${GITHUB_WORKSPACE}\" COMMAND_ECHO STDOUT)
+        execute_process(COMMAND STDOUT find /Users/runner/work/ -name libcrypto.dylib COMMAND_ECHO STDOUT)
+        execute_process(COMMAND STDOUT find /Users/runner/work/ -name libcrypto.3.dylib COMMAND_ECHO STDOUT)
+        execute_process(COMMAND STDOUT find /Users/runner/work/ -name \*.dylib COMMAND_ECHO STDOUT)
         fixup_bundle(${CMAKE_BINARY_DIR}/${MACOS_APP_NAME} \"\" \"\")
         "  BUNDLE DESTINATION ${CMAKE_BINARY_DIR}
     )
