@@ -125,6 +125,7 @@ if (APPIMAGE)
 endif ()
 
 if (MACOS_USE_DEPENDENCIES)
+    message("Using OpenRCT2 dependencies instead of system libraries")
     # if we're building on macOS, then we need the dependencies
     include(cmake/download.cmake)
     
@@ -147,6 +148,7 @@ if (MACOS_USE_DEPENDENCIES)
     # if we're making the OpenRCT2.app bundle, rpath will be handled by fixup_bundle
     # if we're building the CLI executable, we need to do it ourselves
     if (NOT MACOS_BUNDLE)
+        message("Setting rpath for macOS dylibs")
         # the RPATH to be used when installing, but only if it's not a system directory
         list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
         if("${isSystemDir}" STREQUAL "-1")
