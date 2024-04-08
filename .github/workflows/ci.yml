@@ -240,7 +240,7 @@ jobs:
           if-no-files-found: error
       - name: Run Tests
         if: ${{matrix.run_tests}}
-        run: . scripts/setenv -q && run-tests
+        run: . scripts/setenv -q && open -n artifacts/OpenRCT2.app --args --version && run-tests
       - name: Test Summary
         uses: test-summary/action@v2
         with:
