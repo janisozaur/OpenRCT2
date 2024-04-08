@@ -129,7 +129,7 @@ if (MACOS_USE_DEPENDENCIES)
     # if we're building on macOS, then we need the dependencies
     include(cmake/download.cmake)
     
-    set(MACOS_DYLIBS_VERSION "999-vcpkg-manifest-mode-v6-old")
+    set(MACOS_DYLIBS_VERSION "999-vcpkg-manifest-mode-v10-libressl")
     set(MACOS_DYLIBS_ZIPFILE "openrct2-libs-v${MACOS_DYLIBS_VERSION}-universal-macos-dylibs.zip")
     set(MACOS_DYLIBS_SHA1 "412223da7e7ee3b0d8a5e4497b74572140a370a0")
     set(MACOS_DYLIBS_DIR "${ROOT_DIR}/lib/macos")
