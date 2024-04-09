@@ -596,7 +596,8 @@ public:
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, scaleQualityBuffer);
 
         int32_t width, height;
-        SDL_GetWindowSize(_window, &width, &height);
+        SDL_Renderer* renderer = SDL_GetRenderer(_window)
+        SDL_GetRendererOutputSize(renderer, &width, &height);
         OnResize(width, height);
     }
 
@@ -758,6 +759,9 @@ private:
 
         // Initialise the surface, palette and draw buffer
         DrawingEngineInit();
+
+        SDL_Renderer* renderer = SDL_GetRenderer(_window)
+        SDL_GetRendererOutputSize(renderer, &width, &height);
         OnResize(width, height);
 
         UpdateFullscreenResolutions();
