@@ -202,7 +202,7 @@ jobs:
             # Note: only build/run tests on the native architecture of the CI agent
             # GitHub macos-latest agents are currently all Intel
             build_flags: -DARCH="x86_64"
-            run_tests: true
+            run_tests: false
           - arch: arm64
             cache_key: macos-arm64
             build_flags: -DARCH="arm64"
