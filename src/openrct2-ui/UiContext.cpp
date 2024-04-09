@@ -598,8 +598,7 @@ public:
         int32_t width, height;
         int width_nonscaled, height_nonscaled;
         SDL_GetWindowSize(_window, &width_nonscaled, &height_nonscaled);
-        SDL_Renderer* renderer = SDL_GetRenderer(_window);
-        SDL_GetRendererOutputSize(renderer, &width, &height);
+        SDL_GetWindowSizeInPixels(_window, &width, &height);
         // log scaled and nonscaled
         LOG_INFO("Window size: %dx%d, nonscaled: %dx%d", width, height, width_nonscaled, height_nonscaled);
         OnResize(width, height);
@@ -766,8 +765,7 @@ private:
 
         int width_nonscaled, height_nonscaled;
         SDL_GetWindowSize(_window, &width_nonscaled, &height_nonscaled);
-        SDL_Renderer* renderer = SDL_GetRenderer(_window);
-        SDL_GetRendererOutputSize(renderer, &width, &height);
+        SDL_GetWindowSizeInPixels(_window, &width, &height);
         // log scaled and nonscaled
         LOG_INFO("Window size: %dx%d, nonscaled: %dx%d", width, height, width_nonscaled, height_nonscaled);
         OnResize(width, height);
