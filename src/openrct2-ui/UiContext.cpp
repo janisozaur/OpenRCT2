@@ -596,8 +596,12 @@ public:
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, scaleQualityBuffer);
 
         int32_t width, height;
+        int width_nonscaled, height_nonscaled;
+        SDL_GetWindowSize(_window, &width_nonscaled, &height_nonscaled);
         SDL_Renderer* renderer = SDL_GetRenderer(_window)
         SDL_GetRendererOutputSize(renderer, &width, &height);
+        // log scaled and nonscaled
+        LOG_INFO("Window size: %dx%d, nonscaled: %dx%d", width, height, width_nonscaled, height_nonscaled);
         OnResize(width, height);
     }
 
@@ -760,8 +764,12 @@ private:
         // Initialise the surface, palette and draw buffer
         DrawingEngineInit();
 
+        int width_nonscaled, height_nonscaled;
+        SDL_GetWindowSize(_window, &width_nonscaled, &height_nonscaled);
         SDL_Renderer* renderer = SDL_GetRenderer(_window)
         SDL_GetRendererOutputSize(renderer, &width, &height);
+        // log scaled and nonscaled
+        LOG_INFO("Window size: %dx%d, nonscaled: %dx%d", width, height, width_nonscaled, height_nonscaled);
         OnResize(width, height);
 
         UpdateFullscreenResolutions();
