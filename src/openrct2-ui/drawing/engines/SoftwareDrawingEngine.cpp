@@ -136,11 +136,11 @@ private:
             LOG_FATAL("SDL_BlitScaled %s", SDL_GetError());
             exit(1);
         }
-    }
-    if (SDL_UpdateWindowSurface(_window))
-    {
-        LOG_FATAL("SDL_UpdateWindowSurface %s", SDL_GetError());
-        exit(1);
+        if (SDL_UpdateWindowSurface(_window))
+        {
+            LOG_FATAL("SDL_UpdateWindowSurface %s", SDL_GetError());
+            exit(1);
+        }
     }
 };
 
