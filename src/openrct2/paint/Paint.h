@@ -272,6 +272,12 @@ struct FootpathPaintInfo
     colour_t SupportColour = 255;
 };
 
+struct RecordedPaintSession
+{
+    PaintSessionCore Session;
+    std::vector<PaintEntry> Entries;
+};
+
 extern PaintSession gPaintSession;
 
 // Globals for paint clipping
