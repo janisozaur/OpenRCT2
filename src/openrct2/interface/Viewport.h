@@ -17,6 +17,7 @@
 #include <vector>
 
 struct PaintSession;
+struct RecordedPaintSession;
 struct PaintStruct;
 struct DrawPixelInfo;
 struct TileElement;
@@ -140,7 +141,8 @@ void ViewportUpdatePosition(WindowBase* window);
 void ViewportUpdateSmartFollowGuest(WindowBase* window, const Guest& peep);
 void ViewportRotateSingle(WindowBase* window, int32_t direction);
 void ViewportRotateAll(int32_t direction);
-void ViewportRender(DrawPixelInfo& dpi, const Viewport* viewport);
+void ViewportRender(DrawPixelInfo& dpi, const Viewport* viewport, std::vector<RecordedPaintSession>* sessions = nullptr);
+
 
 CoordsXYZ ViewportAdjustForMapHeight(const ScreenCoordsXY& startCoords, uint8_t rotation);
 
