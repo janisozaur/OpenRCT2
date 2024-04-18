@@ -13,6 +13,7 @@
 
 #    include "../Context.h"
 #    include "../Game.h"
+#    include "../GameState.h"
 #    include "../Intro.h"
 #    include "../OpenRCT2.h"
 #    include "../audio/audio.h"
@@ -85,29 +86,29 @@ static std::vector<RecordedPaintSession> extract_paint_session(std::string_view 
 
         gIntroState = IntroState::None;
         gScreenFlags = SCREEN_FLAGS_PLAYING;
+        auto& gameState = OpenRCT2::GetGameState();
 
-        int32_t resolutionWidth = (gMapSize.x * COORDS_XY_STEP * 2);
-        int32_t resolutionHeight = (gMapSize.y * COORDS_XY_STEP * 1);
+        int32_t resolutionWidth = (gameState.MapSize.x * COORDS_XY_STEP * 2);
+        int32_t resolutionHeight = (gameState.MapSize.y * COORDS_XY_STEP * 1);
 
         resolutionWidth += 8;
         resolutionHeight += 128;
 
-        Viewport viewport;
+        Viewport viewport{};
         viewport.pos = { 0, 0 };
         viewport.width = resolutionWidth;
         viewport.height = resolutionHeight;
         viewport.view_width = viewport.width;
         viewport.view_height = viewport.height;
-        viewport.var_11 = 0;
         viewport.flags = 0;
 
-        auto customXY = TileCoordsXY(gMapSize.x / 2, gMapSize.y / 2).ToCoordsXY().ToTileCentre();
+        auto customXY = TileCoordsXY(gameState.MapSize.x / 2, gameState.MapSize.y / 2).ToCoordsXY().ToTileCentre();
         auto customXYZ = CoordsXYZ(customXY, TileElementHeight(customXY));
         auto screenXY = Translate3DTo2DWithZ(0, customXYZ);
 
         viewport.viewPos = { screenXY.x - (viewport.view_width / 2), screenXY.y - (viewport.view_height / 2) };
         viewport.zoom = ZoomLevel{ 0 };
-        gCurrentRotation = 0;
+        viewport.rotation = 0;
 
         // Ensure sprites appear regardless of rotation
         ResetAllSpriteQuadrantPlacements();

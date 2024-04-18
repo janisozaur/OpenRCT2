@@ -467,8 +467,9 @@ static void BenchgfxRenderScreenshots(const char* inputPath, std::unique_ptr<ICo
 
         const double average = totalTime / static_cast<double>(totalRenderCount);
         const auto engineStringId = DrawingEngineStringIds[EnumValue(DrawingEngine::Software)];
-        const auto engineName = FormatStringID(engineStringId, nullptr);
-        std::printf("Engine: %s\n", engineName.c_str());
+        auto ft = Formatter::Common();
+        ft.Add<StringId>(engineStringId);
+        std::printf("Engine: %s\n", ft.Data());
         std::printf("Render Count: %u\n", totalRenderCount);
         for (ZoomLevel zoom{ 0 }; zoom < ZoomLevel::max(); zoom++)
         {

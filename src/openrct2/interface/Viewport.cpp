@@ -75,7 +75,6 @@ InteractionInfo::InteractionInfo(const PaintStruct* ps)
 }
 
 static void ViewportPaintWeatherGloom(DrawPixelInfo& dpi);
-static void ViewportPaint(const Viewport* viewport, DrawPixelInfo& dpi, const ScreenRect& screenRect);
 static void ViewportUpdateFollowSprite(WindowBase* window);
 static void ViewportUpdateSmartFollowEntity(WindowBase* window);
 static void ViewportUpdateSmartFollowStaff(WindowBase* window, const Staff& peep);
