@@ -22,6 +22,7 @@
 #include "../paint/Painter.h"
 #include "../platform/Memory.h"
 #include "../profiling/Profiling.h"
+#include "../util/Prefetch.h"
 #include "Boundbox.h"
 #include "Paint.Entity.h"
 #include "tile_element/Paint.TileElement.h"
