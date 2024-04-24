@@ -311,6 +311,12 @@ namespace Platform
             return steamPath;
         }
 
+        steamPath = Path::Combine(homeDir, u8".steam/steam/steamapps/common");
+        if (Path::DirectoryExists(steamPath))
+        {
+            return steamPath;
+        }
+
         return {};
     }
 
