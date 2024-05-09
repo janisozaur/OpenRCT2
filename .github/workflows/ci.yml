@@ -317,7 +317,8 @@ jobs:
             distro: Debian
             release: bookworm
             image: openrct2/openrct2-build:15-bookworm
-            build_flags: -DCMAKE_POSITION_INDEPENDENT_CODE=on -DCMAKE_CXX_FLAGS="-g -gz -fno-var-tracking-assignments" -DWITH_TESTS=off
+            # Debian Bookworm release is using a buggy version of GCC 12. Add `-Wno-restrict` and `-Wno-null-dereference` to suppress warnings.
+            build_flags: -DCMAKE_POSITION_INDEPENDENT_CODE=on -DCMAKE_CXX_FLAGS="-g -gz -fno-var-tracking-assignments -Wno-restrict -Wno-null-dereference" -DWITH_TESTS=off
           - platform: i686
             distro: Ubuntu
             release: jammy
