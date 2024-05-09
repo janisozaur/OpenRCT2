@@ -317,7 +317,7 @@ else ()
     # -Wstrict-overflow is only active when -fstrict-overflow is enabled, but -fstrict-overflow
     # is enabled on -O2, -O3, -Os. This should help catch bugs locally before they reach Travis
     # As of 2a435bf -Wstrict-overflow=1 passes, but higher values do not.
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstrict-overflow")
+    set(CMAKE_CXX_FLAGS "-fstrict-overflow ${CMAKE_CXX_FLAGS}")
     ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_STRICT_OVERFLOW -Wstrict-overflow=1)
 
     # Compiler flags
