@@ -70,7 +70,7 @@ const std::array<CoordsXY, NumOrthogonalDirections> BinUseOffsets = {
 
 // These are the offsets for bench positions on footpaths, 2 for each edge
 // rct2: 0x00981F2C, 0x00981F2E
-const std::array<CoordsXY, NumOrthogonalDirections* 2> BenchUseOffsets = {
+const std::array<CoordsXY, NumOrthogonalDirections * 2> BenchUseOffsets = {
     CoordsXY{ 7, 12 }, { 12, 25 }, { 25, 20 }, { 20, 7 }, { 7, 20 }, { 20, 25 }, { 25, 12 }, { 12, 7 },
 };
 

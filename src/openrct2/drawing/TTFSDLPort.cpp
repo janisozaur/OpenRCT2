@@ -1,6 +1,6 @@
 // Adapted from freetype.h in order to avoid C-style casts.
 
-#define FT_LOAD_TARGET_ALT(x) (static_cast<FT_Int32>((x)&15) << 16)
+#define FT_LOAD_TARGET_ALT(x) (static_cast<FT_Int32>((x) & 15) << 16)
 #define FT_IMAGE_TAG(value, _x1, _x2, _x3, _x4)                                                                                \
     value                                                                                                                      \
         = ((static_cast<unsigned long>(_x1) << 24) | (static_cast<unsigned long>(_x2) << 16)                                   \

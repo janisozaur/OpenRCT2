@@ -221,7 +221,7 @@ enum : colour_t
 
 #define TRANSLUCENT(x) ((x) | static_cast<uint8_t>(COLOUR_FLAG_TRANSLUCENT))
 #define NOT_TRANSLUCENT(x) ((x) & ~static_cast<uint8_t>(COLOUR_FLAG_TRANSLUCENT))
-#define BASE_COLOUR(x) ((x)&0x1F)
+#define BASE_COLOUR(x) ((x) & 0x1F)
 
 struct ColourShadeMap
 {
