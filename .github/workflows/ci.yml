@@ -342,7 +342,7 @@ jobs:
       - name: Upload artifacts (CI)
         uses: actions/upload-artifact@v4
         with:
-          name: OpenRCT2-${{ runner.os }}-${{ matrix.distro }}-${{ matrix.platform }}
+          name: OpenRCT2-${{ runner.os }}-${{ matrix.distro }}-${{ matrix.platform }}-${{ matrix.release }}
           path: artifacts
           if-no-files-found: error
       - name: Run Tests
@@ -353,7 +353,7 @@ jobs:
           # Build identification code: https://github.com/Limetric/OpenRCT2.org/blob/e5b738f3dadcc5a3b78e8dfd434756ff31eaa1d3/src/misc/releaseAsset.js#L94-L116
           . scripts/setenv -q
           if [[ "$OPENRCT2_PUSH" == "true" ]]; then
-            upload-build artifacts/OpenRCT2-${{ runner.os }}-${{ matrix.distro }}-${{ matrix.platform }}.tar.gz linux-${{ matrix.platform }}-${{ matrix.distro }}.tar.gz $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
+            upload-build artifacts/OpenRCT2-${{ runner.os }}-${{ matrix.distro }}-${{ matrix.platform }}.tar.gz linux-${{ matrix.platform }}-${{ matrix.distro }}-${{ matrix.release }}.tar.gz $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
           else
             echo 'Not going to push build'
           fi
