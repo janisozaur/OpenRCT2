@@ -259,16 +259,6 @@ function (SET_CHECK_CXX_FLAGS _TARGET)
     target_compile_options("${_TARGET}" BEFORE PRIVATE "${SUPPORTED_CHECK_CXX_COMPILER_FLAGS}")
 endfunction()
 
-# Check if a flag exists and add it to the compiler and the linker options
-function (ADD_CHECK_CXX_FLAG _CXXFLAGS _CACHE_VAR _FLAG)
-    CHECK_CXX_COMPILER_FLAG("${_FLAG}" "${_CACHE_VAR}")
-    if (${_CACHE_VAR})
-        set(${_CXXFLAGS} "${${_CXXFLAGS}} ${_FLAG}" PARENT_SCOPE)
-    else ()
-        message(STATUS "Unsupported CXXFLAG: ${_FLAG}")
-    endif ()
-endfunction ()
-
 if (MSVC)
     # CMAKE does not have a built-in option for setting the CRT, so override the default flags.
     # NOTE: doing it this way avoids a linker warning about one directive overriding another
