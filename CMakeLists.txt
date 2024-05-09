@@ -256,7 +256,7 @@ endfunction ()
 
 # Add check flags to a compile TARGET
 function (SET_CHECK_CXX_FLAGS _TARGET)
-    target_compile_options("${_TARGET}" PRIVATE "${SUPPORTED_CHECK_CXX_COMPILER_FLAGS}")
+    target_compile_options("${_TARGET}" BEFORE PRIVATE "${SUPPORTED_CHECK_CXX_COMPILER_FLAGS}")
 endfunction()
 
 # Check if a flag exists and add it to the compiler and the linker options
