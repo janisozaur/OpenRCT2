@@ -168,13 +168,18 @@ find_package(Threads REQUIRED)
 target_link_libraries(${PROJECT_NAME} Threads::Threads)
 
 if (NOT MINGW AND NOT MSVC)
+    message("Looking for ICU - not mingw and not msvc")
     if (APPLE AND NOT MACOS_USE_DEPENDENCIES)
+        message("Looking for ICU - apple and not macos_use_dependencies")
         execute_process(COMMAND brew --prefix icu4c OUTPUT_VARIABLE HOMEBREW_PREFIX_ICU OUTPUT_STRIP_TRAILING_WHITESPACE)
         # Needed for linking with non-broken icu on Apple platforms
         list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX_ICU}")
+        message("Looking for ICU - apple and not macos_use_dependencies - CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
     endif ()
     # For unicode code page conversion.
-    find_package(ICU 59.0 REQUIRED COMPONENTS uc)
+    find_package(ICU 59.0 COMPONENTS uc)
+    message("Looking for ICU - not mingw and not msvc - ICU_FOUND: ${ICU_FOUND}")
+    message("Looking for ICU - not mingw and not msvc - ICU_INCLUDE_DIRS: ${ICU_INCLUDE_DIRS}")
         
     target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${ICU_INCLUDE_DIRS})
         
