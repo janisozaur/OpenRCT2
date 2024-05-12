@@ -437,6 +437,7 @@ if (NOT MACOS_BUNDLE OR (MACOS_BUNDLE AND WITH_TESTS))
                 DOWNLOAD_DIR \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME}/sequence/
                 SKIP_IF_EXISTS ${CMAKE_SOURCE_DIR}/data/sequence/
                 ZIP_URL ${TITLE_SEQUENCE_URL}
+                SHA1 ${TITLE_SEQUENCE_SHA1}
             )")
     endif ()
     if (DOWNLOAD_OBJECTS)
@@ -450,6 +451,7 @@ if (NOT MACOS_BUNDLE OR (MACOS_BUNDLE AND WITH_TESTS))
                 DOWNLOAD_DIR \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME}/object/
                 SKIP_IF_EXISTS ${CMAKE_SOURCE_DIR}/data/object/
                 ZIP_URL ${OBJECTS_URL}
+                SHA1 ${OBJECTS_SHA1}
             )")
     endif ()
     if (DOWNLOAD_OPENSFX)
@@ -460,6 +462,7 @@ if (NOT MACOS_BUNDLE OR (MACOS_BUNDLE AND WITH_TESTS))
                 SKIP_IF_EXISTS ${CMAKE_SOURCE_DIR}/data/assetpack/openrct2.sound.parkap
                 DOWNLOAD_DIR \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME}/
                 ZIP_URL ${OPENSFX_URL}
+                SHA1 ${OPENSFX_SHA1}
             )")
     endif ()
     if (DOWNLOAD_OPENMSX)
@@ -470,6 +473,7 @@ if (NOT MACOS_BUNDLE OR (MACOS_BUNDLE AND WITH_TESTS))
                 SKIP_IF_EXISTS ${CMAKE_SOURCE_DIR}/data/assetpack/openrct2.music.alternative.parkap
                 DOWNLOAD_DIR \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_DATADIR}/${PROJECT_NAME}/
                 ZIP_URL ${OPENMSX_URL}
+                SHA1 ${OPENMSX_SHA1}
             )")
     endif ()
     if (DOWNLOAD_REPLAYS)
@@ -480,6 +484,7 @@ if (NOT MACOS_BUNDLE OR (MACOS_BUNDLE AND WITH_TESTS))
                 ZIP_VERSION ${REPLAYS_VERSION}
                 DOWNLOAD_DIR \${CMAKE_CURRENT_BINARY_DIR}/testdata/replays/
                 ZIP_URL ${REPLAYS_URL}
+                SHA1 ${REPLAYS_SHA1}
             )")
     endif ()
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/g2.dat" DESTINATION "${CMAKE_INSTALL_DATADIR}/openrct2")
