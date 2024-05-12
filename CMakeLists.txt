@@ -133,7 +133,7 @@ if (MACOS_USE_DEPENDENCIES)
     set(MACOS_DYLIBS_ZIPFILE "openrct2-libs-v${MACOS_DYLIBS_VERSION}-universal-macos-dylibs.zip")
     set(MACOS_DYLIBS_SHA1 "bed4340c32b6dbee9634ceaf19cb6b49a837aead")
     set(MACOS_DYLIBS_DIR "${ROOT_DIR}/lib/macos")
-    set(MACOS_DYLIBS_URL "https://github.com/OpenRCT2/Dependencies/releases/download/v${MACOS_DYLIBS_VERSION}/${MACOS_DYLIBS_ZIPFILE}")
+    set(MACOS_DYLIBS_URL "https://github.com/janisozaur/Dependencies/releases/download/v${MACOS_DYLIBS_VERSION}/${MACOS_DYLIBS_ZIPFILE}")
 
     download_openrct2_zip(
         ZIP_VERSION ${MACOS_DYLIBS_VERSION}
