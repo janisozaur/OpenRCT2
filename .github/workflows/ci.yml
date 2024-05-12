@@ -202,7 +202,7 @@ jobs:
             # Note: only build/run tests on the native architecture of the CI agent
             # GitHub macos-12 agents are all Intel, but as of 2024-04-25 new images, e.g. macos-14 (current macos-latest) are arm64
             # See https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
-            build_flags: -DARCH="x86_64" -DWITH_TESTS=on -DDISABLE_DISCORD_RPC=on -DDISABLE_IPO=on -DENABLE_SCRIPTING=ON -DDISABLE_HTTP=on -DDISABLE_NETWORK=on
+            build_flags: -DARCH="x86_64" -DWITH_TESTS=off -DDISABLE_DISCORD_RPC=on -DDISABLE_IPO=on -DENABLE_SCRIPTING=ON -DDISABLE_HTTP=on -DDISABLE_NETWORK=on
             run_tests: true
           - arch: arm64
             cache_key: macos-arm64
