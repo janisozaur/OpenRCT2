@@ -21,6 +21,7 @@
 
 #include <array>
 #include <cstddef>
+#include <gtest/gtest_prod.h>
 #include <vector>
 
 using track_type_t = uint16_t;
@@ -378,6 +379,8 @@ private:
 
     void Loc6DCE02(const Ride& curRide);
     void Loc6DCDE4(const Ride& curRide);
+
+    FRIEND_TEST(VehicleTest, UpdateTrackMotionForwards_HeartLineTransfer);
 };
 static_assert(sizeof(Vehicle) <= 512);
 

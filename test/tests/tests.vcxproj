@@ -103,6 +103,7 @@
     <ClCompile Include="StringTest.cpp" />
     <ClCompile Include="TileElements.cpp" />
     <ClCompile Include="TileElementsView.cpp" />
+    <ClCompile Include="Vehicle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="testdata\sprites\badManifest.json" />
