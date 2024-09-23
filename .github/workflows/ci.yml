@@ -127,6 +127,11 @@ jobs:
           build-portable
           build-symbols
           build-installer -i
+      - name: Rename artifacts
+        run: |
+          mv artifacts/openrct2-portable-*.zip artifacts/OpenRCT2-$OPENRCT2_VERSION-windows-portable-$PLATFORM.exe
+          mv artifacts/openrct2-installer-*.exe artifacts/OpenRCT2-$OPENRCT2_VERSION-windows-installer-$PLATFORM.exe
+          mv artifacts/openrct2-symbols-*.zip artifacts/OpenRCT2-$OPENRCT2_VERSION-windows-symbols-$PLATFORM.exe
       - name: Upload artifacts (CI)
         uses: actions/upload-artifact@v4
         with:
@@ -145,9 +150,9 @@ jobs:
         run: |
           . scripts/setenv
           if [[ "$OPENRCT2_PUSH" == "true" ]]; then
-            upload-build artifacts/openrct2-portable-*.zip "windows-portable-$PLATFORM.zip" $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
-            upload-build artifacts/openrct2-installer-*.exe "windows-installer-$PLATFORM.exe" $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
-            upload-build artifacts/openrct2-symbols-*.zip "windows-symbols-$PLATFORM.zip" $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
+            upload-build artifacts/OpenRCT2-$OPENRCT2_VERSION-windows-portable-$PLATFORM.exe "windows-portable-$PLATFORM.zip" $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
+            upload-build artifacts/OpenRCT2-$OPENRCT2_VERSION-windows-installer-$PLATFORM.exe "windows-installer-$PLATFORM.exe" $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
+            upload-build artifacts/OpenRCT2-$OPENRCT2_VERSION-windows-symbols-$PLATFORM.exe "windows-symbols-$PLATFORM.zip" $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
             upload-backtrace-symbols artifacts/openrct2-symbols-*.zip
           else
               echo 'Not going to push build'
@@ -279,18 +284,18 @@ jobs:
           mv macos_universal/OpenRCT2-universal.app artifacts/OpenRCT2.app
           echo -e "\033[0;36mCompressing OpenRCT2.app...\033[0m"
           cd artifacts
-          zip -rqy openrct2-macos.zip OpenRCT2.app
+          zip -rqy OpenRCT2-$OPENRCT2_VERSION-macos-universal.zip OpenRCT2.app
       - name: Upload artifacts (CI)
         uses: actions/upload-artifact@v4
         with:
           name: OpenRCT2-${{ runner.os }}-universal
-          path: artifacts/openrct2-macos.zip
+          path: artifacts/OpenRCT2-${{ env.OPENRCT2_VERSION }}-macos-universal.zip
           if-no-files-found: error
       - name: Upload artifacts (openrct2.org)
         run: |
           . scripts/setenv
           if [[ "$OPENRCT2_PUSH" == "true" ]]; then
-            upload-build artifacts/openrct2-macos.zip macos-universal.zip $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
+            upload-build artifacts/OpenRCT2-$OPENRCT2_VERSION-macos-universal.zip macos-universal.zip $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
           else
             echo 'Not going to push build'
           fi
@@ -328,7 +333,7 @@ jobs:
       - name: Build OpenRCT2
         run: . scripts/setenv -q && build -DWITH_TESTS=on -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DPORTABLE=ON ${{ matrix.build_flags }}
       - name: Build artifacts
-        run: . scripts/setenv -q && build-portable artifacts/OpenRCT2-${{ runner.os }}-${{ matrix.distro }}-${{ matrix.platform }}.tar.gz bin/install/usr
+        run: . scripts/setenv -q && build-portable artifacts/OpenRCT2-$OPENRCT2_VERSION-${{ runner.os }}-${{ matrix.distro }}-${{ matrix.platform }}.tar.gz bin/install/usr
       - name: Upload artifacts (CI)
         uses: actions/upload-artifact@v4
         with:
@@ -376,7 +381,7 @@ jobs:
           # Build identification code: https://github.com/Limetric/OpenRCT2.org/blob/e5b738f3dadcc5a3b78e8dfd434756ff31eaa1d3/src/misc/releaseAsset.js#L94-L116
           . scripts/setenv -q
           if [[ "$OPENRCT2_PUSH" == "true" ]]; then
-            upload-build artifacts/OpenRCT2-x86_64.AppImage linux.AppImage $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
+            upload-build artifacts/OpenRCT2-$OPENRCT2_VERSION-linux-x86_64.AppImage linux.AppImage $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
           else
             echo 'Not going to push build'
           fi
@@ -480,10 +485,10 @@ jobs:
         run: |
           . scripts/setenv
           pushd src/openrct2-android
-            ./gradlew app:assembleRelease
+          ./gradlew app:assembleRelease
           popd
           mkdir -p artifacts
-          mv src/openrct2-android/app/build/outputs/apk/release/app-release.apk artifacts/openrct2-arm.apk
+          mv src/openrct2-android/app/build/outputs/apk/release/app-release.apk artifacts/OpenRCT2-$OPENRCT2_VERSION-android-arm.apk
       - name: Upload artifacts (CI)
         uses: actions/upload-artifact@v4
         with:
@@ -494,7 +499,7 @@ jobs:
         run: |
           . scripts/setenv -q
           if [[ "$OPENRCT2_PUSH" == "true" ]]; then
-            upload-build artifacts/openrct2-arm.apk android-arm.apk $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
+            upload-build artifacts/OpenRCT2-$OPENRCT2_VERSION-android-arm.apk android-arm.apk $OPENRCT2_VERSION $OPENRCT2_SHA1 $OPENRCT2_BRANCH
           else
             echo 'Not going to push build'
           fi

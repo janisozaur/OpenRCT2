@@ -15,5 +15,5 @@ pushd bin
     $linuxdeploy --appimage-extract-and-run --appdir install/ --output appimage --desktop-file install/usr/share/applications/openrct2.desktop
 popd
 mkdir -p artifacts
-mv bin/OpenRCT2*.AppImage artifacts
+mv bin/OpenRCT2-x86_64.AppImage artifacts/OpenRCT2-$OPENRCT2_VERSION-linux-x86_64.AppImage
 rm $linuxdeploy
