@@ -35,32 +35,16 @@ jobs:
     name: Get version info
     runs-on: ubuntu-latest
     outputs:
-      name: ${{ steps.get_version.outputs.name }}
-      short_sha: ${{ steps.get_version.outputs.short_sha }}
-      commits_since_tag: ${{ steps.get_version.outputs.commits_since_tag }}
-      is_tag: ${{ steps.get_version.outputs.is_tag }}
-      tag: ${{ steps.get_version.outputs.tag }}
+      name: ${{ steps.ghd.outputs.describe }}
+      short-sha: ${{ steps.ghd.outputs.short-sha }}
+      distance: ${{ steps.ghd.outputs.distance }}
+      tag: ${{ steps.ghd.outputs.tag }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-      - name: Get the version
-        id: get_version
-        run: |
-          # check if git ref matches a tag
-          echo "short_sha=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_OUTPUT
-          echo "tag=$(git describe --tags --abbrev=0 --match 'v*' --first-parent)" >> "$GITHUB_OUTPUT"
-          echo "commits_since_tag=$(git rev-list --count HEAD ^$(git describe --tags --abbrev=0 --match 'v*' --first-parent))" >> $GITHUB_OUTPUT
-          if [[ "$GITHUB_REF" =~ "refs/tags/v" ]]; then
-            echo setting output to tag $TAG
-            echo "name=$tag" >> "$GITHUB_OUTPUT"
-            echo "is_tag=true" >> "$GITHUB_OUTPUT"
-          else
-            # set version to sha1 of the commit
-            echo "name=$tag-$commits_since_tag-g$short_sha" >> $GITHUB_OUTPUT
-            echo "is_tag=false" >> "$GITHUB_OUTPUT"
-          fi
-          echo setting name to $name
-          echo Output:\n$(cat \"$GITHUB_OUTPUT\")
+      - name: Git describe
+        id: ghd
+        uses: proudust/gh-describe@v2
   lint-commit:
     name: Lint Commit Message
     if: github.event_name == 'pull_request'
