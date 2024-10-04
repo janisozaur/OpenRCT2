@@ -549,6 +549,17 @@ jobs:
           cat openrct2-${{ needs.get_artifact_name.outputs.name }}-sha1sums.txt >> release_notes.txt
           echo "\`\`\`" >> release_notes.txt
           echo "" >> release_notes.txt
+      - name: Create tag
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.MY_PAT }}
+          script: |
+            github.rest.git.createRef({
+              owner: 'janisozaur',
+              repo: 'openrct2-binaries-test',
+              ref: 'refs/tags/v${{ needs.get_artifact_name.outputs.tag }}',
+              sha: '13e938ae016be78d62020f21dc0a7c54311a5c1e'
+            })
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
@@ -558,3 +569,4 @@ jobs:
             openrct2-${{ needs.get_artifact_name.outputs.name }}-sha1sums.txt
             OpenRCT2-${{ needs.get_artifact_name.outputs.name }}-*
           body_path: release_notes.txt
+          tag_name: v${{ needs.get_artifact_name.outputs.tag }}
