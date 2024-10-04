@@ -569,6 +569,7 @@ jobs:
         with:
           repository: janisozaur/openrct2-binaries-test
           make_latest: true
+          token: ${{ secrets.MY_PAT }}
           files: |
             openrct2-${{ needs.get_artifact_name.outputs.name }}-sha1sums.txt
             OpenRCT2-${{ needs.get_artifact_name.outputs.name }}-*
