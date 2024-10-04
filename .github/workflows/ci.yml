@@ -557,7 +557,7 @@ jobs:
             github.rest.git.createRef({
               owner: 'janisozaur',
               repo: 'openrct2-binaries-test',
-              ref: 'refs/tags/v${{ needs.get_artifact_name.outputs.tag }}',
+              ref: 'refs/tags/${{ needs.get_artifact_name.outputs.tag }}',
               sha: '13e938ae016be78d62020f21dc0a7c54311a5c1e'
             })
       - name: Create release
@@ -569,4 +569,4 @@ jobs:
             openrct2-${{ needs.get_artifact_name.outputs.name }}-sha1sums.txt
             OpenRCT2-${{ needs.get_artifact_name.outputs.name }}-*
           body_path: release_notes.txt
-          tag_name: v${{ needs.get_artifact_name.outputs.tag }}
+          tag_name: ${{ needs.get_artifact_name.outputs.tag }}
