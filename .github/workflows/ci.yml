@@ -581,7 +581,7 @@ jobs:
       # The upload to binaries repository is done from develop only
       - name: Create tag for binaries repository
         uses: actions/github-script@v5
-        if: startsWith(github.ref, 'refs/heads/develop')
+        if: ${{ needs.build_variables.outputs.push }}
         with:
           github-token: ${{ secrets.MY_PAT }}
           script: |
@@ -593,7 +593,7 @@ jobs:
             })
       - name: Create release in binaries repo
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/heads/develop')
+        if: ${{ needs.build_variables.outputs.push }}
         with:
           files: |
             openrct2-${{ needs.build_variables.outputs.name }}-sha1sums.txt
