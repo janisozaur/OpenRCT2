@@ -41,8 +41,11 @@ jobs:
       tag: ${{ steps.ghd.outputs.tag }}
       push: ${{ steps.setenv.outputs.push }}
     steps:
+      # We need to fetch entire repo to get the tags and correctly run `describe`
       - name: Check out code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Git describe
         id: ghd
         uses: proudust/gh-describe@v2
