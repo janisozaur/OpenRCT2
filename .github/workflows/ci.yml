@@ -600,3 +600,12 @@ jobs:
             OpenRCT2-${{ needs.build_variables.outputs.name }}-*
           body_path: release_notes.txt
           tag_name: ${{ needs.build_variables.outputs.name }}
+  test_push:
+    name: Test push
+    runs-on: ubuntu-latest
+    needs: [build_variables]
+    steps:
+      - name: Test push
+        if: ${{ needs.build_variables.outputs.push }}
+        run: |
+          echo pushing
