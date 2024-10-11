@@ -554,6 +554,9 @@ jobs:
           body_path: release_notes.txt
           tag_name: ${{ needs.build_variables.outputs.tag }}
       # The upload to binaries repository is done from develop only
+      # TODO: don't push from tag AND develop?
+      # https://github.com/janisozaur/OpenRCT2/actions/runs/11299713737/job/31431573168
+      # but we don't tag develop, so maybe we're fine
       - name: Create tag for binaries repository
         uses: actions/github-script@v5
         if: ${{ needs.build_variables.outputs.push }}
