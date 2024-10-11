@@ -195,7 +195,6 @@ jobs:
         run: |
           . scripts/setenv
           if [[ "$OPENRCT2_PUSH" == "true" ]]; then
-            upload-backtrace-symbols artifacts/OpenRCT2-${{ needs.build_variables.outputs.name }}-windows-symbols-*.zip
           else
               echo 'Not going to push build'
           fi
