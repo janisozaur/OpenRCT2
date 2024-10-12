@@ -67,7 +67,12 @@ jobs:
       # Name is very similar to "describe", but skips the "v" prefix
       - name: Get artifact name
         id: artifact-name
-        run: echo "name=${{ env.OPENRCT2_VERSION }}-${{ steps.ghd.outputs.distance }}-${{ steps.ghd.outputs.short-sha }}" >> $GITHUB_OUTPUT
+        run: |
+          if [ ${{ steps.ghd.outputs.distance }} -eq 0 ]; then
+            echo "name=${{ env.OPENRCT2_VERSION }}" >> $GITHUB_OUTPUT
+          else
+            echo "name=${{ env.OPENRCT2_VERSION }}-${{ steps.ghd.outputs.distance }}-${{ steps.ghd.outputs.short-sha }}" >> $GITHUB_OUTPUT
+          fi
   lint-commit:
     name: Lint Commit Message
     if: github.event_name == 'pull_request'
