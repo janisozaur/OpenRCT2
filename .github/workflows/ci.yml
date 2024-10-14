@@ -39,4 +39,6 @@ jobs:
         run: |
           mkdir -p C:/OpenRCT2/SimplySign
           curl -L -o C:/OpenRCT2/SimplySign/SimplySign.exe https://files.certum.eu/software/SimplySignDesktop/Windows/9.1.11.61/SimplySignDesktop-9.1.11.61-64-bit-en.msi
-          msiexec /i C:/OpenRCT2/SimplySign/SimplySign.exe /qn /norestart
+          echo test > foo.txt
+          sudo cat foo.txt
+          msiexec /i C:/OpenRCT2/SimplySign/SimplySign.exe /qn /li /norestart
