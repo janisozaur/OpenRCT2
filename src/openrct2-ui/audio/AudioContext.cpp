@@ -90,7 +90,6 @@ namespace OpenRCT2::Audio
             }
             catch (const std::exception& e)
             {
-                SDL_RWclose(rw);
                 LOG_VERBOSE("Unable to create audio source: %s", e.what());
                 return nullptr;
             }
@@ -120,7 +119,6 @@ namespace OpenRCT2::Audio
             }
             catch (const std::exception& e)
             {
-                SDL_RWclose(rw);
                 LOG_VERBOSE("Unable to create audio source: %s", e.what());
                 return nullptr;
             }
