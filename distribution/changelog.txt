@@ -1,6 +1,12 @@
+0.4.17 (in development)
+------------------------------------------------------------------------
+- Feature: [#23166] Add Galician translation.
+- Improved: [#23051] Add large sloped turns and new inversions to the Twister, Vertical Drop, Hyper and Flying Roller Coasters.
+- Improved: [#23123] Improve sorting of roller coasters in build new ride menu.
+
 0.4.16 (2024-11-03)
 ------------------------------------------------------------------------
-- Feature: [#20810] New ride type: LSM Launched Roller Coaster.
+- Feature: [#22797] New ride type: LSM Launched Roller Coaster.
 - Improved: [#22937] Add banked sloped turns and many other pieces to the Corkscrew, Hypercoaster and Lay-down Roller Coaster.
 - Improved: [#22967] Add medium and large half loops to the Wooden and Classic Wooden Roller Coasters.
 - Improved: [#23010] Make AppImage compatible with Ubuntu 22.04 and Debian Bookworm again.
