@@ -28,7 +28,7 @@ if [[ "$OSTYPE" == "cygwin" || "$OSTYPE" == "msys" ]]; then
 
     # Create openrct2.exe and openrct2.com with correct subsystem
     cp bin/openrct2.exe bin/openrct2.com
-    vstool editbin //subsystem:console bin/openrct2.com
+    vstool editbin //subsystem:console bin/openrct2-cli.exe
     vstool editbin //subsystem:windows bin/openrct2.exe
 else
     echo -e "\033[0;36mBuilding OpenRCT2...\033[0m"
