@@ -638,9 +638,14 @@ jobs:
           sha1sum OpenRCT2-* > OpenRCT2-${{ needs.build_variables.outputs.name }}-sha1sums.txt
           popd
       - name: Create release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Print all the lines until an empty line
           sed -n '1,/^$/p' distribution/changelog.txt >> release_notes.txt
+          echo "" >> release_notes.txt
+
+          echo "Repository = ${{ github.repository }}, Run = ${{ github.run_id }}, Job = ${{ github.job }}" >> release_notes.txt
           echo "" >> release_notes.txt
 
           echo "SHA1 checksums:" >> release_notes.txt
@@ -648,6 +653,8 @@ jobs:
           cat OpenRCT2-${{ needs.build_variables.outputs.name }}-sha1sums.txt >> release_notes.txt
           echo "\`\`\`" >> release_notes.txt
           echo "" >> release_notes.txt
+
+          cat release_notes.txt
       # Only upload tagged releases, mark them as draft for manual verification
       - name: Create tagged release
         uses: softprops/action-gh-release@v2
