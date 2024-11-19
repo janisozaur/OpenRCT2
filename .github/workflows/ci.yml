@@ -34,7 +34,7 @@ env:
   OPENRCT2_BUILD_SERVER: GitHub
   OPENRCT2_ORG_TOKEN: ${{ secrets.OPENRCT2_ORG_TOKEN }}
   BACKTRACE_IO_TOKEN: ${{ secrets.BACKTRACE_IO_TOKEN }}
-  OPENRCT2_VERSION: 0.4.16
+  OPENRCT2_VERSION: 0.222.3
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
 concurrency:
@@ -48,8 +48,8 @@ jobs:
     # We want to sign tagged releases with release certificates, but it is only allowed to be ran manually.
     # Disable automatic runs for tags and force release signing for tags.
     if: |
-      (startsWith(github.ref, 'refs/tags/v') && github.event_name == 'workflow_dispatch' && github.event.inputs.sign == 'release-signing') ||
-      (!startsWith(github.ref, 'refs/tags/v') && github.event.inputs.sign != 'release-signing')
+      (startsWith(github.ref, 'refs/tags/v') && github.event_name == 'workflow_dispatch' && github.event.inputs.sign == 'test-signing') ||
+      (!startsWith(github.ref, 'refs/tags/v') && github.event.inputs.sign != 'test-signing')
     outputs:
       name: ${{ steps.artifact-name.outputs.name }}
       describe: ${{ steps.ghd.outputs.describe }}
