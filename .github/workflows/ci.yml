@@ -34,7 +34,7 @@ env:
   OPENRCT2_BUILD_SERVER: GitHub
   OPENRCT2_ORG_TOKEN: ${{ secrets.OPENRCT2_ORG_TOKEN }}
   BACKTRACE_IO_TOKEN: ${{ secrets.BACKTRACE_IO_TOKEN }}
-  OPENRCT2_VERSION: 0.222.3
+  OPENRCT2_VERSION: 0.222.4
 
 # https://docs.github.com/en/actions/using-jobs/using-concurrency#example-using-a-fallback-value
 concurrency:
@@ -100,6 +100,7 @@ jobs:
           # if using workflow_dispatch, use the provided certificate
           if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
             certificate=${{ github.event.inputs.sign }}
+            sign=true
           else
             # Default to no signing
             certificate=no
