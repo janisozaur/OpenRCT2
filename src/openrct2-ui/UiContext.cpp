@@ -64,8 +64,6 @@ using namespace OpenRCT2::Ui;
 class UiContext final : public IUiContext
 {
 private:
-    constexpr static uint32_t TOUCH_DOUBLE_TIMEOUT = 300;
-
     const std::unique_ptr<IPlatformUiContext> _platformUiContext;
     const std::unique_ptr<IWindowManager> _windowManager;
 
@@ -474,9 +472,7 @@ public:
                     ScreenCoordsXY fingerPos = { static_cast<int32_t>(e.tfinger.x * _width),
                                                  static_cast<int32_t>(e.tfinger.y * _height) };
 
-                    _cursorState.touchIsDouble
-                        = (!_cursorState.touchIsDouble
-                           && e.tfinger.timestamp - _cursorState.touchDownTimestamp < TOUCH_DOUBLE_TIMEOUT);
+                    _cursorState.touchIsDouble = e.tfinger.touchId == 1;
 
                     if (_cursorState.touchIsDouble)
                     {
