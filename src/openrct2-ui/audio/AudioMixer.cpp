@@ -76,11 +76,6 @@ std::shared_ptr<IAudioChannel> AudioMixer::Play(IAudioSource* source, int32_t lo
     return channel;
 }
 
-void AudioMixer::SetVolume(float volume)
-{
-    _volume = volume;
-}
-
 SDLAudioSource* AudioMixer::AddSource(std::unique_ptr<SDLAudioSource> source)
 {
     std::lock_guard<std::mutex> guard(_mutex);
@@ -230,6 +225,17 @@ void AudioMixer::ApplyPan(const IAudioChannel* channel, void* buffer, size_t len
     }
 }
 
+void AudioMixer::SetVolume(float volume)
+{
+    _volume = volume;
+    // Set master gain in OpenAL
+    alListenerf(
+        AL_GAIN,
+        _volume
+            * (Config::Get().sound.MasterSoundEnabled ? (static_cast<float>(Config::Get().sound.MasterVolume) / 100.0f)
+                                                      : 0.0f));
+}
+
 int32_t AudioMixer::ApplyVolume(const IAudioChannel* channel, void* buffer, size_t len)
 {
     float volumeAdjust = _volume;
@@ -253,32 +259,11 @@ int32_t AudioMixer::ApplyVolume(const IAudioChannel* channel, void* buffer, size
             break;
     }
 
-    int32_t startVolume = channel->GetOldVolume() * volumeAdjust;
-    int32_t endVolume = channel->GetVolume() * volumeAdjust;
-    if (channel->IsStopping())
-    {
-        endVolume = 0;
-    }
+    // Set per-source gain in OpenAL
+    ALuint source = channel->GetSource();
+    alSourcef(source, AL_GAIN, volumeAdjust);
 
-    int32_t mixVolume = channel->GetVolume() * volumeAdjust;
-    if (startVolume != endVolume)
-    {
-        // Set to max since we are adjusting the volume ourselves
-        mixVolume = kMixerVolumeMax;
-
-        // Fade between volume levels to smooth out sound and minimize clicks from sudden volume changes
-        int32_t fadeLength = static_cast<int32_t>(len) / _format.BytesPerSample();
-        switch (_format.format)
-        {
-            case AUDIO_S16SYS:
-                EffectFadeS16(static_cast<int16_t*>(buffer), fadeLength, startVolume, endVolume);
-                break;
-            case AUDIO_U8:
-                EffectFadeU8(static_cast<uint8_t*>(buffer), fadeLength, startVolume, endVolume);
-                break;
-        }
-    }
-    return mixVolume;
+    return static_cast<int32_t>(volumeAdjust * kMixerVolumeMax);
 }
 
 void AudioMixer::EffectPanS16(const IAudioChannel* channel, int16_t* data, int32_t length)
