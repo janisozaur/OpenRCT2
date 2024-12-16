@@ -11,10 +11,11 @@
 #include "AudioFormat.h"
 #include "SDLAudioSource.h"
 
+#include <AL/al.h>
+#include <AL/alc.h>
 #include <algorithm>
 #include <cmath>
 #include <openrct2/audio/AudioSource.h>
-#include <speex/speex_resampler.h>
 
 namespace OpenRCT2::Audio
 {
@@ -25,7 +26,8 @@ namespace OpenRCT2::Audio
 
     private:
         AudioSource_* _source = nullptr;
-        SpeexResamplerState* _resampler = nullptr;
+        ALuint _buffer = 0;
+        ALuint _source_id = 0;
 
         MixerGroup _group = MixerGroup::Sound;
         double _rate = 0;
@@ -47,6 +49,9 @@ namespace OpenRCT2::Audio
     public:
         AudioChannelImpl()
         {
+            alGenBuffers(1, &_buffer);
+            alGenSources(1, &_source_id);
+
             AudioChannelImpl::SetRate(1);
             AudioChannelImpl::SetVolume(kMixerVolumeMax);
             AudioChannelImpl::SetPan(0.5f);
@@ -54,10 +59,13 @@ namespace OpenRCT2::Audio
 
         ~AudioChannelImpl() override
         {
-            if (_resampler != nullptr)
+            if (_buffer)
             {
-                speex_resampler_destroy(_resampler);
-                _resampler = nullptr;
+                alDeleteBuffers(1, &_buffer);
+            }
+            if (_source_id)
+            {
+                alDeleteSources(1, &_source_id);
             }
         }
 
@@ -68,12 +76,11 @@ namespace OpenRCT2::Audio
 
         [[nodiscard]] SpeexResamplerState* GetResampler() const override
         {
-            return _resampler;
+            return nullptr;
         }
 
         void SetResampler(SpeexResamplerState* value) override
         {
-            _resampler = value;
         }
 
         [[nodiscard]] MixerGroup GetGroup() const override
@@ -221,10 +228,28 @@ namespace OpenRCT2::Audio
             _loop = loop;
             _offset = 0;
             _done = false;
+
+            // Configure OpenAL source
+            alSourcei(_source_id, AL_LOOPING, loop == kMixerLoopInfinite ? AL_TRUE : AL_FALSE);
+            alSourcef(_source_id, AL_GAIN, static_cast<float>(_volume) / kMixerVolumeMax);
+            alSource3f(_source_id, AL_POSITION, _pan - 0.5f, 0.0f, 0.0f);
+
+            // Buffer the audio data
+            auto format = _source->GetFormat();
+            ALenum alFormat = (format.channels == 1) ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16;
+
+            // Read the entire source into buffer
+            std::vector<uint8_t> data(_source->GetLength());
+            _source->Read(data.data(), 0, data.size());
+
+            alBufferData(_buffer, alFormat, data.data(), data.size(), format.freq);
+            alSourcei(_source_id, AL_BUFFER, _buffer);
+            alSourcePlay(_source_id);
         }
 
         void Stop() override
         {
+            alSourceStop(_source_id);
             SetStopping(true);
         }
 
@@ -247,36 +272,14 @@ namespace OpenRCT2::Audio
 
         size_t Read(void* dst, size_t len) override
         {
-            size_t bytesRead = 0;
-            size_t bytesToRead = len;
-            while (bytesToRead > 0 && !_done)
+            // OpenAL handles the actual audio streaming, so we just need to check state
+            ALint state;
+            alGetSourcei(_source_id, AL_SOURCE_STATE, &state);
+            if (state != AL_PLAYING)
             {
-                size_t readLen = _source->Read(dst, _offset, bytesToRead);
-                if (readLen > 0)
-                {
-                    dst = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(dst) + readLen);
-                    bytesToRead -= readLen;
-                    bytesRead += readLen;
-                    _offset += readLen;
-                }
-                if (readLen == 0 || _offset >= _source->GetLength())
-                {
-                    if (_loop == 0)
-                    {
-                        _done = true;
-                    }
-                    else if (_loop == kMixerLoopInfinite)
-                    {
-                        _offset = 0;
-                    }
-                    else
-                    {
-                        _loop--;
-                        _offset = 0;
-                    }
-                }
+                _done = true;
             }
-            return bytesRead;
+            return 0;
         }
     };
 

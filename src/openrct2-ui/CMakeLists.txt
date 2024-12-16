@@ -23,7 +23,7 @@ if (MSVC)
     endif ()
 else ()
     PKG_CHECK_MODULES(SDL2 REQUIRED IMPORTED_TARGET sdl2)
-    PKG_CHECK_MODULES(SPEEX REQUIRED IMPORTED_TARGET speexdsp)
+    PKG_CHECK_MODULES(openal REQUIRED IMPORTED_TARGET openal)
     if (NOT DISABLE_FLAC)
         PKG_CHECK_MODULES(FLAC REQUIRED IMPORTED_TARGET flac)
     endif ()
@@ -64,7 +64,7 @@ ipo_set_target_properties(${PROJECT_NAME})
 if (NOT MSVC AND NOT WIN32)
     target_link_libraries(${PROJECT_NAME} "libopenrct2"
                                     PkgConfig::SDL2
-                                    PkgConfig::SPEEX)
+                                    PkgConfig::openal)
 else ()
     target_link_libraries(${PROJECT_NAME} "libopenrct2"
                                     ${SDL2_LDFLAGS}

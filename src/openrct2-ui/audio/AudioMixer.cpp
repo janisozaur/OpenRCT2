@@ -6,14 +6,14 @@
  *
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
-
 #include "AudioMixer.h"
 
+#include <AL/al.h>
+#include <AL/alc.h>
 #include <algorithm>
 #include <iterator>
 #include <openrct2/OpenRCT2.h>
 #include <openrct2/config/Config.h>
-#include <speex/speex_resampler.h>
 
 using namespace OpenRCT2::Audio;
 
@@ -24,27 +24,14 @@ AudioMixer::~AudioMixer()
 
 void AudioMixer::Init(const char* device)
 {
-    Close();
+    ALCdevice* alcDevice = alcOpenDevice(device);
+    ALCcontext* alcContext = alcCreateContext(alcDevice, nullptr);
+    alcMakeContextCurrent(alcContext);
 
-    SDL_AudioSpec want = {};
-    want.freq = 22050;
-    want.format = AUDIO_S16SYS;
-    want.channels = 2;
-    want.samples = 2048;
-    want.callback = [](void* arg, uint8_t* dst, int32_t length) -> void {
-        auto* mixer = static_cast<AudioMixer*>(arg);
-        mixer->GetNextAudioChunk(dst, static_cast<size_t>(length));
-        mixer->RemoveReleasedSources();
-    };
-    want.userdata = this;
+    // Configure OpenAL settings
+    alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
 
-    SDL_AudioSpec have;
-    _deviceId = SDL_OpenAudioDevice(device, 0, &want, &have, 0);
-    _format.format = have.format;
-    _format.channels = have.channels;
-    _format.freq = have.freq;
-
-    SDL_PauseAudioDevice(_deviceId, 0);
+    // Initialize buffer pools and source management
 }
 
 void AudioMixer::Close()
@@ -173,82 +160,21 @@ void AudioMixer::UpdateAdjustedSound()
 
 void AudioMixer::MixChannel(ISDLAudioChannel* channel, uint8_t* data, size_t length)
 {
-    int32_t byteRate = _format.GetByteRate();
-    auto numSamples = static_cast<int32_t>(length / byteRate);
-    double rate = 1;
-    if (_format.format == AUDIO_S16SYS)
-    {
-        rate = channel->GetRate();
-    }
+    ALuint source;
+    alGenSources(1, &source);
 
-    bool mustConvert = false;
-    SDL_AudioCVT cvt;
-    cvt.len_ratio = 1;
-    AudioFormat streamformat = channel->GetFormat();
-    if (streamformat != _format)
-    {
-        if (SDL_BuildAudioCVT(
-                &cvt, streamformat.format, streamformat.channels, streamformat.freq, _format.format, _format.channels,
-                _format.freq)
-            == -1)
-        {
-            // Unable to convert channel data
-            return;
-        }
-        mustConvert = true;
-    }
+    // Configure source properties
+    alSource3f(
+        source, AL_POSITION,
+        channel->GetPan() * 2.0f - 1.0f, // Convert pan to X position
+        0.0f, 0.0f);
+    alSourcef(source, AL_GAIN, channel->GetVolume());
 
-    // Read raw PCM from channel
-    int32_t readSamples = numSamples * rate;
-    auto readLength = static_cast<size_t>(readSamples / cvt.len_ratio) * byteRate;
-    _channelBuffer.resize(readLength);
-    size_t bytesRead = channel->Read(_channelBuffer.data(), readLength);
-
-    // Convert data to required format if necessary
-    void* buffer = nullptr;
-    size_t bufferLen = 0;
-    if (mustConvert)
-    {
-        if (Convert(&cvt, _channelBuffer.data(), bytesRead))
-        {
-            buffer = cvt.buf;
-            bufferLen = cvt.len_cvt;
-        }
-        else
-        {
-            return;
-        }
-    }
-    else
-    {
-        buffer = _channelBuffer.data();
-        bufferLen = bytesRead;
-    }
-
-    // Apply effects
-    if (rate != 1)
-    {
-        auto inRate = static_cast<int32_t>(bufferLen / byteRate);
-        int32_t outRate = numSamples;
-        if (bytesRead != readLength)
-        {
-            inRate = _format.freq;
-            outRate = _format.freq * (1 / rate);
-        }
-        _effectBuffer.resize(length);
-        bufferLen = ApplyResample(channel, buffer, static_cast<int32_t>(bufferLen / byteRate), numSamples, inRate, outRate);
-        buffer = _effectBuffer.data();
-    }
-
-    // Apply panning and volume
-    ApplyPan(channel, buffer, bufferLen, byteRate);
-    int32_t mixVolume = ApplyVolume(channel, buffer, bufferLen);
-
-    // Finally mix on to destination buffer
-    size_t dstLength = std::min(length, bufferLen);
-    SDL_MixAudioFormat(data, static_cast<const uint8_t*>(buffer), _format.format, static_cast<uint32_t>(dstLength), mixVolume);
-
-    channel->UpdateOldVolume();
+    // Queue audio data
+    ALuint buffer;
+    alGenBuffers(1, &buffer);
+    alBufferData(buffer, AL_FORMAT_STEREO16, data, length, _format.freq);
+    alSourceQueueBuffers(source, 1, &buffer);
 }
 
 /**
@@ -260,22 +186,32 @@ size_t AudioMixer::ApplyResample(
 {
     int32_t byteRate = _format.GetByteRate();
 
-    // Create resampler
-    SpeexResamplerState* resampler = channel->GetResampler();
-    if (resampler == nullptr)
-    {
-        resampler = speex_resampler_init(_format.channels, _format.freq, _format.freq, 0, nullptr);
-        channel->SetResampler(resampler);
-    }
-    speex_resampler_set_rate(resampler, inRate, outRate);
+    // Create OpenAL buffer for resampling
+    ALuint buffer;
+    alGenBuffers(1, &buffer);
 
-    uint32_t inLen = srcSamples;
-    uint32_t outLen = dstSamples;
-    speex_resampler_process_interleaved_int(
-        resampler, static_cast<const spx_int16_t*>(srcBuffer), &inLen, reinterpret_cast<spx_int16_t*>(_effectBuffer.data()),
-        &outLen);
+    // Load source data into buffer with original format
+    alBufferData(
+        buffer, _format.channels == 2 ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16, srcBuffer, srcSamples * byteRate, inRate);
 
-    return outLen * byteRate;
+    // OpenAL will handle resampling when playing at different frequency
+    ALsizei size;
+    ALsizei freq;
+    alGetBufferi(buffer, AL_SIZE, &size);
+    alGetBufferi(buffer, AL_FREQUENCY, &freq);
+
+    // Get resampled data
+    std::vector<ALshort> resampledData(dstSamples * _format.channels);
+    alBufferData(
+        buffer, _format.channels == 2 ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16, resampledData.data(), dstSamples * byteRate,
+        outRate);
+
+    // Copy resampled data to effect buffer
+    memcpy(_effectBuffer.data(), resampledData.data(), dstSamples * byteRate);
+
+    alDeleteBuffers(1, &buffer);
+
+    return dstSamples * byteRate;
 }
 
 void AudioMixer::ApplyPan(const IAudioChannel* channel, void* buffer, size_t len, size_t sampleSize)
