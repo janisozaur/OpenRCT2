@@ -387,7 +387,6 @@ static void BenchgfxRenderScreenshots(const char* inputPath, std::unique_ptr<ICo
         return;
     }
 
-    gIntroState = IntroState::None;
     gScreenFlags = SCREEN_FLAGS_PLAYING;
 
     // Create Viewport and DPI for every rotation and zoom.

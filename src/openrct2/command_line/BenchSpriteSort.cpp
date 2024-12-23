@@ -14,7 +14,6 @@
 #    include "../Context.h"
 #    include "../Game.h"
 #    include "../GameState.h"
-#    include "../Intro.h"
 #    include "../OpenRCT2.h"
 #    include "../audio/audio.h"
 #    include "../core/Console.hpp"
@@ -22,19 +21,20 @@
 #    include "../core/Imaging.h"
 #    include "../drawing/Drawing.h"
 #    include "../interface/Viewport.h"
-#    include "../localisation/Localisation.h"
 #    include "../paint/Paint.h"
 #    include "../platform/Platform.h"
 #    include "../util/Util.h"
 #    include "../world/Climate.h"
 #    include "../world/Map.h"
 #    include "../world/Park.h"
-#    include "../world/Surface.h"
+#include "../Diagnostic.h"
 
 #    include <benchmark/benchmark.h>
 #    include <cstdint>
 #    include <iterator>
 #    include <vector>
+
+using namespace OpenRCT2;
 
 static void fixup_pointers(std::vector<RecordedPaintSession>& s)
 {
@@ -229,7 +229,7 @@ const CommandLineCommand CommandLine::BenchSpriteSortCommands[]{
         "[--benchmark_format=<console|json|csv>] [--benchmark_out=<filename>] [--benchmark_out_format=<json|console|csv>] "
         "[--benchmark_color={auto|true|false}] [--benchmark_counters_tabular={true|false}] [--v=<verbosity>]",
         nullptr, HandleBenchSpriteSort),
-    CommandTableEnd
+    kCommandTableEnd
 #else
     DefineCommand("", "*** SORRY NOT ENABLED IN THIS BUILD ***", nullptr, HandleBenchSpriteSort), CommandTableEnd
 #endif // USE_BENCHMARK

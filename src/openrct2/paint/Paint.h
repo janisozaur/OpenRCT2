@@ -182,6 +182,11 @@ struct PaintNodeStorage
         return &dynamicPaintEntries->emplace_back();
     }
 
+    size_t size() const
+    {
+        return fixedPaintEntries.size() + (dynamicPaintEntries.has_value() ? dynamicPaintEntries->size() : 0);
+    }
+
     void clear()
     {
         fixedPaintEntries.clear();

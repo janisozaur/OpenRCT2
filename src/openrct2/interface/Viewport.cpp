@@ -934,14 +934,14 @@ static void RecordSession(
     // there is no column information embedded in the session itself.
     auto& recordedSession = recorded_sessions->at(record_index);
     recordedSession.Session = session;
-    recordedSession.Entries.resize(session.PaintEntryChain.GetCount());
+    recordedSession.Entries.resize(session.paintEntries.size());
 
     // Mind the offset needs to be calculated against the original `session`, not `session_copy`
     std::unordered_map<PaintStruct*, PaintStruct*> entryRemap;
 
     // Copy all entries
     auto paintIndex = 0;
-    auto chain = session.PaintEntryChain.Head;
+    auto chain = session.paintEntries.fixedPaintEntries[0].AsBasic();
     while (chain != nullptr)
     {
         for (size_t i = 0; i < chain->Count; i++)
@@ -1088,8 +1088,9 @@ static void ViewportPaint(const Viewport* viewport, DrawPixelInfo& dpi, std::vec
         recorded_sessions->resize(columnCount);
     }
 
+    size_t index = 0;
     // Generate and sort columns.
-    for (int32_t x = alignedX; x < rightBorder; x += columnWidth)
+    for (int32_t x = alignedX; x < rightBorder; x += columnWidth, index++)
     {
         PaintSession* session = PaintSessionAlloc(worldDpi, viewport->flags, viewport->rotation);
         _paintColumns.push_back(session);
