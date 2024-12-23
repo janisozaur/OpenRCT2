@@ -208,3 +208,103 @@ void FASTCALL GfxRleSpriteToBuffer(DrawPixelInfo& dpi, const DrawSpriteArgs& arg
         DrawRLESprite<BLEND_TRANSPARENT>(dpi, args);
     }
 }
+
+#include <cstddef>
+#include <cstdint>
+
+static uint8_t palette[256] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255};
+static PaletteMap pm(palette);
+
+
+bool PaletteMap::operator==(const PaletteMap& lhs) const
+{
+    return _data == lhs._data && _dataLength == lhs._dataLength && _numMaps == lhs._numMaps && _mapLength == lhs._mapLength;
+}
+
+uint8_t& PaletteMap::operator[](size_t index)
+{
+    assert(index < _dataLength);
+
+    // Provide safety in release builds
+    if (index >= _dataLength)
+    {
+        static uint8_t dummy;
+        return dummy;
+    }
+
+    return _data[index];
+}
+
+uint8_t PaletteMap::operator[](size_t index) const
+{
+    assert(index < _dataLength);
+
+    // Provide safety in release builds
+    if (index >= _dataLength)
+    {
+        return 0;
+    }
+
+    return _data[index];
+}
+
+uint8_t PaletteMap::Blend(uint8_t src, uint8_t dst) const
+{
+    // src = 0 would be transparent so there is no blend palette for that, hence (src - 1)
+    assert(src != 0 && (src - 1) < _numMaps);
+    assert(dst < _mapLength);
+    auto idx = ((src - 1) * 256) + dst;
+    return (*this)[idx];
+}
+
+ZoomLevel& ZoomLevel::operator=(const ZoomLevel& other)
+{
+    _level = other._level;
+    return *this;
+}
+
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+    if (size < sizeof(DrawPixelInfo) + sizeof(G1Element) + 16)
+        return 0;
+
+    // Create DrawPixelInfo from first part of fuzzer data
+    DrawPixelInfo dpi;
+    memcpy(&dpi, data, sizeof(DrawPixelInfo));
+    
+    // Ensure reasonable bounds for allocated buffers
+    dpi.width = dpi.width & 0x7FF;  // Max 2047
+    dpi.height = dpi.height & 0x7FF;
+    dpi.zoom_level = static_cast<ZoomLevel>(static_cast<int8_t>(dpi.zoom_level) & 0x3); // Valid zoom levels 0-3
+    
+    // Allocate buffer for destination bits
+    std::vector<uint8_t> bits(dpi.width * dpi.height);
+    dpi.bits = bits.data();
+
+    G1Element g1Element;
+    memcpy(&g1Element, data + sizeof(DrawPixelInfo), sizeof(G1Element));
+    g1Element.offset = const_cast<uint8_t*>(data) + sizeof(DrawPixelInfo) + sizeof(G1Element);
+
+
+    // Create DrawSpriteArgs from remaining fuzzer data
+    const uint8_t* remaining = data + sizeof(DrawPixelInfo) + sizeof(G1Element);
+    
+    int32_t args_srcX;
+    int32_t args_srcY;
+    int32_t args_width;
+    int32_t args_height;
+    uint8_t* args_srcImage;
+    memcpy(&args_srcX, remaining, 4);
+    memcpy(&args_srcY, remaining + 4, 4);
+    memcpy(&args_width, remaining + 8, 4);
+    memcpy(&args_height, remaining + 12, 4);
+    args_width &= 0x7FF;
+    args_height &= 0x7FF;
+    args_srcImage = const_cast<uint8_t*>(remaining) + 16;
+
+    DrawSpriteArgs args(ImageId(), pm, g1Element, args_srcX, args_srcY, args_width, args_height, dpi.bits);
+
+    // Call target function
+    GfxRleSpriteToBuffer(dpi, args);
+
+    return 0;
+}

@@ -87,6 +87,7 @@ struct G1Element
     int16_t y_offset = 0;      // 0x0A
     uint16_t flags = 0;        // 0x0C
     int32_t zoomed_offset = 0; // 0x0E
+    size_t size = 0;           // OpenRCT2 addition
 };
 
 #pragma pack(push, 1)

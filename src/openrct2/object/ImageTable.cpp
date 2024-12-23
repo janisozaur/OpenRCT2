@@ -448,6 +448,7 @@ void ImageTable::Read(IReadObjectContext* context, OpenRCT2::IStream* stream)
             imageDataSize = static_cast<uint32_t>(remainingBytes);
         }
 
+        // TODO: add dataSize to G1, try drawing the image to ensure bounds are correct
         auto dataSize = static_cast<size_t>(imageDataSize);
         auto data = std::make_unique<uint8_t[]>(dataSize);
         if (data == nullptr)
