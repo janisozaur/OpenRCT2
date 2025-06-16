@@ -1417,6 +1417,23 @@ namespace OpenRCT2::Ui::Windows
         }
 
         auto& gameState = getGameState();
+
+        // Disable other cheat options when not in editor mode and scenario cheats not enabled
+        if (!isInEditorMode() && !gameState.cheats.scenarioCheatsEnabled)
+        {
+            Dropdown::SetDisabled(DDIDX_CHEATS, true);
+            Dropdown::SetDisabled(DDIDX_TILE_INSPECTOR, true);
+            if (NetworkGetMode() == NETWORK_MODE_NONE) // Only enable if not already disabled by multiplayer
+            {
+                Dropdown::SetDisabled(DDIDX_OBJECT_SELECTION, true);
+                Dropdown::SetDisabled(DDIDX_INVENTIONS_LIST, true);
+            }
+            Dropdown::SetDisabled(DDIDX_SCENARIO_OPTIONS, true);
+            Dropdown::SetDisabled(DDIDX_ENABLE_SANDBOX_MODE, true);
+            Dropdown::SetDisabled(DDIDX_DISABLE_CLEARANCE_CHECKS, true);
+            Dropdown::SetDisabled(DDIDX_DISABLE_SUPPORT_LIMITS, true);
+        }
+
         if (gameState.cheats.sandboxMode)
         {
             Dropdown::SetChecked(DDIDX_ENABLE_SANDBOX_MODE, true);
