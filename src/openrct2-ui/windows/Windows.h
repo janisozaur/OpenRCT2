@@ -55,6 +55,7 @@ namespace OpenRCT2::Ui::Windows
 
     // Cheats
     WindowBase* CheatsOpen();
+    void ShowEnableScenarioCheatsWarning();
 
     // ClearScenery
     WindowBase* ClearSceneryOpen();

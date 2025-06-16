@@ -162,8 +162,6 @@ enum WindowCheatsWidgetIdx
     WIDX_ALLOW_BUILD_IN_PAUSE_MODE,
     WIDX_ALLOW_REGULAR_PATH_AS_QUEUE,
     WIDX_ALLOW_SPECIAL_COLOUR_SCHEMES,
-    WIDX_SCENARIO_GROUP,
-    WIDX_ENABLE_SCENARIO_CHEATS,
 
     WIDX_FIX_ALL = WIDX_TAB_CONTENT,
     WIDX_RENEW_RIDES,
@@ -199,7 +197,7 @@ enum WindowCheatsWidgetIdx
 
 static constexpr StringId WINDOW_TITLE = STR_CHEAT_TITLE;
 static constexpr int32_t WW = 249;
-static constexpr int32_t WH = 315;
+static constexpr int32_t WH = 300;
 
 static constexpr ScreenSize CHEAT_BUTTON = {110, 17};
 static constexpr ScreenSize CHEAT_CHECK = {221, 12};
@@ -311,10 +309,8 @@ static constexpr auto window_cheats_park_widgets = makeWidgets(
     makeWidget        ({  5, 192}, {238,  68},   WidgetType::groupbox, WindowColour::secondary, STR_CHEAT_GROUP_CONSTRUCTION                                                      ), // Construction group
     makeWidget        ({ 11, 207}, CHEAT_CHECK,  WidgetType::checkbox, WindowColour::secondary, STR_CHEAT_BUILD_IN_PAUSE_MODE,          STR_CHEAT_BUILD_IN_PAUSE_MODE_TIP         ), // Build in pause mode
     makeWidget        ({ 11, 224}, CHEAT_CHECK,  WidgetType::checkbox, WindowColour::secondary, STR_CHEAT_ALLOW_PATH_AS_QUEUE,          STR_CHEAT_ALLOW_PATH_AS_QUEUE_TIP         ), // Allow regular footpaths as queue path
-    makeWidget        ({ 11, 241}, CHEAT_CHECK,  WidgetType::checkbox, WindowColour::secondary, STR_CHEAT_ALLOW_SPECIAL_COLOUR_SCHEMES, STR_CHEAT_ALLOW_SPECIAL_COLOUR_SCHEMES_TIP), // Allow special colours in dropdown
+    makeWidget        ({ 11, 241}, CHEAT_CHECK,  WidgetType::checkbox, WindowColour::secondary, STR_CHEAT_ALLOW_SPECIAL_COLOUR_SCHEMES, STR_CHEAT_ALLOW_SPECIAL_COLOUR_SCHEMES_TIP)  // Allow special colours in dropdown
 
-    makeWidget        ({  5, 265}, {238,  25},   WidgetType::groupbox, WindowColour::secondary, STR_CHEAT_GROUP_SCENARIO                                                              ), // Scenario group
-    makeWidget        ({ 11, 280}, CHEAT_CHECK,  WidgetType::checkbox, WindowColour::secondary, STR_CHEAT_ENABLE_SCENARIO_CHEATS,       STR_CHEAT_ENABLE_SCENARIO_CHEATS_TIP      )  // Enable scenario cheats
 );
 
 static constexpr auto window_cheats_rides_widgets = makeWidgets(
@@ -417,8 +413,7 @@ static StringId window_cheats_page_titles[] = {
     static constexpr auto _scenarioCheatsWarningWidgets = makeWidgets(
         makeWindowShim(STR_CHEAT_ENABLE_SCENARIO_CHEATS, { WW_WARNING, WH_WARNING }),
         makeWidget({ 10, WH_WARNING - 25 }, { 120, 14 }, WidgetType::button, WindowColour::primary, STR_OK),
-        makeWidget({ WW_WARNING - 130, WH_WARNING - 25 }, { 120, 14 }, WidgetType::button, WindowColour::primary, STR_CANCEL)
-    );
+        makeWidget({ WW_WARNING - 130, WH_WARNING - 25 }, { 120, 14 }, WidgetType::button, WindowColour::primary, STR_CANCEL));
 
     class ScenarioCheatsWarningWindow final : public Window
     {
@@ -448,11 +443,12 @@ static StringId window_cheats_page_titles[] = {
             WindowDrawWidgets(*this, rt);
 
             ScreenCoordsXY stringCoords(windowPos.x + WW_WARNING / 2, windowPos.y + 50);
-            DrawTextWrapped(rt, stringCoords, WW_WARNING - 20, STR_ENABLE_SCENARIO_CHEATS_WARNING, {}, { TextAlignment::CENTRE });
+            DrawTextWrapped(
+                rt, stringCoords, WW_WARNING - 20, STR_ENABLE_SCENARIO_CHEATS_WARNING, {}, { TextAlignment::CENTRE });
         }
     };
 
-    static void ShowEnableScenarioCheatsWarning()
+    void ShowEnableScenarioCheatsWarning()
     {
         auto* windowMgr = Ui::GetWindowManager();
         windowMgr->CloseByClass(WindowClass::LoadsaveOverwritePrompt);
@@ -615,9 +611,6 @@ static StringId window_cheats_page_titles[] = {
                     SetCheckboxValue(WIDX_ALLOW_BUILD_IN_PAUSE_MODE, gameState.cheats.buildInPauseMode);
                     SetCheckboxValue(WIDX_ALLOW_REGULAR_PATH_AS_QUEUE, gameState.cheats.allowRegularPathAsQueue);
                     SetCheckboxValue(WIDX_ALLOW_SPECIAL_COLOUR_SCHEMES, gameState.cheats.allowSpecialColourSchemes);
-                    SetCheckboxValue(WIDX_ENABLE_SCENARIO_CHEATS, gameState.cheats.scenarioCheatsEnabled);
-                    // Disable the scenario cheats checkbox if it's already enabled (can't be undone)
-                    SetWidgetDisabled(WIDX_ENABLE_SCENARIO_CHEATS, gameState.cheats.scenarioCheatsEnabled);
                     break;
                 case WINDOW_CHEATS_PAGE_RIDES:
                     SetCheckboxValue(WIDX_UNLOCK_OPERATING_LIMITS, gameState.cheats.unlockOperatingLimits);
@@ -1146,9 +1139,6 @@ static StringId window_cheats_page_titles[] = {
                     break;
                 case WIDX_ALLOW_SPECIAL_COLOUR_SCHEMES:
                     CheatsSet(CheatType::AllowSpecialColourSchemes, !gameState.cheats.allowSpecialColourSchemes);
-                    break;
-                case WIDX_ENABLE_SCENARIO_CHEATS:
-                    ShowEnableScenarioCheatsWarning();
                     break;
             }
         }

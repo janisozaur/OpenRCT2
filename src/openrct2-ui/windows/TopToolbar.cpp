@@ -162,6 +162,7 @@ namespace OpenRCT2::Ui::Windows
         DDIDX_ENABLE_SANDBOX_MODE = 6,
         DDIDX_DISABLE_CLEARANCE_CHECKS = 7,
         DDIDX_DISABLE_SUPPORT_LIMITS = 8,
+        DDIDX_ENABLE_SCENARIO_CHEATS = 9,
 
         TOP_TOOLBAR_CHEATS_COUNT,
     };
@@ -1390,6 +1391,7 @@ namespace OpenRCT2::Ui::Windows
             ToggleOption(DDIDX_ENABLE_SANDBOX_MODE, STR_ENABLE_SANDBOX_MODE),
             ToggleOption(DDIDX_DISABLE_CLEARANCE_CHECKS, STR_DISABLE_CLEARANCE_CHECKS),
             ToggleOption(DDIDX_DISABLE_SUPPORT_LIMITS, STR_DISABLE_SUPPORT_LIMITS),
+            ToggleOption(DDIDX_ENABLE_SCENARIO_CHEATS, STR_CHEAT_ENABLE_SCENARIO_CHEATS),
         };
         static_assert(ItemIDsMatchIndices(items));
 
@@ -1427,6 +1429,10 @@ namespace OpenRCT2::Ui::Windows
         {
             Dropdown::SetChecked(DDIDX_DISABLE_SUPPORT_LIMITS, true);
         }
+        if (gameState.cheats.scenarioCheatsEnabled)
+        {
+            Dropdown::SetChecked(DDIDX_ENABLE_SCENARIO_CHEATS, true);
+        }
 
         gDropdownDefaultIndex = DDIDX_CHEATS;
     }
@@ -1462,6 +1468,12 @@ namespace OpenRCT2::Ui::Windows
                 break;
             case DDIDX_DISABLE_SUPPORT_LIMITS:
                 CheatsSet(CheatType::DisableSupportLimits, !getGameState().cheats.disableSupportLimits);
+                break;
+            case DDIDX_ENABLE_SCENARIO_CHEATS:
+                if (!getGameState().cheats.scenarioCheatsEnabled)
+                {
+                    ShowEnableScenarioCheatsWarning();
+                }
                 break;
         }
     }
