@@ -273,6 +273,13 @@ GameActions::Result CheatSetAction::Execute() const
         case CheatType::RemoveParkFences:
             RemoveParkFences();
             break;
+        case CheatType::EnableScenarioCheats:
+            // This cheat can only be enabled, not disabled
+            if (_param1 != 0)
+            {
+                gameState.cheats.scenarioCheatsEnabled = true;
+            }
+            break;
         default:
         {
             LOG_ERROR("Invalid cheat type %d", _cheatType.id);
@@ -349,6 +356,8 @@ ParametersRange CheatSetAction::GetParameterRange(CheatType cheatType) const
         case CheatType::AllowSpecialColourSchemes:
             [[fallthrough]];
         case CheatType::AllowTrackPlaceInvalidHeights:
+            [[fallthrough]];
+        case CheatType::EnableScenarioCheats:
             [[fallthrough]];
         case CheatType::OpenClosePark:
             return { { 0, 1 }, { 0, 0 } };

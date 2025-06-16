@@ -424,7 +424,11 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<StringId>(STR_STRING);
                 ft.Add<const char*>(completedByName.c_str());
                 ft.Add<money64>(scenario->Highscore->company_value);
-                screenPos.y += DrawTextWrapped(rt, screenPos, previewPaneWidth, STR_COMPLETED_BY_WITH_COMPANY_VALUE, ft);
+
+                StringId displayString = scenario->Highscore->cheated ? STR_COMPLETED_WITH_CHEATS_BY_WITH_COMPANY_VALUE
+                                                                      : STR_COMPLETED_BY_WITH_COMPANY_VALUE;
+
+                screenPos.y += DrawTextWrapped(rt, screenPos, previewPaneWidth, displayString, ft);
             }
         }
 

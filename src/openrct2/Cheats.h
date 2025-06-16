@@ -46,6 +46,7 @@ struct CheatsState
     bool allowRegularPathAsQueue;
     bool allowSpecialColourSchemes;
     bool makeAllDestructible;
+    bool scenarioCheatsEnabled;
     StaffSpeedCheat selectedStaffSpeed;
     int32_t forcedParkRating;
 };
@@ -106,6 +107,7 @@ enum class CheatType : int32_t
     AllowSpecialColourSchemes,
     RemoveParkFences,
     IgnorePrice,
+    EnableScenarioCheats,
     Count,
 };
 
