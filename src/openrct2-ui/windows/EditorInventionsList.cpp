@@ -11,6 +11,8 @@
 #include <openrct2-ui/input/MouseInput.h>
 #include <openrct2-ui/interface/Widget.h>
 #include <openrct2-ui/windows/Windows.h>
+#include <openrct2/Cheats.h>
+#include <openrct2/Context.h>
 #include <openrct2/Editor.h>
 #include <openrct2/GameState.h>
 #include <openrct2/Input.h>
@@ -518,6 +520,14 @@ namespace OpenRCT2::Ui::Windows
         void MoveResearchItem(const ResearchItem& item, ResearchItem* beforeItem, bool isInvented)
         {
             auto& gameState = getGameState();
+
+            // Check if scenario cheats are enabled when not in editor mode
+            if (!isInEditorMode() && !gameState.cheats.scenarioCheatsEnabled)
+            {
+                ContextShowError(STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone, {});
+                return;
+            }
+
             _selectedResearchItem = nullptr;
             Invalidate();
 

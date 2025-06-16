@@ -12,6 +12,7 @@
 #include "../Context.h"
 #include "../Date.h"
 #include "../Diagnostic.h"
+#include "../Editor.h"
 #include "../Game.h"
 #include "../GameState.h"
 #include "../OpenRCT2.h"
@@ -917,6 +918,14 @@ void ResearchFix()
 void ResearchItemsMakeAllUnresearched()
 {
     auto& gameState = getGameState();
+
+    // Check if scenario cheats are enabled when not in editor mode
+    if (!isInEditorMode() && !gameState.cheats.scenarioCheatsEnabled)
+    {
+        ContextShowError(STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone, {});
+        return;
+    }
+
     gameState.researchItemsUninvented.insert(
         gameState.researchItemsUninvented.end(), std::make_move_iterator(gameState.researchItemsInvented.begin()),
         std::make_move_iterator(gameState.researchItemsInvented.end()));
@@ -926,6 +935,14 @@ void ResearchItemsMakeAllUnresearched()
 void ResearchItemsMakeAllResearched()
 {
     auto& gameState = getGameState();
+
+    // Check if scenario cheats are enabled when not in editor mode
+    if (!isInEditorMode() && !gameState.cheats.scenarioCheatsEnabled)
+    {
+        ContextShowError(STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone, {});
+        return;
+    }
+
     gameState.researchItemsInvented.insert(
         gameState.researchItemsInvented.end(), std::make_move_iterator(gameState.researchItemsUninvented.begin()),
         std::make_move_iterator(gameState.researchItemsUninvented.end()));
@@ -939,6 +956,14 @@ void ResearchItemsMakeAllResearched()
 void ResearchItemsShuffle()
 {
     auto& gameState = getGameState();
+
+    // Check if scenario cheats are enabled when not in editor mode
+    if (!isInEditorMode() && !gameState.cheats.scenarioCheatsEnabled)
+    {
+        ContextShowError(STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone, {});
+        return;
+    }
+
     std::shuffle(
         std::begin(gameState.researchItemsUninvented), std::end(gameState.researchItemsUninvented),
         std::default_random_engine{});

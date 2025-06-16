@@ -12,6 +12,7 @@
 #include "../Context.h"
 #include "../Diagnostic.h"
 #include "../GameState.h"
+#include "../OpenRCT2.h"
 #include "../core/MemoryStream.h"
 #include "../drawing/Drawing.h"
 #include "../management/Finance.h"
@@ -55,6 +56,12 @@ GameActions::Result ParkSetNameAction::Query() const
 
 GameActions::Result ParkSetNameAction::Execute() const
 {
+    // Check if scenario cheats are enabled when not in editor mode
+    if (!isInEditorMode() && !getGameState().cheats.scenarioCheatsEnabled)
+    {
+        return GameActions::Result(GameActions::Status::Disallowed, STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone);
+    }
+
     // Do a no-op if new name is the same as the current name is the same
     auto& park = getGameState().park;
     if (_name != park.Name)

@@ -682,6 +682,13 @@ namespace OpenRCT2::Ui::Windows
          */
         void SetObjective(int32_t objective)
         {
+            // Check if scenario cheats are enabled when not in editor mode
+            if (!isInEditorMode() && !getGameState().cheats.scenarioCheatsEnabled)
+            {
+                ContextShowError(STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone, {});
+                return;
+            }
+
             auto& gameState = getGameState();
             gameState.scenarioObjective.Type = objective;
             Invalidate();
@@ -784,6 +791,13 @@ namespace OpenRCT2::Ui::Windows
 
         void Arg1Increase()
         {
+            // Check if scenario cheats are enabled when not in editor mode
+            if (!isInEditorMode() && !getGameState().cheats.scenarioCheatsEnabled)
+            {
+                ContextShowError(STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone, {});
+                return;
+            }
+
             auto& gameState = getGameState();
             switch (gameState.scenarioObjective.Type)
             {
@@ -849,6 +863,13 @@ namespace OpenRCT2::Ui::Windows
 
         void Arg1Decrease()
         {
+            // Check if scenario cheats are enabled when not in editor mode
+            if (!isInEditorMode() && !getGameState().cheats.scenarioCheatsEnabled)
+            {
+                ContextShowError(STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone, {});
+                return;
+            }
+
             auto& gameState = getGameState();
             switch (gameState.scenarioObjective.Type)
             {
@@ -914,6 +935,13 @@ namespace OpenRCT2::Ui::Windows
 
         void Arg2Increase()
         {
+            // Check if scenario cheats are enabled when not in editor mode
+            if (!isInEditorMode() && !getGameState().cheats.scenarioCheatsEnabled)
+            {
+                ContextShowError(STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone, {});
+                return;
+            }
+
             auto& gameState = getGameState();
             if (gameState.scenarioObjective.Year >= kObjectiveYearMax)
             {
@@ -928,6 +956,13 @@ namespace OpenRCT2::Ui::Windows
 
         void Arg2Decrease()
         {
+            // Check if scenario cheats are enabled when not in editor mode
+            if (!isInEditorMode() && !getGameState().cheats.scenarioCheatsEnabled)
+            {
+                ContextShowError(STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone, {});
+                return;
+            }
+
             auto& gameState = getGameState();
             if (gameState.scenarioObjective.Year <= kObjectiveYearMin)
             {
@@ -1323,6 +1358,13 @@ namespace OpenRCT2::Ui::Windows
         {
             if (text.empty())
                 return;
+
+            // Check if scenario cheats are enabled when not in editor mode
+            if (!isInEditorMode() && !getGameState().cheats.scenarioCheatsEnabled)
+            {
+                ContextShowError(STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone, {});
+                return;
+            }
 
             auto& gameState = getGameState();
             switch (widgetIndex)

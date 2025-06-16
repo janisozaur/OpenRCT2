@@ -625,6 +625,14 @@ namespace OpenRCT2::Ui::Windows
                             {
                                 completedByName = scenario->Highscore->name;
                             }
+
+                            // Show cheat information in the list
+                            if (scenario->Highscore->cheated)
+                            {
+                                // Show completed with cheats
+                                completedByName = u8"[CHEATS] " + completedByName;
+                            }
+
                             ft = Formatter();
                             ft.Add<StringId>(STR_COMPLETED_BY);
                             ft.Add<StringId>(STR_STRING);

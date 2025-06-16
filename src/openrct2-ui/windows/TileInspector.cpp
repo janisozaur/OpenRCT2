@@ -15,8 +15,11 @@
 #include <openrct2-ui/interface/Viewport.h>
 #include <openrct2-ui/interface/Widget.h>
 #include <openrct2-ui/windows/Windows.h>
+#include <openrct2/Context.h>
 #include <openrct2/Game.h>
+#include <openrct2/GameState.h>
 #include <openrct2/Input.h>
+#include <openrct2/OpenRCT2.h>
 #include <openrct2/SpriteIds.h>
 #include <openrct2/actions/TileModifyAction.h>
 #include <openrct2/core/Guard.hpp>
@@ -1866,8 +1869,20 @@ static uint64_t PageDisabledWidgets[] = {
             Invalidate();
         }
 
+        bool CheckScenarioCheatsAllowed()
+        {
+            if (!isInEditorMode() && !getGameState().cheats.scenarioCheatsEnabled)
+            {
+                ContextShowError(STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone, {});
+                return false;
+            }
+            return true;
+        }
+
         void RemoveElement(int32_t elementIndex)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             Guard::Assert(elementIndex >= 0 && elementIndex < windowTileInspectorElementCount, "elementIndex out of range");
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::AnyRemove, elementIndex);
             GameActions::Execute(&modifyTile);
@@ -1875,6 +1890,8 @@ static uint64_t PageDisabledWidgets[] = {
 
         void RotateElement(int32_t elementIndex)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             Guard::Assert(elementIndex >= 0 && elementIndex < windowTileInspectorElementCount, "elementIndex out of range");
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::AnyRotate, elementIndex);
             GameActions::Execute(&modifyTile);
@@ -1883,6 +1900,8 @@ static uint64_t PageDisabledWidgets[] = {
         // Swap element with its parent
         void SwapElements(int16_t first, int16_t second)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             bool firstInRange = first >= 0 && first < windowTileInspectorElementCount;
             bool secondInRange = second >= 0 && second < windowTileInspectorElementCount;
             // This might happen if two people are modifying the same tile.
@@ -1894,6 +1913,8 @@ static uint64_t PageDisabledWidgets[] = {
 
         void SortElements()
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             Guard::Assert(_tileSelected, "No tile selected");
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::AnySort);
             GameActions::Execute(&modifyTile);
@@ -1901,6 +1922,8 @@ static uint64_t PageDisabledWidgets[] = {
 
         void CopyElement()
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             const TileElement* const tileElement = OpenRCT2::TileInspector::GetSelectedElement();
             Guard::Assert(tileElement != nullptr, "Invalid tile element");
             // Copy value, in case the element gets moved
@@ -1919,42 +1942,56 @@ static uint64_t PageDisabledWidgets[] = {
 
         void PasteElement()
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::AnyPaste, 0, 0, _copiedElement, _copiedBanner);
             GameActions::Execute(&modifyTile);
         }
 
         void BaseHeightOffset(int16_t elementIndex, int8_t heightOffset)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::AnyBaseHeightOffset, elementIndex, heightOffset);
             GameActions::Execute(&modifyTile);
         }
 
         void SurfaceShowParkFences(bool showFences)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::SurfaceShowParkFences, showFences);
             GameActions::Execute(&modifyTile);
         }
 
         void SurfaceToggleCorner(int32_t cornerIndex)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::SurfaceToggleCorner, cornerIndex);
             GameActions::Execute(&modifyTile);
         }
 
         void SurfaceToggleDiagonal()
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::SurfaceToggleDiagonal);
             GameActions::Execute(&modifyTile);
         }
 
         void PathSetSloped(int32_t elementIndex, bool sloped)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::PathSetSlope, elementIndex, sloped);
             GameActions::Execute(&modifyTile);
         }
 
         void PathSetJunctionRailings(int32_t elementIndex, bool hasJunctionRailings)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             auto modifyTile = TileModifyAction(
                 _toolMap, TileModifyType::PathSetJunctionRailings, elementIndex, hasJunctionRailings);
             GameActions::Execute(&modifyTile);
@@ -1962,12 +1999,16 @@ static uint64_t PageDisabledWidgets[] = {
 
         void PathSetBroken(int32_t elementIndex, bool broken)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::PathSetBroken, elementIndex, broken);
             GameActions::Execute(&modifyTile);
         }
 
         void PathToggleEdge(int32_t elementIndex, int32_t cornerIndex)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             Guard::Assert(elementIndex >= 0 && elementIndex < windowTileInspectorElementCount, "elementIndex out of range");
             Guard::Assert(cornerIndex >= 0 && cornerIndex < 8, "cornerIndex out of range");
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::PathToggleEdge, elementIndex, cornerIndex);
@@ -1976,6 +2017,8 @@ static uint64_t PageDisabledWidgets[] = {
 
         void EntranceMakeUsable(int32_t elementIndex)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             Guard::ArgumentInRange(elementIndex, 0, windowTileInspectorElementCount - 1);
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::EntranceMakeUsable, elementIndex);
             GameActions::Execute(&modifyTile);
@@ -1983,6 +2026,8 @@ static uint64_t PageDisabledWidgets[] = {
 
         void WallSetSlope(int32_t elementIndex, int32_t slopeValue)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             // Make sure only the correct bits are set
             Guard::Assert((slopeValue & 3) == slopeValue, "slopeValue doesn't match its mask");
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::WallSetSlope, elementIndex, slopeValue);
@@ -1991,6 +2036,8 @@ static uint64_t PageDisabledWidgets[] = {
 
         void WallAnimationFrameOffset(int16_t elementIndex, int8_t animationFrameOffset)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             auto modifyTile = TileModifyAction(
                 _toolMap, TileModifyType::WallSetAnimationFrame, elementIndex, animationFrameOffset);
             GameActions::Execute(&modifyTile);
@@ -1998,12 +2045,16 @@ static uint64_t PageDisabledWidgets[] = {
 
         void TrackBlockHeightOffset(int32_t elementIndex, int8_t heightOffset)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::TrackBaseHeightOffset, elementIndex, heightOffset);
             GameActions::Execute(&modifyTile);
         }
 
         void TrackBlockSetLift(int32_t elementIndex, bool entireTrackBlock, bool chain)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             auto modifyTile = TileModifyAction(
                 _toolMap, entireTrackBlock ? TileModifyType::TrackSetChainBlock : TileModifyType::TrackSetChain, elementIndex,
                 chain);
@@ -2012,12 +2063,16 @@ static uint64_t PageDisabledWidgets[] = {
 
         void TrackSetBrakeClosed(int32_t elementIndex, bool isClosed)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::TrackSetBrake, elementIndex, isClosed);
             GameActions::Execute(&modifyTile);
         }
 
         void TrackSetIndestructible(int32_t elementIndex, bool isIndestructible)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             auto modifyTile = TileModifyAction(
                 _toolMap, TileModifyType::TrackSetIndestructible, elementIndex, isIndestructible);
             GameActions::Execute(&modifyTile);
@@ -2025,6 +2080,8 @@ static uint64_t PageDisabledWidgets[] = {
 
         void QuarterTileSet(int32_t elementIndex, const int32_t quarterIndex)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             // quarterIndex is widget index relative to WIDX_SCENERY_CHECK_QUARTER_N, so a value from 0-3
             Guard::Assert(quarterIndex >= 0 && quarterIndex < 4, "quarterIndex out of range");
             auto modifyTile = TileModifyAction(
@@ -2035,6 +2092,8 @@ static uint64_t PageDisabledWidgets[] = {
         // ToggleQuadrantCollision?
         void ToggleQuadrantCollosion(int32_t elementIndex, const int32_t quadrantIndex)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             auto modifyTile = TileModifyAction(
                 _toolMap, TileModifyType::ScenerySetQuarterCollision, elementIndex,
                 (quadrantIndex + 2 - GetCurrentRotation()) & 3);
@@ -2043,6 +2102,8 @@ static uint64_t PageDisabledWidgets[] = {
 
         void BannerToggleBlock(int32_t elementIndex, int32_t edgeIndex)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             Guard::Assert(edgeIndex >= 0 && edgeIndex < 4, "edgeIndex out of range");
             // Make edgeIndex  = 0
             edgeIndex = (edgeIndex - GetCurrentRotation()) & 3;
@@ -2052,6 +2113,8 @@ static uint64_t PageDisabledWidgets[] = {
 
         void ToggleInvisibility(int32_t elementIndex)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             Guard::Assert(elementIndex >= 0 && elementIndex < windowTileInspectorElementCount, "elementIndex out of range");
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::AnyToggleInvisilibity, elementIndex);
             GameActions::Execute(&modifyTile);
@@ -2059,6 +2122,8 @@ static uint64_t PageDisabledWidgets[] = {
 
         void WallSetAnimationIsBackwards(int32_t elementIndex, bool backwards)
         {
+            if (!CheckScenarioCheatsAllowed())
+                return;
             auto modifyTile = TileModifyAction(_toolMap, TileModifyType::WallSetAnimationIsBackwards, elementIndex, backwards);
             GameActions::Execute(&modifyTile);
         }
