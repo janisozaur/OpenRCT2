@@ -86,6 +86,14 @@ void ScenarioBegin(GameState_t& gameState)
     GameLoadInit();
     ScenarioReset(gameState);
 
+    // Check if this is an original scenario and disable scenario cheats if so
+    SourceDescriptor sourceDesc;
+    bool isOriginalScenario = ScenarioSources::TryGetByName(gameState.scenarioName, &sourceDesc);
+    if (isOriginalScenario)
+    {
+        gameState.cheats.scenarioCheatsEnabled = false;
+    }
+
     if (gameState.scenarioObjective.Type != OBJECTIVE_NONE && !gLoadKeepWindowsOpen)
         ContextOpenWindowView(WV_PARK_OBJECTIVE);
 
@@ -198,7 +206,8 @@ void ScenarioSuccess(GameState_t& gameState)
     gameState.scenarioCompletedCompanyValue = companyValue;
     PeepApplause();
 
-    if (ScenarioRepositoryTryRecordHighscore(gameState.scenarioFileName.c_str(), companyValue, nullptr))
+    bool cheated = gameState.cheats.scenarioCheatsEnabled;
+    if (ScenarioRepositoryTryRecordHighscore(gameState.scenarioFileName.c_str(), companyValue, nullptr, cheated))
     {
         // Allow name entry
         gameState.park.Flags |= PARK_FLAGS_SCENARIO_COMPLETE_NAME_INPUT;
@@ -213,7 +222,9 @@ void ScenarioSuccess(GameState_t& gameState)
  */
 void ScenarioSuccessSubmitName(GameState_t& gameState, const char* name)
 {
-    if (ScenarioRepositoryTryRecordHighscore(gameState.scenarioFileName.c_str(), gameState.scenarioCompanyValueRecord, name))
+    bool cheated = gameState.cheats.scenarioCheatsEnabled;
+    if (ScenarioRepositoryTryRecordHighscore(
+            gameState.scenarioFileName.c_str(), gameState.scenarioCompanyValueRecord, name, cheated))
     {
         gameState.scenarioCompletedBy = name;
     }

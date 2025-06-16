@@ -55,6 +55,7 @@ void CheatsReset()
     gameState.cheats.allowRegularPathAsQueue = false;
     gameState.cheats.allowSpecialColourSchemes = false;
     gameState.cheats.makeAllDestructible = false;
+    gameState.cheats.scenarioCheatsEnabled = true;
     gameState.cheats.selectedStaffSpeed = StaffSpeedCheat::None;
     gameState.cheats.forcedParkRating = kForcedParkRatingDisabled;
 }
@@ -116,6 +117,7 @@ void CheatsSerialise(DataSerialiser& ds)
         CheatEntrySerialise(ds, CheatType::SetStaffSpeed, gameState.cheats.selectedStaffSpeed, count);
         CheatEntrySerialise(ds, CheatType::IgnorePrice, gameState.cheats.ignorePrice, count);
         CheatEntrySerialise(ds, CheatType::SetForcedParkRating, gameState.cheats.forcedParkRating, count);
+        CheatEntrySerialise(ds, CheatType::EnableScenarioCheats, gameState.cheats.scenarioCheatsEnabled, count);
 
         // Remember current position and update count.
         uint64_t endOffset = stream.GetPosition();
@@ -225,6 +227,9 @@ void CheatsSerialise(DataSerialiser& ds)
                     break;
                 case CheatType::SetForcedParkRating:
                     ds << gameState.cheats.forcedParkRating;
+                    break;
+                case CheatType::EnableScenarioCheats:
+                    ds << gameState.cheats.scenarioCheatsEnabled;
                     break;
                 default:
                     break;
@@ -337,6 +342,8 @@ const char* CheatsGetName(CheatType cheatType)
             return LanguageGetString(STR_CHEAT_ALLOW_SPECIAL_COLOUR_SCHEMES);
         case CheatType::RemoveParkFences:
             return LanguageGetString(STR_CHEAT_REMOVE_PARK_FENCES);
+        case CheatType::EnableScenarioCheats:
+            return LanguageGetString(STR_CHEAT_ENABLE_SCENARIO_CHEATS);
         default:
             return "Unknown Cheat";
     }

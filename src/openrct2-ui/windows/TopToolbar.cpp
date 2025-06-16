@@ -162,6 +162,7 @@ namespace OpenRCT2::Ui::Windows
         DDIDX_ENABLE_SANDBOX_MODE = 6,
         DDIDX_DISABLE_CLEARANCE_CHECKS = 7,
         DDIDX_DISABLE_SUPPORT_LIMITS = 8,
+        DDIDX_ENABLE_SCENARIO_CHEATS = 9,
 
         TOP_TOOLBAR_CHEATS_COUNT,
     };
@@ -1390,6 +1391,7 @@ namespace OpenRCT2::Ui::Windows
             ToggleOption(DDIDX_ENABLE_SANDBOX_MODE, STR_ENABLE_SANDBOX_MODE),
             ToggleOption(DDIDX_DISABLE_CLEARANCE_CHECKS, STR_DISABLE_CLEARANCE_CHECKS),
             ToggleOption(DDIDX_DISABLE_SUPPORT_LIMITS, STR_DISABLE_SUPPORT_LIMITS),
+            ToggleOption(DDIDX_ENABLE_SCENARIO_CHEATS, STR_CHEAT_ENABLE_SCENARIO_CHEATS),
         };
         static_assert(ItemIDsMatchIndices(items));
 
@@ -1415,6 +1417,23 @@ namespace OpenRCT2::Ui::Windows
         }
 
         auto& gameState = getGameState();
+
+        // Disable other cheat options when not in editor mode and scenario cheats not enabled
+        if (!isInEditorMode() && !gameState.cheats.scenarioCheatsEnabled)
+        {
+            Dropdown::SetDisabled(DDIDX_CHEATS, true);
+            Dropdown::SetDisabled(DDIDX_TILE_INSPECTOR, true);
+            if (NetworkGetMode() == NETWORK_MODE_NONE) // Only enable if not already disabled by multiplayer
+            {
+                Dropdown::SetDisabled(DDIDX_OBJECT_SELECTION, true);
+                Dropdown::SetDisabled(DDIDX_INVENTIONS_LIST, true);
+            }
+            Dropdown::SetDisabled(DDIDX_SCENARIO_OPTIONS, true);
+            Dropdown::SetDisabled(DDIDX_ENABLE_SANDBOX_MODE, true);
+            Dropdown::SetDisabled(DDIDX_DISABLE_CLEARANCE_CHECKS, true);
+            Dropdown::SetDisabled(DDIDX_DISABLE_SUPPORT_LIMITS, true);
+        }
+
         if (gameState.cheats.sandboxMode)
         {
             Dropdown::SetChecked(DDIDX_ENABLE_SANDBOX_MODE, true);
@@ -1426,6 +1445,12 @@ namespace OpenRCT2::Ui::Windows
         if (gameState.cheats.disableSupportLimits)
         {
             Dropdown::SetChecked(DDIDX_DISABLE_SUPPORT_LIMITS, true);
+        }
+        if (gameState.cheats.scenarioCheatsEnabled)
+        {
+            Dropdown::SetChecked(DDIDX_ENABLE_SCENARIO_CHEATS, true);
+            // Disable the scenario cheats option if it's already enabled (can't be undone)
+            Dropdown::SetDisabled(DDIDX_ENABLE_SCENARIO_CHEATS, true);
         }
 
         gDropdownDefaultIndex = DDIDX_CHEATS;
@@ -1462,6 +1487,12 @@ namespace OpenRCT2::Ui::Windows
                 break;
             case DDIDX_DISABLE_SUPPORT_LIMITS:
                 CheatsSet(CheatType::DisableSupportLimits, !getGameState().cheats.disableSupportLimits);
+                break;
+            case DDIDX_ENABLE_SCENARIO_CHEATS:
+                if (!getGameState().cheats.scenarioCheatsEnabled)
+                {
+                    ShowEnableScenarioCheatsWarning();
+                }
                 break;
         }
     }

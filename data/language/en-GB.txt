@@ -3829,3 +3829,9 @@ STR_6781    :Screenshots
 STR_6782    :Park notifications
 STR_6783    :Ride notifications
 STR_6784    :Guest notifications
+STR_6785    :Enable cheats for this scenario
+STR_6786    :Permanently enable cheats for this scenario. This will be marked as 'cheated' in highscores.
+STR_6787    :Scenario
+STR_6788    :{WINDOW_COLOUR_2}Completed with cheats by: {BLACK}{STRINGID}{NEWLINE}{WINDOW_COLOUR_2} with a company value of: {BLACK}{CURRENCY}
+STR_6789    :{WINDOW_COLOUR_2}Warning! Enabling cheats for this scenario cannot be undone.{NEWLINE}{NEWLINE}Once enabled, any completion of this scenario will be permanently marked as "completed with cheats".{NEWLINE}{NEWLINE}Are you sure you want to enable cheats?
+STR_6790    :Cheats are not enabled for this scenario. Enable scenario cheats first.

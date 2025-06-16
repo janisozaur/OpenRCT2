@@ -249,7 +249,7 @@ private:
 class ScenarioRepository final : public IScenarioRepository
 {
 private:
-    static constexpr uint32_t HighscoreFileVersion = 2;
+    static constexpr uint32_t HighscoreFileVersion = 3;
 
     IPlatformEnvironment& _env;
     ScenarioFileIndex const _fileIndex;
@@ -347,7 +347,8 @@ public:
         return nullptr;
     }
 
-    bool TryRecordHighscore(int32_t language, const utf8* scenarioFileName, money64 companyValue, const utf8* name) override
+    bool TryRecordHighscore(
+        int32_t language, const utf8* scenarioFileName, money64 companyValue, const utf8* name, bool cheated = false) override
     {
         // Scan the scenarios so we have a fresh list to query. This is to prevent the issue of scenario completions
         // not getting recorded, see #4951.
@@ -383,8 +384,28 @@ public:
         {
             // Check if record company value has been broken or the highscore is the same but no name is registered
             ScenarioHighscoreEntry* highscore = scenario->Highscore;
-            if (highscore == nullptr || companyValue > highscore->company_value
-                || (highscore->name.empty() && companyValue == highscore->company_value))
+            bool shouldRecord = false;
+
+            if (highscore == nullptr)
+            {
+                // No existing highscore, record this one
+                shouldRecord = true;
+            }
+            else if (!cheated && highscore->cheated)
+            {
+                // Non-cheated scores always override cheated scores
+                shouldRecord = true;
+            }
+            else if (cheated == highscore->cheated)
+            {
+                // Same cheat status, check company value or empty name
+                shouldRecord
+                    = (companyValue > highscore->company_value
+                       || (highscore->name.empty() && companyValue == highscore->company_value));
+            }
+            // If this is cheated and existing is not cheated, don't record
+
+            if (shouldRecord)
             {
                 if (highscore == nullptr)
                 {
@@ -402,6 +423,7 @@ public:
                 highscore->fileName = Path::GetFileName(scenario->Path);
                 highscore->name = name != nullptr ? name : "";
                 highscore->company_value = companyValue;
+                highscore->cheated = cheated;
                 SaveHighscores();
                 return true;
             }
@@ -536,7 +558,7 @@ private:
         {
             auto fs = FileStream(path, FileMode::open);
             uint32_t fileVersion = fs.ReadValue<uint32_t>();
-            if (fileVersion != 1 && fileVersion != 2)
+            if (fileVersion < 1 || fileVersion > 3)
             {
                 Console::Error::WriteLine("Invalid or incompatible highscores file.");
                 return;
@@ -552,6 +574,14 @@ private:
                 highscore->name = fs.ReadStdString();
                 highscore->company_value = fileVersion == 1 ? fs.ReadValue<money32>() : fs.ReadValue<money64>();
                 highscore->timestamp = fs.ReadValue<datetime64>();
+                if (fileVersion >= 3)
+                {
+                    highscore->cheated = fs.ReadValue<bool>();
+                }
+                else
+                {
+                    highscore->cheated = false; // Assume old scores are not cheated
+                }
             }
         }
         catch (const std::exception&)
@@ -613,6 +643,7 @@ private:
                                 highscore->name = name;
                                 highscore->company_value = scBasic.CompanyValue;
                                 highscore->timestamp = kDatetime64Min;
+                                highscore->cheated = false; // Legacy scores assumed not cheated
                                 break;
                             }
                         }
@@ -625,6 +656,7 @@ private:
                         highscore->name = name;
                         highscore->company_value = scBasic.CompanyValue;
                         highscore->timestamp = kDatetime64Min;
+                        highscore->cheated = false; // Legacy scores assumed not cheated
                     }
                 }
             }
@@ -683,6 +715,7 @@ private:
                 fs.WriteString(highscore->name);
                 fs.WriteValue(highscore->company_value);
                 fs.WriteValue(highscore->timestamp);
+                fs.WriteValue(highscore->cheated);
             }
         }
         catch (const std::exception&)
@@ -720,8 +753,8 @@ const ScenarioIndexEntry* ScenarioRepositoryGetByIndex(size_t index)
     return repo->GetByIndex(index);
 }
 
-bool ScenarioRepositoryTryRecordHighscore(const utf8* scenarioFileName, money64 companyValue, const utf8* name)
+bool ScenarioRepositoryTryRecordHighscore(const utf8* scenarioFileName, money64 companyValue, const utf8* name, bool cheated)
 {
     IScenarioRepository* repo = GetScenarioRepository();
-    return repo->TryRecordHighscore(LocalisationService_GetCurrentLanguage(), scenarioFileName, companyValue, name);
+    return repo->TryRecordHighscore(LocalisationService_GetCurrentLanguage(), scenarioFileName, companyValue, name, cheated);
 }

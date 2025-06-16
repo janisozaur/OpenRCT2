@@ -24,6 +24,7 @@ struct ScenarioHighscoreEntry
     u8string name;
     money64 company_value{};
     datetime64 timestamp{};
+    bool cheated{};
 };
 
 enum class ScenarioSource : uint8_t
@@ -86,7 +87,9 @@ struct IScenarioRepository
     virtual const ScenarioIndexEntry* GetByInternalName(u8string_view name) const = 0;
     virtual const ScenarioIndexEntry* GetByPath(const utf8* path) const = 0;
 
-    virtual bool TryRecordHighscore(int32_t language, const utf8* scenarioFileName, money64 companyValue, const utf8* name) = 0;
+    virtual bool TryRecordHighscore(
+        int32_t language, const utf8* scenarioFileName, money64 companyValue, const utf8* name, bool cheated = false)
+        = 0;
 };
 
 [[nodiscard]] std::unique_ptr<IScenarioRepository> CreateScenarioRepository(OpenRCT2::IPlatformEnvironment& env);
@@ -95,4 +98,5 @@ struct IScenarioRepository
 void ScenarioRepositoryScan();
 [[nodiscard]] size_t ScenarioRepositoryGetCount();
 [[nodiscard]] const ScenarioIndexEntry* ScenarioRepositoryGetByIndex(size_t index);
-[[nodiscard]] bool ScenarioRepositoryTryRecordHighscore(const utf8* scenarioFileName, money64 companyValue, const utf8* name);
+[[nodiscard]] bool ScenarioRepositoryTryRecordHighscore(
+    const utf8* scenarioFileName, money64 companyValue, const utf8* name, bool cheated = false);

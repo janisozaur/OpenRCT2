@@ -600,6 +600,13 @@ namespace OpenRCT2::Ui::Windows
          */
         void OnScrollMouseDown(int32_t scrollIndex, const ScreenCoordsXY& screenCoords) override
         {
+            // Check scenario cheats permission for object selection/deselection
+            if (!isInEditorMode() && !getGameState().cheats.scenarioCheatsEnabled)
+            {
+                ContextShowError(STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone, {});
+                return;
+            }
+
             // Used for in-game object selection cheat to prevent crashing the game
             // when windows attempt to draw objects that don't exist any more
             auto* windowMgr = Ui::GetWindowManager();

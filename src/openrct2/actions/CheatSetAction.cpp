@@ -13,6 +13,7 @@
 #include "../Context.h"
 #include "../Diagnostic.h"
 #include "../GameState.h"
+#include "../OpenRCT2.h"
 #include "../config/Config.h"
 #include "../core/EnumUtils.hpp"
 #include "../core/String.hpp"
@@ -107,6 +108,15 @@ GameActions::Result CheatSetAction::Execute() const
 {
     auto& gameState = getGameState();
     auto* windowMgr = Ui::GetWindowManager();
+
+    // Check if scenario cheats are enabled (only required when not in editor mode)
+    if (!isInEditorMode() && static_cast<CheatType>(_cheatType.id) != CheatType::EnableScenarioCheats)
+    {
+        if (!gameState.cheats.scenarioCheatsEnabled)
+        {
+            return GameActions::Result(GameActions::Status::Disallowed, STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone);
+        }
+    }
 
     switch (static_cast<CheatType>(_cheatType.id))
     {
@@ -273,6 +283,13 @@ GameActions::Result CheatSetAction::Execute() const
         case CheatType::RemoveParkFences:
             RemoveParkFences();
             break;
+        case CheatType::EnableScenarioCheats:
+            // This cheat can only be enabled, not disabled
+            if (_param1 != 0)
+            {
+                gameState.cheats.scenarioCheatsEnabled = true;
+            }
+            break;
         default:
         {
             LOG_ERROR("Invalid cheat type %d", _cheatType.id);
@@ -349,6 +366,8 @@ ParametersRange CheatSetAction::GetParameterRange(CheatType cheatType) const
         case CheatType::AllowSpecialColourSchemes:
             [[fallthrough]];
         case CheatType::AllowTrackPlaceInvalidHeights:
+            [[fallthrough]];
+        case CheatType::EnableScenarioCheats:
             [[fallthrough]];
         case CheatType::OpenClosePark:
             return { { 0, 1 }, { 0, 0 } };

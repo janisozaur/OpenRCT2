@@ -11,7 +11,9 @@
 
 #include "../Context.h"
 #include "../Diagnostic.h"
+#include "../Editor.h"
 #include "../GameState.h"
+#include "../OpenRCT2.h"
 #include "../core/MemoryStream.h"
 #include "../localisation/StringIds.h"
 #include "../management/Finance.h"
@@ -72,6 +74,13 @@ GameActions::Result ParkSetDateAction::Query() const
 GameActions::Result ParkSetDateAction::Execute() const
 {
     auto& gameState = getGameState();
+
+    // Check if scenario cheats are enabled when not in editor mode
+    if (!isInEditorMode() && !gameState.cheats.scenarioCheatsEnabled)
+    {
+        return GameActions::Result(GameActions::Status::Disallowed, STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone);
+    }
+
     gameState.date = OpenRCT2::Date::FromYMD(_year, _month, _day);
     return GameActions::Result();
 }

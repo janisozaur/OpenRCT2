@@ -47,6 +47,13 @@ GameActions::Result ScenarioSetSettingAction::Query() const
 GameActions::Result ScenarioSetSettingAction::Execute() const
 {
     auto& gameState = getGameState();
+
+    // Check if scenario cheats are enabled when not in editor mode
+    if (!isInEditorMode() && !gameState.cheats.scenarioCheatsEnabled)
+    {
+        return GameActions::Result(GameActions::Status::Disallowed, STR_CHEATS_NOT_ENABLED_FOR_SCENARIO, kStringIdNone);
+    }
+
     auto* windowMgr = Ui::GetWindowManager();
 
     switch (_setting)
