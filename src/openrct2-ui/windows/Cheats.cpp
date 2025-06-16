@@ -199,7 +199,7 @@ enum WindowCheatsWidgetIdx
 
 static constexpr StringId WINDOW_TITLE = STR_CHEAT_TITLE;
 static constexpr int32_t WW = 249;
-static constexpr int32_t WH = 300;
+static constexpr int32_t WH = 315;
 
 static constexpr ScreenSize CHEAT_BUTTON = {110, 17};
 static constexpr ScreenSize CHEAT_CHECK = {221, 12};
@@ -400,6 +400,67 @@ static StringId window_cheats_page_titles[] = {
     STR_CHEAT_TITLE_WEATHER,
 };
     // clang-format on
+
+    // Scenario cheats warning dialog
+    static constexpr int32_t WW_WARNING = 350;
+    static constexpr int32_t WH_WARNING = 140;
+
+    enum ScenarioCheatsWarningWidgetIdx
+    {
+        WIDX_WARNING_BACKGROUND,
+        WIDX_WARNING_TITLE,
+        WIDX_WARNING_CLOSE,
+        WIDX_WARNING_ENABLE,
+        WIDX_WARNING_CANCEL
+    };
+
+    static constexpr auto _scenarioCheatsWarningWidgets = makeWidgets(
+        makeWindowShim(STR_CHEAT_ENABLE_SCENARIO_CHEATS, { WW_WARNING, WH_WARNING }),
+        makeWidget({ 10, WH_WARNING - 25 }, { 120, 14 }, WidgetType::button, WindowColour::primary, STR_OK),
+        makeWidget({ WW_WARNING - 130, WH_WARNING - 25 }, { 120, 14 }, WidgetType::button, WindowColour::primary, STR_CANCEL)
+    );
+
+    class ScenarioCheatsWarningWindow final : public Window
+    {
+    public:
+        void OnOpen() override
+        {
+            SetWidgets(_scenarioCheatsWarningWidgets);
+        }
+
+        void OnMouseUp(WidgetIndex widgetIndex) override
+        {
+            switch (widgetIndex)
+            {
+                case WIDX_WARNING_ENABLE:
+                    CheatsSet(CheatType::EnableScenarioCheats, true);
+                    Close();
+                    break;
+                case WIDX_WARNING_CLOSE:
+                case WIDX_WARNING_CANCEL:
+                    Close();
+                    break;
+            }
+        }
+
+        void OnDraw(RenderTarget& rt) override
+        {
+            WindowDrawWidgets(*this, rt);
+
+            ScreenCoordsXY stringCoords(windowPos.x + WW_WARNING / 2, windowPos.y + 50);
+            DrawTextWrapped(rt, stringCoords, WW_WARNING - 20, STR_ENABLE_SCENARIO_CHEATS_WARNING, {}, { TextAlignment::CENTRE });
+        }
+    };
+
+    static void ShowEnableScenarioCheatsWarning()
+    {
+        auto* windowMgr = Ui::GetWindowManager();
+        windowMgr->CloseByClass(WindowClass::LoadsaveOverwritePrompt);
+
+        windowMgr->Create<ScenarioCheatsWarningWindow>(
+            WindowClass::LoadsaveOverwritePrompt, { WW_WARNING, WH_WARNING },
+            WF_TRANSPARENT | WF_STICK_TO_FRONT | WF_CENTRE_SCREEN | WF_AUTO_POSITION);
+    }
 
     class CheatsWindow final : public Window
     {
@@ -1087,7 +1148,7 @@ static StringId window_cheats_page_titles[] = {
                     CheatsSet(CheatType::AllowSpecialColourSchemes, !gameState.cheats.allowSpecialColourSchemes);
                     break;
                 case WIDX_ENABLE_SCENARIO_CHEATS:
-                    CheatsSet(CheatType::EnableScenarioCheats, !gameState.cheats.scenarioCheatsEnabled);
+                    ShowEnableScenarioCheatsWarning();
                     break;
             }
         }
