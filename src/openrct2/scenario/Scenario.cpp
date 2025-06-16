@@ -86,6 +86,14 @@ void ScenarioBegin(GameState_t& gameState)
     GameLoadInit();
     ScenarioReset(gameState);
 
+    // Check if this is an original scenario and disable scenario cheats if so
+    SourceDescriptor sourceDesc;
+    bool isOriginalScenario = ScenarioSources::TryGetByName(gameState.scenarioName, &sourceDesc);
+    if (isOriginalScenario)
+    {
+        gameState.cheats.scenarioCheatsEnabled = false;
+    }
+
     if (gameState.scenarioObjective.Type != OBJECTIVE_NONE && !gLoadKeepWindowsOpen)
         ContextOpenWindowView(WV_PARK_OBJECTIVE);
 
