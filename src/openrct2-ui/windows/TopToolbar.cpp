@@ -1432,6 +1432,8 @@ namespace OpenRCT2::Ui::Windows
         if (gameState.cheats.scenarioCheatsEnabled)
         {
             Dropdown::SetChecked(DDIDX_ENABLE_SCENARIO_CHEATS, true);
+            // Disable the scenario cheats option if it's already enabled (can't be undone)
+            Dropdown::SetDisabled(DDIDX_ENABLE_SCENARIO_CHEATS, true);
         }
 
         gDropdownDefaultIndex = DDIDX_CHEATS;
