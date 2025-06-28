@@ -428,10 +428,6 @@ namespace OpenRCT2::Platform
     {
         usleep(ms * 1000);
     }
-
-    void InitTicks()
-    {
-    }
 } // namespace Platform
 
 #endif
