@@ -655,7 +655,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    needs: [build_variables, linux-portable, android, linux-appimage, macos-universal, windows]
+    needs: [build_variables, linux-portable, android, linux-appimage, macos-universal, windows, codeql]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -726,3 +726,69 @@ jobs:
             OpenRCT2-${{ needs.build_variables.outputs.name }}-*
           body_path: release_notes.txt
           tag_name: ${{ needs.build_variables.outputs.name }}
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    needs: check-code-formatting
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['cpp']
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.18
+        with:
+          key: codeql
+
+      # Install dependencies needed for C++ analysis
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libssl-dev \
+            libicu-dev \
+            libspeexdsp-dev \
+            libfontconfig1-dev \
+            libfreetype6-dev \
+            libpng-dev \
+            libzip-dev \
+            libcurl4-openssl-dev \
+            libsdl2-dev \
+            libflac-dev \
+            libvorbis-dev \
+            libvorbisfile3 \
+            nlohmann-json3-dev
+
+      # Initializes the CodeQL tools for scanning
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      # Build the project for CodeQL analysis
+      - name: Build project
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=ON \
+            -DWITH_TESTS=OFF \
+            -DDISABLE_IPO=on
+          cmake --build build --target openrct2
+
+      # Perform CodeQL Analysis
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
