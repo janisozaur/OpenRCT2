@@ -15,7 +15,7 @@
     #include "../core/File.h"
     #include "../core/Guard.hpp"
     #include "../localisation/Language.h"
-    #include "../../openrct2-android/app/src/main/cpp/android_asset_manager.h"
+    #include "android_asset_manager.h"
 
     #include <SDL.h>
     #include <jni.h>
