@@ -144,12 +144,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startGame() {
-        // Phase 2: Use native asset system instead of copying files
-        if (initializeNativeAssetSystem()) {
-            Log.i(TAG, "Phase 2: Using native asset system - skipping file copying");
+        // Phase 2: Check if we have embedded assets and skip file copying
+        if (hasEmbeddedAssets()) {
+            Log.i(TAG, "Phase 2: Found embedded assets - skipping file copying");
             assetsCopied = true; // Mark as "copied" to satisfy legacy checks
         } else {
-            Log.w(TAG, "Phase 2: Native asset system failed, falling back to file copying");
+            Log.w(TAG, "Phase 2: No embedded assets found, falling back to file copying");
             copyAssets(); // TODO Don't copy/enumerate assets on every startup
         }
 
@@ -162,38 +162,40 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Phase 2: Initialize native asset system instead of copying files
-     * @return true if native asset system is successfully initialized
+     * Phase 2: Check if we have embedded assets by looking for key files
+     * @return true if critical OpenRCT2 assets are embedded in APK
      */
-    private boolean initializeNativeAssetSystem() {
+    private boolean hasEmbeddedAssets() {
         try {
-            // Load native library if not already loaded
-            System.loadLibrary("openrct2");
+            AssetManager assets = getAssets();
 
-            // Initialize native asset manager
-            boolean success = initializeAssetManager(getAssets());
-            if (success) {
-                Log.i(TAG, "Phase 2: Native asset manager initialized successfully");
-                return true;
-            } else {
-                Log.e(TAG, "Phase 2: Native asset manager initialization failed");
-                return false;
+            // Check for critical OpenRCT2 files that should be embedded
+            String[] criticalAssets = {
+                "openrct2/g2.dat",
+                "openrct2/fonts.dat",
+                "openrct2/tracks.dat",
+                "openrct2/language/en-GB.txt"
+            };
+
+            for (String assetPath : criticalAssets) {
+                try {
+                    InputStream stream = assets.open(assetPath);
+                    stream.close();
+                    Log.d(TAG, "Phase 2: Found embedded asset: " + assetPath);
+                } catch (IOException e) {
+                    Log.w(TAG, "Phase 2: Missing embedded asset: " + assetPath);
+                    return false;
+                }
             }
-        } catch (UnsatisfiedLinkError e) {
-            Log.e(TAG, "Phase 2: Failed to load native library", e);
-            return false;
+
+            Log.i(TAG, "Phase 2: All critical assets found embedded in APK");
+            return true;
+
         } catch (Exception e) {
-            Log.e(TAG, "Phase 2: Error initializing native asset system", e);
+            Log.e(TAG, "Phase 2: Error checking for embedded assets", e);
             return false;
         }
-    }
-
-    /**
-     * Native method to initialize asset manager (implemented in JNI bridge)
-     */
-    private native boolean initializeAssetManager(AssetManager assetManager);
-
-    // TODO Don't copy/enumerate assets on every startup
+    }    // TODO Don't copy/enumerate assets on every startup
     // When building, ensure OpenRCT2 assets are inside their own directory within the APK assets,
     // so that we do not attempt to copy files out of the standard Android asset folders - webkit, etc.
     private void copyAssets() {
