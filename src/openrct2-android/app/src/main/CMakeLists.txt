@@ -398,7 +398,7 @@ if(CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a")
 
         # Phase 2.3: Generate asset manifest for runtime validation
         COMMAND ${CMAKE_COMMAND} -E echo "[Phase 2.3] Generating asset manifest..."
-        COMMAND find "${ASSETS_DIR}/openrct2" -type f -exec basename {} + | sort > "${ASSETS_DIR}/openrct2/asset_manifest.txt"
+        COMMAND bash -c "find '${ASSETS_DIR}/openrct2' -type f -exec basename {} \\; | sort > '${ASSETS_DIR}/openrct2/asset_manifest.txt'"
         COMMAND test -f "${ASSETS_DIR}/openrct2/asset_manifest.txt" && wc -l "${ASSETS_DIR}/openrct2/asset_manifest.txt" || echo "Asset manifest generation failed"
 
         COMMAND ${CMAKE_COMMAND} -E echo "✓ Phase 2: Assets embedded in APK for direct AAsset access!"
