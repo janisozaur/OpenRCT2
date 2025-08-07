@@ -7,6 +7,7 @@
 
 #include <jni.h>
 #include "android_asset_manager.h"
+#include "startup_profiler.h"
 
 #ifdef __ANDROID__
 #include <android/asset_manager_jni.h>
@@ -19,13 +20,19 @@ extern "C" {
  */
 JNIEXPORT jboolean JNICALL
 Java_website_openrct2_OpenRCT2_initializeAssetManager(JNIEnv *env, jobject obj, jobject assetManager) {
+    PROFILE_START("AssetManager_JNI_Init");
+
     AAssetManager* nativeAssetManager = AAssetManager_fromJava(env, assetManager);
     if (!nativeAssetManager) {
+        PROFILE_END("AssetManager_JNI_Init");
         return JNI_FALSE;
     }
 
     android_asset_manager_init(nativeAssetManager);
-    return android_assets_validate() ? JNI_TRUE : JNI_FALSE;
+    jboolean result = android_assets_validate() ? JNI_TRUE : JNI_FALSE;
+
+    PROFILE_END("AssetManager_JNI_Init");
+    return result;
 }
 
 /**

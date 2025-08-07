@@ -71,3 +71,41 @@ configurations.implementation {
     exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
 }
 
+// Performance profiling tasks
+task installProfiledDebug(type: Exec, dependsOn: 'installDebug') {
+    group 'performance'
+    description 'Install debug APK and start profiling logs'
+    commandLine 'adb', 'shell', 'am', 'start', '-n', 'io.openrct2/.MainActivity'
+    doLast {
+        println "App launched. Monitor logcat with:"
+        println "adb logcat -s AndroidAssetManager:* StartupProfiler:*"
+    }
+}
+
+task profileStartup(type: Exec) {
+    group 'performance'
+    description 'Profile app startup performance'
+    commandLine 'adb', 'shell', 'am', 'start', '-W', '-S', '-n', 'io.openrct2/.MainActivity'
+    doLast {
+        println "Startup completed. Check logs with:"
+        println "adb logcat -s AndroidAssetManager:* StartupProfiler:* | grep PERF"
+    }
+}
+
+task clearAppData(type: Exec) {
+    group 'performance'
+    description 'Clear app data for fresh startup testing'
+    commandLine 'adb', 'shell', 'pm', 'clear', 'io.openrct2'
+}
+
+task benchmarkColdStart(dependsOn: ['installDebug', 'clearAppData']) {
+    group 'performance'
+    description 'Benchmark cold app startup (clears data first)'
+    doLast {
+        exec {
+            commandLine 'adb', 'shell', 'am', 'start', '-W', '-S', '-n', 'io.openrct2/.MainActivity'
+        }
+        println "Cold startup completed. Analyze with 'adb logcat -s StartupProfiler:*'"
+    }
+}
+

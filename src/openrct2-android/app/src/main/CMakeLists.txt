@@ -418,6 +418,8 @@ file(GLOB_RECURSE ANDROID_ASSET_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/cpp/android_asset_manager.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/cpp/android_asset_manager.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/cpp/android_jni_bridge.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cpp/startup_profiler.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cpp/startup_profiler.h"
 )
 
 add_library(openrct2 SHARED ${LIBOPENRCT2_SOURCES} ${ANDROID_ASSET_SOURCES})
