@@ -6,97 +6,29 @@
  */
 
 #include <jni.h>
-#include "android_asset_manager.h"
-#include "startup_profiler.h"
-
-#ifdef __ANDROID__
+#include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
+#include <android/log.h>
+#include "android_asset_manager.h"
+
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "OpenRCT2", __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "OpenRCT2", __VA_ARGS__)
 
 extern "C" {
 
-/**
- * Initialize the native asset manager from Java AssetManager
- * Called from MainActivity.startGame()
- */
-JNIEXPORT jboolean JNICALL
-Java_io_openrct2_MainActivity_initializeAssetManager(JNIEnv *env, jobject obj, jobject assetManager) {
-    PROFILE_START("AssetManager_JNI_Init");
+JNIEXPORT void JNICALL
+Java_io_openrct2_GameActivity_nativeSetupAssetManager(JNIEnv *env, jobject thiz, jobject assetManager) {
+    LOGI("Setting up native asset manager");
 
-    AAssetManager* nativeAssetManager = AAssetManager_fromJava(env, assetManager);
-    if (!nativeAssetManager) {
-        PROFILE_END("AssetManager_JNI_Init");
-        return JNI_FALSE;
+    // Convert Java AssetManager to native AAssetManager
+    AAssetManager* aAssetManager = AAssetManager_fromJava(env, assetManager);
+    if (aAssetManager) {
+        // Initialize the AndroidAssetManager singleton
+        AndroidAssetManager::getInstance().initialize(aAssetManager);
+        LOGI("AndroidAssetManager initialized successfully");
+    } else {
+        LOGE("Failed to convert Java AssetManager to native AAssetManager");
     }
-
-    android_asset_manager_init(nativeAssetManager);
-    jboolean result = android_assets_validate() ? JNI_TRUE : JNI_FALSE;
-
-    PROFILE_END("AssetManager_JNI_Init");
-    return result;
-}/**
- * Validate that all critical assets are accessible
- * Can be called from Java to verify APK integrity
- */
-JNIEXPORT jboolean JNICALL
-Java_website_openrct2_OpenRCT2_validateAssets(JNIEnv *env, jobject obj) {
-    return android_assets_validate() ? JNI_TRUE : JNI_FALSE;
-}
-
-/**
- * Check if a specific asset exists
- * Useful for conditional asset loading
- */
-JNIEXPORT jboolean JNICALL
-Java_website_openrct2_OpenRCT2_assetExists(JNIEnv *env, jobject obj, jstring path) {
-    const char* nativePath = env->GetStringUTFChars(path, nullptr);
-    jboolean result = android_asset_exists(nativePath) ? JNI_TRUE : JNI_FALSE;
-    env->ReleaseStringUTFChars(path, nativePath);
-    return result;
-}
-
-/**
- * Get the size of an asset without reading it
- * Useful for progress reporting during asset loading
- */
-JNIEXPORT jlong JNICALL
-Java_website_openrct2_OpenRCT2_getAssetSize(JNIEnv *env, jobject obj, jstring path) {
-    const char* nativePath = env->GetStringUTFChars(path, nullptr);
-    size_t size = 0;
-    if (android_asset_exists(nativePath)) {
-        // For simplicity, we'll return the size via the asset manager
-        AndroidAssetManager& manager = AndroidAssetManager::getInstance();
-        size = manager.getAssetSize(nativePath);
-    }
-    env->ReleaseStringUTFChars(path, nativePath);
-    return static_cast<jlong>(size);
 }
 
 } // extern "C"
-
-#else
-// Non-Android stub implementations
-extern "C" {
-
-JNIEXPORT jboolean JNICALL
-Java_website_openrct2_OpenRCT2_initializeAssetManager(JNIEnv *env, jobject obj, jobject assetManager) {
-    return JNI_FALSE;
-}
-
-JNIEXPORT jboolean JNICALL
-Java_website_openrct2_OpenRCT2_validateAssets(JNIEnv *env, jobject obj) {
-    return JNI_FALSE;
-}
-
-JNIEXPORT jboolean JNICALL
-Java_website_openrct2_OpenRCT2_assetExists(JNIEnv *env, jobject obj, jstring path) {
-    return JNI_FALSE;
-}
-
-JNIEXPORT jlong JNICALL
-Java_website_openrct2_OpenRCT2_getAssetSize(JNIEnv *env, jobject obj, jstring path) {
-    return 0;
-}
-
-} // extern "C"
-
-#endif

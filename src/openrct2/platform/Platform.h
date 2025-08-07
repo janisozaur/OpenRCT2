@@ -163,4 +163,6 @@ public:
     static jmethodID _findClassMethod;
 };
 
+void InitializeAndroidClassLoader();
+
 #endif // __ANDROID__

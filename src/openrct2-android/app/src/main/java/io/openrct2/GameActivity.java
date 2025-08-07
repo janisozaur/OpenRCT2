@@ -1,10 +1,13 @@
 package io.openrct2;
 
 import android.annotation.SuppressLint;
+import android.content.res.AssetManager;
 import android.icu.util.Currency;
 import android.icu.util.LocaleData;
 import android.icu.util.ULocale;
 import android.os.Build;
+import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import org.libsdl.app.SDLActivity;
@@ -12,6 +15,35 @@ import org.libsdl.app.SDLActivity;
 import java.util.Locale;
 
 public class GameActivity extends SDLActivity {
+
+    private static final String TAG = "GameActivity";
+
+    // Load the native library dependencies in correct order
+    static {
+        try {
+            System.loadLibrary("icudata");
+            System.loadLibrary("icuuc");
+            System.loadLibrary("icui18n");
+            System.loadLibrary("openrct2");
+            Log.i("GameActivity", "Native libraries loaded successfully");
+        } catch (UnsatisfiedLinkError e) {
+            Log.e("GameActivity", "Failed to load native libraries", e);
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        // Initialize asset manager before SDL startup
+        try {
+            AssetManager assetManager = getAssets();
+            nativeSetupAssetManager(assetManager);
+            Log.i(TAG, "Phase 2: Asset manager initialized before SDL startup");
+        } catch (Exception e) {
+            Log.e(TAG, "Phase 2: Failed to initialize asset manager", e);
+        }
+
+        super.onCreate(savedInstanceState);
+    }
 
     public float getDefaultScale() {
         return getResources().getDisplayMetrics().density;
@@ -114,4 +146,9 @@ public class GameActivity extends SDLActivity {
         }
         return new String[0];
     }
+
+    /**
+     * Native method to initialize the Android Asset Manager
+     */
+    public static native void nativeSetupAssetManager(AssetManager assetManager);
 }

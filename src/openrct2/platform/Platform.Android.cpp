@@ -62,8 +62,50 @@ namespace OpenRCT2::Platform
 
     std::string GetCurrentExecutablePath()
     {
-        Guard::Assert(false, "GetCurrentExecutablePath() not implemented for Android.");
-        return std::string();
+        // On Android, we don't have a traditional executable path like on desktop platforms.
+        // Instead, we return the APK path which contains our embedded assets.
+        // This is used by the config system to search for game data files.
+
+        JNIEnv* env = static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv());
+        if (!env) {
+            LOG_ERROR("JNI environment not available in GetCurrentExecutablePath");
+            return "/data/app/io.openrct2/base.apk";  // fallback path
+        }
+
+        jobject activity = static_cast<jobject>(SDL_AndroidGetActivity());
+        if (!activity) {
+            LOG_ERROR("Android activity not available in GetCurrentExecutablePath");
+            return "/data/app/io.openrct2/base.apk";  // fallback path
+        }
+
+        jclass activityClass = env->GetObjectClass(activity);
+        jmethodID getPackageCodePath = env->GetMethodID(activityClass, "getPackageCodePath", "()Ljava/lang/String;");
+
+        if (!getPackageCodePath) {
+            LOG_ERROR("Failed to get getPackageCodePath method");
+            env->DeleteLocalRef(activity);
+            env->DeleteLocalRef(activityClass);
+            return "/data/app/io.openrct2/base.apk";  // fallback path
+        }
+
+        jstring jniString = static_cast<jstring>(env->CallObjectMethod(activity, getPackageCodePath));
+        if (!jniString) {
+            LOG_ERROR("Failed to get package code path");
+            env->DeleteLocalRef(activity);
+            env->DeleteLocalRef(activityClass);
+            return "/data/app/io.openrct2/base.apk";  // fallback path
+        }
+
+        const char* jniChars = env->GetStringUTFChars(jniString, nullptr);
+        std::string apkPath = jniChars;
+
+        env->ReleaseStringUTFChars(jniString, jniChars);
+        env->DeleteLocalRef(jniString);
+        env->DeleteLocalRef(activity);
+        env->DeleteLocalRef(activityClass);
+
+        LOG_INFO("Current executable path (APK): %s", apkPath.c_str());
+        return apkPath;
     }
 
     u8string StrDecompToPrecomp(u8string_view input)
@@ -217,15 +259,28 @@ namespace OpenRCT2::Platform
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* pjvm, void* reserved)
 {
-    // Due to an issue where JNI_OnLoad could be called multiple times, we need
-    // to make sure it is only initialized once.
-    // https://issuetracker.google.com/issues/220523932
-    // Otherwise JVM complains about jobject-s having incorrect serial numbers.
+    LOG_INFO("JNI_OnLoad called");
+
+    // Store the JavaVM for later use
+    static JavaVM* g_jvm = pjvm;
+
+    // Don't initialize AndroidClassLoader here - it will be initialized when needed
+    // This prevents crashes when SDL JNI environment isn't available yet
+
+    return JNI_VERSION_1_6;
+}
+
+void InitializeAndroidClassLoader()
+{
     if (!acl)
     {
-        acl = std::make_shared<AndroidClassLoader>();
+        try {
+            acl = std::make_shared<AndroidClassLoader>();
+            LOG_INFO("AndroidClassLoader initialized successfully");
+        } catch (const std::exception& e) {
+            LOG_ERROR("Failed to initialize AndroidClassLoader: %s", e.what());
+        }
     }
-    return JNI_VERSION_1_6;
 }
 
 AndroidClassLoader::AndroidClassLoader()
@@ -235,23 +290,22 @@ AndroidClassLoader::AndroidClassLoader()
     // This is a workaround to be able to call JNI's ClassLoader from non-main
     // thread, based on https://stackoverflow.com/a/16302771
 
-    // Apparently it's OK to use it from across different thread, but JNI
-    // only looks for ClassLoader in the _current_ thread and fails to find
-    // it when searched for from a native library's non-main thread.
-
-    // The solution below works by obtaining a ClassLoader reference in main
-    // thread and caching it for future use from any thread, instead of using
-    // it via env->FindClass(). ClassLoader itself is abstract, so we cannot
-    // create it directly; instead we take an arbitrary class and call
-    // getClassLoader() on it to create a reference that way.
-
-    // If we're here, SDL's JNI_OnLoad has already been called and set env
+    // Wait for SDL to be ready
     JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    if (!env) {
+        LOG_ERROR("JNI environment not available for AndroidClassLoader");
+        throw std::runtime_error("JNI environment not available");
+    }
 
     // Take an arbitrary class. While the class does not really matter, it
     // makes sense to use one that's most likely already loaded and is unlikely
     // to be removed from code.
     auto randomClass = env->FindClass("io/openrct2/MainActivity");
+    if (!randomClass) {
+        LOG_ERROR("Failed to find MainActivity class");
+        throw std::runtime_error("Failed to find MainActivity class");
+    }
+
     jclass classClass = env->GetObjectClass(randomClass);
 
     // Get its class loader
