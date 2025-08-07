@@ -924,6 +924,12 @@ namespace OpenRCT2::Platform
         };
     }
 
+    bool TryLoadFile(const std::string& path, std::vector<uint8_t>& data)
+    {
+        // On Windows, we only use filesystem loading (no embedded assets)
+        return false; // Let the caller handle filesystem loading
+    }
+
 } // namespace OpenRCT2::Platform
 
 #endif

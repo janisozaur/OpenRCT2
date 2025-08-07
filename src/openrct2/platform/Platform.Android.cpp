@@ -15,6 +15,7 @@
     #include "../core/File.h"
     #include "../core/Guard.hpp"
     #include "../localisation/Language.h"
+    #include "../../openrct2-android/app/src/main/cpp/android_asset_manager.h"
 
     #include <SDL.h>
     #include <jni.h>
@@ -254,6 +255,51 @@ namespace OpenRCT2::Platform
     std::vector<std::string_view> GetSearchablePathsRCT2()
     {
         return { "/sdcard/rct2" };
+    }
+
+    bool TryLoadFile(const std::string& path, std::vector<uint8_t>& data)
+    {
+        // Initialize AndroidClassLoader if needed
+        static bool classLoaderInitialized = false;
+        if (!classLoaderInitialized) {
+            try {
+                InitializeAndroidClassLoader();
+                classLoaderInitialized = true;
+                LOG_INFO("AndroidClassLoader initialized for file loading");
+            } catch (const std::exception& e) {
+                LOG_ERROR("Failed to initialize AndroidClassLoader: %s", e.what());
+                // Continue with fallback loading
+            }
+        }
+
+        // Phase 2: Try loading from embedded assets first on Android
+        std::string pathStr = path;
+
+        // Convert filesystem path to asset path
+        // Remove leading "/sdcard/openrct2/" and replace with "openrct2/"
+        size_t sdcardPos = pathStr.find("/sdcard/openrct2/");
+        if (sdcardPos != std::string::npos) {
+            std::string assetPath = "openrct2/" + pathStr.substr(sdcardPos + 17); // 17 = length of "/sdcard/openrct2/"
+            LOG_VERBOSE("Trying to load file from embedded asset: %s", assetPath.c_str());
+
+            auto& assetManager = AndroidAssetManager::getInstance();
+            if (assetManager.assetExists(assetPath)) {
+                auto assetData = assetManager.readAsset(assetPath);
+                if (!assetData.empty()) {
+                    data = assetData;
+                    LOG_INFO("Successfully loaded file from embedded asset: %s (%zu bytes)", assetPath.c_str(), data.size());
+                    return true;
+                } else {
+                    LOG_ERROR("Failed to read data from embedded asset: %s", assetPath.c_str());
+                }
+            } else {
+                LOG_VERBOSE("Asset not found in embedded assets: %s", assetPath.c_str());
+            }
+        }
+
+        // Fall back to filesystem if asset loading failed
+        LOG_VERBOSE("Falling back to filesystem for file: %s", path.c_str());
+        return false; // Let the caller handle filesystem loading
     }
 } // namespace OpenRCT2::Platform
 

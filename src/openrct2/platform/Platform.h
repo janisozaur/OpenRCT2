@@ -151,6 +151,9 @@ namespace OpenRCT2::Platform
 
     std::vector<std::string_view> GetSearchablePathsRCT1();
     std::vector<std::string_view> GetSearchablePathsRCT2();
+
+    // Platform-specific file loading (handles embedded assets on mobile platforms)
+    bool TryLoadFile(const std::string& path, std::vector<uint8_t>& data);
 } // namespace OpenRCT2::Platform
 
 #ifdef __ANDROID__

@@ -295,6 +295,12 @@ namespace OpenRCT2::Platform
     {
         return { "/Applications" };
     }
+
+    bool TryLoadFile(const std::string& path, std::vector<uint8_t>& data)
+    {
+        // On macOS, we only use filesystem loading (no embedded assets)
+        return false; // Let the caller handle filesystem loading
+    }
 } // namespace OpenRCT2::Platform
 
 #endif
