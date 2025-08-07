@@ -144,7 +144,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startGame() {
-        copyAssets(); // TODO Don't copy/enumerate assets on every startup
+        // Phase 2: Use native asset system instead of copying files
+        if (initializeNativeAssetSystem()) {
+            Log.i(TAG, "Phase 2: Using native asset system - skipping file copying");
+            assetsCopied = true; // Mark as "copied" to satisfy legacy checks
+        } else {
+            Log.w(TAG, "Phase 2: Native asset system failed, falling back to file copying");
+            copyAssets(); // TODO Don't copy/enumerate assets on every startup
+        }
+
         Intent intent = new Intent(this, GameActivity.class);
         if (getIntent().hasExtra("commandLineArgs")) {
             intent.putExtra("commandLineArgs", getIntent().getStringArrayExtra("commandLineArgs"));
@@ -152,6 +160,38 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
         finish();
     }
+
+    /**
+     * Phase 2: Initialize native asset system instead of copying files
+     * @return true if native asset system is successfully initialized
+     */
+    private boolean initializeNativeAssetSystem() {
+        try {
+            // Load native library if not already loaded
+            System.loadLibrary("openrct2");
+
+            // Initialize native asset manager
+            boolean success = initializeAssetManager(getAssets());
+            if (success) {
+                Log.i(TAG, "Phase 2: Native asset manager initialized successfully");
+                return true;
+            } else {
+                Log.e(TAG, "Phase 2: Native asset manager initialization failed");
+                return false;
+            }
+        } catch (UnsatisfiedLinkError e) {
+            Log.e(TAG, "Phase 2: Failed to load native library", e);
+            return false;
+        } catch (Exception e) {
+            Log.e(TAG, "Phase 2: Error initializing native asset system", e);
+            return false;
+        }
+    }
+
+    /**
+     * Native method to initialize asset manager (implemented in JNI bridge)
+     */
+    private native boolean initializeAssetManager(AssetManager assetManager);
 
     // TODO Don't copy/enumerate assets on every startup
     // When building, ensure OpenRCT2 assets are inside their own directory within the APK assets,

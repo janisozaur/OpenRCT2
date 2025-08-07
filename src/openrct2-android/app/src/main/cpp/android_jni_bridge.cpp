@@ -16,10 +16,10 @@ extern "C" {
 
 /**
  * Initialize the native asset manager from Java AssetManager
- * Called from OpenRCT2Activity.onCreate() or similar
+ * Called from MainActivity.startGame()
  */
 JNIEXPORT jboolean JNICALL
-Java_website_openrct2_OpenRCT2_initializeAssetManager(JNIEnv *env, jobject obj, jobject assetManager) {
+Java_io_openrct2_MainActivity_initializeAssetManager(JNIEnv *env, jobject obj, jobject assetManager) {
     PROFILE_START("AssetManager_JNI_Init");
 
     AAssetManager* nativeAssetManager = AAssetManager_fromJava(env, assetManager);
@@ -33,9 +33,7 @@ Java_website_openrct2_OpenRCT2_initializeAssetManager(JNIEnv *env, jobject obj, 
 
     PROFILE_END("AssetManager_JNI_Init");
     return result;
-}
-
-/**
+}/**
  * Validate that all critical assets are accessible
  * Can be called from Java to verify APK integrity
  */
