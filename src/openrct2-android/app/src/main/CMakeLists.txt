@@ -260,18 +260,15 @@ set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 set(TEMP_DIR "${CMAKE_BINARY_DIR}/temp")
 set(GXC_TOOLS_DIR "${CMAKE_BINARY_DIR}/gxc-tools")
 
-# Use shared asset download function for Android builds
 add_asset_download_targets(ANDROID_BUILD TEMP_DIR "${TEMP_DIR}")
 
 # Build graphics files using gxc
 add_custom_target(build-graphics ALL
     DEPENDS gxc-tools
     COMMAND ${CMAKE_COMMAND} -E make_directory "${TEMP_DIR}/graphics"
-    COMMAND ${CMAKE_COMMAND} -E echo "Building graphics with gxc compiler..."
     COMMAND "${GXC_TOOLS_DIR}/gxc" build "${TEMP_DIR}/graphics/g2.dat" "${ORCT2_ROOT}/resources/g2/sprites.json"
     COMMAND "${GXC_TOOLS_DIR}/gxc" build "${TEMP_DIR}/graphics/fonts.dat" "${ORCT2_ROOT}/resources/fonts/sprites.json"
     COMMAND "${GXC_TOOLS_DIR}/gxc" build "${TEMP_DIR}/graphics/tracks.dat" "${ORCT2_ROOT}/resources/tracks/sprites.json"
-    COMMAND ${CMAKE_COMMAND} -E echo "✓ Graphics compilation complete!"
     BYPRODUCTS
         "${TEMP_DIR}/graphics/g2.dat"
         "${TEMP_DIR}/graphics/fonts.dat"
@@ -279,64 +276,36 @@ add_custom_target(build-graphics ALL
     COMMENT "Building graphics files with gxc compiler"
 )
 
-# Phase 2: Advanced Asset Management - Direct APK Asset Access
-# Assets are embedded directly in APK and accessed via Android AAsset API
 if(CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a")
+    # Only prepare assets for arm64-v8a to avoid clashes
     add_custom_target(prepare-assets ALL
         DEPENDS title-sequences objects opensound openmusic build-graphics
         COMMAND ${CMAKE_COMMAND} -E make_directory "${ASSETS_DIR}/openrct2"
 
-        # Phase 2.1: Copy assets directly to APK assets structure
-        COMMAND ${CMAKE_COMMAND} -E echo "[Phase 2.1] Preparing assets for direct APK access..."
-
-        # Core graphics files (accessed via AAsset API)
-        COMMAND ${CMAKE_COMMAND} -E echo "Embedding compiled graphics files..."
+        # Sprites
         COMMAND ${CMAKE_COMMAND} -E copy "${TEMP_DIR}/graphics/g2.dat" "${ASSETS_DIR}/openrct2/"
         COMMAND ${CMAKE_COMMAND} -E copy "${TEMP_DIR}/graphics/fonts.dat" "${ASSETS_DIR}/openrct2/"
         COMMAND ${CMAKE_COMMAND} -E copy "${TEMP_DIR}/graphics/tracks.dat" "${ASSETS_DIR}/openrct2/"
 
         # Static data files
-        COMMAND ${CMAKE_COMMAND} -E echo "Embedding language files..."
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORCT2_ROOT}/data/language" "${ASSETS_DIR}/openrct2/language"
-        COMMAND ${CMAKE_COMMAND} -E echo "Embedding scenario patches..."
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORCT2_ROOT}/data/scenario_patches" "${ASSETS_DIR}/openrct2/scenario_patches"
-        COMMAND ${CMAKE_COMMAND} -E echo "Embedding shaders..."
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORCT2_ROOT}/data/shaders" "${ASSETS_DIR}/openrct2/shaders"
 
         # Title sequences
-        COMMAND ${CMAKE_COMMAND} -E echo "Embedding title sequences..."
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/title-sequences" "${ASSETS_DIR}/openrct2/sequence"
 
         # Objects
-        COMMAND ${CMAKE_COMMAND} -E echo "Embedding objects..."
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/objects" "${ASSETS_DIR}/openrct2/object"
 
         # Asset packs (.parkap format)
-        COMMAND ${CMAKE_COMMAND} -E echo "Embedding sound asset packs..."
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/opensound/assetpack" "${ASSETS_DIR}/openrct2/assetpack"
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/opensound/object/official/audio" "${ASSETS_DIR}/openrct2/object/official/audio"
 
-        COMMAND ${CMAKE_COMMAND} -E echo "Embedding music asset packs..."
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/openmusic/assetpack" "${ASSETS_DIR}/openrct2/assetpack"
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/openmusic/object/official/music" "${ASSETS_DIR}/openrct2/object/official/music"
 
-        # Phase 2.2: Validate APK asset structure
-        COMMAND ${CMAKE_COMMAND} -E echo "[Phase 2.2] Validating APK asset structure for AAsset access..."
-        COMMAND test -f "${ASSETS_DIR}/openrct2/g2.dat" || (echo "ERROR: g2.dat not found in APK assets" && exit 1)
-        COMMAND test -f "${ASSETS_DIR}/openrct2/fonts.dat" || (echo "ERROR: fonts.dat not found in APK assets" && exit 1)
-        COMMAND test -f "${ASSETS_DIR}/openrct2/tracks.dat" || (echo "ERROR: tracks.dat not found in APK assets" && exit 1)
-        COMMAND test -d "${ASSETS_DIR}/openrct2/assetpack" || (echo "ERROR: assetpack directory not found in APK assets" && exit 1)
-        COMMAND find "${ASSETS_DIR}/openrct2/assetpack" -name "*.parkap" | head -1 > /dev/null || (echo "ERROR: No .parkap files found in APK assets" && exit 1)
-        COMMAND test -f "${ASSETS_DIR}/openrct2/language/en-GB.txt" || (echo "ERROR: English language file not found in APK assets" && exit 1)
-
-        # Phase 2.3: Generate asset manifest for runtime validation
-        COMMAND ${CMAKE_COMMAND} -E echo "[Phase 2.3] Generating asset manifest..."
-        COMMAND bash -c "find '${ASSETS_DIR}/openrct2' -type f -exec basename {} \\; | sort > '${ASSETS_DIR}/openrct2/asset_manifest.txt'"
-        COMMAND test -f "${ASSETS_DIR}/openrct2/asset_manifest.txt" && wc -l "${ASSETS_DIR}/openrct2/asset_manifest.txt" || echo "Asset manifest generation failed"
-
-        COMMAND ${CMAKE_COMMAND} -E echo "✓ Phase 2: Assets embedded in APK for direct AAsset access!"
-
-        COMMENT "[Phase 2] Embedding assets in APK for direct access via Android AAsset API"
+        COMMENT "Embedding assets in APK"
     )
 else()
     # For other ABIs, create a dummy prepare-assets target that depends on the shared assets
@@ -360,30 +329,6 @@ target_link_libraries(openrct2-ui openrct2 android stdc++ GLESv1_CM GLESv2 SDL2m
 
 # Make sure assets are prepared before building openrct2-ui
 add_dependencies(openrct2-ui prepare-assets)
-
-# Phase 2: Enhanced asset summary with APK structure analysis
-add_custom_target(asset-summary
-    DEPENDS prepare-assets
-    COMMAND ${CMAKE_COMMAND} -E echo "=== Phase 2: OpenRCT2 Android APK Asset Summary ==="
-    COMMAND ${CMAKE_COMMAND} -E echo "APK Assets directory: ${ASSETS_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E echo ""
-    COMMAND ${CMAKE_COMMAND} -E echo "Core graphics files (accessible via AAsset API):"
-    COMMAND ls -lh "${ASSETS_DIR}/openrct2/"*.dat 2>/dev/null || echo "No .dat files found"
-    COMMAND ${CMAKE_COMMAND} -E echo ""
-    COMMAND ${CMAKE_COMMAND} -E echo "Asset packs (.parkap files):"
-    COMMAND find "${ASSETS_DIR}/openrct2/assetpack" -name "*.parkap" -exec ls -lh {} \; 2>/dev/null || echo "No .parkap files found"
-    COMMAND ${CMAKE_COMMAND} -E echo ""
-    COMMAND ${CMAKE_COMMAND} -E echo "Language files:"
-    COMMAND ls -1 "${ASSETS_DIR}/openrct2/language/" 2>/dev/null | head -5 || echo "No language files found"
-    COMMAND ${CMAKE_COMMAND} -E echo ""
-    COMMAND ${CMAKE_COMMAND} -E echo "Asset manifest (for runtime validation):"
-    COMMAND test -f "${ASSETS_DIR}/openrct2/asset_manifest.txt" && wc -l "${ASSETS_DIR}/openrct2/asset_manifest.txt" || echo "Asset manifest not found"
-    COMMAND ${CMAKE_COMMAND} -E echo ""
-    COMMAND ${CMAKE_COMMAND} -E echo "Total APK asset size:"
-    COMMAND du -sh "${ASSETS_DIR}" 2>/dev/null || echo "Could not calculate size"
-    COMMAND ${CMAKE_COMMAND} -E echo "=== Phase 2 Complete: Assets embedded in APK for direct AAsset access ==="
-    COMMENT "Display Phase 2 APK asset summary"
-)
 
 target_include_directories(openrct2 PRIVATE "${ORCT2_ROOT}/src/thirdparty/duktape/")
 target_include_directories(openrct2 SYSTEM PRIVATE "${ORCT2_ROOT}/src/thirdparty")

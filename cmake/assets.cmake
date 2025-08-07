@@ -1,31 +1,25 @@
-# OpenRCT2 Asset Management Configuration
-# This file defines asset versions, URLs, and checksums for both desktop and Android builds
-
-# Asset versions (single source of truth)
 set(TITLE_SEQUENCE_VERSION "0.4.14")
+set(TITLE_SEQUENCE_URL     "https://github.com/OpenRCT2/title-sequences/releases/download/v${TITLE_SEQUENCE_VERSION}/title-sequences.zip")
+set(TITLE_SEQUENCE_SHA256  "140df714e806fed411cc49763e7f16b0fcf2a487a57001d1e50fce8f9148a9f3")
+
 set(OBJECTS_VERSION "1.7.3")
+set(OBJECTS_URL     "https://github.com/OpenRCT2/objects/releases/download/v${OBJECTS_VERSION}/objects.zip")
+set(OBJECTS_SHA256  "06b90f3e19c216752df441d551b26a9e3e1ba7755bdd2102504b73bf993608be")
+
 set(OPENSFX_VERSION "1.0.6")
+set(OPENSFX_URL     "https://github.com/OpenRCT2/OpenSoundEffects/releases/download/v${OPENSFX_VERSION}/opensound.zip")
+set(OPENSFX_SHA256  "06b90f3e19c216752df441d551b26a9e3e1ba7755bdd2102504b73bf993608be")
+
 set(OPENMSX_VERSION "1.6.1")
+set(OPENMSX_URL     "https://github.com/OpenRCT2/OpenMusic/releases/download/v${OPENMSX_VERSION}/openmusic.zip")
+set(OPENMSX_SHA256  "994b350d3b180ee1cb9619fe27f7ebae3a1a5232840c4bd47a89f33fa89de1a1")
+
 set(REPLAYS_VERSION "0.0.89")
+set(REPLAYS_URL     "https://github.com/OpenRCT2/replays/releases/download/v${REPLAYS_VERSION}/replays.zip")
+set(REPLAYS_SHA256  "04607bb1f67a0f31d841ed70b38d65b8f7a9e19749e414ff74b8a434bc90b42a")
 
-# Asset URLs (generated from versions)
-set(TITLE_SEQUENCE_URL "https://github.com/OpenRCT2/title-sequences/releases/download/v${TITLE_SEQUENCE_VERSION}/title-sequences.zip")
-set(OBJECTS_URL "https://github.com/OpenRCT2/objects/releases/download/v${OBJECTS_VERSION}/objects.zip")
-set(OPENSFX_URL "https://github.com/OpenRCT2/OpenSoundEffects/releases/download/v${OPENSFX_VERSION}/opensound.zip")
-set(OPENMSX_URL "https://github.com/OpenRCT2/OpenMusic/releases/download/v${OPENMSX_VERSION}/openmusic.zip")
-set(REPLAYS_URL "https://github.com/OpenRCT2/replays/releases/download/v${REPLAYS_VERSION}/replays.zip")
-
-# Asset SHA256 checksums
-set(TITLE_SEQUENCE_SHA256 "140df714e806fed411cc49763e7f16b0fcf2a487a57001d1e50fce8f9148a9f3")
-set(OBJECTS_SHA256 "06b90f3e19c216752df441d551b26a9e3e1ba7755bdd2102504b73bf993608be")
-set(OPENSFX_SHA256 "06b90f3e19c216752df441d551b26a9e3e1ba7755bdd2102504b73bf993608be")
-set(OPENMSX_SHA256 "994b350d3b180ee1cb9619fe27f7ebae3a1a5232840c4bd47a89f33fa89de1a1")
-set(REPLAYS_SHA256 "04607bb1f67a0f31d841ed70b38d65b8f7a9e19749e414ff74b8a434bc90b42a")
-
-# Additional tools for Android builds
 set(GXC_TOOLS_URL "https://github.com/IntelOrca/libsawyer/releases/download/v1.3.0/libsawyer-tools-linux-x64.tar.gz")
 
-# Function to create asset download targets (for reuse between desktop and Android)
 function(add_asset_download_targets)
     # Parse optional arguments
     set(options ANDROID_BUILD)
