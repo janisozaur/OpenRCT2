@@ -78,7 +78,7 @@ task installProfiledDebug(type: Exec, dependsOn: 'installDebug') {
     commandLine 'adb', 'shell', 'am', 'start', '-n', 'io.openrct2/.MainActivity'
     doLast {
         println "App launched. Monitor logcat with:"
-        println "adb logcat -s AndroidAssetManager:* StartupProfiler:*"
+        println "adb logcat -s AndroidAssetManager:*"
     }
 }
 
@@ -88,7 +88,7 @@ task profileStartup(type: Exec) {
     commandLine 'adb', 'shell', 'am', 'start', '-W', '-S', '-n', 'io.openrct2/.MainActivity'
     doLast {
         println "Startup completed. Check logs with:"
-        println "adb logcat -s AndroidAssetManager:* StartupProfiler:* | grep PERF"
+        println "adb logcat -s AndroidAssetManager:* | grep PERF"
     }
 }
 
@@ -105,7 +105,7 @@ task benchmarkColdStart(dependsOn: ['installDebug', 'clearAppData']) {
         exec {
             commandLine 'adb', 'shell', 'am', 'start', '-W', '-S', '-n', 'io.openrct2/.MainActivity'
         }
-        println "Cold startup completed. Analyze with 'adb logcat -s StartupProfiler:*'"
+        println "Cold startup completed. Analyze with 'adb logcat -s AndroidAssetManager:*'"
     }
 }
 

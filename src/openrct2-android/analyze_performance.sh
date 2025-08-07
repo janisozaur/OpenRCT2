@@ -51,7 +51,7 @@ for i in $(seq 1 $ITERATIONS); do
 
     # Collect profiling data
     echo "Collecting profiling data..."
-    adb logcat -d -s StartupProfiler:* AndroidAssetManager:* | grep PERF > "/tmp/openrct2_perf_test${i}.log"
+    adb logcat -d -s AndroidAssetManager:* | grep PERF > "/tmp/openrct2_perf_test${i}.log"
 
     if [ -s "/tmp/openrct2_perf_test${i}.log" ]; then
         echo "Performance log saved to /tmp/openrct2_perf_test${i}.log"
