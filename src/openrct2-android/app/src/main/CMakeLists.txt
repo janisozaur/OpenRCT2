@@ -315,13 +315,7 @@ else()
     )
 endif()
 
-# Phase 2: Add Android native asset management source files
-# Note: Android asset management and JNI bridge code is now integrated into Platform.Android.cpp
-file(GLOB_RECURSE ANDROID_ASSET_SOURCES
-    "${CMAKE_SOURCE_DIR}/src/openrct2/platform/Platform.Android.cpp"
-)
-
-add_library(openrct2 SHARED ${LIBOPENRCT2_SOURCES} ${ANDROID_ASSET_SOURCES})
+add_library(openrct2 SHARED ${LIBOPENRCT2_SOURCES})
 target_link_libraries(openrct2 android stdc++ log dl SDL2 png z zstd icu icuuc icudata crypto ssl freetype)
 
 add_library(openrct2-ui SHARED ${OPENRCT2_GUI_SOURCES})
