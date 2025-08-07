@@ -334,47 +334,74 @@ ExternalProject_Add(openmusic
 add_custom_target(build-graphics ALL
     DEPENDS gxc-tools
     COMMAND ${CMAKE_COMMAND} -E make_directory "${TEMP_DIR}/graphics"
+    COMMAND ${CMAKE_COMMAND} -E echo "Building graphics with gxc compiler..."
     COMMAND "${GXC_TOOLS_DIR}/gxc" build "${TEMP_DIR}/graphics/g2.dat" "${ORCT2_ROOT}/resources/g2/sprites.json"
     COMMAND "${GXC_TOOLS_DIR}/gxc" build "${TEMP_DIR}/graphics/fonts.dat" "${ORCT2_ROOT}/resources/fonts/sprites.json"
     COMMAND "${GXC_TOOLS_DIR}/gxc" build "${TEMP_DIR}/graphics/tracks.dat" "${ORCT2_ROOT}/resources/tracks/sprites.json"
+    COMMAND ${CMAKE_COMMAND} -E echo "✓ Graphics compilation complete!"
     BYPRODUCTS
         "${TEMP_DIR}/graphics/g2.dat"
         "${TEMP_DIR}/graphics/fonts.dat"
         "${TEMP_DIR}/graphics/tracks.dat"
-    COMMENT "Building graphics files with gxc"
+    COMMENT "Building graphics files with gxc compiler"
 )
 
-# Copy all assets to Android assets directory
-add_custom_target(prepare-assets ALL
-    DEPENDS title-sequences objects opensound openmusic build-graphics
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${ASSETS_DIR}"
+# Copy all assets to Android assets directory (only for primary ABI to avoid conflicts)
+if(CMAKE_ANDROID_ARCH_ABI STREQUAL "arm64-v8a")
+    add_custom_target(prepare-assets ALL
+        DEPENDS title-sequences objects opensound openmusic build-graphics
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${ASSETS_DIR}"
 
-    # Copy static data
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORCT2_ROOT}/data/language" "${ASSETS_DIR}/language"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORCT2_ROOT}/data/scenario_patches" "${ASSETS_DIR}/scenario_patches"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORCT2_ROOT}/data/shaders" "${ASSETS_DIR}/shaders"
+        # Copy static data with progress reporting
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying language files..."
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORCT2_ROOT}/data/language" "${ASSETS_DIR}/language"
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying scenario patches..."
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORCT2_ROOT}/data/scenario_patches" "${ASSETS_DIR}/scenario_patches"
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying shaders..."
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORCT2_ROOT}/data/shaders" "${ASSETS_DIR}/shaders"
 
-    # Copy generated graphics
-    COMMAND ${CMAKE_COMMAND} -E copy "${TEMP_DIR}/graphics/g2.dat" "${ASSETS_DIR}/"
-    COMMAND ${CMAKE_COMMAND} -E copy "${TEMP_DIR}/graphics/fonts.dat" "${ASSETS_DIR}/"
-    COMMAND ${CMAKE_COMMAND} -E copy "${TEMP_DIR}/graphics/tracks.dat" "${ASSETS_DIR}/"
+        # Copy generated graphics with validation
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying compiled graphics files..."
+        COMMAND ${CMAKE_COMMAND} -E copy "${TEMP_DIR}/graphics/g2.dat" "${ASSETS_DIR}/"
+        COMMAND ${CMAKE_COMMAND} -E copy "${TEMP_DIR}/graphics/fonts.dat" "${ASSETS_DIR}/"
+        COMMAND ${CMAKE_COMMAND} -E copy "${TEMP_DIR}/graphics/tracks.dat" "${ASSETS_DIR}/"
 
-    # Copy title sequences
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/title-sequences" "${ASSETS_DIR}/sequence"
+        # Copy title sequences
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying title sequences..."
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/title-sequences" "${ASSETS_DIR}/sequence"
 
-    # Copy objects
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/objects" "${ASSETS_DIR}/object"
+        # Copy objects with progress reporting
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying objects..."
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/objects" "${ASSETS_DIR}/object"
 
-    # Copy opensound assets (new .parkap format)
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/opensound/assetpack" "${ASSETS_DIR}/assetpack"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/opensound/object/official/audio" "${ASSETS_DIR}/object/official/audio"
+        # Copy opensound assets (new .parkap format)
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying sound asset packs..."
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/opensound/assetpack" "${ASSETS_DIR}/assetpack"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/opensound/object/official/audio" "${ASSETS_DIR}/object/official/audio"
 
-    # Copy openmusic assets (new .parkap format)
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/openmusic/assetpack" "${ASSETS_DIR}/assetpack"
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/openmusic/object/official/music" "${ASSETS_DIR}/object/official/music"
+        # Copy openmusic assets (new .parkap format)
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying music asset packs..."
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/openmusic/assetpack" "${ASSETS_DIR}/assetpack"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/openmusic/object/official/music" "${ASSETS_DIR}/object/official/music"
 
-    COMMENT "Preparing all assets for Android APK"
-)
+        # Validate final asset structure
+        COMMAND ${CMAKE_COMMAND} -E echo "Asset preparation complete! Validating structure..."
+        COMMAND test -f "${ASSETS_DIR}/g2.dat" || (echo "ERROR: g2.dat not found" && exit 1)
+        COMMAND test -f "${ASSETS_DIR}/fonts.dat" || (echo "ERROR: fonts.dat not found" && exit 1)
+        COMMAND test -f "${ASSETS_DIR}/tracks.dat" || (echo "ERROR: tracks.dat not found" && exit 1)
+        COMMAND test -d "${ASSETS_DIR}/assetpack" || (echo "ERROR: assetpack directory not found" && exit 1)
+        COMMAND find "${ASSETS_DIR}/assetpack" -name "*.parkap" | head -1 > /dev/null || (echo "ERROR: No .parkap files found" && exit 1)
+        COMMAND ${CMAKE_COMMAND} -E echo "✓ Asset validation passed!"
+
+        COMMENT "Preparing all assets for Android APK with validation"
+    )
+else()
+    # For other ABIs, create a dummy prepare-assets target that depends on the shared assets
+    add_custom_target(prepare-assets ALL
+        COMMAND ${CMAKE_COMMAND} -E echo "Assets prepared by primary ABI arm64-v8a"
+        COMMENT "Assets managed by primary ABI"
+    )
+endif()
 
 add_library(openrct2 SHARED ${LIBOPENRCT2_SOURCES})
 target_link_libraries(openrct2 android stdc++ log dl SDL2 png z zstd icu icuuc icudata crypto ssl freetype)
@@ -384,6 +411,23 @@ target_link_libraries(openrct2-ui openrct2 android stdc++ GLESv1_CM GLESv2 SDL2m
 
 # Make sure assets are prepared before building openrct2-ui
 add_dependencies(openrct2-ui prepare-assets)
+
+# Add a summary target for asset statistics
+add_custom_target(asset-summary
+    DEPENDS prepare-assets
+    COMMAND ${CMAKE_COMMAND} -E echo "=== OpenRCT2 Android Asset Summary ==="
+    COMMAND ${CMAKE_COMMAND} -E echo "Asset directory: ${ASSETS_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E echo "Graphics files:"
+    COMMAND ls -lh "${ASSETS_DIR}/"*.dat || true
+    COMMAND ${CMAKE_COMMAND} -E echo ""
+    COMMAND ${CMAKE_COMMAND} -E echo "Asset packs (.parkap files):"
+    COMMAND find "${ASSETS_DIR}/assetpack" -name "*.parkap" -exec ls -lh {} \; || true
+    COMMAND ${CMAKE_COMMAND} -E echo ""
+    COMMAND ${CMAKE_COMMAND} -E echo "Total asset size:"
+    COMMAND du -sh "${ASSETS_DIR}" || true
+    COMMAND ${CMAKE_COMMAND} -E echo "=== Phase 1.1 Complete: Assets ready for Android APK ==="
+    COMMENT "Display asset preparation summary"
+)
 
 target_include_directories(openrct2 PRIVATE "${ORCT2_ROOT}/src/thirdparty/duktape/")
 target_include_directories(openrct2 SYSTEM PRIVATE "${ORCT2_ROOT}/src/thirdparty")
