@@ -85,6 +85,8 @@ set(OPENMSX_SHA256  "994b350d3b180ee1cb9619fe27f7ebae3a1a5232840c4bd47a89f33fa89
 set(REPLAYS_VERSION "0.0.90")
 set(REPLAYS_URL     "https://github.com/OpenRCT2/replays/releases/download/v${REPLAYS_VERSION}/replays.zip")
 set(REPLAYS_SHA256  "f8474a927e155056e5729b6fa9f05af2a85ae7e1435f5fa89ba496242f9f255e")
+# Include shared asset configuration
+include(assets)
 
 option(FORCE32 "Force 32-bit build. It will add `-m32` to compiler flags.")
 option(WITH_TESTS "Build tests")

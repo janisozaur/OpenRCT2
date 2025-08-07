@@ -225,6 +225,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-char8_t -Wno-deprecated-declaration
 
 list(APPEND CMAKE_MODULE_PATH "${ORCT2_ROOT}/cmake")
 
+# Include shared asset configuration
+include(assets)
+
 find_package(CCache)
 
 if (CCache_FOUND)
@@ -252,83 +255,13 @@ if(X86 OR X86_64)
     set_source_files_properties(${ORCT2_ROOT}/src/openrct2/drawing/AVX2Drawing.cpp PROPERTIES COMPILE_FLAGS -mavx2)
 endif()
 
-# Asset versions (matching main CMakeLists.txt)
-set(TITLE_SEQUENCE_VERSION "0.4.14")
-set(OBJECTS_VERSION "1.7.2")
-set(OPENSFX_VERSION "1.0.6")
-set(OPENMSX_VERSION "1.6.1")
-
-# Asset URLs
-set(TITLE_SEQUENCE_URL "https://github.com/OpenRCT2/title-sequences/releases/download/v${TITLE_SEQUENCE_VERSION}/title-sequences.zip")
-set(OBJECTS_URL "https://github.com/OpenRCT2/objects/releases/download/v${OBJECTS_VERSION}/objects.zip")
-set(OPENSFX_URL "https://github.com/OpenRCT2/OpenSoundEffects/releases/download/v${OPENSFX_VERSION}/opensound.zip")
-set(OPENMSX_URL "https://github.com/OpenRCT2/OpenMusic/releases/download/v${OPENMSX_VERSION}/openmusic.zip")
-set(GXC_TOOLS_URL "https://github.com/IntelOrca/libsawyer/releases/download/v1.3.0/libsawyer-tools-linux-x64.tar.gz")
-
-# Asset SHA256 checksums
-set(TITLE_SEQUENCE_SHA256 "140df714e806fed411cc49763e7f16b0fcf2a487a57001d1e50fce8f9148a9f3")
-set(OBJECTS_SHA256 "b4286f7af68a61b0f7fc6e379ba37bf6796286d73e97c967958bf374e3f98f35")
-set(OPENSFX_SHA256 "06b90f3e19c216752df441d551b26a9e3e1ba7755bdd2102504b73bf993608be")
-set(OPENMSX_SHA256 "994b350d3b180ee1cb9619fe27f7ebae3a1a5232840c4bd47a89f33fa89de1a1")
-
 # Directories
 set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 set(TEMP_DIR "${CMAKE_BINARY_DIR}/temp")
 set(GXC_TOOLS_DIR "${CMAKE_BINARY_DIR}/gxc-tools")
 
-# Download and extract gxc tools
-ExternalProject_Add(gxc-tools
-    URL ${GXC_TOOLS_URL}
-    SOURCE_DIR "${GXC_TOOLS_DIR}"
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-    LOG_DOWNLOAD 1
-)
-
-# Download title sequences
-ExternalProject_Add(title-sequences
-    URL ${TITLE_SEQUENCE_URL}
-    URL_HASH SHA256=${TITLE_SEQUENCE_SHA256}
-    SOURCE_DIR "${TEMP_DIR}/title-sequences"
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-    LOG_DOWNLOAD 1
-)
-
-# Download objects
-ExternalProject_Add(objects
-    URL ${OBJECTS_URL}
-    URL_HASH SHA256=${OBJECTS_SHA256}
-    SOURCE_DIR "${TEMP_DIR}/objects"
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-    LOG_DOWNLOAD 1
-)
-
-# Download sound effects
-ExternalProject_Add(opensound
-    URL ${OPENSFX_URL}
-    URL_HASH SHA256=${OPENSFX_SHA256}
-    SOURCE_DIR "${TEMP_DIR}/opensound"
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-    LOG_DOWNLOAD 1
-)
-
-# Download music
-ExternalProject_Add(openmusic
-    URL ${OPENMSX_URL}
-    URL_HASH SHA256=${OPENMSX_SHA256}
-    SOURCE_DIR "${TEMP_DIR}/openmusic"
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-    LOG_DOWNLOAD 1
-)
+# Use shared asset download function for Android builds
+add_asset_download_targets(ANDROID_BUILD TEMP_DIR "${TEMP_DIR}")
 
 # Build graphics files using gxc
 add_custom_target(build-graphics ALL
