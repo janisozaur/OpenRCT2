@@ -252,10 +252,129 @@ if(X86 OR X86_64)
     set_source_files_properties(${ORCT2_ROOT}/src/openrct2/drawing/AVX2Drawing.cpp PROPERTIES COMPILE_FLAGS -mavx2)
 endif()
 
-file(GLOB_RECURSE OPENRCT2_CLI_SOURCES
-    "${ORCT2_ROOT}/src/openrct2-cli/*.cpp"
-    "${ORCT2_ROOT}/src/openrct2-cli/*.h"
-    "${ORCT2_ROOT}/src/openrct2-cli/*.hpp")
+# Asset versions (matching main CMakeLists.txt)
+set(TITLE_SEQUENCE_VERSION "0.4.14")
+set(OBJECTS_VERSION "1.7.2")
+set(OPENSFX_VERSION "1.0.6")
+set(OPENMSX_VERSION "1.6.1")
+
+# Asset URLs
+set(TITLE_SEQUENCE_URL "https://github.com/OpenRCT2/title-sequences/releases/download/v${TITLE_SEQUENCE_VERSION}/title-sequences.zip")
+set(OBJECTS_URL "https://github.com/OpenRCT2/objects/releases/download/v${OBJECTS_VERSION}/objects.zip")
+set(OPENSFX_URL "https://github.com/OpenRCT2/OpenSoundEffects/releases/download/v${OPENSFX_VERSION}/opensound.zip")
+set(OPENMSX_URL "https://github.com/OpenRCT2/OpenMusic/releases/download/v${OPENMSX_VERSION}/openmusic.zip")
+set(GXC_TOOLS_URL "https://github.com/IntelOrca/libsawyer/releases/download/v1.3.0/libsawyer-tools-linux-x64.tar.gz")
+
+# Asset SHA256 checksums
+set(TITLE_SEQUENCE_SHA256 "140df714e806fed411cc49763e7f16b0fcf2a487a57001d1e50fce8f9148a9f3")
+set(OBJECTS_SHA256 "b4286f7af68a61b0f7fc6e379ba37bf6796286d73e97c967958bf374e3f98f35")
+set(OPENSFX_SHA256 "06b90f3e19c216752df441d551b26a9e3e1ba7755bdd2102504b73bf993608be")
+set(OPENMSX_SHA256 "994b350d3b180ee1cb9619fe27f7ebae3a1a5232840c4bd47a89f33fa89de1a1")
+
+# Directories
+set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets/openrct2")
+set(TEMP_DIR "${CMAKE_BINARY_DIR}/temp")
+set(GXC_TOOLS_DIR "${CMAKE_BINARY_DIR}/gxc-tools")
+
+# Download and extract gxc tools
+ExternalProject_Add(gxc-tools
+    URL ${GXC_TOOLS_URL}
+    SOURCE_DIR "${GXC_TOOLS_DIR}"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    LOG_DOWNLOAD 1
+)
+
+# Download title sequences
+ExternalProject_Add(title-sequences
+    URL ${TITLE_SEQUENCE_URL}
+    URL_HASH SHA256=${TITLE_SEQUENCE_SHA256}
+    SOURCE_DIR "${TEMP_DIR}/title-sequences"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    LOG_DOWNLOAD 1
+)
+
+# Download objects
+ExternalProject_Add(objects
+    URL ${OBJECTS_URL}
+    URL_HASH SHA256=${OBJECTS_SHA256}
+    SOURCE_DIR "${TEMP_DIR}/objects"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    LOG_DOWNLOAD 1
+)
+
+# Download sound effects
+ExternalProject_Add(opensound
+    URL ${OPENSFX_URL}
+    URL_HASH SHA256=${OPENSFX_SHA256}
+    SOURCE_DIR "${TEMP_DIR}/opensound"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    LOG_DOWNLOAD 1
+)
+
+# Download music
+ExternalProject_Add(openmusic
+    URL ${OPENMSX_URL}
+    URL_HASH SHA256=${OPENMSX_SHA256}
+    SOURCE_DIR "${TEMP_DIR}/openmusic"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    LOG_DOWNLOAD 1
+)
+
+# Build graphics files using gxc
+add_custom_target(build-graphics ALL
+    DEPENDS gxc-tools
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${TEMP_DIR}/graphics"
+    COMMAND "${GXC_TOOLS_DIR}/gxc" build "${TEMP_DIR}/graphics/g2.dat" "${ORCT2_ROOT}/resources/g2/sprites.json"
+    COMMAND "${GXC_TOOLS_DIR}/gxc" build "${TEMP_DIR}/graphics/fonts.dat" "${ORCT2_ROOT}/resources/fonts/sprites.json"
+    COMMAND "${GXC_TOOLS_DIR}/gxc" build "${TEMP_DIR}/graphics/tracks.dat" "${ORCT2_ROOT}/resources/tracks/sprites.json"
+    BYPRODUCTS
+        "${TEMP_DIR}/graphics/g2.dat"
+        "${TEMP_DIR}/graphics/fonts.dat"
+        "${TEMP_DIR}/graphics/tracks.dat"
+    COMMENT "Building graphics files with gxc"
+)
+
+# Copy all assets to Android assets directory
+add_custom_target(prepare-assets ALL
+    DEPENDS title-sequences objects opensound openmusic build-graphics
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${ASSETS_DIR}"
+
+    # Copy static data
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORCT2_ROOT}/data/language" "${ASSETS_DIR}/language"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORCT2_ROOT}/data/scenario_patches" "${ASSETS_DIR}/scenario_patches"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${ORCT2_ROOT}/data/shaders" "${ASSETS_DIR}/shaders"
+
+    # Copy generated graphics
+    COMMAND ${CMAKE_COMMAND} -E copy "${TEMP_DIR}/graphics/g2.dat" "${ASSETS_DIR}/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${TEMP_DIR}/graphics/fonts.dat" "${ASSETS_DIR}/"
+    COMMAND ${CMAKE_COMMAND} -E copy "${TEMP_DIR}/graphics/tracks.dat" "${ASSETS_DIR}/"
+
+    # Copy title sequences
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/title-sequences" "${ASSETS_DIR}/sequence"
+
+    # Copy objects
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/objects" "${ASSETS_DIR}/object"
+
+    # Copy opensound assets (new .parkap format)
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/opensound/assetpack" "${ASSETS_DIR}/assetpack"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/opensound/object/official/audio" "${ASSETS_DIR}/object/official/audio"
+
+    # Copy openmusic assets (new .parkap format)
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/openmusic/assetpack" "${ASSETS_DIR}/assetpack"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${TEMP_DIR}/openmusic/object/official/music" "${ASSETS_DIR}/object/official/music"
+
+    COMMENT "Preparing all assets for Android APK"
+)
 
 add_library(openrct2 SHARED ${LIBOPENRCT2_SOURCES})
 target_link_libraries(openrct2 android stdc++ log dl SDL2 png z zstd icu icuuc icudata crypto ssl freetype)
@@ -263,15 +382,14 @@ target_link_libraries(openrct2 android stdc++ log dl SDL2 png z zstd icu icuuc i
 add_library(openrct2-ui SHARED ${OPENRCT2_GUI_SOURCES})
 target_link_libraries(openrct2-ui openrct2 android stdc++ GLESv1_CM GLESv2 SDL2main speexdsp brotlicommon brotlidec bz2 freetype ogg vorbis vorbisfile FLAC)
 
-add_executable(openrct2-cli ${OPENRCT2_CLI_SOURCES})
-target_link_libraries(openrct2-cli openrct2 android stdc++ GLESv1_CM GLESv2)
+# Make sure assets are prepared before building openrct2-ui
+add_dependencies(openrct2-ui prepare-assets)
 
 target_include_directories(openrct2 PRIVATE "${ORCT2_ROOT}/src/thirdparty/duktape/")
 target_include_directories(openrct2 SYSTEM PRIVATE "${ORCT2_ROOT}/src/thirdparty")
 target_include_directories(openrct2-ui PRIVATE "${ORCT2_ROOT}/src/thirdparty/duktape/")
 target_include_directories(openrct2-ui PRIVATE "${ORCT2_ROOT}/src")
 target_include_directories(openrct2-ui SYSTEM PRIVATE "${ORCT2_ROOT}/src/thirdparty")
-target_include_directories(openrct2-cli PRIVATE "${ORCT2_ROOT}/src")
 
 target_include_directories(openrct2 PRIVATE "/opt/openrct2/include/nlohmann/../")
 target_include_directories(openrct2-ui PRIVATE "/opt/openrct2/include/nlohmann/../")
