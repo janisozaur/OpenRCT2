@@ -255,6 +255,12 @@ if(X86 OR X86_64)
     set_source_files_properties(${ORCT2_ROOT}/src/openrct2/drawing/AVX2Drawing.cpp PROPERTIES COMPILE_FLAGS -mavx2)
 endif()
 
+file(GLOB_RECURSE OPENRCT2_CLI_SOURCES
+    "${ORCT2_ROOT}/src/openrct2-cli/*.cpp"
+    "${ORCT2_ROOT}/src/openrct2-cli/*.h"
+    "${ORCT2_ROOT}/src/openrct2-cli/*.hpp")
+
+
 # Directories
 set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 set(TEMP_DIR "${CMAKE_BINARY_DIR}/temp")
@@ -321,6 +327,9 @@ target_link_libraries(openrct2 android stdc++ log dl SDL2 png z zstd icu icuuc i
 add_library(openrct2-ui SHARED ${OPENRCT2_GUI_SOURCES})
 target_link_libraries(openrct2-ui openrct2 android stdc++ GLESv1_CM GLESv2 SDL2main speexdsp brotlicommon brotlidec bz2 freetype ogg vorbis vorbisfile FLAC)
 
+add_executable(openrct2-cli ${OPENRCT2_CLI_SOURCES})
+target_link_libraries(openrct2-cli openrct2 android stdc++ GLESv1_CM GLESv2)
+
 # Make sure assets are prepared before building openrct2-ui
 add_dependencies(openrct2-ui prepare-assets)
 
@@ -329,6 +338,7 @@ target_include_directories(openrct2 SYSTEM PRIVATE "${ORCT2_ROOT}/src/thirdparty
 target_include_directories(openrct2-ui PRIVATE "${ORCT2_ROOT}/src/thirdparty/duktape/")
 target_include_directories(openrct2-ui PRIVATE "${ORCT2_ROOT}/src")
 target_include_directories(openrct2-ui SYSTEM PRIVATE "${ORCT2_ROOT}/src/thirdparty")
+target_include_directories(openrct2-cli PRIVATE "${ORCT2_ROOT}/src")
 
 target_include_directories(openrct2 PRIVATE "/opt/openrct2/include/nlohmann/../")
 target_include_directories(openrct2-ui PRIVATE "/opt/openrct2/include/nlohmann/../")
