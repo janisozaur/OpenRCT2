@@ -17,23 +17,20 @@
     #include "../localisation/Language.h"
 
     #include <SDL.h>
-    #include <jni.h>
-    #include <memory>
     #include <android/asset_manager.h>
     #include <android/asset_manager_jni.h>
     #include <android/log.h>
-    #include <cstring>
     #include <chrono>
-
     #include <cstring>
-    #include <chrono>
+    #include <jni.h>
+    #include <memory>
 
-// Android Asset Manager logging macros
-#define ASSET_LOG_TAG "AndroidAssetManager"
-#define ASSET_LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, ASSET_LOG_TAG, __VA_ARGS__)
-#define ASSET_LOGE(...) __android_log_print(ANDROID_LOG_ERROR, ASSET_LOG_TAG, __VA_ARGS__)
-#define ASSET_LOGI(...) __android_log_print(ANDROID_LOG_INFO, ASSET_LOG_TAG, __VA_ARGS__)
-#define ASSET_LOGPERF(...) __android_log_print(ANDROID_LOG_WARN, ASSET_LOG_TAG, "[PERF] " __VA_ARGS__)
+    // Android Asset Manager logging macros
+    #define ASSET_LOG_TAG "AndroidAssetManager"
+    #define ASSET_LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, ASSET_LOG_TAG, __VA_ARGS__)
+    #define ASSET_LOGE(...) __android_log_print(ANDROID_LOG_ERROR, ASSET_LOG_TAG, __VA_ARGS__)
+    #define ASSET_LOGI(...) __android_log_print(ANDROID_LOG_INFO, ASSET_LOG_TAG, __VA_ARGS__)
+    #define ASSET_LOGPERF(...) __android_log_print(ANDROID_LOG_WARN, ASSET_LOG_TAG, "[PERF] " __VA_ARGS__)
 
 /**
  * Phase 2: Advanced Asset Management - Android AAsset Integration
@@ -41,7 +38,8 @@
  * This class provides direct access to assets embedded in the APK,
  * eliminating the need for file copying during build time.
  */
-class AndroidAssetManager {
+class AndroidAssetManager
+{
 public:
     static AndroidAssetManager& getInstance();
 
@@ -67,7 +65,8 @@ public:
     bool validateCriticalAssets();
 
     // Get asset info for debugging
-    struct AssetInfo {
+    struct AssetInfo
+    {
         std::string path;
         size_t size;
         bool exists;
@@ -85,23 +84,23 @@ private:
 
 // Critical assets that must be present for OpenRCT2 to function
 const std::vector<std::string> AndroidAssetManager::CRITICAL_ASSETS = {
-    "openrct2/g2.dat",
-    "openrct2/fonts.dat",
-    "openrct2/tracks.dat",
-    "openrct2/language/en-GB.txt",
-    "openrct2/assetpack"  // Directory check
+    "openrct2/g2.dat", "openrct2/fonts.dat", "openrct2/tracks.dat", "openrct2/language/en-GB.txt",
+    "openrct2/assetpack" // Directory check
 };
 
-AndroidAssetManager& AndroidAssetManager::getInstance() {
+AndroidAssetManager& AndroidAssetManager::getInstance()
+{
     static AndroidAssetManager instance;
     return instance;
 }
 
-bool AndroidAssetManager::initialize(AAssetManager* assetManager) {
+bool AndroidAssetManager::initialize(AAssetManager* assetManager)
+{
     auto start = std::chrono::high_resolution_clock::now();
     ASSET_LOGPERF("Asset manager initialization started");
 
-    if (!assetManager) {
+    if (!assetManager)
+    {
         ASSET_LOGE("AssetManager is null");
         return false;
     }
@@ -113,7 +112,8 @@ bool AndroidAssetManager::initialize(AAssetManager* assetManager) {
 
     // Validate critical assets are present
     auto validation_start = std::chrono::high_resolution_clock::now();
-    if (!validateCriticalAssets()) {
+    if (!validateCriticalAssets())
+    {
         ASSET_LOGE("Critical asset validation failed");
         return false;
     }
@@ -130,31 +130,37 @@ bool AndroidAssetManager::initialize(AAssetManager* assetManager) {
     return true;
 }
 
-bool AndroidAssetManager::assetExists(const std::string& path) {
-    if (!m_initialized) {
+bool AndroidAssetManager::assetExists(const std::string& path)
+{
+    if (!m_initialized)
+    {
         ASSET_LOGE("AssetManager not initialized");
         return false;
     }
 
     AAsset* asset = AAssetManager_open(m_assetManager, path.c_str(), AASSET_MODE_UNKNOWN);
-    if (asset) {
+    if (asset)
+    {
         AAsset_close(asset);
         return true;
     }
     return false;
 }
 
-std::vector<uint8_t> AndroidAssetManager::readAsset(const std::string& path) {
+std::vector<uint8_t> AndroidAssetManager::readAsset(const std::string& path)
+{
     auto start = std::chrono::high_resolution_clock::now();
     std::vector<uint8_t> data;
 
-    if (!m_initialized) {
+    if (!m_initialized)
+    {
         ASSET_LOGE("AssetManager not initialized");
         return data;
     }
 
     AAsset* asset = AAssetManager_open(m_assetManager, path.c_str(), AASSET_MODE_BUFFER);
-    if (!asset) {
+    if (!asset)
+    {
         ASSET_LOGE("Failed to open asset: %s", path.c_str());
         return data;
     }
@@ -168,11 +174,15 @@ std::vector<uint8_t> AndroidAssetManager::readAsset(const std::string& path) {
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-    if (bytesRead != static_cast<int>(size)) {
+    if (bytesRead != static_cast<int>(size))
+    {
         ASSET_LOGE("Failed to read complete asset: %s (%d/%zu bytes)", path.c_str(), bytesRead, size);
         data.clear();
-    } else {
-        if (size > 1024 * 1024) { // Only log for files > 1MB
+    }
+    else
+    {
+        if (size > 1024 * 1024)
+        { // Only log for files > 1MB
             ASSET_LOGPERF("Read large asset: %s (%zu bytes) in %lld ms", path.c_str(), size, (long long)duration.count());
         }
         ASSET_LOGD("Successfully read asset: %s (%zu bytes)", path.c_str(), size);
@@ -181,13 +191,16 @@ std::vector<uint8_t> AndroidAssetManager::readAsset(const std::string& path) {
     return data;
 }
 
-size_t AndroidAssetManager::getAssetSize(const std::string& path) {
-    if (!m_initialized) {
+size_t AndroidAssetManager::getAssetSize(const std::string& path)
+{
+    if (!m_initialized)
+    {
         return 0;
     }
 
     AAsset* asset = AAssetManager_open(m_assetManager, path.c_str(), AASSET_MODE_UNKNOWN);
-    if (!asset) {
+    if (!asset)
+    {
         return 0;
     }
 
@@ -196,29 +209,35 @@ size_t AndroidAssetManager::getAssetSize(const std::string& path) {
     return size;
 }
 
-AAsset* AndroidAssetManager::openAsset(const std::string& path) {
-    if (!m_initialized) {
+AAsset* AndroidAssetManager::openAsset(const std::string& path)
+{
+    if (!m_initialized)
+    {
         return nullptr;
     }
 
     return AAssetManager_open(m_assetManager, path.c_str(), AASSET_MODE_STREAMING);
 }
 
-std::vector<std::string> AndroidAssetManager::listAssets(const std::string& directory) {
+std::vector<std::string> AndroidAssetManager::listAssets(const std::string& directory)
+{
     std::vector<std::string> assets;
 
-    if (!m_initialized) {
+    if (!m_initialized)
+    {
         return assets;
     }
 
     AAssetDir* assetDir = AAssetManager_openDir(m_assetManager, directory.c_str());
-    if (!assetDir) {
+    if (!assetDir)
+    {
         ASSET_LOGE("Failed to open asset directory: %s", directory.c_str());
         return assets;
     }
 
     const char* filename;
-    while ((filename = AAssetDir_getNextFileName(assetDir)) != nullptr) {
+    while ((filename = AAssetDir_getNextFileName(assetDir)) != nullptr)
+    {
         std::string fullPath = directory.empty() ? filename : directory + "/" + filename;
         assets.push_back(fullPath);
     }
@@ -228,24 +247,32 @@ std::vector<std::string> AndroidAssetManager::listAssets(const std::string& dire
     return assets;
 }
 
-bool AndroidAssetManager::validateCriticalAssets() {
-    if (!m_initialized) {
+bool AndroidAssetManager::validateCriticalAssets()
+{
+    if (!m_initialized)
+    {
         return false;
     }
 
     ASSET_LOGI("Validating critical assets...");
 
-    for (const auto& assetPath : CRITICAL_ASSETS) {
-        if (assetPath.back() == '/') {
+    for (const auto& assetPath : CRITICAL_ASSETS)
+    {
+        if (assetPath.back() == '/')
+        {
             // Directory check
             auto files = listAssets(assetPath);
-            if (files.empty()) {
+            if (files.empty())
+            {
                 ASSET_LOGE("Critical directory is empty: %s", assetPath.c_str());
                 return false;
             }
-        } else {
+        }
+        else
+        {
             // File check
-            if (!assetExists(assetPath)) {
+            if (!assetExists(assetPath))
+            {
                 ASSET_LOGE("Critical asset missing: %s", assetPath.c_str());
                 return false;
             }
@@ -255,15 +282,18 @@ bool AndroidAssetManager::validateCriticalAssets() {
     return true;
 }
 
-std::vector<AndroidAssetManager::AssetInfo> AndroidAssetManager::getAssetSummary() {
+std::vector<AndroidAssetManager::AssetInfo> AndroidAssetManager::getAssetSummary()
+{
     std::vector<AssetInfo> summary;
 
-    if (!m_initialized) {
+    if (!m_initialized)
+    {
         return summary;
     }
 
     // Get info for critical assets
-    for (const auto& path : CRITICAL_ASSETS) {
+    for (const auto& path : CRITICAL_ASSETS)
+    {
         AssetInfo info;
         info.path = path;
         info.exists = assetExists(path);
@@ -321,33 +351,37 @@ namespace OpenRCT2::Platform
         // This is used by the config system to search for game data files.
 
         JNIEnv* env = static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv());
-        if (!env) {
+        if (!env)
+        {
             LOG_ERROR("JNI environment not available in GetCurrentExecutablePath");
-            return "/data/app/io.openrct2/base.apk";  // fallback path
+            return "/data/app/io.openrct2/base.apk"; // fallback path
         }
 
         jobject activity = static_cast<jobject>(SDL_AndroidGetActivity());
-        if (!activity) {
+        if (!activity)
+        {
             LOG_ERROR("Android activity not available in GetCurrentExecutablePath");
-            return "/data/app/io.openrct2/base.apk";  // fallback path
+            return "/data/app/io.openrct2/base.apk"; // fallback path
         }
 
         jclass activityClass = env->GetObjectClass(activity);
         jmethodID getPackageCodePath = env->GetMethodID(activityClass, "getPackageCodePath", "()Ljava/lang/String;");
 
-        if (!getPackageCodePath) {
+        if (!getPackageCodePath)
+        {
             LOG_ERROR("Failed to get getPackageCodePath method");
             env->DeleteLocalRef(activity);
             env->DeleteLocalRef(activityClass);
-            return "/data/app/io.openrct2/base.apk";  // fallback path
+            return "/data/app/io.openrct2/base.apk"; // fallback path
         }
 
         jstring jniString = static_cast<jstring>(env->CallObjectMethod(activity, getPackageCodePath));
-        if (!jniString) {
+        if (!jniString)
+        {
             LOG_ERROR("Failed to get package code path");
             env->DeleteLocalRef(activity);
             env->DeleteLocalRef(activityClass);
-            return "/data/app/io.openrct2/base.apk";  // fallback path
+            return "/data/app/io.openrct2/base.apk"; // fallback path
         }
 
         const char* jniChars = env->GetStringUTFChars(jniString, nullptr);
@@ -514,12 +548,16 @@ namespace OpenRCT2::Platform
     {
         // Initialize AndroidClassLoader if needed
         static bool classLoaderInitialized = false;
-        if (!classLoaderInitialized) {
-            try {
+        if (!classLoaderInitialized)
+        {
+            try
+            {
                 InitializeAndroidClassLoader();
                 classLoaderInitialized = true;
                 LOG_INFO("AndroidClassLoader initialized for file loading");
-            } catch (const std::exception& e) {
+            }
+            catch (const std::exception& e)
+            {
                 LOG_ERROR("Failed to initialize AndroidClassLoader: %s", e.what());
                 // Continue with fallback loading
             }
@@ -531,21 +569,28 @@ namespace OpenRCT2::Platform
         // Convert filesystem path to asset path
         // Remove leading "/sdcard/openrct2/" and replace with "openrct2/"
         size_t sdcardPos = pathStr.find("/sdcard/openrct2/");
-        if (sdcardPos != std::string::npos) {
+        if (sdcardPos != std::string::npos)
+        {
             std::string assetPath = "openrct2/" + pathStr.substr(sdcardPos + 17); // 17 = length of "/sdcard/openrct2/"
             LOG_VERBOSE("Trying to load file from embedded asset: %s", assetPath.c_str());
 
             auto& assetManager = AndroidAssetManager::getInstance();
-            if (assetManager.assetExists(assetPath)) {
+            if (assetManager.assetExists(assetPath))
+            {
                 auto assetData = assetManager.readAsset(assetPath);
-                if (!assetData.empty()) {
+                if (!assetData.empty())
+                {
                     data = assetData;
                     LOG_INFO("Successfully loaded file from embedded asset: %s (%zu bytes)", assetPath.c_str(), data.size());
                     return true;
-                } else {
+                }
+                else
+                {
                     LOG_ERROR("Failed to read data from embedded asset: %s", assetPath.c_str());
                 }
-            } else {
+            }
+            else
+            {
                 LOG_VERBOSE("Asset not found in embedded assets: %s", assetPath.c_str());
             }
         }
@@ -559,33 +604,40 @@ namespace OpenRCT2::Platform
 // JNI Bridge Functions
 extern "C" {
 
-JNIEXPORT void JNICALL
-Java_io_openrct2_GameActivity_nativeSetupAssetManager(JNIEnv *env, jobject thiz, jobject assetManager) {
+JNIEXPORT void JNICALL Java_io_openrct2_GameActivity_nativeSetupAssetManager(JNIEnv* env, jobject thiz, jobject assetManager)
+{
     LOG_INFO("Setting up native asset manager");
 
     // Convert Java AssetManager to native AAssetManager
     AAssetManager* aAssetManager = AAssetManager_fromJava(env, assetManager);
-    if (aAssetManager) {
+    if (aAssetManager)
+    {
         // Initialize the AndroidAssetManager singleton
         AndroidAssetManager::getInstance().initialize(aAssetManager);
         LOG_INFO("AndroidAssetManager initialized successfully");
-    } else {
+    }
+    else
+    {
         LOG_ERROR("Failed to convert Java AssetManager to native AAssetManager");
     }
 }
 
 // C-style interface for AndroidAssetManager
-void android_asset_manager_init(AAssetManager* assetManager) {
+void android_asset_manager_init(AAssetManager* assetManager)
+{
     AndroidAssetManager::getInstance().initialize(assetManager);
 }
 
-int android_asset_exists(const char* path) {
+int android_asset_exists(const char* path)
+{
     return AndroidAssetManager::getInstance().assetExists(path) ? 1 : 0;
 }
 
-uint8_t* android_asset_read(const char* path, size_t* size) {
+uint8_t* android_asset_read(const char* path, size_t* size)
+{
     auto data = AndroidAssetManager::getInstance().readAsset(path);
-    if (data.empty()) {
+    if (data.empty())
+    {
         *size = 0;
         return nullptr;
     }
@@ -596,11 +648,13 @@ uint8_t* android_asset_read(const char* path, size_t* size) {
     return result;
 }
 
-void android_asset_free(uint8_t* data) {
+void android_asset_free(uint8_t* data)
+{
     delete[] data;
 }
 
-int android_assets_validate() {
+int android_assets_validate()
+{
     return AndroidAssetManager::getInstance().validateCriticalAssets() ? 1 : 0;
 }
 
@@ -623,10 +677,13 @@ void InitializeAndroidClassLoader()
 {
     if (!acl)
     {
-        try {
+        try
+        {
             acl = std::make_shared<AndroidClassLoader>();
             LOG_INFO("AndroidClassLoader initialized successfully");
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception& e)
+        {
             LOG_ERROR("Failed to initialize AndroidClassLoader: %s", e.what());
         }
     }
@@ -641,7 +698,8 @@ AndroidClassLoader::AndroidClassLoader()
 
     // Wait for SDL to be ready
     JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
-    if (!env) {
+    if (!env)
+    {
         LOG_ERROR("JNI environment not available for AndroidClassLoader");
         throw std::runtime_error("JNI environment not available");
     }
@@ -650,7 +708,8 @@ AndroidClassLoader::AndroidClassLoader()
     // makes sense to use one that's most likely already loaded and is unlikely
     // to be removed from code.
     auto randomClass = env->FindClass("io/openrct2/MainActivity");
-    if (!randomClass) {
+    if (!randomClass)
+    {
         LOG_ERROR("Failed to find MainActivity class");
         throw std::runtime_error("Failed to find MainActivity class");
     }
