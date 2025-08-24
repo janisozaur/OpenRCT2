@@ -77,6 +77,9 @@ void RestrictAllMiscScenery();
 void MarkAllUnrestrictedSceneryAsInvented();
 std::vector<ScenerySelection>& GetRestrictedScenery();
 void SetSceneryItemRestricted(const ScenerySelection& item, bool on);
+bool IsSceneryItemFavourited(const ScenerySelection& item);
+std::vector<ScenerySelection>& GetFavouritedScenery();
+void SetSceneryItemFavourited(const ScenerySelection& item, bool on);
 bool ObjectTypeCanBeRestricted(OpenRCT2::ObjectType objectType);
 
 OpenRCT2::ObjectType GetObjectTypeFromSceneryType(uint8_t type);

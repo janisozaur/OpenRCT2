@@ -17,6 +17,7 @@ namespace OpenRCT2
     {
         // General
         STR_ADJUST_LARGER_LAND_TIP = 2379,
+        STR_FAVOURITES = 7004,
         STR_ADJUST_SMALLER_LAND_TIP = 2378,
         STR_BROKEN = 3124,
         STR_BROWSE = 6705,

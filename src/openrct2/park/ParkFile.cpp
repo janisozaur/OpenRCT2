@@ -99,6 +99,7 @@ namespace OpenRCT2
         constexpr uint32_t RESTRICTED_OBJECTS   = 0x37;
         constexpr uint32_t PLUGIN_STORAGE       = 0x38;
         constexpr uint32_t PREVIEW              = 0x39;
+        constexpr uint32_t FAVOURITE_OBJECTS    = 0x3a;
         constexpr uint32_t PACKED_OBJECTS       = 0x80;
         // clang-format on
     }; // namespace ParkFileChunkType
@@ -169,6 +170,7 @@ namespace OpenRCT2
             ReadWriteInterfaceChunk(gameState, os);
             ReadWriteCheatsChunk(gameState, os);
             ReadWriteRestrictedObjectsChunk(gameState, os);
+            ReadWriteFavouriteObjectsChunk(gameState, os);
             ReadWritePluginStorageChunk(gameState, os);
             if (os.getHeader().targetVersion < 0x4)
             {
@@ -203,6 +205,7 @@ namespace OpenRCT2
             ReadWriteInterfaceChunk(gameState, os);
             ReadWriteCheatsChunk(gameState, os);
             ReadWriteRestrictedObjectsChunk(gameState, os);
+            ReadWriteFavouriteObjectsChunk(gameState, os);
             ReadWritePluginStorageChunk(gameState, os);
             ReadWritePreviewChunk(gameState, os);
             ReadWritePackedObjectsChunk(os);
@@ -727,6 +730,28 @@ namespace OpenRCT2
                 // We are want to support all object types in the future, so convert scenery type
                 // to object type when we write the list
                 cs.readWriteVector(restrictedScenery, [&cs](ScenerySelection& item) {
+                    if (cs.getMode() == OrcaStream::Mode::reading)
+                    {
+                        item.SceneryType = GetSceneryTypeFromObjectType(static_cast<ObjectType>(cs.read<uint16_t>()));
+                        item.EntryIndex = cs.read<ObjectEntryIndex>();
+                    }
+                    else
+                    {
+                        cs.write(static_cast<uint16_t>(GetObjectTypeFromSceneryType(item.SceneryType)));
+                        cs.write(item.EntryIndex);
+                    }
+                });
+            });
+        }
+
+        void ReadWriteFavouriteObjectsChunk(GameState_t& gameState, OrcaStream& os)
+        {
+            os.readWriteChunk(ParkFileChunkType::FAVOURITE_OBJECTS, [](OrcaStream::ChunkStream& cs) {
+                auto& favouritedScenery = GetFavouritedScenery();
+
+                // We are want to support all object types in the future, so convert scenery type
+                // to object type when we write the list
+                cs.readWriteVector(favouritedScenery, [&cs](ScenerySelection& item) {
                     if (cs.getMode() == OrcaStream::Mode::reading)
                     {
                         item.SceneryType = GetSceneryTypeFromObjectType(static_cast<ObjectType>(cs.read<uint16_t>()));

@@ -66,6 +66,7 @@
 #include "RideSetStatusAction.h"
 #include "RideSetVehicleAction.h"
 #include "ScenarioSetSettingAction.h"
+#include "ScenerySetFavouriteAction.h"
 #include "ScenerySetRestrictedAction.h"
 #include "SignSetNameAction.h"
 #include "SignSetStyleAction.h"
@@ -211,6 +212,7 @@ namespace OpenRCT2::GameActions
         REGISTER_ACTION(MapChangeSizeAction);
         REGISTER_ACTION(GameSetSpeedAction);
         REGISTER_ACTION(ScenerySetRestrictedAction);
+        REGISTER_ACTION(ScenerySetFavouriteAction);
 #ifdef ENABLE_SCRIPTING
         REGISTER_ACTION(CustomAction);
 #endif

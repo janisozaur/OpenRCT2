@@ -403,6 +403,39 @@ void SetSceneryItemRestricted(const ScenerySelection& item, bool on)
     }
 }
 
+bool IsSceneryItemFavourited(const ScenerySelection& item)
+{
+    auto& gameState = getGameState();
+    return std::find(std::begin(gameState.favouritedScenery), std::end(gameState.favouritedScenery), item)
+        != std::end(gameState.favouritedScenery);
+}
+
+std::vector<ScenerySelection>& GetFavouritedScenery()
+{
+    return getGameState().favouritedScenery;
+}
+
+void SetSceneryItemFavourited(const ScenerySelection& item, bool on)
+{
+    auto& gameState = getGameState();
+    auto existingItem = std::find(std::begin(gameState.favouritedScenery), std::end(gameState.favouritedScenery), item);
+    const bool existingItemIsPresent = existingItem != std::end(gameState.favouritedScenery);
+    if (on)
+    {
+        if (!existingItemIsPresent)
+        {
+            gameState.favouritedScenery.push_back(item);
+        }
+    }
+    else
+    {
+        if (existingItemIsPresent)
+        {
+            gameState.favouritedScenery.erase(existingItem);
+        }
+    }
+}
+
 bool ObjectTypeCanBeRestricted(ObjectType objectType)
 {
     switch (objectType)
