@@ -85,7 +85,7 @@ private:
 // Critical assets that must be present for OpenRCT2 to function
 const std::vector<std::string> AndroidAssetManager::CRITICAL_ASSETS = {
     "openrct2/g2.dat", "openrct2/fonts.dat", "openrct2/tracks.dat", "openrct2/language/en-GB.txt",
-    "openrct2/assetpack" // Directory check
+    "openrct2/assetpack/" // Directory check
 };
 
 AndroidAssetManager& AndroidAssetManager::getInstance()
