@@ -454,17 +454,17 @@ jobs:
             distro: Ubuntu
             release: noble
             image: openrct2/openrct2-build:23-noble
-            build_flags: -DCMAKE_POSITION_INDEPENDENT_CODE=on -DCMAKE_CXX_FLAGS="-gz -fno-var-tracking-assignments"
+            build_flags: -DCMAKE_POSITION_INDEPENDENT_CODE=on -DCMAKE_CXX_FLAGS="-g1 -gz -fno-var-tracking-assignments"
           - platform: x86_64
             distro: Debian
             release: bookworm
             image: openrct2/openrct2-build:23-bookworm
-            build_flags: -DCMAKE_POSITION_INDEPENDENT_CODE=on -DCMAKE_CXX_FLAGS="-gz -fno-var-tracking-assignments" -DWITH_TESTS=off
+            build_flags: -DCMAKE_POSITION_INDEPENDENT_CODE=on -DCMAKE_CXX_FLAGS="-g1 -gz -fno-var-tracking-assignments" -DWITH_TESTS=off
           - platform: x86_64
             distro: Debian
             release: trixie
             image: openrct2/openrct2-build:23-trixie
-            build_flags: -DCMAKE_POSITION_INDEPENDENT_CODE=on -DCMAKE_CXX_FLAGS="-gz -fno-var-tracking-assignments" -DWITH_TESTS=off
+            build_flags: -DCMAKE_POSITION_INDEPENDENT_CODE=on -DCMAKE_CXX_FLAGS="-g1 -gz -fno-var-tracking-assignments" -DWITH_TESTS=off
     steps:
       - name: Checkout
         uses: actions/checkout@v4
