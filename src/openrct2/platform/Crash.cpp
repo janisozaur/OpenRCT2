@@ -335,7 +335,7 @@ CExceptionHandler CrashInit()
 #ifdef USE_BREAKPAD
     // Path must exist and be RW!
     auto exHandler = new google_breakpad::ExceptionHandler(
-        GetDumpDirectory(), 0, OnCrash, 0, google_breakpad::ExceptionHandler::HANDLER_ALL, MiniDumpWithDataSegs, PipeName, 0);
+        GetDumpDirectory(), 0, OnCrash, 0, google_breakpad::ExceptionHandler::HANDLER_ALL, MiniDumpWithDataSegs | MiniDumpWithFullMemory, PipeName, 0);
     return reinterpret_cast<CExceptionHandler>(exHandler);
 #else  // USE_BREAKPAD
     return nullptr;
