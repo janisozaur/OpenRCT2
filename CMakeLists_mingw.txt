@@ -15,7 +15,7 @@ else()
 endif(APPLE)
 
 # here is the target environment located
-SET(CMAKE_FIND_ROOT_PATH ${TARGET_ENVIRONMENT})
+#SET(CMAKE_FIND_ROOT_PATH ${TARGET_ENVIRONMENT})
 
 # adjust the default behaviour of the FIND_XXX() commands:
 # search headers and libraries in the target environment, search

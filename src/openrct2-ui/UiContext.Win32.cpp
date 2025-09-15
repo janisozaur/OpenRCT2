@@ -15,7 +15,9 @@
         #define WIN32_LEAN_AND_MEAN
     #endif
     #include <windows.h>
+    #include <commdlg.h>
     #include <shellapi.h>
+    #include <shlobj.h>
     #undef CreateWindow
 // clang-format on
 
@@ -128,6 +130,43 @@ namespace OpenRCT2::Ui
         std::string ShowFileDialogInternal(SDL_Window* window, const FileDialogDesc& desc, bool isFolder)
         {
             std::string resultFilename;
+#if 1
+            WCHAR path[MAX_PATH] = {};
+            if (isFolder)
+            {
+                BROWSEINFOW bi = {};
+                std::wstring wtitle = String::toWideChar(desc.Title);
+                bi.hwndOwner = nullptr;
+                bi.pidlRoot = nullptr;
+                bi.pszDisplayName = path;
+                bi.lpszTitle = wtitle.c_str();
+                bi.ulFlags = BIF_USENEWUI;
+                bi.lpfn = nullptr;
+                bi.lParam = 0;
+                bi.iImage = 0;
+
+                PIDLIST_ABSOLUTE list = SHBrowseForFolderW(&bi);
+                if (list != NULL)
+                {
+                    SHGetPathFromIDListW(list, path);
+                    resultFilename = String::toUtf8(path);
+                    MessageBoxW(NULL, path, NULL, MB_OK);
+                }
+            }
+            else
+            {
+                OPENFILENAMEW ofn = {};
+                ofn.lStructSize = sizeof(ofn);
+                ofn.lpstrFile = path;
+                ofn.nMaxFile = MAX_PATH;
+                //ofn.lpstrFileTitle = String::ToWideChar(desc.Title).c_str();
+                if (desc.Type == FileDialogType::Save)
+                    GetSaveFileNameW(&ofn);
+                else
+                    GetOpenFileNameW(&ofn);
+                resultFilename = String::toUtf8(ofn.lpstrFile);
+            }
+#else
 
             CCoInitialize coInitialize(COINIT_APARTMENTTHREADED);
             if (coInitialize)
@@ -193,6 +232,7 @@ namespace OpenRCT2::Ui
                     }
                 }
             }
+#endif
             return resultFilename;
         }
 

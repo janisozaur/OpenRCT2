@@ -16,3 +16,7 @@ if (EMSCRIPTEN)
 endif ()
 target_link_libraries(openrct2-cli libopenrct2 Threads::Threads)
 target_link_platform_libraries(openrct2-cli)
+
+if (WIN32)
+    target_link_libraries(openrct2-cli shlwapi)
+endif ()

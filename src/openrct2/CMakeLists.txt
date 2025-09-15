@@ -70,10 +70,14 @@ if (NOT DISABLE_NETWORK AND WIN32)
     target_link_libraries(libopenrct2 ws2_32 crypt32 wldap32 version winmm imm32 advapi32 shell32 ole32)
 endif ()
 
+if (WIN32)
+    target_link_libraries(libopenrct2 shlwapi mbedtls mbedcrypto mbedx509)
+endif ()
+
 if (NOT DISABLE_HTTP)
-    if (WIN32)
-        target_link_libraries(libopenrct2 winhttp)
-    else ()
+    #if (WIN32)
+    #    target_link_libraries(libopenrct2 winhttp)
+    #else ()
         PKG_CHECK_MODULES(LIBCURL REQUIRED libcurl)
 
         target_include_directories(libopenrct2 SYSTEM PRIVATE ${LIBCURL_INCLUDE_DIRS})
@@ -83,7 +87,7 @@ if (NOT DISABLE_HTTP)
         else ()
             target_link_libraries(libopenrct2 ${LIBCURL_LIBRARIES})
         endif ()
-    endif ()
+    #endif ()
 endif ()
 
 if (NOT DISABLE_TTF)
@@ -157,6 +161,7 @@ if (STATIC)
                                      ${ZLIB_STATIC_LIBRARIES}
                                      ${LIBZIP_STATIC_LIBRARIES}
                                      ${ZSTD_STATIC_LIBRARIES})
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
 else ()
     if (NOT MSVC AND NOT EMSCRIPTEN)
         target_link_libraries(libopenrct2
@@ -175,7 +180,7 @@ endif ()
 
 if (MINGW)
     # Hardcode libraries used on mingw
-    target_link_libraries(libopenrct2 crypto ws2_32 tasn1 unistring iconv p11-kit hogweed gmp nettle)
+    target_link_libraries(libopenrct2 crypto ws2_32 iconv)
     # Link in libssp
     target_link_libraries(libopenrct2 -fstack-protector-strong)
 endif()

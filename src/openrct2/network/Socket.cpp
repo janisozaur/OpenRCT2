@@ -648,16 +648,19 @@ private:
         std::string result;
         if (addr->sin_family == AF_INET)
         {
-            char str[INET_ADDRSTRLEN]{};
-            inet_ntop(AF_INET, &addr->sin_addr, str, sizeof(str));
-            result = str;
+            //char str[INET_ADDRSTRLEN]{};
+            //inet_ntop(AF_INET, &addr->sin_addr, str, sizeof(str));
+            //result = str;
+            result = inet_ntoa(addr->sin_addr);
         }
         else if (addr->sin_family == AF_INET6)
         {
-            auto addrv6 = reinterpret_cast<const sockaddr_in6*>(&addr);
+            //auto addrv6 = reinterpret_cast<const sockaddr_in6*>(&addr);
             char str[INET6_ADDRSTRLEN]{};
-            inet_ntop(AF_INET6, &addrv6->sin6_addr, str, sizeof(str));
-            result = str;
+            //inet_ntop(AF_INET6, &addrv6->sin6_addr, str, sizeof(str));
+            DWORD len = sizeof(str);
+            WSAAddressToStringA(const_cast<sockaddr *>(reinterpret_cast<const sockaddr *>(addr)), sizeof(sockaddr_in6), nullptr, str, &len);
+			result = str;
         }
         return result;
     }
