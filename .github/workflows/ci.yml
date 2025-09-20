@@ -27,10 +27,6 @@ on:
           - release-signing
         default: test-signing
 
-permissions:
-  pull-requests: write
-  contents: read
-
 defaults:
   run:
     shell: bash
