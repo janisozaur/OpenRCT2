@@ -1784,7 +1784,6 @@ namespace OpenRCT2
         GetContext()->GetUiContext().SetWindowTitle(value);
     }
 
-
     void ContextForceCloseWindowByClass(WindowClass windowClass)
     {
         auto windowManager = GetWindowManager();
