@@ -180,6 +180,7 @@ namespace OpenRCT2
     WindowBase* ContextShowError(StringId title, StringId message, const class Formatter& args, bool autoClose = false);
     WindowBase* ContextOpenIntent(Intent* intent);
     void ContextBroadcastIntent(Intent* intent);
+    void ContextSetWindowTitle(std::string value);
     void ContextForceCloseWindowByClass(WindowClass wc);
     void ContextHandleInput();
     void ContextInputHandleKeyboard(bool isTitle);
