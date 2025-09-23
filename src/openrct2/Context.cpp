@@ -1312,7 +1312,7 @@ namespace OpenRCT2
             windowMgr->CloseByClass(WindowClass::titleMenu);
             windowMgr->CloseByClass(WindowClass::titleExit);
             windowMgr->CloseByClass(WindowClass::titleVersion);
-            Config::Get().general.ShowFPS = true;
+            Config::Get().general.ShowFPS = false;
             Platform::AdvanceTicks();
             PROFILED_FUNCTION();
 
@@ -1778,6 +1778,12 @@ namespace OpenRCT2
         auto windowManager = GetWindowManager();
         windowManager->BroadcastIntent(*intent);
     }
+
+    void ContextSetWindowTitle(std::string value)
+    {
+        GetContext()->GetUiContext().SetWindowTitle(value);
+    }
+
 
     void ContextForceCloseWindowByClass(WindowClass windowClass)
     {
