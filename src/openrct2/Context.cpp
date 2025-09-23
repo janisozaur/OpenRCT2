@@ -1307,11 +1307,11 @@ namespace OpenRCT2
         void RunFrame()
         {
             auto* windowMgr = GetContext()->GetUiContext().GetWindowManager();
-            windowMgr->CloseByClass(WindowClass::TitleLogo);
-            windowMgr->CloseByClass(WindowClass::TitleOptions);
-            windowMgr->CloseByClass(WindowClass::TitleMenu);
-            windowMgr->CloseByClass(WindowClass::TitleExit);
-            windowMgr->CloseByClass(WindowClass::TitleVersion);
+            windowMgr->CloseByClass(WindowClass::titleLogo);
+            windowMgr->CloseByClass(WindowClass::titleOptions);
+            windowMgr->CloseByClass(WindowClass::titleMenu);
+            windowMgr->CloseByClass(WindowClass::titleExit);
+            windowMgr->CloseByClass(WindowClass::titleVersion);
             Config::Get().general.ShowFPS = true;
             Platform::AdvanceTicks();
             PROFILED_FUNCTION();
