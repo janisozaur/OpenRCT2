@@ -23,6 +23,7 @@
 #include "ParkImporter.h"
 #include "PlatformEnvironment.h"
 #include "ReplayManager.h"
+#include "StartupLogger.h"
 #include "Version.h"
 #include "actions/GameAction.h"
 #include "audio/Audio.h"

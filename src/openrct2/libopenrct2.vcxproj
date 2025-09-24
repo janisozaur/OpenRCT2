@@ -619,6 +619,7 @@
     <ClInclude Include="scripting\ScriptEngine.h" />
     <ClInclude Include="scripting\SoundNames.hpp" />
     <ClInclude Include="SpriteIds.h" />
+    <ClInclude Include="StartupLogger.h" />
     <ClInclude Include="System.hpp" />
     <ClInclude Include="TrackImporter.h" />
     <ClInclude Include="ui\UiContext.h" />
@@ -1149,6 +1150,7 @@
     <ClCompile Include="scripting\HookEngine.cpp" />
     <ClCompile Include="scripting\Plugin.cpp" />
     <ClCompile Include="scripting\ScriptEngine.cpp" />
+    <ClCompile Include="StartupLogger.cpp" />
     <ClCompile Include="TrackImporter.cpp" />
     <ClCompile Include="ui\DummyUiContext.cpp" />
     <ClCompile Include="ui\DummyWindowManager.cpp" />
