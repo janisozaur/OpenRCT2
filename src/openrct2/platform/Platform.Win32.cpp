@@ -15,6 +15,10 @@
     #endif
 // clang-format off
     #include <windows.h>
+    #include "../Diagnostic.h"
+    #include "../StartupLogger.h"
+
+    #include <cassert>
     #include <datetimeapi.h>
     #include <lmcons.h>
     #include <memory>
@@ -94,6 +98,30 @@ namespace OpenRCT2::Platform
 
     std::string GetFolderPath(SpecialFolder folder)
     {
+        const char* folderName = "";
+        switch (folder)
+        {
+            case SpecialFolder::userCache:
+                folderName = "userCache";
+                break;
+            case SpecialFolder::userConfig:
+                folderName = "userConfig";
+                break;
+            case SpecialFolder::userData:
+                folderName = "userData";
+                break;
+            case SpecialFolder::userHome:
+                folderName = "userHome";
+                break;
+            case SpecialFolder::rct2Discord:
+                folderName = "rct2Discord";
+                break;
+            default:
+                folderName = "unknown";
+                break;
+        }
+        LOG_STARTUP("Getting Windows folder path for: %s", folderName);
+
         switch (folder)
         {
             // We currently store everything under Documents/OpenRCT2
@@ -101,36 +129,60 @@ namespace OpenRCT2::Platform
             case SpecialFolder::userConfig:
             case SpecialFolder::userData:
             {
+                LOG_STARTUP("Attempting to get Documents folder...");
                 auto path = WIN32_GetKnownFolderPath(FOLDERID_Documents);
                 if (path.empty())
                 {
+                    LOG_STARTUP_WARNING("Documents folder not found, falling back to user home");
                     path = GetFolderPath(SpecialFolder::userHome);
+                }
+                else
+                {
+                    LOG_STARTUP("Documents folder found: %s", path.c_str());
                 }
                 return path;
             }
             case SpecialFolder::userHome:
             {
+                LOG_STARTUP("Attempting to get Profile folder...");
                 auto path = WIN32_GetKnownFolderPath(FOLDERID_Profile);
                 if (path.empty())
                 {
+                    LOG_STARTUP_WARNING("Profile folder not found, trying environment variables");
                     path = GetHomePathViaEnvironment();
                     if (path.empty())
                     {
+                        LOG_STARTUP_WARNING("Environment variables not set, using C:\\ as fallback");
                         path = "C:\\";
                     }
+                    else
+                    {
+                        LOG_STARTUP("Home path found via environment: %s", path.c_str());
+                    }
+                }
+                else
+                {
+                    LOG_STARTUP("Profile folder found: %s", path.c_str());
                 }
                 return path;
             }
             case SpecialFolder::rct2Discord:
             {
+                LOG_STARTUP("Attempting to get LocalAppData folder for Discord...");
                 auto path = WIN32_GetKnownFolderPath(FOLDERID_LocalAppData);
                 if (!path.empty())
                 {
                     path = Path::Combine(path, u8"DiscordGames\\RollerCoaster Tycoon 2 Triple Thrill Pack\\content\\Game");
+                    LOG_STARTUP("Discord RCT2 path: %s", path.c_str());
+                }
+                else
+                {
+                    LOG_STARTUP_WARNING("LocalAppData folder not found for Discord path");
                 }
                 return path;
             }
             default:
+                LOG_STARTUP_WARNING("Unknown folder type requested: %d", static_cast<int>(folder));
                 return std::string();
         }
     }

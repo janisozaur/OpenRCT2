@@ -33,6 +33,7 @@
 #include <openrct2/Context.h>
 #include <openrct2/Diagnostic.h>
 #include <openrct2/Input.h>
+#include <openrct2/StartupLogger.h>
 #include <openrct2/Version.h>
 #include <openrct2/audio/AudioContext.h>
 #include <openrct2/audio/AudioMixer.h>
@@ -120,13 +121,22 @@ public:
         , _windowManager(CreateWindowManager())
         , _shortcutManager(env)
     {
+        LOG_STARTUP("Initializing SDL...");
         LogSDLVersion();
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0)
         {
+            LOG_STARTUP_ERROR("SDL initialization failed: %s", SDL_GetError());
             SDLException::Throw("SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK)");
         }
+        LOG_STARTUP("SDL initialized successfully");
+
+        LOG_STARTUP("Loading cursors...");
         _cursorRepository.LoadCursors();
+        LOG_STARTUP("Cursors loaded successfully");
+
+        LOG_STARTUP("Loading user shortcuts...");
         _shortcutManager.loadUserBindings();
+        LOG_STARTUP("User shortcuts loaded successfully");
     }
 
     ~UiContext() override
@@ -624,17 +634,28 @@ public:
 
     void CreateWindow() override
     {
+        LOG_STARTUP("Creating main window...");
         SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, Config::Get().general.minimizeFullscreenFocusLoss ? "1" : "0");
 
         // Set window position to default display
         int32_t defaultDisplay = std::clamp(Config::Get().general.defaultDisplay, 0, 0xFFFF);
+        LOG_STARTUP("Using display %d for window placement", defaultDisplay);
         auto windowPos = ScreenCoordsXY{ static_cast<int32_t>(SDL_WINDOWPOS_UNDEFINED_DISPLAY(defaultDisplay)),
                                          static_cast<int32_t>(SDL_WINDOWPOS_UNDEFINED_DISPLAY(defaultDisplay)) };
 
         CreateWindow(windowPos);
+        LOG_STARTUP("Main window created successfully");
 
         // Check if steam overlay renderer is loaded into the process
         _steamOverlayActive = _platformUiContext->IsSteamOverlayAttached();
+        if (_steamOverlayActive)
+        {
+            LOG_STARTUP("Steam overlay detected and active");
+        }
+        else
+        {
+            LOG_STARTUP("No Steam overlay detected");
+        }
     }
 
     void CloseWindow() override
@@ -812,11 +833,14 @@ private:
             flags |= SDL_WINDOW_OPENGL;
         }
 
+        LOG_STARTUP("Creating SDL window: %dx%d at (%d,%d) with flags 0x%x", width, height, windowPos.x, windowPos.y, flags);
         _window = SDL_CreateWindow(OPENRCT2_NAME, windowPos.x, windowPos.y, width, height, flags);
         if (_window == nullptr)
         {
+            LOG_STARTUP_ERROR("Failed to create SDL window: %s", SDL_GetError());
             SDLException::Throw("SDL_CreateWindow(...)");
         }
+        LOG_STARTUP("SDL window created successfully");
 
         ApplyScreenSaverLockSetting();
 
@@ -825,14 +849,29 @@ private:
         _platformUiContext->SetWindowIcon(_window);
 
         // Initialise the surface, palette and draw buffer
+        LOG_STARTUP("Initializing drawing engine...");
         DrawingEngineInit();
+        LOG_STARTUP("Drawing engine initialized");
+
+        LOG_STARTUP("Inferring display DPI...");
         InferDisplayDPI();
+        LOG_STARTUP("Display DPI inferred");
+
+        LOG_STARTUP("Setting initial window size: %dx%d", width, height);
         OnResize(width, height);
+        LOG_STARTUP("Window resize completed");
 
+        LOG_STARTUP("Updating fullscreen resolutions...");
         UpdateFullscreenResolutions();
+        LOG_STARTUP("Fullscreen resolutions updated");
 
+        LOG_STARTUP("Setting fullscreen mode: %d", Config::Get().general.fullscreenMode);
         SetFullscreenMode(static_cast<FullscreenMode>(Config::Get().general.fullscreenMode));
+        LOG_STARTUP("Fullscreen mode set");
+
+        LOG_STARTUP("Triggering final resize...");
         TriggerResize();
+        LOG_STARTUP("Window creation and setup completed successfully");
     }
 
     void OnResize(int32_t width, int32_t height)

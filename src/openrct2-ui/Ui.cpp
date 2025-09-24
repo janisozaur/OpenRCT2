@@ -19,6 +19,7 @@
 #include <openrct2/Diagnostic.h>
 #include <openrct2/OpenRCT2.h>
 #include <openrct2/PlatformEnvironment.h>
+#include <openrct2/StartupLogger.h>
 #include <openrct2/audio/AudioContext.h>
 #include <openrct2/command_line/CommandLine.hpp>
 #include <openrct2/platform/Platform.h>
@@ -53,40 +54,76 @@ int main(int argc, const char** argv)
         Module.canvas.addEventListener("contextmenu", function(e) { e.preventDefault(); });
     });
 #endif
+    // Initialize startup logging as early as possible
+    StartupLogger::GetInstance().Initialize();
+    LOG_STARTUP("OpenRCT2 main() function started");
+    LOG_STARTUP("Processing command line arguments...");
+
     std::unique_ptr<IContext> context;
     int32_t rc = EXIT_SUCCESS;
     int runGame = CommandLineRun(argv, argc);
+    LOG_STARTUP("Command line processing completed with result: %d", runGame);
+
+    LOG_STARTUP("Registering bitmap readers...");
     RegisterBitmapReader();
+    LOG_STARTUP("Bitmap readers registered");
     if (runGame == EXITCODE_CONTINUE)
     {
+        LOG_STARTUP("Starting OpenRCT2 initialization");
         if (gOpenRCT2Headless)
         {
             // Run OpenRCT2 with a plain context
+            LOG_STARTUP("Running in headless mode");
             context = CreateContext();
+            LOG_STARTUP("Headless context created successfully");
         }
         else
         {
             // Run OpenRCT2 with a UI context
+            LOG_STARTUP("Running in UI mode");
+            LOG_STARTUP("Creating platform environment...");
             auto env = CreatePlatformEnvironment();
+            LOG_STARTUP("Platform environment created successfully");
+
             std::unique_ptr<IAudioContext> audioContext;
             try
             {
+                LOG_STARTUP("Creating audio context...");
                 audioContext = CreateAudioContext();
+                LOG_STARTUP("Audio context created successfully");
             }
             catch (const SDLException& e)
             {
+                LOG_STARTUP_WARNING("Failed to create audio context: %s", e.what());
                 LOG_WARNING("Failed to create audio context. Using dummy audio context. Error message was: %s", e.what());
                 audioContext = CreateDummyAudioContext();
+                LOG_STARTUP("Dummy audio context created as fallback");
             }
+
+            LOG_STARTUP("Creating UI context...");
             auto uiContext = CreateUiContext(*env);
+            LOG_STARTUP("UI context created successfully");
+
+            LOG_STARTUP("Creating main context...");
             context = CreateContext(std::move(env), std::move(audioContext), std::move(uiContext));
+            LOG_STARTUP("Main context created successfully");
         }
+        LOG_STARTUP("Starting main game loop...");
         rc = context->RunOpenRCT2(argc, argv);
+        LOG_STARTUP("Main game loop completed with exit code: %d", rc);
     }
     else if (runGame == EXITCODE_FAIL)
     {
+        LOG_STARTUP("Command line processing failed");
         rc = EXIT_FAILURE;
     }
+    else
+    {
+        LOG_STARTUP("Application exited without starting main loop (exit code: %d)", runGame);
+    }
+
+    // Close the startup logger before exiting
+    StartupLogger::GetInstance().Close();
     return rc;
 }
 
