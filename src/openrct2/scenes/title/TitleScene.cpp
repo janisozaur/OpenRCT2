@@ -195,11 +195,11 @@ void TitleScene::ChangePresetSequence(size_t preset)
  */
 void TitleScene::CreateWindows()
 {
-    ContextOpenWindow(WindowClass::titleMenu);
-    ContextOpenWindow(WindowClass::titleExit);
-    ContextOpenWindow(WindowClass::titleOptions);
-    ContextOpenWindow(WindowClass::titleLogo);
-    ContextOpenWindow(WindowClass::titleVersion);
+    // ContextOpenWindow(WindowClass::titleMenu);
+    // ContextOpenWindow(WindowClass::titleExit);
+    // ContextOpenWindow(WindowClass::titleOptions);
+    // ContextOpenWindow(WindowClass::titleLogo);
+    // ContextOpenWindow(WindowClass::titleVersion);
     WindowResizeGui(ContextGetWidth(), ContextGetHeight());
 }
 
