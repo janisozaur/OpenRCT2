@@ -353,6 +353,22 @@ namespace OpenRCT2::GameActions
             ActionLogContext logContext;
             LogActionBegin(logContext, action);
 
+            if (replayManager != nullptr && !ignoreForReplays && Network::GetMode() == Network::Mode::none)
+            {
+                bool commandExecutes = (flags & GAME_COMMAND_FLAG_GHOST) == 0 && (flags & GAME_COMMAND_FLAG_NO_SPEND) == 0;
+
+                bool recordAction = false;
+                if (replayManager->IsRecording() && commandExecutes)
+                    recordAction = true;
+                else if (replayManager->IsNormalising() && (flags & GAME_COMMAND_FLAG_REPLAY) != 0)
+                    recordAction = true;
+
+                if (recordAction)
+                {
+                    replayManager->AddGameAction(getGameState().currentTicks, action);
+                }
+            }
+
             // Execute the action, changing the game state
             result = action->Execute(gameState);
 #ifdef ENABLE_SCRIPTING
@@ -397,23 +413,6 @@ namespace OpenRCT2::GameActions
                     if (!result.Position.IsNull())
                     {
                         Network::SetPlayerLastActionCoord(playerIndex, result.Position);
-                    }
-                }
-                else
-                {
-                    bool commandExecutes = (flags & GAME_COMMAND_FLAG_GHOST) == 0 && (flags & GAME_COMMAND_FLAG_NO_SPEND) == 0;
-
-                    bool recordAction = false;
-                    if (replayManager != nullptr && !ignoreForReplays)
-                    {
-                        if (replayManager->IsRecording() && commandExecutes)
-                            recordAction = true;
-                        else if (replayManager->IsNormalising() && (flags & GAME_COMMAND_FLAG_REPLAY) != 0)
-                            recordAction = true; // In normalisation we only feed back actions issued by the replay manager.
-                    }
-                    if (recordAction)
-                    {
-                        replayManager->AddGameAction(getGameState().currentTicks, action);
                     }
                 }
             }
