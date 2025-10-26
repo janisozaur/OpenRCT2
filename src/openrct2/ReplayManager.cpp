@@ -106,7 +106,8 @@ namespace OpenRCT2
 
     class ReplayManager final : public IReplayManager
     {
-        static constexpr uint16_t kReplayVersion = 11;
+        static constexpr uint16_t kReplayVersion = 12;
+        static constexpr uint16_t kReplayPostRecordingVersion = 11;
         static constexpr uint16_t kReplayMinCompatVersion = 10;
         static constexpr uint32_t kReplayMagic = 0x5243524F; // ORCR.
         static constexpr int kReplayCompressionLevel = 18;
@@ -153,7 +154,17 @@ namespace OpenRCT2
 
             auto ga = GameActions::Clone(action);
 
-            _currentRecording->commands.emplace(tick, std::move(ga), _commandId++);
+            // When normalising an older replay (pre-version change), convert from
+            // post-execution recording semantics to pre-execution by shifting the
+            // recorded tick back by one. This preserves the original visible tick
+            // for the action while switching to pre-exec recording in the output.
+            uint32_t recordTick = tick;
+            if (_mode == ReplayMode::NORMALISATION && _currentReplay != nullptr && _currentReplay->version < kReplayPostRecordingVersion)
+            {
+                recordTick = (tick > 0) ? (tick - 1) : 0;
+            }
+
+            _currentRecording->commands.emplace(recordTick, std::move(ga), _commandId++);
         }
 
         void AddChecksum(uint32_t tick, EntitiesChecksum&& checksum)
@@ -822,13 +833,22 @@ namespace OpenRCT2
                 if (_mode == ReplayMode::PLAYING)
                 {
                     // If this is a normal playback wait for the correct tick.
-                    if (command.tick != currentTicks)
+                    // For newer replays (version > kReplayPostRecordingVersion), actions were recorded
+                    // before execution, so we execute them one tick after their recorded tick
+                    // to preserve the original timeline. Older replays execute at their
+                    // recorded tick (post-execution recording semantics).
+                    const bool isPreRecording = (_currentReplay->version > kReplayPostRecordingVersion);
+                    const uint32_t expectedTick = command.tick + (isPreRecording ? 1u : 0u);
+                    if (expectedTick != currentTicks)
                         break;
                 }
                 else if (_mode == ReplayMode::NORMALISATION)
                 {
                     // Allow one entry per tick.
-                    if (currentTicks != _nextReplayTick)
+                    // Honour version-specific timing (see PLAYING logic above).
+                    const bool isPreRecording = (_currentReplay->version > kReplayPostRecordingVersion);
+                    const uint32_t expectedTick = command.tick + (isPreRecording ? 1u : 0u);
+                    if (expectedTick != currentTicks)
                         break;
 
                     _nextReplayTick = currentTicks + 1;
