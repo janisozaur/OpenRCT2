@@ -650,25 +650,6 @@ namespace OpenRCT2
                 break;
         }
     }
-    template<>
-    void FormatArgument(FormatBuffer& ss, FormatToken token, const wchar_t* arg)
-    {
-        if (arg == nullptr) {
-            return;
-        }
-        // Convert wchar_t* to UTF-8 using wcsrtombs
-        std::mbstate_t state = std::mbstate_t();
-        const wchar_t* src = arg;
-        size_t len = std::wcsrtombs(nullptr, &src, 0, &state);
-        if (len == static_cast<size_t>(-1)) {
-            // Conversion failed, skip
-            return;
-        }
-        std::string utf8(len, '\0');
-        src = arg;
-        std::wcsrtombs(&utf8[0], &src, len, &state);
-        ss << utf8.c_str();
-    }
 
     template void FormatArgument(FormatBuffer&, FormatToken, uint16_t);
     template void FormatArgument(FormatBuffer&, FormatToken, int16_t);
