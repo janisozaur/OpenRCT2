@@ -680,6 +680,13 @@ namespace OpenRCT2
 
         void OpenProgress(StringId captionStringId) override
         {
+            // Only update progress window from the main thread to avoid race conditions
+            const auto isMainThread = _mainThreadId == std::this_thread::get_id();
+            if (!gOpenRCT2Headless && !isMainThread)
+            {
+                return;
+            }
+
             auto captionString = _localisationService->GetString(captionStringId);
             auto intent = Intent(INTENT_ACTION_PROGRESS_OPEN);
             intent.PutExtra(INTENT_EXTRA_MESSAGE, captionString);
@@ -693,17 +700,17 @@ namespace OpenRCT2
 
             _forcedUpdateTimer.Restart();
 
-            auto intent = Intent(INTENT_ACTION_PROGRESS_SET);
-            intent.PutExtra(INTENT_EXTRA_PROGRESS_OFFSET, currentProgress);
-            intent.PutExtra(INTENT_EXTRA_PROGRESS_TOTAL, totalCount);
-            intent.PutExtra(INTENT_EXTRA_STRING_ID, format);
-            ContextOpenIntent(&intent);
-
-            // When we call this from the main thread we can pump messages and redraw.
+            // Only update progress window from the main thread to avoid race conditions
             const auto isMainThread = _mainThreadId == std::this_thread::get_id();
 
             if (!gOpenRCT2Headless && isMainThread)
             {
+                auto intent = Intent(INTENT_ACTION_PROGRESS_SET);
+                intent.PutExtra(INTENT_EXTRA_PROGRESS_OFFSET, currentProgress);
+                intent.PutExtra(INTENT_EXTRA_PROGRESS_TOTAL, totalCount);
+                intent.PutExtra(INTENT_EXTRA_STRING_ID, format);
+                ContextOpenIntent(&intent);
+
                 _uiContext->ProcessMessages();
                 auto* windowMgr = Ui::GetWindowManager();
                 windowMgr->InvalidateByClass(WindowClass::progressWindow);
@@ -713,6 +720,13 @@ namespace OpenRCT2
 
         void CloseProgress() override
         {
+            // Only close progress window from the main thread to avoid race conditions
+            const auto isMainThread = _mainThreadId == std::this_thread::get_id();
+            if (!gOpenRCT2Headless && !isMainThread)
+            {
+                return;
+            }
+
             auto intent = Intent(INTENT_ACTION_PROGRESS_CLOSE);
             ContextOpenIntent(&intent);
         }
