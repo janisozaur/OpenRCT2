@@ -15,7 +15,7 @@
 using namespace OpenRCT2::Drawing;
 
 template<DrawBlendOp TBlendOp>
-static void FASTCALL DrawRLESpriteMagnify(RenderTarget& rt, const DrawSpriteArgs& args)
+static bool FASTCALL DrawRLESpriteMagnify(RenderTarget& rt, const DrawSpriteArgs& args)
 {
     auto& paletteMap = args.PalMap;
     auto imgData = args.SourceImage.offset;
@@ -57,10 +57,11 @@ static void FASTCALL DrawRLESpriteMagnify(RenderTarget& rt, const DrawSpriteArgs
 
         dst = nextDst;
     }
+    return true;
 }
 
 template<DrawBlendOp TBlendOp, size_t TZoom>
-static void FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs& args)
+static bool FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs& args)
 {
     auto src0 = args.SourceImage.offset;
     auto dst0 = args.DestinationBits;
@@ -152,33 +153,29 @@ static void FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs&
             }
         }
     }
+    return true;
 }
 
 template<DrawBlendOp TBlendOp>
-static void FASTCALL DrawRLESprite(RenderTarget& rt, const DrawSpriteArgs& args)
+static bool FASTCALL DrawRLESprite(RenderTarget& rt, const DrawSpriteArgs& args)
 {
     auto zoom_level = static_cast<int8_t>(rt.zoom_level);
     switch (zoom_level)
     {
         case -2:
         case -1:
-            DrawRLESpriteMagnify<TBlendOp>(rt, args);
-            break;
+            return DrawRLESpriteMagnify<TBlendOp>(rt, args);
         case 0:
-            DrawRLESpriteMinify<TBlendOp, 0>(rt, args);
-            break;
+            return DrawRLESpriteMinify<TBlendOp, 0>(rt, args);
         case 1:
-            DrawRLESpriteMinify<TBlendOp, 1>(rt, args);
-            break;
+            return DrawRLESpriteMinify<TBlendOp, 1>(rt, args);
         case 2:
-            DrawRLESpriteMinify<TBlendOp, 2>(rt, args);
-            break;
+            return DrawRLESpriteMinify<TBlendOp, 2>(rt, args);
         case 3:
-            DrawRLESpriteMinify<TBlendOp, 3>(rt, args);
-            break;
+            return DrawRLESpriteMinify<TBlendOp, 3>(rt, args);
         default:
             assert(false);
-            break;
+            return false;
     }
 }
 
@@ -188,25 +185,25 @@ static void FASTCALL DrawRLESprite(RenderTarget& rt, const DrawSpriteArgs& args)
  *  rct2: 0x0067AA18
  * @param imageId Only flags are used.
  */
-void FASTCALL GfxRleSpriteToBuffer(RenderTarget& rt, const DrawSpriteArgs& args)
+bool FASTCALL GfxRleSpriteToBuffer(RenderTarget& rt, const DrawSpriteArgs& args)
 {
     if (args.Image.HasPrimary())
     {
         if (args.Image.IsBlended())
         {
-            DrawRLESprite<kBlendTransparent | kBlendSrc | kBlendDst>(rt, args);
+            return DrawRLESprite<kBlendTransparent | kBlendSrc | kBlendDst>(rt, args);
         }
         else
         {
-            DrawRLESprite<kBlendTransparent | kBlendSrc>(rt, args);
+            return DrawRLESprite<kBlendTransparent | kBlendSrc>(rt, args);
         }
     }
     else if (args.Image.IsBlended())
     {
-        DrawRLESprite<kBlendTransparent | kBlendDst>(rt, args);
+        return DrawRLESprite<kBlendTransparent | kBlendDst>(rt, args);
     }
     else
     {
-        DrawRLESprite<kBlendTransparent>(rt, args);
+        return DrawRLESprite<kBlendTransparent>(rt, args);
     }
 }
