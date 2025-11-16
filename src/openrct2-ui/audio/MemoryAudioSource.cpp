@@ -33,6 +33,9 @@ namespace OpenRCT2::Audio
             : _format(format)
             , _data(pcmData)
         {
+            printf(
+                "MemoryAudioSource format: freq=%d, channels=%d, format=0x%X, data size=%zu\n", _format.freq, _format.channels,
+                _format.format, _data.size());
         }
 
         [[nodiscard]] AudioFormat GetFormat() const override

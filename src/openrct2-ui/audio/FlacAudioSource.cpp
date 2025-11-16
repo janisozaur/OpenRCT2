@@ -310,6 +310,9 @@ namespace OpenRCT2::Audio
                 self->_format.format = AUDIO_S16LSB;
                 self->_format.channels = metadata->data.stream_info.channels;
                 self->_dataLength = self->_totalSamples * self->_format.channels * sizeof(int16_t);
+                printf(
+                    "FLAC loaded: %d Hz, %d channels, %d bits per sample, %u total samples\n", self->_format.freq,
+                    self->_format.channels, self->_bitsPerSample, self->_totalSamples);
             }
         }
 

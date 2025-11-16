@@ -43,6 +43,9 @@ void AudioMixer::Init(const char* device)
     _format.format = have.format;
     _format.channels = have.channels;
     _format.freq = have.freq;
+    printf(
+        "AudioMixer::Init: opened audio device '%s' with format freq=%d, format=0x%X, channels=%d\n", device, have.freq,
+        have.format, have.channels);
 
     SDL_PauseAudioDevice(_deviceId, 0);
 }
@@ -195,12 +198,20 @@ void AudioMixer::MixChannel(ISDLAudioChannel* channel, uint8_t* data, size_t len
             // Unable to convert channel data
             return;
         }
+        printf(
+            "MixChannel: converting audio from freq=%d, channels=%d, format=0x%X to freq=%d, channels=%d, format=0x%X, ratio: "
+            "%.f\n",
+            streamformat.freq, streamformat.channels, streamformat.format, _format.freq, _format.channels, _format.format,
+            cvt.len_ratio);
         mustConvert = true;
     }
 
     // Read raw PCM from channel
     int32_t readSamples = numSamples * rate;
     auto readLength = static_cast<size_t>(readSamples / cvt.len_ratio) * byteRate;
+    // printf("MixChannel: numSamples=%d, rate=%.2f, readSamples=%d, cvt.len_ratio = %.2f, readLength = %zu, ceil(readLength) =
+    // %zu\n", numSamples, rate, readSamples, cvt.len_ratio, readLength, static_cast<size_t>(std::ceil(readSamples /
+    // cvt.len_ratio) * byteRate));
     _channelBuffer.resize(readLength);
     size_t bytesRead = channel->Read(_channelBuffer.data(), readLength);
 

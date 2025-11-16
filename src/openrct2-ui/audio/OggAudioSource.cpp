@@ -83,6 +83,7 @@ namespace OpenRCT2::Audio
             _dataLength = _totalSamples * _format.channels * sizeof(int16_t);
             _currentOffset = 0;
             _section = -1;
+            printf("OGG loaded: %d Hz, %d channels, %u total samples\n", _format.freq, _format.channels, _totalSamples);
             return true;
         }
 
