@@ -463,11 +463,13 @@ namespace OpenRCT2
             // Read g1 element headers
             uintptr_t imageDataBase = reinterpret_cast<uintptr_t>(data.get());
             std::vector<G1Element> newEntries;
+            std::vector<uint32_t> imageDataOffsets;
             for (uint32_t i = 0; i < numImages; i++)
             {
                 G1Element g1Element{};
 
                 uintptr_t imageDataOffset = static_cast<uintptr_t>(stream->ReadValue<uint32_t>());
+                imageDataOffsets.push_back(static_cast<uint32_t>(imageDataOffset));
                 g1Element.offset = reinterpret_cast<uint8_t*>(imageDataBase + imageDataOffset);
 
                 g1Element.width = stream->ReadValue<int16_t>();
@@ -478,6 +480,13 @@ namespace OpenRCT2
                 g1Element.zoomedOffset = stream->ReadValue<uint16_t>();
 
                 newEntries.push_back(std::move(g1Element));
+            }
+
+            // Calculate size for each element based on offsets
+            for (uint32_t i = 0; i < numImages; i++)
+            {
+                uint32_t nextOffset = (i + 1 < numImages) ? imageDataOffsets[i + 1] : static_cast<uint32_t>(dataSize);
+                newEntries[i].size = nextOffset - imageDataOffsets[i];
             }
 
             // Read g1 element data
