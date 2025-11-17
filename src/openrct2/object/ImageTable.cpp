@@ -33,6 +33,59 @@ namespace OpenRCT2
 {
     static thread_local std::map<u8string, std::unique_ptr<Object>> _objDataCache = {};
 
+    // Computes the maximum possible byte size available for a G1Element's data, based solely on
+    // spacing to the next element (or end of the data buffer). Offsets are taken from the
+    // G1Element.offset pointers relative to the provided data base pointer.
+    //
+    // maxSize(i) = (nextGreaterOffset ? nextGreaterOffset : dataSize) - O_i, where
+    //   O_i is the element's byte offset from dataBase, and dataSize is total bytes in the buffer.
+    // Returns 0 when the offset is null or out-of-range.
+    static uint32_t ComputeG1MaxElementSize(
+        const std::vector<G1Element>& entries, size_t index, size_t dataSize, const uint8_t* dataBase)
+    {
+        if (index >= entries.size())
+            return 0;
+        const auto* base = dataBase;
+        const auto* ptr = entries[index].offset;
+        if (ptr == nullptr || base == nullptr)
+            return 0;
+
+        // Compute O_i
+        const ptrdiff_t rel = ptr - base;
+        if (rel < 0 || static_cast<size_t>(rel) >= dataSize)
+            return 0;
+        const uint32_t O_i = static_cast<uint32_t>(rel);
+
+        uint32_t nextGreater = static_cast<uint32_t>(dataSize); // default: end of buffer
+        for (const auto& e : entries)
+        {
+            if (e.offset == nullptr)
+                continue;
+            const ptrdiff_t relJ = e.offset - base;
+            if (relJ <= rel || relJ < 0 || static_cast<size_t>(relJ) >= dataSize)
+                continue;
+            const uint32_t O_j = static_cast<uint32_t>(relJ);
+            if (O_j > O_i && O_j < nextGreater)
+            {
+                nextGreater = O_j;
+            }
+        }
+        return nextGreater - O_i;
+    }
+
+    // Convenience: compute max sizes for all entries.
+    [[maybe_unused]] static std::vector<uint32_t> ComputeG1MaxElementSizes(
+        const std::vector<G1Element>& entries, size_t dataSize, const uint8_t* dataBase)
+    {
+        std::vector<uint32_t> result;
+        result.reserve(entries.size());
+        for (size_t i = 0; i < entries.size(); i++)
+        {
+            result.push_back(ComputeG1MaxElementSize(entries, i, dataSize, dataBase));
+        }
+        return result;
+    }
+
     struct ImageTable::RequiredImage
     {
         G1Element g1{};
