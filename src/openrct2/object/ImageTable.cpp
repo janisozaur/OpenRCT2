@@ -53,6 +53,7 @@ namespace OpenRCT2
             g1.offset = new uint8_t[length];
             std::memcpy(g1.offset, orig.offset, length);
             g1.flags.unset(G1Flag::hasZoomSprite);
+            g1.size = static_cast<uint32_t>(length);
         }
 
         RequiredImage(uint32_t idx, std::function<const G1Element*(uint32_t)> getter)
@@ -64,6 +65,7 @@ namespace OpenRCT2
                 g1 = *orig;
                 g1.offset = new uint8_t[length];
                 std::memcpy(g1.offset, orig->offset, length);
+                g1.size = static_cast<uint32_t>(length);
                 if (g1.flags.has(G1Flag::hasZoomSprite) && g1.zoomedOffset != 0)
                 {
                     // Fetch image for next zoom level
