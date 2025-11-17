@@ -54,6 +54,7 @@ namespace OpenRCT2
 
         G1Flags flags = {};
         int32_t zoomedOffset = 0;
+        uint32_t size = 0; // OpenRCT2 extension: size of the image data
 
         const G1Palette* asPalette() const
         {
@@ -63,7 +64,7 @@ namespace OpenRCT2
             return reinterpret_cast<const G1Palette*>(this);
         }
     };
-    static_assert(sizeof(G1Palette) == sizeof(G1Element));
+    static_assert(sizeof(G1Palette) <= sizeof(G1Element));
 
 #pragma pack(push, 1)
     struct G1Header

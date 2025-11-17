@@ -60,7 +60,7 @@ static bool FASTCALL DrawRLESpriteMagnify(RenderTarget& rt, const DrawSpriteArgs
     return true;
 }
 
-template<DrawBlendOp TBlendOp, size_t TZoom>
+template<DrawBlendOp TBlendOp, size_t TZoom, bool TCheckBounds = false>
 static bool FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs& args)
 {
     auto src0 = args.SourceImage.offset;
@@ -71,6 +71,17 @@ static bool FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs&
     auto height = args.Height;
     auto zoom = 1 << TZoom;
     auto dstLineWidth = static_cast<size_t>(rt.LineStride());
+
+    // Bounds checking setup
+    const uint8_t* srcEnd = nullptr;
+    if constexpr (TCheckBounds)
+    {
+        if (args.SourceImage.size == 0)
+        {
+            return false; // Invalid sprite data: no size information
+        }
+        srcEnd = src0 + args.SourceImage.size;
+    }
 
     // Move up to the first line of the image if source_y_start is negative. Why does this even occur?
     if (srcY < 0)
@@ -87,7 +98,23 @@ static bool FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs&
 
         // The first part of the source pointer is a list of offsets to different lines
         // This will move the pointer to the correct source line.
+        if constexpr (TCheckBounds)
+        {
+            // Check line offset table bounds
+            const size_t lineOffsetPos = static_cast<size_t>(y) * 2;
+            if (lineOffsetPos + 1 >= args.SourceImage.size)
+            {
+                return false; // Line offset table out of bounds
+            }
+        }
         uint16_t lineOffset = src0[y * 2] | (src0[y * 2 + 1] << 8);
+        if constexpr (TCheckBounds)
+        {
+            if (lineOffset >= args.SourceImage.size)
+            {
+                return false; // Line offset points beyond sprite data
+            }
+        }
         auto nextRun = src0 + lineOffset;
         auto* dstLineStart = reinterpret_cast<PaletteIndex*>(dst0 + dstLineWidth * (i >> TZoom));
 
@@ -97,6 +124,14 @@ static bool FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs&
         {
             // Read chunk metadata
             auto src = nextRun;
+            if constexpr (TCheckBounds)
+            {
+                // Check we can read chunk header (2 bytes)
+                if (src + 2 >= srcEnd)
+                {
+                    return false; // Chunk header out of bounds
+                }
+            }
             auto dataSize = *src++;
             auto firstPixelX = *src++;
             isEndOfLine = (dataSize & 0x80) != 0;
@@ -104,6 +139,14 @@ static bool FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs&
 
             // Have our next source pointer point to the next data section
             nextRun = src + dataSize;
+            if constexpr (TCheckBounds)
+            {
+                // Check pixel data bounds
+                if (nextRun > srcEnd)
+                {
+                    return false; // Pixel data out of bounds
+                }
+            }
 
             int32_t x = firstPixelX - srcX;
             int32_t numPixels = dataSize;
@@ -156,7 +199,7 @@ static bool FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs&
     return true;
 }
 
-template<DrawBlendOp TBlendOp>
+template<DrawBlendOp TBlendOp, bool TCheckBounds = false>
 static bool FASTCALL DrawRLESprite(RenderTarget& rt, const DrawSpriteArgs& args)
 {
     auto zoom_level = static_cast<int8_t>(rt.zoom_level);
@@ -166,13 +209,13 @@ static bool FASTCALL DrawRLESprite(RenderTarget& rt, const DrawSpriteArgs& args)
         case -1:
             return DrawRLESpriteMagnify<TBlendOp>(rt, args);
         case 0:
-            return DrawRLESpriteMinify<TBlendOp, 0>(rt, args);
+            return DrawRLESpriteMinify<TBlendOp, 0, TCheckBounds>(rt, args);
         case 1:
-            return DrawRLESpriteMinify<TBlendOp, 1>(rt, args);
+            return DrawRLESpriteMinify<TBlendOp, 1, TCheckBounds>(rt, args);
         case 2:
-            return DrawRLESpriteMinify<TBlendOp, 2>(rt, args);
+            return DrawRLESpriteMinify<TBlendOp, 2, TCheckBounds>(rt, args);
         case 3:
-            return DrawRLESpriteMinify<TBlendOp, 3>(rt, args);
+            return DrawRLESpriteMinify<TBlendOp, 3, TCheckBounds>(rt, args);
         default:
             assert(false);
             return false;
@@ -185,25 +228,40 @@ static bool FASTCALL DrawRLESprite(RenderTarget& rt, const DrawSpriteArgs& args)
  *  rct2: 0x0067AA18
  * @param imageId Only flags are used.
  */
-bool FASTCALL GfxRleSpriteToBuffer(RenderTarget& rt, const DrawSpriteArgs& args)
+template<bool TCheckBounds = false>
+static bool FASTCALL GfxRleSpriteToBufferInternal(RenderTarget& rt, const DrawSpriteArgs& args)
 {
     if (args.Image.HasPrimary())
     {
         if (args.Image.IsBlended())
         {
-            return DrawRLESprite<kBlendTransparent | kBlendSrc | kBlendDst>(rt, args);
+            return DrawRLESprite<kBlendTransparent | kBlendSrc | kBlendDst, TCheckBounds>(rt, args);
         }
         else
         {
-            return DrawRLESprite<kBlendTransparent | kBlendSrc>(rt, args);
+            return DrawRLESprite<kBlendTransparent | kBlendSrc, TCheckBounds>(rt, args);
         }
     }
     else if (args.Image.IsBlended())
     {
-        return DrawRLESprite<kBlendTransparent | kBlendDst>(rt, args);
+        return DrawRLESprite<kBlendTransparent | kBlendDst, TCheckBounds>(rt, args);
     }
     else
     {
-        return DrawRLESprite<kBlendTransparent>(rt, args);
+        return DrawRLESprite<kBlendTransparent, TCheckBounds>(rt, args);
     }
+}
+
+bool FASTCALL GfxRleSpriteToBuffer(RenderTarget& rt, const DrawSpriteArgs& args)
+{
+    return GfxRleSpriteToBufferInternal<false>(rt, args);
+}
+
+/**
+ * Bounds-checking version for validating sprite data during load/export.
+ * Returns false if the sprite data is malformed or accesses out of bounds.
+ */
+bool FASTCALL GfxRleSpriteToBufferWithBoundsCheck(RenderTarget& rt, const DrawSpriteArgs& args)
+{
+    return GfxRleSpriteToBufferInternal<true>(rt, args);
 }

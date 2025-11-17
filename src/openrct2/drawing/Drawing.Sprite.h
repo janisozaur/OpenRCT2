@@ -169,6 +169,7 @@ bool IsCsgLoaded();
 void FASTCALL GfxSpriteToBuffer(OpenRCT2::Drawing::RenderTarget& rt, const DrawSpriteArgs& args);
 void FASTCALL GfxBmpSpriteToBuffer(OpenRCT2::Drawing::RenderTarget& rt, const DrawSpriteArgs& args);
 bool FASTCALL GfxRleSpriteToBuffer(OpenRCT2::Drawing::RenderTarget& rt, const DrawSpriteArgs& args);
+bool FASTCALL GfxRleSpriteToBufferWithBoundsCheck(OpenRCT2::Drawing::RenderTarget& rt, const DrawSpriteArgs& args);
 void FASTCALL GfxDrawSpriteSoftware(OpenRCT2::Drawing::RenderTarget& rt, ImageId imageId, const ScreenCoordsXY& spriteCoords);
 void FASTCALL GfxDrawSpritePaletteSetSoftware(
     OpenRCT2::Drawing::RenderTarget& rt, ImageId imageId, const ScreenCoordsXY& coords,
