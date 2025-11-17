@@ -59,6 +59,7 @@ namespace OpenRCT2
          * @note root is deliberately left non-const: json_t behaviour changes when const
          */
         bool ReadJson(IReadObjectContext* context, json_t& root);
+        void ValidateImages(IReadObjectContext* context);
         const G1Element* GetImages() const
         {
             return _entries.data();

@@ -493,6 +493,9 @@ namespace OpenRCT2
 
             _data = std::move(data);
             _entries.insert(_entries.end(), newEntries.begin(), newEntries.end());
+
+            // Validate all loaded images for malformed RLE sprite data
+            ValidateImages(context);
         }
         catch (const std::exception&)
         {
@@ -627,7 +630,55 @@ namespace OpenRCT2
 
         _objDataCache.clear();
 
+        // Validate all loaded images for malformed RLE sprite data
+        ValidateImages(context);
+
         return usesFallbackSprites;
+    }
+
+    void ImageTable::ValidateImages(IReadObjectContext* context)
+    {
+        // Validate each RLE-compressed image for bounds violations
+        for (size_t i = 0; i < _entries.size(); i++)
+        {
+            const auto& g1 = _entries[i];
+
+            // Skip non-RLE images
+            if (!g1.flags.has(G1Flag::hasRLECompression))
+            {
+                continue;
+            }
+
+            // Skip images with no data
+            if (g1.offset == nullptr)
+            {
+                continue;
+            }
+
+            // Create a temporary dummy buffer and render target for validation
+            // We don't need the actual output, just to check if the sprite data is valid
+            std::vector<uint8_t> dummyBuffer(g1.width * g1.height);
+            auto* paletteBits = reinterpret_cast<OpenRCT2::Drawing::PaletteIndex*>(dummyBuffer.data());
+            OpenRCT2::Drawing::RenderTarget rt;
+            rt.bits = paletteBits;
+            rt.width = g1.width;
+            rt.height = g1.height;
+            rt.pitch = 0;
+            rt.zoom_level = ZoomLevel{ 0 };
+
+            // Create draw sprite args
+            DrawSpriteArgs args(ImageId(), OpenRCT2::Drawing::PaletteMap{}, g1, 0, 0, g1.width, g1.height, paletteBits);
+
+            // Try to render the sprite with bounds checking
+            bool isValid = GfxRleSpriteToBufferWithBoundsCheck(rt, args);
+
+            if (!isValid)
+            {
+                auto message = String::stdFormat(
+                    "Image %zu contains malformed RLE sprite data and may cause rendering issues.", i);
+                context->LogWarning(ObjectError::invalidProperty, message.c_str());
+            }
+        }
     }
 
     void ImageTable::AddImage(const G1Element* g1)
