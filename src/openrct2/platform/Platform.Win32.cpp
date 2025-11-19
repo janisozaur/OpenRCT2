@@ -52,6 +52,8 @@ static constexpr wchar_t kSingleInstanceMutexName[] = L"RollerCoaster Tycoon 2_G
     #define SOFTWARE_CLASSES L"Software\\Classes"
     #define MUI_CACHE L"Local Settings\\Software\\Microsoft\\Windows\\Shell\\MuiCache"
 
+#define swprintf_s swprintf
+
 namespace OpenRCT2::Platform
 {
     static std::string WIN32_GetKnownFolderPath(REFKNOWNFOLDERID rfid);
@@ -668,10 +670,14 @@ namespace OpenRCT2::Platform
         //
         wchar_t first[std::size(dateFormat)];
         wchar_t second[std::size(dateFormat)];
+#if 0
         if (swscanf_s(
                 dateFormat, L"%l[dyM]%*l[^dyM]%l[dyM]%*l[^dyM]%*l[dyM]", first, static_cast<uint32_t>(std::size(first)), second,
                 static_cast<uint32_t>(std::size(second)))
             != 2)
+#else
+        if (swscanf(dateFormat, L"%l[dyM]%*l[^dyM]%l[dyM]%*l[^dyM]%*l[dyM]", first, second) != 2)
+#endif
         {
             return DATE_FORMAT_DAY_MONTH_YEAR;
         }
