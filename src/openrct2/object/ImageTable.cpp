@@ -485,8 +485,25 @@ namespace OpenRCT2
             // Calculate size for each element based on offsets
             for (uint32_t i = 0; i < numImages; i++)
             {
+                uint32_t thisOffset = imageDataOffsets[i];
                 uint32_t nextOffset = (i + 1 < numImages) ? imageDataOffsets[i + 1] : static_cast<uint32_t>(dataSize);
-                newEntries[i].size = nextOffset - imageDataOffsets[i];
+                if (nextOffset > thisOffset)
+                {
+                    newEntries[i].size = nextOffset - thisOffset;
+                    printf("Image %u size: %u bytes\n", i, newEntries[i].size);
+                }
+                else if (thisOffset < dataSize)
+                {
+                    // Malformed: next offset is not after this one, but we still have data left
+                    newEntries[i].size = static_cast<uint32_t>(dataSize - thisOffset);
+                    printf("Image %u size malformed, adjusted to: %u bytes\n", i, newEntries[i].size);
+                }
+                else
+                {
+                    // No data available
+                    newEntries[i].size = 0;
+                    printf("Image %u has no data\n", i);
+                }
             }
 
             // Read g1 element data

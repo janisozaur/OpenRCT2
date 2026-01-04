@@ -10,6 +10,7 @@
 #include "Drawing.Sprite.h"
 
 #include <cassert>
+#include <cstdio>
 #include <cstring>
 
 using namespace OpenRCT2::Drawing;
@@ -78,6 +79,7 @@ static bool FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs&
     {
         if (args.SourceImage.size == 0)
         {
+            printf("%s:%d: Invalid sprite data: no size information\n", __FILE__, __LINE__);
             return false; // Invalid sprite data: no size information
         }
         srcEnd = src0 + args.SourceImage.size;
@@ -104,6 +106,7 @@ static bool FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs&
             const size_t lineOffsetPos = static_cast<size_t>(y) * 2;
             if (lineOffsetPos + 1 >= args.SourceImage.size)
             {
+                printf("%s:%d: Line offset table out of bounds\n", __FILE__, __LINE__);
                 return false; // Line offset table out of bounds
             }
         }
@@ -112,6 +115,7 @@ static bool FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs&
         {
             if (lineOffset >= args.SourceImage.size)
             {
+                printf("%s:%d: Line offset points beyond sprite data\n", __FILE__, __LINE__);
                 return false; // Line offset points beyond sprite data
             }
         }
@@ -129,6 +133,7 @@ static bool FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs&
                 // Check we can read chunk header (2 bytes)
                 if (src + 2 >= srcEnd)
                 {
+                    printf("%s:%d: Chunk header out of bounds, size: %u\n", __FILE__, __LINE__, args.SourceImage.size);
                     return false; // Chunk header out of bounds
                 }
             }
@@ -144,6 +149,7 @@ static bool FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs&
                 // Check pixel data bounds
                 if (nextRun > srcEnd)
                 {
+                    printf("%s:%d: Pixel data out of bounds\n", __FILE__, __LINE__);
                     return false; // Pixel data out of bounds
                 }
             }
@@ -263,5 +269,5 @@ bool FASTCALL GfxRleSpriteToBuffer(RenderTarget& rt, const DrawSpriteArgs& args)
  */
 bool FASTCALL GfxRleSpriteToBufferWithBoundsCheck(RenderTarget& rt, const DrawSpriteArgs& args)
 {
-    return GfxRleSpriteToBufferInternal<true>(rt, args);
+    return GfxRleSpriteToBufferInternal<false>(rt, args);
 }

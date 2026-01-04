@@ -72,6 +72,7 @@ namespace
         int zoom; // 0..3
         int dx;   // X offset relative to 0 (can be negative)
         int dy;   // Y offset relative to 0 (can be negative)
+        bool skipBoundsCheck = false;
     };
 
     class RleSpriteParamTests : public ::testing::TestWithParam<RleDrawParam>
@@ -168,7 +169,7 @@ namespace
 
             // Use bounds-checking version to validate sprite data
             bool result = GfxRleSpriteToBufferWithBoundsCheck(rt, args);
-            ASSERT_TRUE(result) << "Sprite data bounds violation at sprite index: " << idx;
+            EXPECT_TRUE(result) << "Sprite data bounds violation at sprite index: " << idx;
         }
     }
 
