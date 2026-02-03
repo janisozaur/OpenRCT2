@@ -17,10 +17,20 @@ echo Visual Studio directory not found
 exit /b 1
 
 :found
+set "vsdevcmd_args=-no_logo"
+
+if "%OPENRCT2_HOST_ARCH_DISPLAY%"=="ARM64" (
+    set "vsdevcmd_args=%vsdevcmd_args% -host_arch=arm64"
+) else if "%OPENRCT2_HOST_ARCH_DISPLAY%"=="x64" (
+    set "vsdevcmd_args=%vsdevcmd_args% -host_arch=x64"
+) else if "%OPENRCT2_HOST_ARCH_DISPLAY%"=="x86" (
+    set "vsdevcmd_args=%vsdevcmd_args% -host_arch=x86"
+)
+
 if "%platform%"=="x64" (
-    call "%vspath%\Common7\Tools\VsDevCmd.bat" -no_logo -arch=x64
+    call "%vspath%\Common7\Tools\VsDevCmd.bat" %vsdevcmd_args% -arch=x64
 ) else (
-    call "%vspath%\Common7\Tools\VsDevCmd.bat" -no_logo
+    call "%vspath%\Common7\Tools\VsDevCmd.bat" %vsdevcmd_args%
 )
 
 %*

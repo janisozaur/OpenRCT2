@@ -208,7 +208,7 @@ jobs:
       - name: Install MSVC problem matcher
         uses: ammaraskar/msvc-problem-matcher@master
       - name: Build OpenRCT2
-        run: . scripts/setenv && build
+        run: . scripts/setenv --host-arch=arm64 && build
       - name: Upload unsigned binaries
         id: upload-windows-binaries-unsigned
         uses: actions/upload-artifact@v6

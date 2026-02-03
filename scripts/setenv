@@ -4,6 +4,30 @@ set -e
 
 # This sets up more environment variables using the existing environment
 # It should be dot sourced into your environment
+
+# Parse command-line options
+OPENRCT2_QUIET=0
+OPENRCT2_HOST_ARCH=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -q)
+            OPENRCT2_QUIET=1
+            shift
+            ;;
+        --host-arch=*)
+            OPENRCT2_HOST_ARCH="${1#--host-arch=}"
+            shift
+            ;;
+        --host-arch)
+            OPENRCT2_HOST_ARCH="$2"
+            shift 2
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
 if [[ "$GITHUB_ACTIONS" != "true" ]]; then
     export OPENRCT2_BUILD_SERVER=$(hostname)
     export OPENRCT2_VERSION=$(grep 'OPENRCT2_VERSION:' openrct2/.github/workflows/ci.yml | sed 's/.*OPENRCT2_VERSION: *//;s/".*//')
@@ -53,8 +77,31 @@ scriptsdir="$(realpath "$(dirname "${BASH_SOURCE[0]}")")"
 export PATH="$scriptsdir:$PATH"
 export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
 
+# Configure MSVC host architecture for native compilation on ARM64
+if [[ -n "$OPENRCT2_HOST_ARCH" ]]; then
+    # Map architecture names to display format
+    case "$OPENRCT2_HOST_ARCH" in
+        arm64|ARM64)
+            export OPENRCT2_HOST_ARCH_DISPLAY="ARM64"
+            ;;
+        x86_64|x64|AMD64)
+            export OPENRCT2_HOST_ARCH_DISPLAY="x64"
+            ;;
+        x86|X86)
+            export OPENRCT2_HOST_ARCH_DISPLAY="x86"
+            ;;
+        arm|ARM)
+            export OPENRCT2_HOST_ARCH_DISPLAY="ARM"
+            ;;
+        *)
+            echo -e "\033[0;33mWarning: Unknown host architecture '$OPENRCT2_HOST_ARCH'. Skipping host architecture configuration.\033[0m"
+            unset OPENRCT2_HOST_ARCH_DISPLAY
+            ;;
+    esac
+fi
+
 # Output all the variables
-if [[ "$1" != "-q" ]]; then
+if [[ "$OPENRCT2_QUIET" != "1" ]]; then
     echo "----------------------------------------------"
     echo "OPENRCT2_BUILD_SERVER:  $OPENRCT2_BUILD_SERVER"
     echo "OPENRCT2_TAG:           $OPENRCT2_TAG"
@@ -66,5 +113,8 @@ if [[ "$1" != "-q" ]]; then
     echo "OPENRCT2_PUSH:          $OPENRCT2_PUSH"
     echo "OPENRCT2_SHA1:          $OPENRCT2_SHA1"
     echo "OPENRCT2_SHA1_SHORT:    $OPENRCT2_SHA1_SHORT"
+    if [[ -n "$OPENRCT2_HOST_ARCH_DISPLAY" ]]; then
+        echo "OPENRCT2_HOST_ARCH:     $OPENRCT2_HOST_ARCH_DISPLAY (passed to VsDevCmd.bat -host_arch)"
+    fi
     echo "----------------------------------------------"
 fi
