@@ -17,10 +17,17 @@ echo Visual Studio directory not found
 exit /b 1
 
 :found
+rem Display current PreferredToolArchitecture value from environment
+if defined PreferredToolArchitecture (
+    echo PreferredToolArchitecture from bash environment: %PreferredToolArchitecture%
+) else (
+    echo PreferredToolArchitecture not set in environment
+)
+
 rem Set PreferredToolArchitecture for MSBuild to use ARM64 host tools
 if "%OPENRCT2_HOST_ARCH_DISPLAY%"=="ARM64" (
     set "PreferredToolArchitecture=arm64"
-    echo Setting PreferredToolArchitecture=arm64
+    echo Setting PreferredToolArchitecture=arm64 in vstool.cmd
 )
 
 set "vsdevcmd_args=-no_logo"
