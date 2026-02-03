@@ -356,7 +356,8 @@ namespace OpenRCT2::GameActions
 
                 // When using verbose logging also log what we are about to do.
                 // We create a temporary string to avoid messing with the main log output.
-                std::string logLine = std::string(static_cast<const char*>(logContext.output.GetData()), logContext.output.GetLength());
+                std::string logLine = std::string(
+                    static_cast<const char*>(logContext.output.GetData()), logContext.output.GetLength());
                 logLine += ") [Executing]";
                 LOG_VERBOSE("%s", logLine.c_str());
             }
