@@ -17,6 +17,12 @@ echo Visual Studio directory not found
 exit /b 1
 
 :found
+rem Set PreferredToolArchitecture for MSBuild to use ARM64 host tools
+if "%OPENRCT2_HOST_ARCH_DISPLAY%"=="ARM64" (
+    set "PreferredToolArchitecture=arm64"
+    echo Setting PreferredToolArchitecture=arm64
+)
+
 set "vsdevcmd_args=-no_logo"
 
 rem List available host compilers
