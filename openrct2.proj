@@ -28,6 +28,7 @@
     <!-- Set openrct2.sln properties -->
     <SlnProperties>$(SlnProperties);Platform=$(Platform)</SlnProperties>
     <SlnProperties Condition="'$(OPENRCT2_BUILD_SERVER)'!=''">$(SlnProperties);OPENRCT2_CL_ADDITIONALOPTIONS=$(OPENRCT2_CL_ADDITIONALOPTIONS)</SlnProperties>
+    <SlnProperties Condition="'$(PreferredToolArchitecture)'!=''">$(SlnProperties);PreferredToolArchitecture=$(PreferredToolArchitecture)</SlnProperties>
   </PropertyGroup>
 
   <Target Name="Clean">
