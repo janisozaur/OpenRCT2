@@ -17,20 +17,21 @@ echo Visual Studio directory not found
 exit /b 1
 
 :found
-set "vsdevcmd_args=-no_logo"
-
+rem Set host architecture environment variable for MSVC if specified
 if "%OPENRCT2_HOST_ARCH_DISPLAY%"=="ARM64" (
-    set "vsdevcmd_args=%vsdevcmd_args% -host_arch=arm64"
+    set "VCToolsHostArchitecture=ARM64"
 ) else if "%OPENRCT2_HOST_ARCH_DISPLAY%"=="x64" (
-    set "vsdevcmd_args=%vsdevcmd_args% -host_arch=x64"
+    set "VCToolsHostArchitecture=x64"
 ) else if "%OPENRCT2_HOST_ARCH_DISPLAY%"=="x86" (
-    set "vsdevcmd_args=%vsdevcmd_args% -host_arch=x86"
+    set "VCToolsHostArchitecture=x86"
 )
 
 if "%platform%"=="x64" (
-    call "%vspath%\Common7\Tools\VsDevCmd.bat" %vsdevcmd_args% -arch=x64
+    call "%vspath%\Common7\Tools\VsDevCmd.bat" -no_logo -arch=x64
+) else if "%platform%"=="win32" (
+    call "%vspath%\Common7\Tools\VsDevCmd.bat" -no_logo -arch=x86
 ) else (
-    call "%vspath%\Common7\Tools\VsDevCmd.bat" %vsdevcmd_args%
+    call "%vspath%\Common7\Tools\VsDevCmd.bat" -no_logo
 )
 
 %*
