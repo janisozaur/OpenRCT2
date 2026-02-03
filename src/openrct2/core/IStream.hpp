@@ -57,6 +57,10 @@ namespace OpenRCT2
         virtual void Read(void* buffer, uint64_t length) = 0;
         virtual void Write(const void* buffer, uint64_t length) = 0;
 
+        virtual void Flush()
+        {
+        }
+
         virtual uint64_t TryRead(void* buffer, uint64_t length) = 0;
 
         virtual const void* GetData() const

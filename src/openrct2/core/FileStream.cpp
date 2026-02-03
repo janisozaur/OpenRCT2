@@ -189,6 +189,11 @@ namespace OpenRCT2
         _fileSize = std::max(_fileSize, position);
     }
 
+    void FileStream::Flush()
+    {
+        fflush(_file);
+    }
+
     uint64_t FileStream::TryRead(void* buffer, uint64_t length)
     {
         size_t readBytes = fread(buffer, 1, static_cast<size_t>(length), _file);
