@@ -83,15 +83,19 @@ if [[ -n "$OPENRCT2_HOST_ARCH" ]]; then
     case "$OPENRCT2_HOST_ARCH" in
         arm64|ARM64)
             export OPENRCT2_HOST_ARCH_DISPLAY="ARM64"
+            export PreferredToolArchitecture="arm64"
             ;;
         x86_64|x64|AMD64)
             export OPENRCT2_HOST_ARCH_DISPLAY="x64"
+            export PreferredToolArchitecture="x64"
             ;;
         x86|X86)
             export OPENRCT2_HOST_ARCH_DISPLAY="x86"
+            export PreferredToolArchitecture="x86"
             ;;
         arm|ARM)
             export OPENRCT2_HOST_ARCH_DISPLAY="ARM"
+            export PreferredToolArchitecture="arm"
             ;;
         *)
             echo -e "\033[0;33mWarning: Unknown host architecture '$OPENRCT2_HOST_ARCH'. Skipping host architecture configuration.\033[0m"

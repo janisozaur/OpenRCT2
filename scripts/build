@@ -24,7 +24,15 @@ if [[ "$OSTYPE" == "cygwin" || "$OSTYPE" == "msys" ]]; then
 
     # Build everything
     echo -e "\033[0;36mBuilding OpenRCT2 for Windows $CONFIGURATION|$PLATFORM...\033[0m"
-    vstool msbuild openrct2.proj -t:build -p:Breakpad=true -p:UsePCH=true
+
+    # Add PreferredToolArchitecture if OPENRCT2_HOST_ARCH_DISPLAY is set
+    MSBUILD_PROPS="-p:Breakpad=true -p:UsePCH=true"
+    if [[ -n "$OPENRCT2_HOST_ARCH_DISPLAY" ]]; then
+        MSBUILD_PROPS="$MSBUILD_PROPS -p:PreferredToolArchitecture=${PreferredToolArchitecture}"
+        echo "Using MSBuild property: PreferredToolArchitecture=${PreferredToolArchitecture}"
+    fi
+
+    vstool msbuild openrct2.proj -t:build $MSBUILD_PROPS
 
     # Create openrct2.exe and openrct2.com with correct subsystem
     cp bin/openrct2.exe bin/openrct2.com
