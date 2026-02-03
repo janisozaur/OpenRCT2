@@ -21,13 +21,15 @@ set "vsdevcmd_args=-no_logo"
 
 rem Pass host_arch parameter to VsDevCmd.bat based on OPENRCT2_HOST_ARCH_DISPLAY
 if "%OPENRCT2_HOST_ARCH_DISPLAY%"=="ARM64" (
-    set "vsdevcmd_args=%vsdevcmd_args% -host_arch=ARM64"
+    set "vsdevcmd_args=%vsdevcmd_args% -host_arch=arm64"
 )
 
 if "%platform%"=="x64" (
     call "%vspath%\Common7\Tools\VsDevCmd.bat" %vsdevcmd_args% -arch=x64
 ) else if "%platform%"=="win32" (
     call "%vspath%\Common7\Tools\VsDevCmd.bat" %vsdevcmd_args% -arch=x86
+) else if "%platform%"=="arm64" (
+    call "%vspath%\Common7\Tools\VsDevCmd.bat" %vsdevcmd_args% -arch=arm64
 ) else (
     call "%vspath%\Common7\Tools\VsDevCmd.bat" %vsdevcmd_args%
 )
