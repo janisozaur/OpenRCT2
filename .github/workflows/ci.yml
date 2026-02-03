@@ -205,6 +205,10 @@ jobs:
           fi
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+        with:
+          msbuild-architecture: arm64
       - name: Install MSVC problem matcher
         uses: ammaraskar/msvc-problem-matcher@master
       - name: Build OpenRCT2
