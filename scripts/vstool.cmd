@@ -20,8 +20,19 @@ exit /b 1
 set "vsdevcmd_args=-no_logo"
 
 rem List available host compilers
-for /d %%D in ("%vspath%\VC\Tools\MSVC\*\bin\Host*") do (
-    echo Available compiler: %%~nxD
+echo Checking for available MSVC compilers:
+set "msvc_path=%vspath%\VC\Tools\MSVC"
+if exist "%msvc_path%" (
+    for /d %%V in ("%msvc_path%\*") do (
+        echo MSVC Version: %%~nxV
+        if exist "%%V\bin" (
+            for /d %%H in ("%%V\bin\Host*") do (
+                echo   Found: %%~nxH
+            )
+        )
+    )
+) else (
+    echo MSVC path not found: %msvc_path%
 )
 
 rem Pass host_arch parameter to VsDevCmd.bat based on OPENRCT2_HOST_ARCH_DISPLAY
