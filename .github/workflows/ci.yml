@@ -302,13 +302,13 @@ jobs:
           path: artifacts/OpenRCT2-${{ needs.build_variables.outputs.name }}-windows-symbols-${{ matrix.platform }}.zip
           if-no-files-found: error
       - name: Run Tests
-        if: matrix.platform != 'arm64'
+        if: matrix.platform == 'arm64'
         run: . scripts/setenv -q && run-tests
       - name: Test Summary
         uses: test-summary/action@v2
         with:
           paths: "artifacts/test-**.xml"
-        if: matrix.platform != 'arm64'
+        if: matrix.platform == 'arm64'
       - name: Upload symbols (backtrace.io)
         run: |
           . scripts/setenv
