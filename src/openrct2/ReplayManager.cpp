@@ -895,7 +895,7 @@ namespace OpenRCT2
                 }
                 else
                 {
-                    ReplayEntryType type;
+                    ReplayEntryType type{};
                     try
                     {
                         while (true)
@@ -913,7 +913,7 @@ namespace OpenRCT2
                             }
                             else if (type == ReplayEntryType::Checksum)
                             {
-                                uint32_t tick;
+                                uint32_t tick = 0;
                                 EntitiesChecksum checksum;
                                 serialiser << tick;
                                 serialiser << checksum.raw;
