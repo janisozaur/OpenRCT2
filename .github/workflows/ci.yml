@@ -230,7 +230,7 @@ jobs:
         run: |
           echo PATH: $PATH
           which msbuild.exe
-          msbuild.exe openrct2.proj -t:build -p:Configuration=$CONFIGURATION -p:Platform=${{ matrix.platform }} /maxcpucount
+          msbuild.exe openrct2.proj -t:build -p:Configuration=$CONFIGURATION -p:Platform=${{ matrix.platform }} -maxcpucount
       # - name: Build OpenRCT2
       #   run: . scripts/setenv --host-arch=arm64 && build
       - name: Upload unsigned binaries
