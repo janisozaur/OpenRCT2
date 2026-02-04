@@ -19,12 +19,12 @@
     #include <unistd.h>
 #endif
 
+#include "../platform/Platform.h"
 #include "FileScanner.h"
 #include "Memory.hpp"
 #include "Numerics.hpp"
 #include "Path.hpp"
 #include "String.hpp"
-#include "../platform/Platform.h"
 
 #include <memory>
 #include <stack>
