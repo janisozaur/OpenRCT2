@@ -22,36 +22,36 @@ if [[ "$OSTYPE" == "cygwin" || "$OSTYPE" == "msys" ]]; then
     echo "#define OPENRCT2_PRODUCT_VERSION \"$productversion\"" >> "resources/version.h"
     cat "resources/version.h"
 
-    # Build everything
-    echo -e "\033[0;36mBuilding OpenRCT2 for Windows $CONFIGURATION|$PLATFORM...\033[0m"
+    # # Build everything
+    # echo -e "\033[0;36mBuilding OpenRCT2 for Windows $CONFIGURATION|$PLATFORM...\033[0m"
 
-    # Add PreferredToolArchitecture if OPENRCT2_HOST_ARCH_DISPLAY is set
-    MSBUILD_PROPS="-p:Breakpad=true -p:UsePCH=true"
-    if [[ -n "$OPENRCT2_HOST_ARCH_DISPLAY" ]]; then
-        MSBUILD_PROPS="$MSBUILD_PROPS -p:PreferredToolArchitecture=${PreferredToolArchitecture}"
-        echo "Using MSBuild property: PreferredToolArchitecture=${PreferredToolArchitecture}"
-    fi
+    # # Add PreferredToolArchitecture if OPENRCT2_HOST_ARCH_DISPLAY is set
+    # MSBUILD_PROPS="-p:Breakpad=true -p:UsePCH=true"
+    # if [[ -n "$OPENRCT2_HOST_ARCH_DISPLAY" ]]; then
+    #     MSBUILD_PROPS="$MSBUILD_PROPS -p:PreferredToolArchitecture=${PreferredToolArchitecture}"
+    #     echo "Using MSBuild property: PreferredToolArchitecture=${PreferredToolArchitecture}"
+    # fi
 
-    # Check if msbuild is already in PATH (e.g., from setup-msbuild action)
-    if command -v msbuild &> /dev/null; then
-        echo "Using msbuild from PATH (setup-msbuild action)"
-        msbuild openrct2.proj -t:build $MSBUILD_PROPS
-    else
-        echo "Using vstool wrapper to setup VS environment"
-        vstool msbuild openrct2.proj -t:build $MSBUILD_PROPS
-    fi
+    # # Check if msbuild is already in PATH (e.g., from setup-msbuild action)
+    # if command -v msbuild &> /dev/null; then
+    #     echo "Using msbuild from PATH (setup-msbuild action)"
+    #     msbuild openrct2.proj -t:build $MSBUILD_PROPS
+    # else
+    #     echo "Using vstool wrapper to setup VS environment"
+    #     vstool msbuild openrct2.proj -t:build $MSBUILD_PROPS
+    # fi
 
-    # Create openrct2.exe and openrct2.com with correct subsystem
-    cp bin/openrct2.exe bin/openrct2.com
+    # # Create openrct2.exe and openrct2.com with correct subsystem
+    # cp bin/openrct2.exe bin/openrct2.com
 
-    # Check if editbin is already in PATH
-    if command -v editbin &> /dev/null; then
-        editbin //subsystem:console bin/openrct2.com
-        editbin //subsystem:windows bin/openrct2.exe
-    else
-        vstool editbin //subsystem:console bin/openrct2.com
-        vstool editbin //subsystem:windows bin/openrct2.exe
-    fi
+    # # Check if editbin is already in PATH
+    # if command -v editbin &> /dev/null; then
+    #     editbin //subsystem:console bin/openrct2.com
+    #     editbin //subsystem:windows bin/openrct2.exe
+    # else
+    #     vstool editbin //subsystem:console bin/openrct2.com
+    #     vstool editbin //subsystem:windows bin/openrct2.exe
+    # fi
 else
     echo -e "\033[0;36mBuilding OpenRCT2...\033[0m"
     mkdir -p bin && cd bin
