@@ -214,9 +214,9 @@ jobs:
         run: |
           cat $GITHUB_PATH
           echo PATH: $PATH
-          echo cygpath: steps.add-msbuild-to-path.outputs.msbuild-path
-          cygpath "${{ steps.add-msbuild-to-path.outputs.msbuild-path }}"
-          cygpath "${{ steps.add-msbuild-to-path.outputs.msbuild-path }}" >> $GITHUB_PATH
+          echo cygpath: ${{ steps.add-msbuild-to-path.outputs.msbuild-path }}
+          cygpath ${{ steps.add-msbuild-to-path.outputs.msbuild-path }}
+          cygpath ${{ steps.add-msbuild-to-path.outputs.msbuild-path }} >> $GITHUB_PATH
       - name: Install MSVC problem matcher
         uses: ammaraskar/msvc-problem-matcher@master
       - name: msbuild
