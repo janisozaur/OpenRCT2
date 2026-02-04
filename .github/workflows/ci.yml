@@ -652,7 +652,7 @@ jobs:
           mkdir -p $ASSETS_DIR/object
           unzip -q objects.zip -d $ASSETS_DIR/object
 
-          curl -L $TS_URL -o title-sequences.zip
+          curl -L "$TS_URL" -o title-sequences.zip
           mkdir -p $ASSETS_DIR/sequence
           unzip -q title-sequences.zip -d $ASSETS_DIR/sequence
 
