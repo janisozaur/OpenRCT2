@@ -22,12 +22,46 @@
 #include "FileStream.h"
 #include "String.hpp"
 
+#ifdef __ANDROID__
+    #include <android/asset_manager.h>
+#endif
+
 #include <fstream>
 
 namespace OpenRCT2::File
 {
     bool Exists(u8string_view path)
     {
+#ifdef __ANDROID__
+        if (String::startsWith(path, "/android_asset/"))
+        {
+            auto assetManager = static_cast<AAssetManager*>(Platform::GetAssetManager());
+            if (assetManager != nullptr)
+            {
+                std::string assetPath = std::string(path.substr(15));
+                auto asset = AAssetManager_open(assetManager, assetPath.c_str(), AASSET_MODE_UNKNOWN);
+                if (asset != nullptr)
+                {
+                    AAsset_close(asset);
+                    return true;
+                }
+
+                // Check if it is a directory
+                auto dir = AAssetManager_openDir(assetManager, assetPath.c_str());
+                if (dir != nullptr)
+                {
+                    // AAssetManager_openDir returns a non-null pointer even if the directory does not exist,
+                    // but calling AAssetDir_getNextFileName will return null.
+                    // However, we can't easily tell if it's an empty directory or a non-existent one.
+                    // But for assets, we usually know what we are looking for.
+                    auto firstFile = AAssetDir_getNextFileName(dir);
+                    AAssetDir_close(dir);
+                    return firstFile != nullptr;
+                }
+            }
+            return false;
+        }
+#endif
         fs::path file = fs::u8path(path);
         LOG_VERBOSE("Checking if file exists: %s", u8string(path).c_str());
         std::error_code ec;

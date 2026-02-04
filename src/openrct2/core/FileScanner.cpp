@@ -24,6 +24,7 @@
 #include "Numerics.hpp"
 #include "Path.hpp"
 #include "String.hpp"
+#include "../platform/Platform.h"
 
 #include <memory>
 #include <stack>
@@ -251,6 +252,60 @@ private:
 
 #endif // _WIN32
 
+#ifdef __ANDROID__
+    #include <android/asset_manager.h>
+
+class FileScannerAndroidAssets final : public FileScannerBase
+{
+public:
+    FileScannerAndroidAssets(u8string_view pattern, bool recurse)
+        : FileScannerBase(pattern, recurse)
+    {
+    }
+
+    void GetDirectoryChildren(std::vector<DirectoryChild>& children, const std::string& path) override
+    {
+        auto assetManager = static_cast<AAssetManager*>(Platform::GetAssetManager());
+        if (assetManager == nullptr)
+        {
+            return;
+        }
+
+        std::string assetPath = path.substr(15);
+        auto dir = AAssetManager_openDir(assetManager, assetPath.c_str());
+        if (dir != nullptr)
+        {
+            while (auto fileName = AAssetDir_getNextFileName(dir))
+            {
+                DirectoryChild child;
+                child.Name = fileName;
+                child.Type = DirectoryChildType::file;
+
+                // For assets, size and last modified are harder to get without opening the file
+                // But for most scanners in OpenRCT2, only Name and Type matter.
+                // If needed, we could open the asset to get the size.
+                auto childAssetPath = Path::Combine(assetPath, fileName);
+                auto asset = AAssetManager_open(assetManager, childAssetPath.c_str(), AASSET_MODE_UNKNOWN);
+                if (asset != nullptr)
+                {
+                    child.Size = AAsset_getLength64(asset);
+                    AAsset_close(asset);
+                }
+
+                children.push_back(child);
+            }
+            AAssetDir_close(dir);
+        }
+
+        // AAssetManager doesn't easily allow listing subdirectories.
+        // This is a known limitation of the NDK AssetManager.
+        // Currently, OpenRCT2's bundled assets (language, shaders, objects) are mostly flat or
+        // have a known structure. If recursion is needed, a different approach (like a pre-generated
+        // manifest) might be required.
+    }
+};
+#endif
+
 #if defined(__unix__) || defined(__HAIKU__) || (defined(__APPLE__) && defined(__MACH__))
 
 class FileScannerUnix final : public FileScannerBase
@@ -328,6 +383,12 @@ private:
 
 std::unique_ptr<IFileScanner> Path::ScanDirectory(const std::string& pattern, bool recurse)
 {
+#ifdef __ANDROID__
+    if (String::startsWith(pattern, "/android_asset/"))
+    {
+        return std::make_unique<FileScannerAndroidAssets>(pattern, recurse);
+    }
+#endif
 #ifdef _WIN32
     return std::make_unique<FileScannerWindows>(pattern, recurse);
 #elif defined(__unix__) || defined(__HAIKU__) || (defined(__APPLE__) && defined(__MACH__))
