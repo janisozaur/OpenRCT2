@@ -224,6 +224,7 @@ Section "!OpenRCT2" Section1
     ; Copy executable
     File /oname=${OPENRCT2_EXE} ${BINARY_DIR}\${OPENRCT2_EXE}
     File /oname=${OPENRCT2_COM} ${BINARY_DIR}\${OPENRCT2_COM}
+    File ${BINARY_DIR}\crashpad_handler.exe
 
     ; Create the Registry Entries
     WriteRegStr HKEY_LOCAL_MACHINE "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\OpenRCT2" "Comments" "Visit ${APPURLLINK}"
@@ -297,6 +298,7 @@ Section "Uninstall"
     Delete "$INSTDIR\openrct2.d.ts"
     Delete "$INSTDIR\${OPENRCT2_EXE}"
     Delete "$INSTDIR\${OPENRCT2_COM}"
+    Delete "$INSTDIR\crashpad_handler.exe"
     Delete "$INSTDIR\INSTALL.LOG"
 
     ; Data files

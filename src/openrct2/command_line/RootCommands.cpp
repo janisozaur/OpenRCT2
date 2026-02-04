@@ -31,11 +31,11 @@
 #include <iterator>
 #include <string>
 
-#ifdef USE_BREAKPAD
+#ifdef USE_CRASHPAD
     #define IMPLIES_SILENT_BREAKPAD ", implies --silent-breakpad"
 #else
     #define IMPLIES_SILENT_BREAKPAD
-#endif // USE_BREAKPAD
+#endif // USE_CRASHPAD
 
 namespace OpenRCT2
 {
@@ -84,9 +84,9 @@ namespace OpenRCT2
         { CMDLINE_TYPE_STRING,  &_openrct2DataPath, kNAC, "openrct2-data-path", "path to the OpenRCT2 data directory (containing languages)" },
         { CMDLINE_TYPE_STRING,  &_rct1DataPath,     kNAC, "rct1-data-path",     "path to the RollerCoaster Tycoon 1 data directory (containing data/csg1.dat)" },
         { CMDLINE_TYPE_STRING,  &_rct2DataPath,     kNAC, "rct2-data-path",     "path to the RollerCoaster Tycoon 2 data directory (containing data/g1.dat)" },
-    #ifdef USE_BREAKPAD
+    #ifdef USE_CRASHPAD
         { CMDLINE_TYPE_SWITCH,  &_silentBreakpad,  kNAC, "silent-breakpad",   "make breakpad crash reporting silent"                       },
-    #endif // USE_BREAKPAD
+    #endif // USE_CRASHPAD
         kOptionTableEnd
     };
 
@@ -466,11 +466,11 @@ namespace OpenRCT2
         Console::WriteLine();
         Console::WriteFormat("Minimum park file version: %d", kParkFileMinVersion);
         Console::WriteLine();
-#ifdef USE_BREAKPAD
-        Console::WriteFormat("With breakpad support enabled");
+#ifdef USE_CRASHPAD
+        Console::WriteFormat("With crashpad support enabled");
         Console::WriteLine();
 #else
-        Console::WriteFormat("Breakpad support disabled");
+        Console::WriteFormat("Crashpad support disabled");
         Console::WriteLine();
 #endif
     }
