@@ -7,8 +7,9 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
-#include "../platform/Platform.h"
 #include "FileStream.h"
+
+#include "../platform/Platform.h"
 #include "Path.hpp"
 #include "String.hpp"
 
