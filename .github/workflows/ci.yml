@@ -610,7 +610,7 @@ jobs:
   android:
     name: Android
     runs-on: ubuntu-latest
-    needs: [check-code-formatting, build_variables]
+    needs: [check-code-formatting, build_variables, g2dat]
     container: openrct2/openrct2-build:24-android
     steps:
       - name: Checkout
@@ -626,6 +626,36 @@ jobs:
           echo "OPENRCT2_KEYSTORE_PASSWORD=${{ secrets.OPENRCT2_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
       - name: Install GCC problem matcher
         uses: ammaraskar/gcc-problem-matcher@master
+      - name: Download graphics .dat files
+        uses: actions/download-artifact@v7
+        with:
+          name: graphics-${{ needs.build_variables.outputs.name }}
+          path: bin/data
+      - name: Prepare assets
+        run: |
+          ASSETS_DIR=src/openrct2-android/app/src/main/assets/openrct2
+          mkdir -p $ASSETS_DIR
+
+          # Copy graphics
+          cp bin/data/*.dat $ASSETS_DIR/
+
+          # Copy data files from repo
+          cp -r data/language $ASSETS_DIR/
+          cp -r data/shaders $ASSETS_DIR/
+          cp -r data/scenario_patches $ASSETS_DIR/
+
+          # Download objects and sequence from assets.json
+          OBJECTS_URL=$(jq -r '.objects.url' assets.json)
+          TS_URL=$(jq -r '.["title-sequences"].url' assets.json)
+
+          curl -L "$OBJECTS_URL" -o objects.zip
+          mkdir -p $ASSETS_DIR/object
+          unzip -q objects.zip -d $ASSETS_DIR/object
+
+          curl -L $TS_URL -o title-sequences.zip
+          mkdir -p $ASSETS_DIR/sequence
+          unzip -q title-sequences.zip -d $ASSETS_DIR/sequence
+
       - name: Build OpenRCT2
         run: |
           . scripts/setenv
