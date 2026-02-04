@@ -212,15 +212,25 @@ jobs:
           msbuild-architecture: arm64
       - name: Add msbuild to path
         run: |
+          echo GITHUB_PATH: "$GITHUB_PATH", contents:
           cat $GITHUB_PATH
           echo PATH: $PATH
           echo cygpath: "${{ steps.add-msbuild-to-path.outputs.msbuildPath }}"
           cygpath "${{ steps.add-msbuild-to-path.outputs.msbuildPath }}"
           cygpath "${{ steps.add-msbuild-to-path.outputs.msbuildPath }}" >> $GITHUB_PATH
+          echo files:
+          ls "$(cygpath "${{ steps.add-msbuild-to-path.outputs.msbuildPath }}")"
+          echo which:
+          which msbuild.exe || true
+          echo file:
+          file "$(which msbuild.exe)" || true
       - name: Install MSVC problem matcher
         uses: ammaraskar/msvc-problem-matcher@master
       - name: msbuild
-        run: msbuild openrct2.proj -t:build -p:Configuration=$CONFIGURATION -p:Platform=${{ matrix.platform }} /maxcpucount
+        run: |
+          echo PATH: $PATH
+          which msbuild.exe
+          msbuild.exe openrct2.proj -t:build -p:Configuration=$CONFIGURATION -p:Platform=${{ matrix.platform }} /maxcpucount
       # - name: Build OpenRCT2
       #   run: . scripts/setenv --host-arch=arm64 && build
       - name: Upload unsigned binaries
