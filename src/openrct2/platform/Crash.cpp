@@ -11,16 +11,15 @@
 
 #ifdef USE_CRASHPAD
     #include <atomic>
+    #include <base/files/file_path.h>
+    #include <client/crash_report_database.h>
+    #include <client/crashpad_client.h>
+    #include <client/settings.h>
     #include <map>
     #include <memory>
     #include <mutex>
     #include <string>
     #include <vector>
-
-    #include <base/files/file_path.h>
-    #include <client/crash_report_database.h>
-    #include <client/crashpad_client.h>
-    #include <client/settings.h>
 
     #ifdef _WIN32
         #include <shlobj.h>
