@@ -209,6 +209,11 @@ jobs:
         uses: microsoft/setup-msbuild@v2
         with:
           msbuild-architecture: arm64
+      - name: Add msbuild to path
+        run: |
+          cat $GITHUB_PATH
+          echo PATH: $PATH
+          echo "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\Arm64" >> $GITHUB_PATH
       - name: Install MSVC problem matcher
         uses: ammaraskar/msvc-problem-matcher@master
       - name: msbuild
