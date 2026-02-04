@@ -17,6 +17,8 @@
     #include "../localisation/Language.h"
 
     #include <SDL.h>
+    #include <android/asset_manager.h>
+    #include <android/asset_manager_jni.h>
     #include <jni.h>
     #include <memory>
 
@@ -28,6 +30,7 @@ AndroidClassLoader::~AndroidClassLoader()
 
 jobject AndroidClassLoader::_classLoader;
 jmethodID AndroidClassLoader::_findClassMethod;
+static AAssetManager* _assetManager;
 
 // Initialized in JNI_OnLoad. Cannot be initialized here as JVM is not
 // available until after JNI_OnLoad is called.
@@ -57,7 +60,7 @@ namespace OpenRCT2::Platform
 
     std::string GetInstallPath()
     {
-        return "/sdcard/openrct2";
+        return "/android_asset/openrct2";
     }
 
     std::string GetCurrentExecutablePath()
@@ -187,6 +190,25 @@ namespace OpenRCT2::Platform
         return static_cast<jclass>(env->CallObjectMethod(
             AndroidClassLoader::_classLoader, AndroidClassLoader::_findClassMethod,
             env->NewStringUTF(std::string(name).c_str())));
+    }
+
+    void* GetAssetManager()
+    {
+        if (_assetManager == nullptr)
+        {
+            JNIEnv* env = static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv());
+            jobject activity = static_cast<jobject>(SDL_AndroidGetActivity());
+            jclass activityClass = env->GetObjectClass(activity);
+            jmethodID getAssetsMethod = env->GetMethodID(activityClass, "getAssets", "()Landroid/content/res/AssetManager;");
+            jobject assetManagerObj = env->CallObjectMethod(activity, getAssetsMethod);
+            _assetManager = AAssetManager_fromJava(env, assetManagerObj);
+
+            env->DeleteLocalRef(assetManagerObj);
+            env->DeleteLocalRef(activityClass);
+            env->DeleteLocalRef(activity);
+        }
+
+        return _assetManager;
     }
 
     std::vector<std::string_view> GetSearchablePathsRCT1()
