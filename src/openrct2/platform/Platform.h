@@ -171,6 +171,7 @@ namespace OpenRCT2::Platform
 #ifdef __ANDROID__
     jclass AndroidFindClass(JNIEnv* env, std::string_view name);
     void* GetAssetManager();
+    const std::vector<std::string>& GetAssetList();
 #endif
 
     bool IsRunningInWine();
