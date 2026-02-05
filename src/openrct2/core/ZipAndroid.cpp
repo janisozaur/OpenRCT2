@@ -38,14 +38,23 @@ public:
 
         jstring jniPath = env->NewStringUTF(path.data());
 
-        // TODO: Catch exceptions. Should probably be done on Java side, and just return null from a static method
         jobject zip = env->NewObject(jniClass, constructor, jniPath);
+        if (env->ExceptionCheck())
+        {
+            env->ExceptionClear();
+            throw std::runtime_error("Failed to open zip archive: " + std::string(path));
+        }
 
         _zip = env->NewGlobalRef(zip);
     }
 
     ~ZipArchive() override
     {
+        if (_zip == nullptr)
+        {
+            return;
+        }
+
         // retrieve the JNI environment.
         JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
 
@@ -59,6 +68,11 @@ public:
 
     size_t GetNumFiles() const override
     {
+        if (_zip == nullptr)
+        {
+            return 0;
+        }
+
         // retrieve the JNI environment.
         JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
 
@@ -70,6 +84,11 @@ public:
 
     std::string GetFileName(size_t index) const override
     {
+        if (_zip == nullptr)
+        {
+            return std::string();
+        }
+
         // retrieve the JNI environment.
         JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
 
@@ -87,6 +106,11 @@ public:
 
     uint64_t GetFileSize(size_t index) const override
     {
+        if (_zip == nullptr)
+        {
+            return 0;
+        }
+
         // retrieve the JNI environment.
         JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
 
@@ -98,6 +122,11 @@ public:
 
     std::vector<uint8_t> GetFileData(std::string_view path) const override
     {
+        if (_zip == nullptr)
+        {
+            return {};
+        }
+
         // retrieve the JNI environment.
         JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
 

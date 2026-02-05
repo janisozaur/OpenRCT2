@@ -27,6 +27,7 @@
 #include "String.hpp"
 
 #include <memory>
+#include <set>
 #include <stack>
 #include <string>
 #include <vector>
@@ -265,43 +266,57 @@ public:
 
     void GetDirectoryChildren(std::vector<DirectoryChild>& children, const std::string& path) override
     {
-        auto assetManager = static_cast<AAssetManager*>(Platform::GetAssetManager());
-        if (assetManager == nullptr)
+        const auto& assetList = Platform::GetAssetList();
+        std::string prefix = path.substr(15);
+        if (!prefix.empty() && prefix.back() != '/')
         {
-            return;
+            prefix += '/';
         }
 
-        std::string assetPath = path.substr(15);
-        auto dir = AAssetManager_openDir(assetManager, assetPath.c_str());
-        if (dir != nullptr)
+        std::set<std::string> seen;
+
+        for (const auto& entry : assetList)
         {
-            while (auto fileName = AAssetDir_getNextFileName(dir))
+            if (entry.size() > prefix.size() && String::startsWith(entry, prefix))
             {
-                DirectoryChild child;
-                child.Name = fileName;
-                child.Type = DirectoryChildType::file;
-
-                // For assets, size and last modified are harder to get without opening the file
-                // But for most scanners in OpenRCT2, only Name and Type matter.
-                // If needed, we could open the asset to get the size.
-                auto childAssetPath = Path::Combine(assetPath, fileName);
-                auto asset = AAssetManager_open(assetManager, childAssetPath.c_str(), AASSET_MODE_UNKNOWN);
-                if (asset != nullptr)
+                std::string_view relative = std::string_view(entry).substr(prefix.size());
+                auto slashPos = relative.find('/');
+                if (slashPos != std::string_view::npos)
                 {
-                    child.Size = AAsset_getLength64(asset);
-                    AAsset_close(asset);
+                    std::string dirName = std::string(relative.substr(0, slashPos));
+                    if (seen.insert(dirName).second)
+                    {
+                        DirectoryChild child;
+                        child.Name = dirName;
+                        child.Type = DirectoryChildType::directory;
+                        children.push_back(child);
+                    }
                 }
+                else
+                {
+                    std::string fileName = std::string(relative);
+                    if (seen.insert(fileName).second)
+                    {
+                        DirectoryChild child;
+                        child.Name = fileName;
+                        child.Type = DirectoryChildType::file;
 
-                children.push_back(child);
+                        auto assetManager = static_cast<AAssetManager*>(Platform::GetAssetManager());
+                        if (assetManager != nullptr)
+                        {
+                            auto asset = AAssetManager_open(assetManager, entry.c_str(), AASSET_MODE_UNKNOWN);
+                            if (asset != nullptr)
+                            {
+                                child.Size = AAsset_getLength64(asset);
+                                AAsset_close(asset);
+                            }
+                        }
+
+                        children.push_back(child);
+                    }
+                }
             }
-            AAssetDir_close(dir);
         }
-
-        // AAssetManager doesn't easily allow listing subdirectories.
-        // This is a known limitation of the NDK AssetManager.
-        // Currently, OpenRCT2's bundled assets (language, shaders, objects) are mostly flat or
-        // have a known structure. If recursion is needed, a different approach (like a pre-generated
-        // manifest) might be required.
     }
 };
 #endif
@@ -362,7 +377,9 @@ private:
             // Get the full path of the file
             auto path = Path::Combine(directory, node->d_name);
 
-            struct stat statInfo{};
+            struct stat statInfo
+            {
+            };
             int32_t statRes = stat(path.c_str(), &statInfo);
             if (statRes != -1)
             {
