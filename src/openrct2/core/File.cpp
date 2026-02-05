@@ -33,9 +33,9 @@ namespace OpenRCT2::File
     bool Exists(u8string_view path)
     {
 #ifdef __ANDROID__
-        if (OpenRCT2::String::startsWith(path, "/android_asset/"))
+        if (OpenRCT2::::OpenRCT2::String::startsWith(path, "/android_asset/"))
         {
-            auto assetManager = static_cast<AAssetManager*>(Platform::GetAssetManager());
+            auto assetManager = static_cast<AAssetManager*>(::OpenRCT2::Platform::GetAssetManager());
             if (assetManager != nullptr)
             {
                 std::string assetPath = std::string(path.substr(15));
@@ -103,7 +103,7 @@ namespace OpenRCT2::File
         auto fsize = fs.GetLength();
         if (fsize > SIZE_MAX)
         {
-            u8string message = String::stdFormat(
+            u8string message = ::OpenRCT2::String::stdFormat(
                 "'%s' exceeds maximum length of %lld bytes.", u8string(path).c_str(), SIZE_MAX);
             throw IOException(message);
         }
@@ -161,11 +161,11 @@ namespace OpenRCT2::File
 
     uint64_t GetLastModified(u8string_view path)
     {
-        return Platform::GetLastModified(path);
+        return ::OpenRCT2::Platform::GetLastModified(path);
     }
 
     uint64_t GetSize(u8string_view path)
     {
-        return Platform::GetFileSize(path);
+        return ::OpenRCT2::Platform::GetFileSize(path);
     }
 } // namespace OpenRCT2::File

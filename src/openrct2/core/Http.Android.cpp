@@ -42,8 +42,8 @@ namespace OpenRCT2::Http
 
         // Create request object
 
-        jclass HttpAndroidClass = Platform::AndroidFindClass(env, "io/openrct2/HttpAndroid");
-        jclass req_class = Platform::AndroidFindClass(env, "io/openrct2/HttpAndroid$Request");
+        jclass HttpAndroidClass = ::OpenRCT2::Platform::AndroidFindClass(env, "io/openrct2/HttpAndroid");
+        jclass req_class = ::OpenRCT2::Platform::AndroidFindClass(env, "io/openrct2/HttpAndroid$Request");
         // New request object
         jobject jniRequest = env->NewObject(req_class, env->GetMethodID(req_class, "<init>", "()V"));
         // Create request's headers map
@@ -89,9 +89,9 @@ namespace OpenRCT2::Http
         env->SetObjectField(
             jniRequest, env->GetFieldID(req_class, "method", "Lio/openrct2/HttpAndroid$Method;"),
             env->GetStaticObjectField(
-                Platform::AndroidFindClass(env, "io/openrct2/HttpAndroid$Method"),
+                ::OpenRCT2::Platform::AndroidFindClass(env, "io/openrct2/HttpAndroid$Method"),
                 env->GetStaticFieldID(
-                    Platform::AndroidFindClass(env, "io/openrct2/HttpAndroid$Method"), method.c_str(),
+                    ::OpenRCT2::Platform::AndroidFindClass(env, "io/openrct2/HttpAndroid$Method"), method.c_str(),
                     "Lio/openrct2/HttpAndroid$Method;")));
         // Call request method
         jmethodID requestMethod = env->GetStaticMethodID(
@@ -99,7 +99,7 @@ namespace OpenRCT2::Http
         jobject jniResponse = env->CallStaticObjectMethod(HttpAndroidClass, requestMethod, jniRequest);
         jfieldID statusField = env->GetFieldID(env->GetObjectClass(jniResponse), "status", "Lio/openrct2/HttpAndroid$Status;");
         jobject jniStatus = env->GetObjectField(jniResponse, statusField);
-        jclass statusClass = Platform::AndroidFindClass(env, "io/openrct2/HttpAndroid$Status");
+        jclass statusClass = ::OpenRCT2::Platform::AndroidFindClass(env, "io/openrct2/HttpAndroid$Status");
         jmethodID getCodeMethod = env->GetMethodID(statusClass, "getCode", "()I");
         int code = env->CallIntMethod(jniStatus, getCodeMethod);
 

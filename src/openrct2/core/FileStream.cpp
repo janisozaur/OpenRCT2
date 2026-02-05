@@ -50,9 +50,9 @@ namespace OpenRCT2
     FileStream::FileStream(const utf8* path, FileMode fileMode)
     {
 #ifdef __ANDROID__
-        if (fileMode == FileMode::open && OpenRCT2::String::startsWith(path, "/android_asset/"))
+        if (fileMode == FileMode::open && OpenRCT2::::OpenRCT2::String::startsWith(path, "/android_asset/"))
         {
-            auto assetManager = static_cast<AAssetManager*>(Platform::GetAssetManager());
+            auto assetManager = static_cast<AAssetManager*>(::OpenRCT2::Platform::GetAssetManager());
             if (assetManager != nullptr)
             {
                 std::string assetPath = path + 15;
@@ -102,8 +102,8 @@ namespace OpenRCT2
         }
 
 #ifdef _WIN32
-        auto pathW = String::toWideChar(path);
-        auto modeW = String::toWideChar(mode);
+        auto pathW = ::OpenRCT2::String::toWideChar(path);
+        auto modeW = ::OpenRCT2::String::toWideChar(mode);
         _file = _wfopen(pathW.c_str(), modeW.c_str());
 #else
         if (fileMode == FileMode::open)
@@ -122,7 +122,7 @@ namespace OpenRCT2
 #endif
         if (_file == nullptr)
         {
-            throw IOException(String::stdFormat("Unable to open '%s'", path));
+            throw IOException(::OpenRCT2::String::stdFormat("Unable to open '%s'", path));
         }
 
 #ifdef _WIN32

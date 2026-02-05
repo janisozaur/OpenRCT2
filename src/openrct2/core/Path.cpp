@@ -27,9 +27,9 @@ namespace OpenRCT2::Path
             return u8string(a);
         auto aEnd = a.back();
         auto bBegin = b.front();
-        if (Platform::IsPathSeparator(aEnd))
+        if (::OpenRCT2::Platform::IsPathSeparator(aEnd))
         {
-            if (Platform::IsPathSeparator(bBegin))
+            if (::OpenRCT2::Platform::IsPathSeparator(bBegin))
             {
                 return u8string(a) + u8string(b.substr(1));
             }
@@ -37,7 +37,7 @@ namespace OpenRCT2::Path
             return u8string(a) + u8string(b);
         }
 
-        if (Platform::IsPathSeparator(bBegin))
+        if (::OpenRCT2::Platform::IsPathSeparator(bBegin))
         {
             return u8string(a) + u8string(b);
         }
@@ -63,7 +63,7 @@ namespace OpenRCT2::Path
 #ifdef __ANDROID__
         if (::OpenRCT2::String::startsWith(path, "/android_asset/"))
         {
-            const auto& assetList = Platform::GetAssetList();
+            const auto& assetList = ::OpenRCT2::Platform::GetAssetList();
             std::string prefix = std::string(path).substr(15);
             if (!prefix.empty() && prefix.back() != '/')
             {
@@ -139,12 +139,12 @@ namespace OpenRCT2::Path
 
     bool Equals(u8string_view a, u8string_view b)
     {
-        return Platform::ShouldIgnoreCase() ? String::iequals(a, b) : String::equals(a, b);
+        return ::OpenRCT2::Platform::ShouldIgnoreCase() ? ::OpenRCT2::String::iequals(a, b) : ::OpenRCT2::String::equals(a, b);
     }
 
     u8string ResolveCasing(u8string_view path)
     {
-        return Platform::ResolveCasing(path, File::Exists(path));
+        return ::OpenRCT2::Platform::ResolveCasing(path, File::Exists(path));
     }
 
     bool DeleteDirectory(u8string_view path)
