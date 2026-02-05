@@ -33,7 +33,7 @@ namespace OpenRCT2::File
     bool Exists(u8string_view path)
     {
 #ifdef __ANDROID__
-        if (String::startsWith(path, "/android_asset/"))
+        if (OpenRCT2::String::startsWith(path, "/android_asset/"))
         {
             auto assetManager = static_cast<AAssetManager*>(Platform::GetAssetManager());
             if (assetManager != nullptr)
