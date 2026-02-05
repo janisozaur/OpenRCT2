@@ -661,8 +661,8 @@ jobs:
           unzip -q objects.zip -d $DATA_DIR/object
 
           curl -L "$TS_URL" -o title-sequences.zip
-          mkdir -p $ASSETS_DIR/sequence
-          unzip -q title-sequences.zip -d $ASSETS_DIR/sequence
+          mkdir -p $DATA_DIR/sequence
+          unzip -q title-sequences.zip -d $DATA_DIR/sequence
 
           # Generate manifest
           pushd src/openrct2-android/app/src/main/assets
