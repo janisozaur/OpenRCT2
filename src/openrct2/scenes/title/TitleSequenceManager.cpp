@@ -168,7 +168,8 @@ namespace OpenRCT2::TitleSequenceManager
         auto filename = Path::GetFileName(path);
         for (size_t i = 0; i < std::size(PredefinedSequences); i++)
         {
-            if (String::iequals(filename, PredefinedSequences[i].Filename))
+            if (String::iequals(filename, PredefinedSequences[i].Filename)
+                || String::iequals(filename, Path::GetFileNameWithoutExtension(PredefinedSequences[i].Filename)))
             {
                 return i;
             }
@@ -307,7 +308,8 @@ namespace OpenRCT2::TitleSequenceManager
         const auto filename = Path::GetFileName(item->Path);
         for (const auto& pseq : PredefinedSequences)
         {
-            if (String::iequals(filename, pseq.Filename))
+            if (String::iequals(filename, pseq.Filename)
+                || String::iequals(filename, Path::GetFileNameWithoutExtension(pseq.Filename)))
             {
                 return pseq.ConfigId;
             }
