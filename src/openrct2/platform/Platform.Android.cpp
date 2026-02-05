@@ -34,7 +34,7 @@ AndroidClassLoader::~AndroidClassLoader()
 jobject AndroidClassLoader::_classLoader;
 jmethodID AndroidClassLoader::_findClassMethod;
 static AAssetManager* _assetManager;
-static std::vector<Platform::AssetInfo> _assetList;
+static std::vector<OpenRCT2::Platform::AssetInfo> _assetList;
 
 // Initialized in JNI_OnLoad. Cannot be initialized here as JVM is not
 // available until after JNI_OnLoad is called.
