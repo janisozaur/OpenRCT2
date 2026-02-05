@@ -164,6 +164,55 @@ namespace OpenRCT2::Platform
         return {};
     }
 
+    uint64_t GetLastModified(std::string_view path)
+    {
+        if (String::startsWith(path, "/android_asset/"))
+        {
+            // Assets don't have a modification time in the traditional sense.
+            return 0;
+        }
+
+        uint64_t lastModified = 0;
+        struct stat statInfo
+        {
+        };
+        if (stat(std::string(path).c_str(), &statInfo) == 0)
+        {
+            lastModified = statInfo.st_mtime;
+        }
+        return lastModified;
+    }
+
+    uint64_t GetFileSize(std::string_view path)
+    {
+        if (String::startsWith(path, "/android_asset/"))
+        {
+            auto assetManager = static_cast<AAssetManager*>(GetAssetManager());
+            if (assetManager != nullptr)
+            {
+                std::string assetPath = std::string(path).substr(15);
+                auto asset = AAssetManager_open(assetManager, assetPath.c_str(), AASSET_MODE_UNKNOWN);
+                if (asset != nullptr)
+                {
+                    auto size = AAsset_getLength(asset);
+                    AAsset_close(asset);
+                    return static_cast<uint64_t>(size);
+                }
+            }
+            return 0;
+        }
+
+        uint64_t size = 0;
+        struct stat statInfo
+        {
+        };
+        if (stat(std::string(path).c_str(), &statInfo) == 0)
+        {
+            size = statInfo.st_size;
+        }
+        return size;
+    }
+
     #ifndef DISABLE_TTF
     std::string GetFontPath(const TTFFontDescriptor& font)
     {
@@ -275,6 +324,11 @@ namespace OpenRCT2::Platform
     std::vector<std::string_view> GetSearchablePathsRCT2()
     {
         return { "/sdcard/rct2" };
+    }
+
+    time_t FileGetModifiedTime(u8string_view path)
+    {
+        return static_cast<time_t>(GetLastModified(path));
     }
 } // namespace OpenRCT2::Platform
 

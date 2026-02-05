@@ -307,7 +307,7 @@ public:
                             auto asset = AAssetManager_open(assetManager, entry.c_str(), AASSET_MODE_UNKNOWN);
                             if (asset != nullptr)
                             {
-                                child.Size = AAsset_getLength64(asset);
+                                child.Size = static_cast<uint64_t>(AAsset_getLength(asset));
                                 AAsset_close(asset);
                             }
                         }

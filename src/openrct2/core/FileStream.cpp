@@ -59,7 +59,7 @@ namespace OpenRCT2
                 _asset = AAssetManager_open(assetManager, assetPath.c_str(), AASSET_MODE_RANDOM);
                 if (_asset != nullptr)
                 {
-                    _fileSize = AAsset_getLength64(static_cast<AAsset*>(_asset));
+                    _fileSize = static_cast<uint64_t>(AAsset_getLength(static_cast<AAsset*>(_asset)));
                     _canRead = true;
                     _canWrite = false;
                     _ownsFilePtr = true;
@@ -179,7 +179,7 @@ namespace OpenRCT2
 #ifdef __ANDROID__
         if (_asset != nullptr)
         {
-            return AAsset_seek64(static_cast<AAsset*>(_asset), 0, SEEK_CUR);
+            return static_cast<uint64_t>(AAsset_seek(static_cast<AAsset*>(_asset), 0, SEEK_CUR));
         }
 #endif
         return ftello(_file);
@@ -210,7 +210,7 @@ namespace OpenRCT2
                 default:
                     return;
             }
-            AAsset_seek64(static_cast<AAsset*>(_asset), offset, whence);
+            AAsset_seek(static_cast<AAsset*>(_asset), static_cast<off_t>(offset), whence);
             return;
         }
 #endif
