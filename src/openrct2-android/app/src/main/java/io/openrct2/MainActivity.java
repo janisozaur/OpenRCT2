@@ -9,55 +9,54 @@ import android.graphics.PointF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Environment;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
-
-import org.apache.commons.io.IOUtils;
-
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import org.apache.commons.io.IOUtils;
 
-public class MainActivity extends AppCompatActivity {
-
+public class MainActivity extends AppCompatActivity
+{
     public static final String TAG = "OpenRCT2";
 
     @Override
-    public void onRequestPermissionsResult(
-        int requestCode,
-        @NonNull String[] permissions,
-        @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
+    {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if (hasRequiredPermissions()) {
+        if (hasRequiredPermissions())
+        {
             startGame();
         }
     }
 
-    private String[] getSupportedAbis() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+    private String[] getSupportedAbis()
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        {
             return Build.SUPPORTED_ABIS;
         }
 
-        if (!TextUtils.isEmpty(Build.CPU_ABI2)) {
-            return new String[]{Build.CPU_ABI, Build.CPU_ABI2};
+        if (!TextUtils.isEmpty(Build.CPU_ABI2))
+        {
+            return new String[] { Build.CPU_ABI, Build.CPU_ABI2 };
         }
 
-        return new String[]{Build.CPU_ABI};
+        return new String[] { Build.CPU_ABI };
     }
 
-    private PointF getResolutionDips() {
+    private PointF getResolutionDips()
+    {
         PointF out = new PointF();
         Point pixelSize = new Point();
 
@@ -69,18 +68,19 @@ public class MainActivity extends AppCompatActivity {
         display.getRealMetrics(metrics);
 
         int rotation = display.getRotation();
-        if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
+        if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270)
+        {
             pixelSize = new Point(pixelSize.y, pixelSize.x);
         }
 
-        out.x = ((float) pixelSize.x) / metrics.density;
-        out.y = ((float) pixelSize.y) / metrics.density;
+        out.x = ((float)pixelSize.x) / metrics.density;
+        out.y = ((float)pixelSize.y) / metrics.density;
 
         return out;
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    @Override protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -89,12 +89,14 @@ public class MainActivity extends AppCompatActivity {
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
     }
 
-    @Override
-    protected void onStart() {
+    @Override protected void onStart()
+    {
         super.onStart();
 
-        if (!hasRequiredPermissions()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (!hasRequiredPermissions())
+        {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+            {
                 /*
                 TODO - This is a temporary solution
                 Ideally, OpenRCT2 assets should be shipped in the apk and we should ask
@@ -106,35 +108,53 @@ public class MainActivity extends AppCompatActivity {
                 intent.addCategory("android.intent.category.DEFAULT");
                 intent.setData(Uri.fromParts("package", getPackageName(), null));
                 startActivity(intent);
-            } else {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
             }
-        } else {
+            else
+            {
+                ActivityCompat.requestPermissions(
+                    this,
+                    new String[] { Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE }, 1);
+            }
+        }
+        else
+        {
             startGame();
         }
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    @Override public void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 0) {
-            if (!hasRequiredPermissions()) {
+        if (requestCode == 0)
+        {
+            if (!hasRequiredPermissions())
+            {
                 Log.d(TAG, "User denied storage permission!");
-            } else {
+            }
+            else
+            {
                 startGame();
             }
         }
     }
 
-    private boolean hasRequiredPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+    private boolean hasRequiredPermissions()
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+        {
             return Environment.isExternalStorageManager();
-        } else {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+        }
+        else
+        {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_DENIED)
+            {
                 return false;
             }
 
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_DENIED)
+            {
                 return false;
             }
 
@@ -142,14 +162,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void startGame() {
+    private void startGame()
+    {
         Intent intent = new Intent(this, GameActivity.class);
-        if (getIntent().hasExtra("commandLineArgs")) {
+        if (getIntent().hasExtra("commandLineArgs"))
+        {
             intent.putExtra("commandLineArgs", getIntent().getStringArrayExtra("commandLineArgs"));
         }
         startActivity(intent);
         finish();
     }
-
-
 }
