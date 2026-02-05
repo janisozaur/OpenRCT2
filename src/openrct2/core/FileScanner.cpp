@@ -213,7 +213,7 @@ public:
     void GetDirectoryChildren(std::vector<DirectoryChild>& children, const std::string& path) override
     {
         auto pattern = path + "\\*";
-        auto wPattern = String::toWideChar(pattern.c_str());
+        auto wPattern = ::OpenRCT2::String::toWideChar(pattern.c_str());
 
         WIN32_FIND_DATAW findData;
         HANDLE hFile = FindFirstFileW(wPattern.c_str(), &findData);
@@ -235,7 +235,7 @@ private:
     {
         DirectoryChild result;
 
-        result.Name = String::toUtf8(child->cFileName);
+        result.Name = ::OpenRCT2::String::toUtf8(child->cFileName);
         if (child->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         {
             result.Type = DirectoryChildType::directory;
@@ -266,7 +266,7 @@ public:
 
     void GetDirectoryChildren(std::vector<DirectoryChild>& children, const std::string& path) override
     {
-        const auto& assetList = Platform::GetAssetList();
+        const auto& assetList = ::OpenRCT2::Platform::GetAssetList();
         std::string prefix = path.substr(15);
         if (!prefix.empty() && prefix.back() != '/')
         {
@@ -330,7 +330,7 @@ public:
             for (int32_t i = 0; i < count; i++)
             {
                 const struct dirent* node = namelist[i];
-                if (!String::equals(node->d_name, ".") && !String::equals(node->d_name, ".."))
+                if (!::OpenRCT2::String::equals(node->d_name, ".") && !::OpenRCT2::String::equals(node->d_name, ".."))
                 {
                     children.push_back(CreateChild(path.c_str(), node));
                 }
