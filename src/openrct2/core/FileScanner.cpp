@@ -12,7 +12,7 @@
         #define WIN32_LEAN_AND_MEAN
     #endif
     #include <windows.h>
-#elif defined(__unix__) || defined(__HAIKU__) || (defined(__APPLE__) && defined(__MACH__))
+#elif defined(__unix__) || defined(__HAIKU__) || (defined(__APPLE__) && defined(__MACH__)) || defined(__ANDROID__)
     #include <dirent.h>
     #include <sys/stat.h>
     #include <sys/types.h>
@@ -377,7 +377,9 @@ private:
             // Get the full path of the file
             auto path = Path::Combine(directory, node->d_name);
 
-            struct stat statInfo{};
+            struct stat statInfo
+            {
+            };
             int32_t statRes = stat(path.c_str(), &statInfo);
             if (statRes != -1)
             {
@@ -399,7 +401,7 @@ private:
 std::unique_ptr<IFileScanner> Path::ScanDirectory(const std::string& pattern, bool recurse)
 {
 #ifdef __ANDROID__
-    if (String::startsWith(pattern, "/android_asset/"))
+    if (OpenRCT2::String::startsWith(pattern, "/android_asset/"))
     {
         return std::make_unique<FileScannerAndroidAssets>(pattern, recurse);
     }

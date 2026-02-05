@@ -61,7 +61,7 @@ namespace OpenRCT2::Path
     bool DirectoryExists(u8string_view path)
     {
 #ifdef __ANDROID__
-        if (String::startsWith(path, "/android_asset/"))
+        if (OpenRCT2::String::startsWith(path, "/android_asset/"))
         {
             const auto& assetList = Platform::GetAssetList();
             std::string prefix = std::string(path).substr(15);
