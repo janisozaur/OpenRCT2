@@ -31,6 +31,7 @@ AndroidClassLoader::~AndroidClassLoader()
 jobject AndroidClassLoader::_classLoader;
 jmethodID AndroidClassLoader::_findClassMethod;
 static AAssetManager* _assetManager;
+static std::vector<std::string> _assetList;
 
 // Initialized in JNI_OnLoad. Cannot be initialized here as JVM is not
 // available until after JNI_OnLoad is called.
@@ -60,7 +61,14 @@ namespace OpenRCT2::Platform
 
     std::string GetInstallPath()
     {
-        return "/android_asset/openrct2";
+        // If assets are bundled, use them as install path
+        if (File::Exists("/android_asset/openrct2/data/g2.dat"))
+        {
+            return "/android_asset/openrct2";
+        }
+
+        // Fallback to external storage for backward compatibility
+        return GetFolderPath(SpecialFolder::userData);
     }
 
     std::string GetCurrentExecutablePath()
@@ -209,6 +217,54 @@ namespace OpenRCT2::Platform
         }
 
         return _assetManager;
+    }
+
+    const std::vector<std::string>& GetAssetList()
+    {
+        if (_assetList.empty())
+        {
+            AAssetManager* am = static_cast<AAssetManager*>(GetAssetManager());
+            if (am != nullptr)
+            {
+                AAsset* asset = AAssetManager_open(am, "openrct2/manifest.txt", AASSET_MODE_BUFFER);
+                if (asset != nullptr)
+                {
+                    size_t size = AAsset_getLength(asset);
+                    std::string content;
+                    content.resize(size);
+                    AAsset_read(asset, content.data(), size);
+                    AAsset_close(asset);
+
+                    size_t start = 0;
+                    size_t end = content.find('\n');
+                    while (end != std::string::npos)
+                    {
+                        std::string line = content.substr(start, end - start);
+                        if (!line.empty() && line.back() == '\r')
+                        {
+                            line.pop_back();
+                        }
+                        if (!line.empty())
+                        {
+                            _assetList.push_back(line);
+                        }
+                        start = end + 1;
+                        end = content.find('\n', start);
+                    }
+                    std::string lastLine = content.substr(start);
+                    if (!lastLine.empty() && lastLine.back() == '\r')
+                    {
+                        lastLine.pop_back();
+                    }
+                    if (!lastLine.empty())
+                    {
+                        _assetList.push_back(lastLine);
+                    }
+                    std::sort(_assetList.begin(), _assetList.end());
+                }
+            }
+        }
+        return _assetList;
     }
 
     std::vector<std::string_view> GetSearchablePathsRCT1()
