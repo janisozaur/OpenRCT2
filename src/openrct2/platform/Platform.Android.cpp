@@ -14,6 +14,7 @@
     #include "../Diagnostic.h"
     #include "../core/File.h"
     #include "../core/Guard.hpp"
+    #include "../core/String.hpp"
     #include "../localisation/Language.h"
 
     #include <SDL.h>
@@ -21,6 +22,7 @@
     #include <android/asset_manager_jni.h>
     #include <jni.h>
     #include <memory>
+    #include <sys/stat.h>
 
 AndroidClassLoader::~AndroidClassLoader()
 {
@@ -166,14 +168,16 @@ namespace OpenRCT2::Platform
 
     uint64_t GetLastModified(std::string_view path)
     {
-        if (String::startsWith(path, "/android_asset/"))
+        if (OpenRCT2::String::startsWith(path, "/android_asset/"))
         {
             // Assets don't have a modification time in the traditional sense.
             return 0;
         }
 
         uint64_t lastModified = 0;
-        struct stat statInfo{};
+        struct stat statInfo
+        {
+        };
         if (stat(std::string(path).c_str(), &statInfo) == 0)
         {
             lastModified = statInfo.st_mtime;
@@ -183,7 +187,7 @@ namespace OpenRCT2::Platform
 
     uint64_t GetFileSize(std::string_view path)
     {
-        if (String::startsWith(path, "/android_asset/"))
+        if (OpenRCT2::String::startsWith(path, "/android_asset/"))
         {
             auto assetManager = static_cast<AAssetManager*>(GetAssetManager());
             if (assetManager != nullptr)
@@ -201,7 +205,9 @@ namespace OpenRCT2::Platform
         }
 
         uint64_t size = 0;
-        struct stat statInfo{};
+        struct stat statInfo
+        {
+        };
         if (stat(std::string(path).c_str(), &statInfo) == 0)
         {
             size = statInfo.st_size;

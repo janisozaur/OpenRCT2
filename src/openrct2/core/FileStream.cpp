@@ -50,7 +50,7 @@ namespace OpenRCT2
     FileStream::FileStream(const utf8* path, FileMode fileMode)
     {
 #ifdef __ANDROID__
-        if (fileMode == FileMode::open && String::startsWith(path, "/android_asset/"))
+        if (fileMode == FileMode::open && OpenRCT2::String::startsWith(path, "/android_asset/"))
         {
             auto assetManager = static_cast<AAssetManager*>(Platform::GetAssetManager());
             if (assetManager != nullptr)
