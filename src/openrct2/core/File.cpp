@@ -98,14 +98,9 @@ namespace OpenRCT2::File
 
     std::vector<uint8_t> ReadAllBytes(u8string_view path)
     {
-        std::ifstream fs(fs::u8path(u8string(path)), std::ios::in | std::ios::binary);
-        if (!fs.is_open())
-        {
-            throw IOException("Unable to open " + u8string(path));
-        }
-
+        FileStream fs(path, FileMode::open);
         std::vector<uint8_t> result;
-        auto fsize = Platform::GetFileSize(path);
+        auto fsize = fs.GetLength();
         if (fsize > SIZE_MAX)
         {
             u8string message = String::stdFormat(
@@ -114,9 +109,8 @@ namespace OpenRCT2::File
         }
         else
         {
-            result.resize(fsize);
-            fs.read(reinterpret_cast<char*>(result.data()), result.size());
-            fs.exceptions(fs.failbit);
+            result.resize(static_cast<size_t>(fsize));
+            fs.Read(result.data(), result.size());
         }
         return result;
     }

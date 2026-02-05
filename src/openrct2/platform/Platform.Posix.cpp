@@ -214,10 +214,13 @@ namespace OpenRCT2::Platform
     #endif // __EMSCRIPTEN__
     }
 
+    #ifndef __ANDROID__
     uint64_t GetLastModified(std::string_view path)
     {
         uint64_t lastModified = 0;
-        struct stat statInfo{};
+        struct stat statInfo
+        {
+        };
         if (stat(std::string(path).c_str(), &statInfo) == 0)
         {
             lastModified = statInfo.st_mtime;
@@ -228,13 +231,16 @@ namespace OpenRCT2::Platform
     uint64_t GetFileSize(std::string_view path)
     {
         uint64_t size = 0;
-        struct stat statInfo{};
+        struct stat statInfo
+        {
+        };
         if (stat(std::string(path).c_str(), &statInfo) == 0)
         {
             size = statInfo.st_size;
         }
         return size;
     }
+    #endif
 
     bool ShouldIgnoreCase()
     {
@@ -390,6 +396,7 @@ namespace OpenRCT2::Platform
         return 0;
     }
 
+    #ifndef __ANDROID__
     time_t FileGetModifiedTime(u8string_view path)
     {
         struct stat buf;
@@ -399,6 +406,7 @@ namespace OpenRCT2::Platform
         }
         return 100;
     }
+    #endif
 
     datetime64 GetDatetimeNowUTC()
     {

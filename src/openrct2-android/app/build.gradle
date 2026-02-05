@@ -59,6 +59,10 @@ android {
     lintOptions {
         abortOnError false
     }
+
+    androidResources {
+        noCompress 'parkseq', 'zip'
+    }
 }
 
 dependencies {
