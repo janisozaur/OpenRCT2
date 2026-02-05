@@ -34,7 +34,7 @@ AndroidClassLoader::~AndroidClassLoader()
 jobject AndroidClassLoader::_classLoader;
 jmethodID AndroidClassLoader::_findClassMethod;
 static AAssetManager* _assetManager;
-static std::vector<OpenRCT2::Platform::AssetInfo> _assetList;
+static std::vector<::OpenRCT2::Platform::AssetInfo> _assetList;
 
 // Initialized in JNI_OnLoad. Cannot be initialized here as JVM is not
 // available until after JNI_OnLoad is called.
@@ -67,7 +67,7 @@ namespace OpenRCT2::Platform
         // If assets are bundled, use them as install path
         if (File::Exists("/android_asset/openrct2/data/g2.dat"))
         {
-            return "/android_asset/openrct2";
+            return "/android_asset/openrct2/data";
         }
 
         // Fallback to external storage for backward compatibility
@@ -143,7 +143,7 @@ namespace OpenRCT2::Platform
         env->DeleteLocalRef(activity);
         env->DeleteLocalRef(activityClass);
 
-        return Platform::GetCurrencyValue(localeCurrencyCode.c_str());
+        return GetCurrencyValue(localeCurrencyCode.c_str());
     }
 
     MeasurementFormat GetLocaleMeasurementFormat()
