@@ -277,9 +277,9 @@ public:
 
         for (const auto& entry : assetList)
         {
-            if (entry.size() > prefix.size() && String::startsWith(entry, prefix))
+            if (entry.Path.size() > prefix.size() && ::OpenRCT2::String::startsWith(entry.Path, prefix))
             {
-                std::string_view relative = std::string_view(entry).substr(prefix.size());
+                std::string_view relative = std::string_view(entry.Path).substr(prefix.size());
                 auto slashPos = relative.find('/');
                 if (slashPos != std::string_view::npos)
                 {
@@ -300,17 +300,7 @@ public:
                         DirectoryChild child;
                         child.Name = fileName;
                         child.Type = DirectoryChildType::file;
-
-                        auto assetManager = static_cast<AAssetManager*>(Platform::GetAssetManager());
-                        if (assetManager != nullptr)
-                        {
-                            auto asset = AAssetManager_open(assetManager, entry.c_str(), AASSET_MODE_UNKNOWN);
-                            if (asset != nullptr)
-                            {
-                                child.Size = static_cast<uint64_t>(AAsset_getLength(asset));
-                                AAsset_close(asset);
-                            }
-                        }
+                        child.Size = entry.Size;
 
                         children.push_back(child);
                     }
@@ -377,7 +367,9 @@ private:
             // Get the full path of the file
             auto path = Path::Combine(directory, node->d_name);
 
-            struct stat statInfo{};
+            struct stat statInfo
+            {
+            };
             int32_t statRes = stat(path.c_str(), &statInfo);
             if (statRes != -1)
             {
@@ -399,7 +391,7 @@ private:
 std::unique_ptr<IFileScanner> Path::ScanDirectory(const std::string& pattern, bool recurse)
 {
 #ifdef __ANDROID__
-    if (OpenRCT2::String::startsWith(pattern, "/android_asset/"))
+    if (::OpenRCT2::String::startsWith(pattern, "/android_asset/"))
     {
         return std::make_unique<FileScannerAndroidAssets>(pattern, recurse);
     }

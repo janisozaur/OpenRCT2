@@ -62,7 +62,7 @@ android {
     }
 
     androidResources {
-        noCompress 'parkseq', 'zip'
+        noCompress 'parkseq', 'zip', 'dat', 'parkobj'
     }
 }
 
