@@ -52,7 +52,10 @@ public class ZipArchive
     {
         try
         {
-            _zipArchive.close();
+            if (_zipArchive != null)
+            {
+                _zipArchive.close();
+            }
         }
         catch (IOException e)
         {

@@ -634,24 +634,24 @@ jobs:
       - name: Prepare assets
         run: |
           ASSETS_DIR=src/openrct2-android/app/src/main/assets/openrct2
-          mkdir -p $ASSETS_DIR
+          DATA_DIR=$ASSETS_DIR/data
+          mkdir -p $DATA_DIR
 
           # Copy graphics
-          mkdir -p $ASSETS_DIR/data
-          cp bin/data/*.dat $ASSETS_DIR/data/
+          cp bin/data/*.dat $DATA_DIR/
 
           # Copy data files from repo
-          cp -r data/language $ASSETS_DIR/
-          cp -r data/shaders $ASSETS_DIR/
-          cp -r data/scenario_patches $ASSETS_DIR/
+          cp -r data/language $DATA_DIR/
+          cp -r data/shaders $DATA_DIR/
+          cp -r data/scenario_patches $DATA_DIR/
 
           # Download objects and sequence from assets.json
           OBJECTS_URL=$(jq -r '.objects.url' assets.json)
           TS_URL=$(jq -r '.["title-sequences"].url' assets.json)
 
           curl -L "$OBJECTS_URL" -o objects.zip
-          mkdir -p $ASSETS_DIR/object
-          unzip -q objects.zip -d $ASSETS_DIR/object
+          mkdir -p $DATA_DIR/object
+          unzip -q objects.zip -d $DATA_DIR/object
 
           curl -L "$TS_URL" -o title-sequences.zip
           mkdir -p $ASSETS_DIR/sequence
@@ -659,7 +659,7 @@ jobs:
 
           # Generate manifest
           pushd src/openrct2-android/app/src/main/assets
-          find openrct2 -type f > openrct2/manifest.txt
+          find openrct2 -type f -printf "%p|%s\n" > openrct2/manifest.txt
           popd
       - name: Build OpenRCT2
         run: |

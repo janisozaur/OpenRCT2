@@ -169,9 +169,14 @@ namespace OpenRCT2::Platform
     bool SetupUriProtocol();
 #endif
 #ifdef __ANDROID__
+    struct AssetInfo
+    {
+        std::string Path;
+        uint64_t Size;
+    };
     jclass AndroidFindClass(JNIEnv* env, std::string_view name);
     void* GetAssetManager();
-    const std::vector<std::string>& GetAssetList();
+    const std::vector<AssetInfo>& GetAssetList();
 #endif
 
     bool IsRunningInWine();

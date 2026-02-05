@@ -18,6 +18,7 @@
     #include "../localisation/Language.h"
 
     #include <SDL.h>
+    #include <algorithm>
     #include <android/asset_manager.h>
     #include <android/asset_manager_jni.h>
     #include <jni.h>
@@ -33,7 +34,7 @@ AndroidClassLoader::~AndroidClassLoader()
 jobject AndroidClassLoader::_classLoader;
 jmethodID AndroidClassLoader::_findClassMethod;
 static AAssetManager* _assetManager;
-static std::vector<std::string> _assetList;
+static std::vector<Platform::AssetInfo> _assetList;
 
 // Initialized in JNI_OnLoad. Cannot be initialized here as JVM is not
 // available until after JNI_OnLoad is called.
@@ -168,15 +169,17 @@ namespace OpenRCT2::Platform
 
     uint64_t GetLastModified(std::string_view path)
     {
-        if (OpenRCT2::String::startsWith(path, "/android_asset/"))
+        if (::OpenRCT2::String::startsWith(path, "/android_asset/"))
         {
             // Assets don't have a modification time in the traditional sense.
             return 0;
         }
 
         uint64_t lastModified = 0;
-        struct stat statInfo{};
-        if (stat(std::string(path).c_str(), &statInfo) == 0)
+        struct ::stat statInfo
+        {
+        };
+        if (::stat(std::string(path).c_str(), &statInfo) == 0)
         {
             lastModified = statInfo.st_mtime;
         }
@@ -185,7 +188,7 @@ namespace OpenRCT2::Platform
 
     uint64_t GetFileSize(std::string_view path)
     {
-        if (OpenRCT2::String::startsWith(path, "/android_asset/"))
+        if (::OpenRCT2::String::startsWith(path, "/android_asset/"))
         {
             auto assetManager = static_cast<AAssetManager*>(GetAssetManager());
             if (assetManager != nullptr)
@@ -203,8 +206,10 @@ namespace OpenRCT2::Platform
         }
 
         uint64_t size = 0;
-        struct stat statInfo{};
-        if (stat(std::string(path).c_str(), &statInfo) == 0)
+        struct ::stat statInfo
+        {
+        };
+        if (::stat(std::string(path).c_str(), &statInfo) == 0)
         {
             size = statInfo.st_size;
         }
@@ -266,7 +271,7 @@ namespace OpenRCT2::Platform
         return _assetManager;
     }
 
-    const std::vector<std::string>& GetAssetList()
+    const std::vector<AssetInfo>& GetAssetList()
     {
         if (_assetList.empty())
         {
@@ -293,7 +298,14 @@ namespace OpenRCT2::Platform
                         }
                         if (!line.empty())
                         {
-                            _assetList.push_back(line);
+                            auto sep = line.find('|');
+                            if (sep != std::string::npos)
+                            {
+                                AssetInfo info;
+                                info.Path = line.substr(0, sep);
+                                info.Size = std::stoull(line.substr(sep + 1));
+                                _assetList.push_back(std::move(info));
+                            }
                         }
                         start = end + 1;
                         end = content.find('\n', start);
@@ -305,9 +317,18 @@ namespace OpenRCT2::Platform
                     }
                     if (!lastLine.empty())
                     {
-                        _assetList.push_back(lastLine);
+                        auto sep = lastLine.find('|');
+                        if (sep != std::string::npos)
+                        {
+                            AssetInfo info;
+                            info.Path = lastLine.substr(0, sep);
+                            info.Size = std::stoull(lastLine.substr(sep + 1));
+                            _assetList.push_back(std::move(info));
+                        }
                     }
-                    std::sort(_assetList.begin(), _assetList.end());
+                    std::sort(_assetList.begin(), _assetList.end(), [](const AssetInfo& a, const AssetInfo& b) {
+                        return a.Path < b.Path;
+                    });
                 }
             }
         }
