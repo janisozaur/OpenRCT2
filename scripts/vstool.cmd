@@ -4,12 +4,16 @@ rem Invokes a tool within a Visual Studio prompt
 rem Uses %PLATFORM% to set architecture of prompt
 
 echo janis ProgramFiles:
-dir %ProgramFiles%
+dir "%ProgramFiles%"
 echo janis PF/VS:
 dir "%ProgramFiles%\Microsoft Visual Studio"
 echo janis PF/VS/2026:
 dir "%ProgramFiles%\Microsoft Visual Studio\2026"
 
+set "vspath=%ProgramFiles%\Microsoft Visual Studio\18\Enterprise"
+if exist "%vspath%" goto found
+set "vspath=%ProgramFiles%\Microsoft Visual Studio\18\Community"
+if exist "%vspath%" goto found
 set "vspath=%ProgramFiles%\Microsoft Visual Studio\2026\Enterprise"
 if exist "%vspath%" goto found
 set "vspath=%ProgramFiles%\Microsoft Visual Studio\2026\Community"
