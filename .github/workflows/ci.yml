@@ -205,19 +205,9 @@ jobs:
           fi
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Add MSBuild to PATH
-        id: add-msbuild-to-path
-        uses: microsoft/setup-msbuild@v2
-        with:
-          msbuild-architecture: arm64
-      - name: Add msbuild to path
+      - name: find cl.exe
         run: |
-          cat $GITHUB_PATH
-          echo PATH: $PATH
-          echo cygpath: "${{ steps.add-msbuild-to-path.outputs.msbuildPath }}"
-          ls -lR $(cygpath "${{ steps.add-msbuild-to-path.outputs.msbuildPath }}")
-          cygpath "${{ steps.add-msbuild-to-path.outputs.msbuildPath }}"
-          cygpath "${{ steps.add-msbuild-to-path.outputs.msbuildPath }}" >> $GITHUB_PATH
+          find /c/Program\ Files/ -name cl.exe || true
       - name: Install MSVC problem matcher
         uses: ammaraskar/msvc-problem-matcher@master
       - name: Build OpenRCT2
