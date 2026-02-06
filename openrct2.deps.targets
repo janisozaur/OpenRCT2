@@ -6,7 +6,7 @@
              TaskFactory="CodeTaskFactory"
              AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
     <ParameterGroup>
-      <File            Required="true"  ParameterType="System.String" />
+      <AssetFile       Required="true"  ParameterType="System.String" />
       <TitleSequencesUrl      Output="true" ParameterType="System.String" />
       <TitleSequencesSha256   Output="true" ParameterType="System.String" />
       <ObjectsUrl             Output="true" ParameterType="System.String" />
@@ -30,7 +30,7 @@
           {
               try
               {
-                  string json = File.ReadAllText(File);
+                  string json = System.IO.File.ReadAllText(AssetFile);
                   var serializer = new JavaScriptSerializer();
                   var dict = serializer.Deserialize<Dictionary<string, object>>(json);
 
@@ -289,7 +289,7 @@
 
   <!-- Load Assets Target -->
   <Target Name="LoadAssets">
-    <LoadAssetsFromJson File="$(RootDir)assets.json">
+    <LoadAssetsFromJson AssetFile="$(RootDir)assets.json">
       <Output TaskParameter="TitleSequencesUrl" PropertyName="TitleSequencesUrl" />
       <Output TaskParameter="TitleSequencesSha256" PropertyName="TitleSequencesSha256" />
       <Output TaskParameter="ObjectsUrl" PropertyName="ObjectsUrl" />
