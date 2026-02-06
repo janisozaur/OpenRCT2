@@ -1,6 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <!-- LoadAssetsFromJson task -->
+  <UsingTask TaskName="LoadAssetsFromJson"
+             TaskFactory="CodeTaskFactory"
+             AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup>
+      <File            Required="true"  ParameterType="System.String" />
+      <TitleSequencesUrl      Output="true" ParameterType="System.String" />
+      <TitleSequencesSha256   Output="true" ParameterType="System.String" />
+      <ObjectsUrl             Output="true" ParameterType="System.String" />
+      <ObjectsSha256          Output="true" ParameterType="System.String" />
+      <OpenSFXUrl             Output="true" ParameterType="System.String" />
+      <OpenSFXSha256          Output="true" ParameterType="System.String" />
+      <OpenMSXUrl             Output="true" ParameterType="System.String" />
+      <OpenMSXSha256          Output="true" ParameterType="System.String" />
+      <ReplaysUrl             Output="true" ParameterType="System.String" />
+      <ReplaysSha256          Output="true" ParameterType="System.String" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.Web.Extensions" />
+      <Using Namespace="System"/>
+      <Using Namespace="System.IO"/>
+      <Using Namespace="System.Collections.Generic"/>
+      <Using Namespace="System.Web.Script.Serialization"/>
+      <Code Type="Method" Language="cs">
+        <![CDATA[
+          public override bool Execute()
+          {
+              try
+              {
+                  string json = File.ReadAllText(File);
+                  var serializer = new JavaScriptSerializer();
+                  var dict = serializer.Deserialize<Dictionary<string, object>>(json);
+
+                  TitleSequencesUrl = GetAssetValue(dict, "title-sequences", "url");
+                  TitleSequencesSha256 = GetAssetValue(dict, "title-sequences", "sha256");
+                  ObjectsUrl = GetAssetValue(dict, "objects", "url");
+                  ObjectsSha256 = GetAssetValue(dict, "objects", "sha256");
+                  OpenSFXUrl = GetAssetValue(dict, "opensfx", "url");
+                  OpenSFXSha256 = GetAssetValue(dict, "opensfx", "sha256");
+                  OpenMSXUrl = GetAssetValue(dict, "openmsx", "url");
+                  OpenMSXSha256 = GetAssetValue(dict, "openmsx", "sha256");
+                  ReplaysUrl = GetAssetValue(dict, "replays", "url");
+                  ReplaysSha256 = GetAssetValue(dict, "replays", "sha256");
+                  return true;
+              }
+              catch (Exception ex)
+              {
+                  Log.LogErrorFromException(ex);
+                  return false;
+              }
+          }
+
+          private string GetAssetValue(Dictionary<string, object> dict, string asset, string key)
+          {
+              if (dict.ContainsKey(asset))
+              {
+                  var assetDict = dict[asset] as Dictionary<string, object>;
+                  if (assetDict != null && assetDict.ContainsKey(key))
+                  {
+                      return assetDict[key] as string;
+                  }
+              }
+              throw new Exception("Could not find " + key + " for " + asset);
+          }
+        ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
   <!-- DownloadDependency task -->
   <UsingTask TaskName="DownloadDependency"
              TaskFactory="CodeTaskFactory"
@@ -216,22 +285,28 @@
     <LibsSha256 Condition="'$(Platform)'=='x64'">8e78f1c3c09c50cb0f509eab6845a93dd69771ff95cdf82d747568093d138f73</LibsSha256>
     <LibsUrl Condition="'$(Platform)'=='Win32'">https://github.com/OpenRCT2/Dependencies/releases/download/v41/openrct2-libs-v41-x86-windows-static.zip</LibsUrl>
     <LibsSha256 Condition="'$(Platform)'=='Win32'">490263b873dd02c13a043a04d26bb9837d2d378dacd8b2c8d29660fef44db3db</LibsSha256>
-    <TitleSequencesUrl>https://github.com/OpenRCT2/title-sequences/releases/download/v0.4.26/title-sequences.zip</TitleSequencesUrl>
-    <TitleSequencesSha256>dabb9787b1576342fca4dd9f64b3f8cfa04a7e6ce9c2bb9610f47b762905c858</TitleSequencesSha256>
-    <ObjectsUrl>https://github.com/OpenRCT2/objects/releases/download/v1.7.6/objects.zip</ObjectsUrl>
-    <ObjectsSha256>6aca2eb441fbe8c022ff84d59fb51ed7ea577756640970dc989eab685ff45696</ObjectsSha256>
-    <OpenSFXUrl>https://github.com/OpenRCT2/OpenSoundEffects/releases/download/v1.0.6/opensound.zip</OpenSFXUrl>
-    <OpenSFXSha256>06b90f3e19c216752df441d551b26a9e3e1ba7755bdd2102504b73bf993608be</OpenSFXSha256>
-    <OpenMSXUrl>https://github.com/OpenRCT2/OpenMusic/releases/download/v1.6.1/openmusic.zip</OpenMSXUrl>
-    <OpenMSXSha256>994b350d3b180ee1cb9619fe27f7ebae3a1a5232840c4bd47a89f33fa89de1a1</OpenMSXSha256>
-    <ReplaysUrl>https://github.com/OpenRCT2/replays/releases/download/v0.0.92/replays.zip</ReplaysUrl>
-    <ReplaysSha256>455a19172a8df81b935a942bbbda20167b4740b34653fdb74127740686bf4cbe</ReplaysSha256>
   </PropertyGroup>
+
+  <!-- Load Assets Target -->
+  <Target Name="LoadAssets">
+    <LoadAssetsFromJson File="$(RootDir)assets.json">
+      <Output TaskParameter="TitleSequencesUrl" PropertyName="TitleSequencesUrl" />
+      <Output TaskParameter="TitleSequencesSha256" PropertyName="TitleSequencesSha256" />
+      <Output TaskParameter="ObjectsUrl" PropertyName="ObjectsUrl" />
+      <Output TaskParameter="ObjectsSha256" PropertyName="ObjectsSha256" />
+      <Output TaskParameter="OpenSFXUrl" PropertyName="OpenSFXUrl" />
+      <Output TaskParameter="OpenSFXSha256" PropertyName="OpenSFXSha256" />
+      <Output TaskParameter="OpenMSXUrl" PropertyName="OpenMSXUrl" />
+      <Output TaskParameter="OpenMSXSha256" PropertyName="OpenMSXSha256" />
+      <Output TaskParameter="ReplaysUrl" PropertyName="ReplaysUrl" />
+      <Output TaskParameter="ReplaysSha256" PropertyName="ReplaysSha256" />
+    </LoadAssetsFromJson>
+  </Target>
 
   <!-- Unified Dependency Target -->
   <Target Name="DownloadAllDependencies"
           BeforeTargets="PrepareForBuild"
-          DependsOnTargets="DownloadLibs;DownloadTitleSequences;DownloadObjects;DownloadOpenSFX;DownloadOpenMSX;DownloadReplays">
+          DependsOnTargets="LoadAssets;DownloadLibs;DownloadTitleSequences;DownloadObjects;DownloadOpenSFX;DownloadOpenMSX;DownloadReplays">
 
     <!-- Add completion marker -->
     <Touch Files="$(DependenciesCheckFile)" AlwaysCreate="true" />
@@ -249,7 +324,7 @@
   </Target>
 
   <!-- Target to download the title sequences -->
-  <Target Name="DownloadTitleSequences">
+  <Target Name="DownloadTitleSequences" DependsOnTargets="LoadAssets">
     <DownloadDependency Name="TitleSequences"
                         Url="$(TitleSequencesUrl)"
                         Sha256="$(TitleSequencesSha256)"
@@ -258,7 +333,7 @@
   </Target>
 
   <!-- Target to download the objects -->
-  <Target Name="DownloadObjects">
+  <Target Name="DownloadObjects" DependsOnTargets="LoadAssets">
     <DownloadDependency Name="Objects"
                         Url="$(ObjectsUrl)"
                         Sha256="$(ObjectsSha256)"
@@ -267,7 +342,7 @@
   </Target>
 
   <!-- Target to download OpenSFX -->
-  <Target Name="DownloadOpenSFX">
+  <Target Name="DownloadOpenSFX" DependsOnTargets="LoadAssets">
     <DownloadDependency Name="OpenSFX"
                         Url="$(OpenSFXUrl)"
                         Sha256="$(OpenSFXSha256)"
@@ -276,7 +351,7 @@
   </Target>
 
   <!-- Target to download OpenMSX -->
-  <Target Name="DownloadOpenMSX">
+  <Target Name="DownloadOpenMSX" DependsOnTargets="LoadAssets">
     <DownloadDependency Name="OpenMSX"
                         Url="$(OpenMSXUrl)"
                         Sha256="$(OpenMSXSha256)"
@@ -285,7 +360,7 @@
   </Target>
 
   <!-- Target to download replays -->
-  <Target Name="DownloadReplays">
+  <Target Name="DownloadReplays" DependsOnTargets="LoadAssets">
     <DownloadDependency Name="Replays"
                         Url="$(ReplaysUrl)"
                         Sha256="$(ReplaysSha256)"
