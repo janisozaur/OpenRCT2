@@ -6,7 +6,7 @@
              TaskFactory="CodeTaskFactory"
              AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
     <ParameterGroup>
-      <AssetFile       Required="true"  ParameterType="System.String" />
+      <AssetsJsonPath  Required="true"  ParameterType="System.String" />
       <TitleSequencesUrl      Output="true" ParameterType="System.String" />
       <TitleSequencesSha256   Output="true" ParameterType="System.String" />
       <ObjectsUrl             Output="true" ParameterType="System.String" />
@@ -30,7 +30,7 @@
           {
               try
               {
-                  string json = System.IO.File.ReadAllText(AssetFile);
+                  string json = File.ReadAllText(AssetsJsonPath);
                   var serializer = new JavaScriptSerializer();
                   var dict = serializer.Deserialize<Dictionary<string, object>>(json);
 
@@ -55,12 +55,14 @@
 
           private string GetAssetValue(Dictionary<string, object> dict, string asset, string key)
           {
-              if (dict.ContainsKey(asset))
+              object assetObj;
+              if (dict.TryGetValue(asset, out assetObj))
               {
-                  var assetDict = dict[asset] as Dictionary<string, object>;
-                  if (assetDict != null && assetDict.ContainsKey(key))
+                  var assetDict = assetObj as Dictionary<string, object>;
+                  object valueObj;
+                  if (assetDict != null && assetDict.TryGetValue(key, out valueObj))
                   {
-                      return assetDict[key] as string;
+                      return valueObj as string;
                   }
               }
               throw new Exception("Could not find " + key + " for " + asset);
@@ -289,7 +291,7 @@
 
   <!-- Load Assets Target -->
   <Target Name="LoadAssets">
-    <LoadAssetsFromJson AssetFile="$(RootDir)assets.json">
+    <LoadAssetsFromJson AssetsJsonPath="$(RootDir)assets.json">
       <Output TaskParameter="TitleSequencesUrl" PropertyName="TitleSequencesUrl" />
       <Output TaskParameter="TitleSequencesSha256" PropertyName="TitleSequencesSha256" />
       <Output TaskParameter="ObjectsUrl" PropertyName="ObjectsUrl" />
