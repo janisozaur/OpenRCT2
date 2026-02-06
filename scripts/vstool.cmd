@@ -3,6 +3,10 @@
 rem Invokes a tool within a Visual Studio prompt
 rem Uses %PLATFORM% to set architecture of prompt
 
+set "vspath=%ProgramFiles%\Microsoft Visual Studio\2026\Enterprise"
+if exist "%vspath%" goto found
+set "vspath=%ProgramFiles%\Microsoft Visual Studio\2026\Community"
+if exist "%vspath%" goto found
 set "vspath=%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise"
 if exist "%vspath%" goto found
 set "vspath=%ProgramFiles%\Microsoft Visual Studio\2022\Community"
