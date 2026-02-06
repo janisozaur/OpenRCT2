@@ -92,6 +92,14 @@ namespace OpenRCT2
         MemoryStream data;
     };
 
+    enum class ReplayEntryType : uint8_t
+    {
+        Action = 0,
+        Checksum = 1,
+        Snapshot = 2,
+        End = 0xFF,
+    };
+
     struct ReplayRecordData
     {
         uint32_t magic;
@@ -113,9 +121,10 @@ namespace OpenRCT2
 
     class ReplayManager final : public IReplayManager
     {
-        static constexpr uint16_t kReplayVersion = 11;
+        static constexpr uint16_t kReplayVersion = 12;
         static constexpr uint16_t kReplayMinCompatVersion = 10;
-        static constexpr uint32_t kReplayMagic = 0x5243524F; // ORCR.
+        static constexpr uint32_t kReplayMagic = 0x5243524F;    // ORCR.
+        static constexpr uint32_t kReplayMagicTmp = 0x5452434F; // ORCT.
         static constexpr int kReplayCompressionLevel = 18;
         static constexpr int kNormalRecordingChecksumTicks = 1;
         static constexpr int kSilentRecordingChecksumTicks = 40; // Same as network server
@@ -167,11 +176,42 @@ namespace OpenRCT2
 
             auto ga = Clone(action);
 
-            _currentRecording->commands.emplace(tick, std::move(ga), _commandId++);
+            ReplayCommand command(tick, std::move(ga), _commandId++);
+
+            if (_incrementalSerialiser != nullptr)
+            {
+                try
+                {
+                    *_incrementalSerialiser << ReplayEntryType::Action;
+                    SerialiseCommand(*_incrementalSerialiser, command);
+                    _incrementalFileStream->Flush();
+                }
+                catch (const std::exception& ex)
+                {
+                    LOG_ERROR("Failed to write incremental action: %s", ex.what());
+                }
+            }
+
+            _currentRecording->commands.emplace(std::move(command));
         }
 
         void AddChecksum(uint32_t tick, EntitiesChecksum&& checksum)
         {
+            if (_incrementalSerialiser != nullptr)
+            {
+                try
+                {
+                    *_incrementalSerialiser << ReplayEntryType::Checksum;
+                    *_incrementalSerialiser << tick;
+                    *_incrementalSerialiser << checksum.raw;
+                    _incrementalFileStream->Flush();
+                }
+                catch (const std::exception& ex)
+                {
+                    LOG_ERROR("Failed to write incremental checksum: %s", ex.what());
+                }
+            }
+
             _currentRecording->checksums.emplace_back(std::make_pair(tick, std::move(checksum)));
         }
 
@@ -295,6 +335,46 @@ namespace OpenRCT2
             _recordType = rt;
             _nextChecksumTick = currentTicks + 1;
 
+            // Incremental saving start
+            try
+            {
+                fs::path filePath = _currentRecording->filePath;
+                if (filePath.is_relative())
+                {
+                    if (filePath.extension() != ".parkrep")
+                        filePath += ".parkrep";
+                    fs::path replayPath = GetContext()->GetPlatformEnvironment().GetDirectoryPath(
+                                              DirBase::user, DirId::replayRecordings)
+                        / filePath;
+                    filePath = replayPath;
+                    _currentRecording->filePath = filePath.u8string();
+                }
+
+                _incrementalFileStream = std::make_unique<FileStream>(_currentRecording->filePath, FileMode::write);
+                _incrementalSerialiser = std::make_unique<DataSerialiser>(true, *_incrementalFileStream);
+
+                // Initial preamble (Magic/Version will be Tmp/12)
+                uint32_t oldMagic = _currentRecording->magic;
+                uint32_t oldTickEnd = _currentRecording->tickEnd;
+                _currentRecording->magic = kReplayMagicTmp;
+                _currentRecording->tickEnd = 0xFFFFFFFF; // Mark as live/crashed
+                SerialisePreamble(*_incrementalSerialiser, *_currentRecording);
+                _currentRecording->magic = oldMagic;
+                _currentRecording->tickEnd = oldTickEnd;
+
+                // Write the initial snapshot incrementally as well
+                *_incrementalSerialiser << ReplayEntryType::Snapshot;
+                *_incrementalSerialiser << _currentRecording->gameStateSnapshots;
+
+                _incrementalFileStream->Flush();
+            }
+            catch (const std::exception& ex)
+            {
+                LOG_ERROR("Failed to start incremental recording: %s", ex.what());
+                _incrementalSerialiser.reset();
+                _incrementalFileStream.reset();
+            }
+
             return true;
         }
 
@@ -321,6 +401,23 @@ namespace OpenRCT2
 
             TakeGameStateSnapshot(_currentRecording->gameStateSnapshots);
 
+            if (_incrementalSerialiser != nullptr)
+            {
+                try
+                {
+                    *_incrementalSerialiser << ReplayEntryType::End;
+                    *_incrementalSerialiser << _currentRecording->gameStateSnapshots;
+                    _incrementalFileStream->Flush();
+                }
+                catch (const std::exception& ex)
+                {
+                    LOG_ERROR("Failed to finalise incremental recording: %s", ex.what());
+                }
+                _incrementalSerialiser.reset();
+                _incrementalFileStream.reset();
+            }
+
+            // Final compression to save space.
             // Serialise Body.
             DataSerialiser recSerialiser(true);
             Serialise(recSerialiser, *_currentRecording);
@@ -574,7 +671,19 @@ namespace OpenRCT2
             fileStream.SetPosition(0);
             DataSerialiser fileSerializer(false, fileStream);
             fileSerializer << recFile.magic;
+            if (recFile.magic != kReplayMagic && recFile.magic != kReplayMagicTmp)
+            {
+                throw std::runtime_error("Invalid replay magic");
+            }
             fileSerializer << recFile.version;
+
+            if (recFile.magic == kReplayMagicTmp)
+            {
+                // Temporary uncompressed format
+                MemoryStream data;
+                data.CopyFromStream(fileStream, fileStream.GetLength() - fileStream.GetPosition());
+                return data;
+            }
 
             if (recFile.version >= 2)
             {
@@ -718,12 +827,12 @@ namespace OpenRCT2
             return data.version >= kReplayMinCompatVersion;
         }
 
-        bool Serialise(DataSerialiser& serialiser, ReplayRecordData& data)
+        bool SerialisePreamble(DataSerialiser& serialiser, ReplayRecordData& data)
         {
             serialiser << data.magic;
-            if (data.magic != kReplayMagic)
+            if (data.magic != kReplayMagic && data.magic != kReplayMagicTmp)
             {
-                LOG_ERROR("Magic does not match %08X, expected: %08X", data.magic, kReplayMagic);
+                LOG_ERROR("Magic does not match %08X", data.magic);
                 return false;
             }
             serialiser << data.version;
@@ -752,42 +861,129 @@ namespace OpenRCT2
             serialiser << data.tickStart;
             serialiser << data.tickEnd;
 
-            uint32_t countCommands = static_cast<uint32_t>(data.commands.size());
-            serialiser << countCommands;
+            return true;
+        }
 
-            if (serialiser.IsSaving())
+        bool Serialise(DataSerialiser& serialiser, ReplayRecordData& data)
+        {
+            if (!SerialisePreamble(serialiser, data))
+                return false;
+
+            if (data.version >= 12)
             {
-                for (auto& command : data.commands)
+                if (serialiser.IsSaving())
                 {
-                    SerialiseCommand(serialiser, const_cast<ReplayCommand&>(command));
+                    // For version 12+, we save snapshots first (usually just the one at the start)
+                    if (data.gameStateSnapshots.GetLength() > 0)
+                    {
+                        serialiser << ReplayEntryType::Snapshot;
+                        serialiser << data.gameStateSnapshots;
+                    }
+
+                    for (auto& command : data.commands)
+                    {
+                        serialiser << ReplayEntryType::Action;
+                        SerialiseCommand(serialiser, const_cast<ReplayCommand&>(command));
+                    }
+                    for (auto& checksum : data.checksums)
+                    {
+                        serialiser << ReplayEntryType::Checksum;
+                        serialiser << checksum.first;
+                        serialiser << checksum.second.raw;
+                    }
+                    serialiser << ReplayEntryType::End;
+                }
+                else
+                {
+                    ReplayEntryType type{};
+                    try
+                    {
+                        while (true)
+                        {
+                            serialiser << type;
+                            if (type == ReplayEntryType::End)
+                            {
+                                break;
+                            }
+                            if (type == ReplayEntryType::Action)
+                            {
+                                ReplayCommand command = {};
+                                SerialiseCommand(serialiser, command);
+                                data.commands.emplace(std::move(command));
+                            }
+                            else if (type == ReplayEntryType::Checksum)
+                            {
+                                uint32_t tick = 0;
+                                EntitiesChecksum checksum;
+                                serialiser << tick;
+                                serialiser << checksum.raw;
+                                data.checksums.emplace_back(tick, std::move(checksum));
+                            }
+                            else if (type == ReplayEntryType::Snapshot)
+                            {
+                                serialiser << data.gameStateSnapshots;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    catch (const std::exception&)
+                    {
+                        LOG_WARNING("Replay file is truncated or corrupted.");
+                    }
                 }
             }
             else
             {
-                for (uint32_t i = 0; i < countCommands; i++)
-                {
-                    ReplayCommand command = {};
-                    SerialiseCommand(serialiser, command);
+                uint32_t countCommands = static_cast<uint32_t>(data.commands.size());
+                serialiser << countCommands;
 
-                    data.commands.emplace(std::move(command));
+                if (serialiser.IsSaving())
+                {
+                    for (auto& command : data.commands)
+                    {
+                        SerialiseCommand(serialiser, const_cast<ReplayCommand&>(command));
+                    }
+                }
+                else
+                {
+                    for (uint32_t i = 0; i < countCommands; i++)
+                    {
+                        ReplayCommand command = {};
+                        SerialiseCommand(serialiser, command);
+
+                        data.commands.emplace(std::move(command));
+                    }
+                }
+
+                uint32_t countChecksums = static_cast<uint32_t>(data.checksums.size());
+                serialiser << countChecksums;
+
+                if (serialiser.IsLoading())
+                {
+                    data.checksums.resize(countChecksums);
+                }
+
+                for (uint32_t i = 0; i < countChecksums; i++)
+                {
+                    serialiser << data.checksums[i].first;
+                    serialiser << data.checksums[i].second.raw;
                 }
             }
 
-            uint32_t countChecksums = static_cast<uint32_t>(data.checksums.size());
-            serialiser << countChecksums;
-
-            if (serialiser.IsLoading())
+            if (data.version < 12)
             {
-                data.checksums.resize(countChecksums);
+                try
+                {
+                    serialiser << data.gameStateSnapshots;
+                }
+                catch (const std::exception&)
+                {
+                    LOG_WARNING("Replay snapshots are missing (likely truncated).");
+                }
             }
-
-            for (uint32_t i = 0; i < countChecksums; i++)
-            {
-                serialiser << data.checksums[i].first;
-                serialiser << data.checksums[i].second.raw;
-            }
-
-            serialiser << data.gameStateSnapshots;
             return true;
         }
 
@@ -887,6 +1083,9 @@ namespace OpenRCT2
         uint32_t _nextChecksumTick = 0;
         uint32_t _nextReplayTick = 0;
         RecordType _recordType = RecordType::NORMAL;
+
+        std::unique_ptr<IStream> _incrementalFileStream;
+        std::unique_ptr<DataSerialiser> _incrementalSerialiser;
     };
 
     std::unique_ptr<IReplayManager> CreateReplayManager()

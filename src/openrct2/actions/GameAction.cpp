@@ -353,6 +353,33 @@ namespace OpenRCT2::GameActions
             if (topLevel && !flags.has(CommandFlag::ghost))
             {
                 LogActionBegin(gameState, logContext, action);
+
+                // When using verbose logging also log what we are about to do.
+                // We create a temporary string to avoid messing with the main log output.
+                std::string logLine = std::string(
+                    static_cast<const char*>(logContext.output.GetData()), logContext.output.GetLength());
+                logLine += ") [Executing]";
+                LOG_VERBOSE("%s", logLine.c_str());
+            }
+
+            // If not a ghost and not a client-only action, record it in the replay if we are recording.
+            // This is done BEFORE execution to ensure crashes during execution are captured.
+            if (topLevel && !(actionFlags & Flags::ClientOnly) && Network::GetMode() == Network::Mode::none)
+            {
+                bool commandExecutes = !flags.hasAny(CommandFlag::ghost, CommandFlag::noSpend);
+                if (replayManager != nullptr && !ignoreForReplays)
+                {
+                    bool recordAction = false;
+                    if (replayManager->IsRecording() && commandExecutes)
+                        recordAction = true;
+                    else if (replayManager->IsNormalising() && flags.has(CommandFlag::replay))
+                        recordAction = true; // In normalisation we only feed back actions issued by the replay manager.
+
+                    if (recordAction)
+                    {
+                        replayManager->AddGameAction(gameState.currentTicks, action);
+                    }
+                }
             }
 
             // Execute the action, changing the game state
@@ -401,23 +428,6 @@ namespace OpenRCT2::GameActions
                     if (!result.position.IsNull())
                     {
                         Network::SetPlayerLastActionCoord(playerIndex, result.position);
-                    }
-                }
-                else
-                {
-                    bool commandExecutes = !flags.hasAny(CommandFlag::ghost, CommandFlag::noSpend);
-
-                    bool recordAction = false;
-                    if (replayManager != nullptr && !ignoreForReplays)
-                    {
-                        if (replayManager->IsRecording() && commandExecutes)
-                            recordAction = true;
-                        else if (replayManager->IsNormalising() && flags.has(CommandFlag::replay))
-                            recordAction = true; // In normalisation we only feed back actions issued by the replay manager.
-                    }
-                    if (recordAction)
-                    {
-                        replayManager->AddGameAction(gameState.currentTicks, action);
                     }
                 }
             }
