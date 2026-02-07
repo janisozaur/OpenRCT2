@@ -19,8 +19,9 @@
       <ReplaysSha256          Required="false" ParameterType="System.String" Output="true" />
     </ParameterGroup>
     <Task>
-      <Reference Include="System.Memory" />
-      <Reference Include="System.Text.Json" />
+      <!-- See current versions at https://www.nuget.org/packages/System.Text.json -->
+      <Reference Include="System.Memory" Version="4.6.3" />
+      <Reference Include="System.Text.Json" Version="10.0.2" />
       <Using Namespace="System"/>
       <Using Namespace="System.IO"/>
       <Using Namespace="System.Text.Json"/>
