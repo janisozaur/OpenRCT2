@@ -897,7 +897,7 @@ namespace OpenRCT2::Ui::Windows
             }
 
             // Add window tabs
-            if (!_info.Desc.Tabs.empty())
+            if (_info.Desc.Tabs.size() != 0)
             {
                 widgetList[WIDX_CONTENT_PANEL].top = kTabBarHeight;
             }
@@ -919,7 +919,7 @@ namespace OpenRCT2::Ui::Windows
             // Add custom widgets
             auto totalWidgets = _info.Desc.Widgets.size();
             auto tabWidgetsOffset = totalWidgets;
-            if (!_info.Desc.Tabs.empty())
+            if (_info.Desc.Tabs.size() != 0)
             {
                 totalWidgets += _info.Desc.Tabs[page].Widgets.size();
             }
@@ -1271,7 +1271,7 @@ namespace OpenRCT2::Ui::Windows
                 auto& widget = w->widgets[widgetIndex];
 
                 auto lastSelectedIndex = customWidgetInfo->SelectedIndex;
-                if (customWidgetInfo->Items.empty())
+                if (customWidgetInfo->Items.size() == 0)
                 {
                     selectedIndex = -1;
                 }

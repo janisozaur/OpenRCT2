@@ -110,7 +110,7 @@ constexpr RideTypeDescriptor MultiDimensionRollerCoasterAltRTD =
         .extraTrackGroups = {  },
     }),
     .flags = kRtdFlagsHasThreeColours | kRtdFlagsCommonCoaster | 
-        RtdFlags(RtdFlag::hasLeaveWhenAnotherVehicleArrivesAtStation, RtdFlag::hasSeatRotation, RtdFlag::isDummyType),
+        RtdFlags(RtdFlag::hasLeaveWhenAnotherVehicleArrivesAtStation, RtdFlag::hasSeatRotation),
     .RideModes = EnumsToFlags(RideMode::continuousCircuit, RideMode::continuousCircuitBlockSectioned),
     .DefaultMode = RideMode::continuousCircuit,
     .OperatingSettings = { 10, 27 },

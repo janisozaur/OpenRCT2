@@ -721,8 +721,13 @@ namespace OpenRCT2::String
         return escaped.str();
     }
 
-    // Case insensitive natural sort (numbers compared numerically).
-    // Strings starting with digits sort before alphabetic strings.
+    /* Case insensitive logical compare, produces the same output as Notepad++ lexicographical sort */
+    // Example:
+    // - Guest 10
+    // - Guest 99
+    // - Guest 100
+    // - John v2.0
+    // - John v2.1
     int32_t logicalCmp(const char* s1, const char* s2)
     {
         const auto isDigit = [](char c) { return std::isdigit(static_cast<unsigned char>(c)); };
@@ -732,9 +737,30 @@ namespace OpenRCT2::String
         bool s1StartsDigit = isDigit(*s1);
         bool s2StartsDigit = isDigit(*s2);
         if (s1StartsDigit && !s2StartsDigit)
-            return -1;
+        {
+            return -1; // s1 (starts with digit) comes before s2
+        }
         if (!s1StartsDigit && s2StartsDigit)
-            return 1;
+        {
+            return 1; // s2 (starts with digit) comes before s1
+        }
+
+        // If both start with digits, compare lexicographically
+        if (s1StartsDigit && s2StartsDigit)
+        {
+            while (*s1 != '\0' && *s2 != '\0')
+            {
+                char c1 = toUpper(*s1);
+                char c2 = toUpper(*s2);
+                if (c1 != c2)
+                {
+                    return c1 - c2;
+                }
+                s1++;
+                s2++;
+            }
+            return *s1 == '\0' ? (*s2 == '\0' ? 0 : -1) : 1;
+        }
 
         while (*s1 != '\0' && *s2 != '\0')
         {

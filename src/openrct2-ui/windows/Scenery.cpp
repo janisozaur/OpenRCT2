@@ -825,7 +825,7 @@ namespace OpenRCT2::Ui::Windows
             }
 
             auto windowWidth = width;
-            if (!_tabEntries.empty())
+            if (_tabEntries.size() > 0)
             {
                 const auto lastTabIndex = GetMaxTabCountInARow() == kMaxTabsPerRow ? kMaxTabsPerRow - 1
                                                                                    : _tabEntries.size() - 1;
@@ -916,7 +916,7 @@ namespace OpenRCT2::Ui::Windows
                 auto sceneryObjectType = GetObjectTypeFromSceneryType(selectedSceneryEntry.SceneryType);
                 auto& objManager = GetContext()->GetObjectManager();
                 auto sceneryObject = objManager.GetLoadedObject(sceneryObjectType, selectedSceneryEntry.EntryIndex);
-                if (sceneryObject != nullptr && !sceneryObject->GetAuthors().empty())
+                if (sceneryObject != nullptr && sceneryObject->GetAuthors().size() > 0)
                 {
                     std::string authorsString;
                     const auto& authors = sceneryObject->GetAuthors();
@@ -1007,7 +1007,7 @@ namespace OpenRCT2::Ui::Windows
                             tabInfo.AddEntryToBack(sceneryEntry);
                         }
                     }
-                    if (!tabInfo.Entries.empty())
+                    if (tabInfo.Entries.size() > 0)
                     {
                         _tabEntries.push_back(std::move(tabInfo));
                     }

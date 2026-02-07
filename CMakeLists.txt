@@ -66,22 +66,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
-file(READ "${CMAKE_CURRENT_SOURCE_DIR}/assets.json" ASSETS_JSON)
-
-string(JSON TITLE_SEQUENCE_URL GET "${ASSETS_JSON}" "title-sequences" url)
-string(JSON TITLE_SEQUENCE_SHA256 GET "${ASSETS_JSON}" "title-sequences" sha256)
-
-string(JSON OBJECTS_URL GET "${ASSETS_JSON}" objects url)
-string(JSON OBJECTS_SHA256 GET "${ASSETS_JSON}" objects sha256)
-
-string(JSON OPENSFX_URL GET "${ASSETS_JSON}" opensfx url)
-string(JSON OPENSFX_SHA256 GET "${ASSETS_JSON}" opensfx sha256)
-
-string(JSON OPENMSX_URL GET "${ASSETS_JSON}" openmsx url)
-string(JSON OPENMSX_SHA256 GET "${ASSETS_JSON}" openmsx sha256)
-
-string(JSON REPLAYS_URL GET "${ASSETS_JSON}" replays url)
-string(JSON REPLAYS_SHA256 GET "${ASSETS_JSON}" replays sha256)
+include(cmake/data_packages.cmake)
 
 option(FORCE32 "Force 32-bit build. It will add `-m32` to compiler flags.")
 option(WITH_TESTS "Build tests")
@@ -146,6 +131,7 @@ if (MACOS_USE_DEPENDENCIES)
     set(MACOS_DYLIBS_URL "https://github.com/OpenRCT2/Dependencies/releases/download/v${MACOS_DYLIBS_VERSION}/${MACOS_DYLIBS_ZIPFILE}")
 
     download_openrct2_zip(
+        ZIP_VERSION ${MACOS_DYLIBS_VERSION}
         DOWNLOAD_DIR ${MACOS_DYLIBS_DIR}
         ZIP_URL ${MACOS_DYLIBS_URL}
         SHA256 ${MACOS_DYLIBS_SHA256}
@@ -445,6 +431,7 @@ if (NOT MACOS_BUNDLE OR (MACOS_BUNDLE AND WITH_TESTS))
         install(CODE "
             include(${ROOT_DIR}/cmake/download.cmake)
             download_openrct2_zip(
+                ZIP_VERSION ${TITLE_SEQUENCE_VERSION}
                 DOWNLOAD_DIR \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_DATADIR}/openrct2/sequence/
                 SKIP_IF_EXISTS ${CMAKE_SOURCE_DIR}/data/sequence/
                 ZIP_URL ${TITLE_SEQUENCE_URL}
@@ -458,6 +445,7 @@ if (NOT MACOS_BUNDLE OR (MACOS_BUNDLE AND WITH_TESTS))
         install(CODE "
             include(${ROOT_DIR}/cmake/download.cmake)
             download_openrct2_zip(
+                ZIP_VERSION ${OBJECTS_VERSION}
                 DOWNLOAD_DIR \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_DATADIR}/openrct2/object/
                 SKIP_IF_EXISTS ${CMAKE_SOURCE_DIR}/data/object/
                 ZIP_URL ${OBJECTS_URL}
@@ -468,6 +456,7 @@ if (NOT MACOS_BUNDLE OR (MACOS_BUNDLE AND WITH_TESTS))
         install(CODE "
             include(${ROOT_DIR}/cmake/download.cmake)
             download_openrct2_zip(
+                ZIP_VERSION ${OPENSFX_VERSION}
                 SKIP_IF_EXISTS ${CMAKE_SOURCE_DIR}/data/assetpack/openrct2.sound.parkap
                 DOWNLOAD_DIR \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_DATADIR}/openrct2/
                 ZIP_URL ${OPENSFX_URL}
@@ -478,6 +467,7 @@ if (NOT MACOS_BUNDLE OR (MACOS_BUNDLE AND WITH_TESTS))
         install(CODE "
             include(${ROOT_DIR}/cmake/download.cmake)
             download_openrct2_zip(
+                ZIP_VERSION ${OPENMSX_VERSION}
                 SKIP_IF_EXISTS ${CMAKE_SOURCE_DIR}/data/assetpack/openrct2.music.alternative.parkap
                 DOWNLOAD_DIR \$ENV{DESTDIR}${CMAKE_INSTALL_FULL_DATADIR}/openrct2/
                 ZIP_URL ${OPENMSX_URL}
@@ -489,6 +479,7 @@ if (NOT MACOS_BUNDLE OR (MACOS_BUNDLE AND WITH_TESTS))
         install(CODE "
             include(${ROOT_DIR}/cmake/download.cmake)
             download_openrct2_zip(
+                ZIP_VERSION ${REPLAYS_VERSION}
                 DOWNLOAD_DIR \${CMAKE_CURRENT_BINARY_DIR}/testdata/replays/
                 ZIP_URL ${REPLAYS_URL}
                 SHA256 ${REPLAYS_SHA256}

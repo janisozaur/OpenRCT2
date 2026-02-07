@@ -966,7 +966,7 @@ namespace OpenRCT2
         for (size_t index = 0; index < jCarColours.size(); index++)
         {
             auto config = ReadJsonColourConfiguration(jCarColours[index]);
-            if (!config.empty())
+            if (config.size() >= 1)
             {
                 list.list[index] = config[0];
                 list.count++;
@@ -990,7 +990,7 @@ namespace OpenRCT2
             VehicleColour carColour = {};
 
             auto colours = Json::AsArray(jColours);
-            if (!colours.empty())
+            if (colours.size() >= 1)
             {
                 carColour.Body = Drawing::colourFromString(Json::GetString(colours[0]));
                 carColour.Trim = carColour.Body;

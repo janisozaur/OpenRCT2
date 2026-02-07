@@ -47,7 +47,7 @@
 // It is used for making sure only compatible builds get connected, even within
 // single OpenRCT2 version.
 
-constexpr uint8_t kStreamVersion = 1;
+constexpr uint8_t kStreamVersion = 0;
 
 const std::string kStreamID = std::string(kOpenRCT2Version) + "-" + std::to_string(kStreamVersion);
 
@@ -790,7 +790,7 @@ namespace OpenRCT2::Network
                 }
             }
 
-            if (colours.empty() || (colours.size() == 1 && colours[0] == "{WHITE}"))
+            if (colours.size() == 0 || (colours.size() == 1 && colours[0] == "{WHITE}"))
             {
                 formatted += "{BABYBLUE}";
                 formatted += fromPlayer->Name;
@@ -1677,7 +1677,7 @@ namespace OpenRCT2::Network
     {
         json_t jsonObj = {
             { "name", Config::Get().network.serverName },
-            { "requiresPassword", !_password.empty() },
+            { "requiresPassword", _password.size() > 0 },
             { "version", GetVersion() },
             { "players", GetNumVisiblePlayers() },
             { "maxPlayers", Config::Get().network.maxplayers },

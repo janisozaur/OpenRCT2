@@ -775,7 +775,7 @@ namespace OpenRCT2
             static constexpr uint8_t DESCRIPTOR_DAT = 0;
             static constexpr uint8_t DESCRIPTOR_PARKOBJ = 1;
 
-            if (os.getMode() == OrcaStream::Mode::writing && ExportObjectsList.empty())
+            if (os.getMode() == OrcaStream::Mode::writing && ExportObjectsList.size() == 0)
             {
                 // Do not emit chunk if there are no packed objects
                 return;
@@ -2188,7 +2188,7 @@ namespace OpenRCT2
                 {
                     value = std::get<1>(*fr);
                 }
-                else if (!table.empty())
+                else if (table.size() > 0)
                 {
                     value = std::get<1>(table[0]);
                 }

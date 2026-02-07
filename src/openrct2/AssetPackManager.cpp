@@ -153,7 +153,7 @@ namespace OpenRCT2
             if (i == csl.size() || csl[i] == ',')
             {
                 auto el = csl.substr(elStart, i - elStart);
-                if (!el.empty())
+                if (el.size() != 0)
                     func(el);
                 elStart = i + 1;
             }
@@ -204,9 +204,9 @@ namespace OpenRCT2
                 enabledList.push_back(',');
             }
         }
-        if (!orderList.empty())
+        if (orderList.size() > 0)
             orderList.pop_back();
-        if (!enabledList.empty())
+        if (enabledList.size() > 0)
             enabledList.pop_back();
         Config::Get().general.assetPackOrder = orderList;
         Config::Get().general.enabledAssetPacks = enabledList;

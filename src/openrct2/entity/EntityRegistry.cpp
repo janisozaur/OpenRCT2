@@ -296,7 +296,7 @@ namespace OpenRCT2
 
     EntityBase* EntityRegistry::CreateEntity(EntityType type)
     {
-        if (_freeIdList.empty())
+        if (_freeIdList.size() == 0)
         {
             // No free sprites.
             return nullptr;

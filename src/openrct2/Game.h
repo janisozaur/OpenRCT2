@@ -123,7 +123,6 @@ enum class GameCommand : int32_t
     FreezeRideRating,
     SetGameSpeed,
     SetRestrictedScenery,
-    setRideVisibility,
     Count,
 };
 

@@ -1273,7 +1273,7 @@ static void ConsoleCommandForceDate([[maybe_unused]] InteractiveConsole& console
     int32_t year = 0;
     int32_t month = 0;
     int32_t day = 0;
-    if (argv.empty() || argv.size() > 3)
+    if (argv.size() < 1 || argv.size() > 3)
     {
         return;
     }
@@ -1327,7 +1327,7 @@ static void ConsoleCommandForceDate([[maybe_unused]] InteractiveConsole& console
 
 static void ConsoleCommandLoadPark([[maybe_unused]] InteractiveConsole& console, [[maybe_unused]] const arguments_t& argv)
 {
-    if (argv.empty())
+    if (argv.size() < 1)
     {
         console.WriteLine("Parameters required <filename>");
         return;
@@ -1362,7 +1362,7 @@ static void ConsoleCommandLoadPark([[maybe_unused]] InteractiveConsole& console,
 
 static void ConsoleCommandSavePark([[maybe_unused]] InteractiveConsole& console, [[maybe_unused]] const arguments_t& argv)
 {
-    if (argv.empty())
+    if (argv.size() < 1)
     {
         SaveGameCmd();
     }
@@ -1398,7 +1398,7 @@ static void ConsoleCommandReplayStartRecord(InteractiveConsole& console, const a
         return;
     }
 
-    if (argv.empty())
+    if (argv.size() < 1)
     {
         console.WriteFormatLine("Parameters required <replay_name> [<max_ticks = 0xFFFFFFFF>]");
         return;
@@ -1471,7 +1471,7 @@ static void ConsoleCommandReplayStart(InteractiveConsole& console, const argumen
         return;
     }
 
-    if (argv.empty())
+    if (argv.size() < 1)
     {
         console.WriteFormatLine("Parameters required <replay_name>");
         return;
@@ -1556,7 +1556,7 @@ static void ConsoleCommandReplayNormalise(InteractiveConsole& console, const arg
 static void ConsoleCommandMpDesync(InteractiveConsole& console, const arguments_t& argv)
 {
     int32_t desyncType = 0;
-    if (!argv.empty())
+    if (argv.size() >= 1)
     {
         desyncType = atoi(argv[0].c_str());
     }
@@ -1698,7 +1698,7 @@ static void ConsoleCommandProfilerStart([[maybe_unused]] InteractiveConsole& con
 static void ConsoleCommandProfilerExportCSV(
     [[maybe_unused]] InteractiveConsole& console, [[maybe_unused]] const arguments_t& argv)
 {
-    if (argv.empty())
+    if (argv.size() < 1)
     {
         console.WriteLineError("Missing argument: <file path>");
     }
@@ -1719,7 +1719,7 @@ static void ConsoleCommandProfilerStop([[maybe_unused]] InteractiveConsole& cons
     Profiling::Disable();
 
     // Export to CSV if argument is provided.
-    if (!argv.empty())
+    if (argv.size() >= 1)
     {
         return ConsoleCommandProfilerExportCSV(console, argv);
     }
