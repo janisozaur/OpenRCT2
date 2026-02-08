@@ -103,7 +103,7 @@ namespace OpenRCT2::File
         auto fsize = fs.GetLength();
         if (fsize > SIZE_MAX)
         {
-            u8string message = ::OpenRCT2::String::stdFormat(
+            u8string message = String::stdFormat(
                 "'%s' exceeds maximum length of %lld bytes.", u8string(path).c_str(), SIZE_MAX);
             throw IOException(message);
         }
@@ -161,11 +161,11 @@ namespace OpenRCT2::File
 
     uint64_t GetLastModified(u8string_view path)
     {
-        return ::OpenRCT2::Platform::GetLastModified(path);
+        return Platform::GetLastModified(path);
     }
 
     uint64_t GetSize(u8string_view path)
     {
-        return ::OpenRCT2::Platform::GetFileSize(path);
+        return Platform::GetFileSize(path);
     }
 } // namespace OpenRCT2::File

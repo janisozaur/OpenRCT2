@@ -3,6 +3,9 @@ package io.openrct2;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.util.Log;
+
+import org.apache.commons.io.IOUtils;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,7 +17,6 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
-import org.apache.commons.io.IOUtils;
 
 public class ZipArchive {
     private ZipFile _zipArchive;
@@ -153,9 +155,7 @@ public class ZipArchive {
                 IOUtils.read(inputStream, inBuffer);
                 return inBuffer;
             }
-        }
-        else
-        {
+        } else {
             if (index >= 0 && index < _entryNames.size()) {
                 return _entries.get(_entryNames.get(index).toLowerCase());
             }
