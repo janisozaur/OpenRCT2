@@ -40,7 +40,7 @@ namespace OpenRCT2::Platform
 {
     std::string GetEnvironmentVariable(std::string_view name)
     {
-        return ::OpenRCT2::String::toStd(getenv(std::string(name).c_str()));
+        return String::toStd(getenv(std::string(name).c_str()));
     }
 
     std::string GetEnvironmentPath(const char* name)
@@ -269,7 +269,7 @@ namespace OpenRCT2::Platform
                 // Find a file which matches by name (case insensitive)
                 for (int32_t i = 0; i < count; i++)
                 {
-                    if (::OpenRCT2::String::iequals(files[i]->d_name, fileName.c_str()))
+                    if (String::iequals(files[i]->d_name, fileName.c_str()))
                     {
                         result = Path::Combine(directory, std::string(files[i]->d_name));
                         break;

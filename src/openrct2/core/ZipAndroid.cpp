@@ -33,7 +33,7 @@ public:
         // retrieve the JNI environment.
         JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
 
-        jclass jniClass = ::OpenRCT2::Platform::AndroidFindClass(env, "io/openrct2/ZipArchive");
+        jclass jniClass = Platform::AndroidFindClass(env, "io/openrct2/ZipArchive");
         jmethodID constructor = env->GetMethodID(jniClass, "<init>", "(Landroid/content/Context;Ljava/lang/String;)V");
 
         jobject activity = (jobject)SDL_AndroidGetActivity();
