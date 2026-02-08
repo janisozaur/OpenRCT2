@@ -213,7 +213,7 @@ public:
     void GetDirectoryChildren(std::vector<DirectoryChild>& children, const std::string& path) override
     {
         auto pattern = path + "\\*";
-        auto wPattern = ::OpenRCT2::String::toWideChar(pattern.c_str());
+        auto wPattern = String::toWideChar(pattern.c_str());
 
         WIN32_FIND_DATAW findData;
         HANDLE hFile = FindFirstFileW(wPattern.c_str(), &findData);
@@ -235,7 +235,7 @@ private:
     {
         DirectoryChild result;
 
-        result.Name = ::OpenRCT2::String::toUtf8(child->cFileName);
+        result.Name = String::toUtf8(child->cFileName);
         if (child->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         {
             result.Type = DirectoryChildType::directory;
@@ -266,7 +266,7 @@ public:
 
     void GetDirectoryChildren(std::vector<DirectoryChild>& children, const std::string& path) override
     {
-        const auto& assetList = ::OpenRCT2::Platform::GetAssetList();
+        const auto& assetList = Platform::GetAssetList();
         std::string prefix = path.substr(15);
         if (!prefix.empty() && prefix.back() != '/')
         {
@@ -277,7 +277,7 @@ public:
 
         for (const auto& entry : assetList)
         {
-            if (entry.Path.size() > prefix.size() && ::OpenRCT2::String::startsWith(entry.Path, prefix))
+            if (entry.Path.size() > prefix.size() && String::startsWith(entry.Path, prefix))
             {
                 std::string_view relative = std::string_view(entry.Path).substr(prefix.size());
                 auto slashPos = relative.find('/');
@@ -330,7 +330,7 @@ public:
             for (int32_t i = 0; i < count; i++)
             {
                 const struct dirent* node = namelist[i];
-                if (!::OpenRCT2::String::equals(node->d_name, ".") && !::OpenRCT2::String::equals(node->d_name, ".."))
+                if (!String::equals(node->d_name, ".") && !String::equals(node->d_name, ".."))
                 {
                     children.push_back(CreateChild(path.c_str(), node));
                 }
@@ -389,7 +389,7 @@ private:
 std::unique_ptr<IFileScanner> Path::ScanDirectory(const std::string& pattern, bool recurse)
 {
 #ifdef __ANDROID__
-    if (::OpenRCT2::String::startsWith(pattern, "/android_asset/"))
+    if (String::startsWith(pattern, "/android_asset/"))
     {
         return std::make_unique<FileScannerAndroidAssets>(pattern, recurse);
     }

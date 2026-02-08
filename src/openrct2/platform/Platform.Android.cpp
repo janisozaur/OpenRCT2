@@ -34,7 +34,7 @@ AndroidClassLoader::~AndroidClassLoader()
 jobject AndroidClassLoader::_classLoader;
 jmethodID AndroidClassLoader::_findClassMethod;
 static AAssetManager* _assetManager;
-static std::vector<::OpenRCT2::Platform::AssetInfo> _assetList;
+static std::vector<Platform::AssetInfo> _assetList;
 
 // Initialized in JNI_OnLoad. Cannot be initialized here as JVM is not
 // available until after JNI_OnLoad is called.
@@ -169,7 +169,7 @@ namespace OpenRCT2::Platform
 
     uint64_t GetLastModified(std::string_view path)
     {
-        if (::OpenRCT2::String::startsWith(path, "/android_asset/"))
+        if (String::startsWith(path, "/android_asset/"))
         {
             // Assets don't have a modification time in the traditional sense.
             return 0;
@@ -186,7 +186,7 @@ namespace OpenRCT2::Platform
 
     uint64_t GetFileSize(std::string_view path)
     {
-        if (::OpenRCT2::String::startsWith(path, "/android_asset/"))
+        if (String::startsWith(path, "/android_asset/"))
         {
             auto assetManager = static_cast<AAssetManager*>(GetAssetManager());
             if (assetManager != nullptr)
