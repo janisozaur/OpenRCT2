@@ -143,7 +143,7 @@ namespace OpenRCT2::Platform
         env->DeleteLocalRef(activity);
         env->DeleteLocalRef(activityClass);
 
-        return GetCurrencyValue(localeCurrencyCode.c_str());
+        return Platform::GetCurrencyValue(localeCurrencyCode.c_str());
     }
 
     MeasurementFormat GetLocaleMeasurementFormat()
