@@ -49,6 +49,10 @@
 #include <openrct2/world/Location.hpp>
 #include <vector>
 
+#ifdef __ANDROID__
+    #include <jni.h>
+#endif
+
 #ifdef __EMSCRIPTEN__
     #include <emscripten.h>
     #include <emscripten/html5.h>
@@ -57,6 +61,43 @@
 using namespace OpenRCT2;
 using namespace OpenRCT2::Drawing;
 using namespace OpenRCT2::Ui;
+
+#ifdef __ANDROID__
+static bool IsAndroidActivityFinishing()
+{
+    auto* env = static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv());
+    if (env == nullptr)
+    {
+        return false;
+    }
+
+    auto activity = static_cast<jobject>(SDL_AndroidGetActivity());
+    if (activity == nullptr)
+    {
+        return false;
+    }
+
+    auto activityClass = env->GetObjectClass(activity);
+    if (activityClass == nullptr)
+    {
+        env->DeleteLocalRef(activity);
+        return false;
+    }
+
+    auto isFinishingMethod = env->GetMethodID(activityClass, "isFinishing", "()Z");
+    if (isFinishingMethod == nullptr)
+    {
+        env->DeleteLocalRef(activityClass);
+        env->DeleteLocalRef(activity);
+        return false;
+    }
+
+    const jboolean finishing = env->CallBooleanMethod(activity, isFinishingMethod);
+    env->DeleteLocalRef(activityClass);
+    env->DeleteLocalRef(activity);
+    return finishing == JNI_TRUE;
+}
+#endif
 
 #ifdef __MACOSX__
     // macOS uses COMMAND rather than CTRL for many keyboard shortcuts
@@ -355,6 +396,13 @@ public:
             switch (e.type)
             {
                 case SDL_QUIT:
+#ifdef __ANDROID__
+                    if (!IsAndroidActivityFinishing())
+                    {
+                        LOG_INFO("Ignoring SDL_QUIT while activity is not finishing");
+                        break;
+                    }
+#endif
                     ContextQuit();
                     break;
                 case SDL_DISPLAYEVENT:
