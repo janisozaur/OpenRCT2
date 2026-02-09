@@ -430,6 +430,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     }
 
     protected void pauseNativeThread() {
+        Log.i(TAG, "pauseNativeThread: Setting state to PAUSED");
         mNextNativeState = NativeState.PAUSED;
         mIsResumedCalled = false;
 
@@ -437,10 +438,12 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
             return;
         }
 
+        Log.i(TAG, "pauseNativeThread: Calling handleNativeState");
         SDLActivity.handleNativeState();
     }
 
     protected void resumeNativeThread() {
+        Log.i(TAG, "resumeNativeThread: Setting state to RESUMED");
         mNextNativeState = NativeState.RESUMED;
         mIsResumedCalled = true;
 
@@ -448,6 +451,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
            return;
         }
 
+        Log.i(TAG, "resumeNativeThread: Calling handleNativeState");
         SDLActivity.handleNativeState();
     }
 
@@ -455,12 +459,14 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     @Override
     protected void onPause() {
         Log.v(TAG, "onPause()");
+        Log.i(TAG, "onPause: mHasMultiWindow=" + mHasMultiWindow);
         super.onPause();
 
         if (mHIDDeviceManager != null) {
             mHIDDeviceManager.setFrozen(true);
         }
         if (!mHasMultiWindow) {
+            Log.i(TAG, "onPause: Calling pauseNativeThread");
             pauseNativeThread();
         }
     }
@@ -468,12 +474,14 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     @Override
     protected void onResume() {
         Log.v(TAG, "onResume()");
+        Log.i(TAG, "onResume: mHasMultiWindow=" + mHasMultiWindow);
         super.onResume();
 
         if (mHIDDeviceManager != null) {
             mHIDDeviceManager.setFrozen(false);
         }
         if (!mHasMultiWindow) {
+            Log.i(TAG, "onResume: Calling resumeNativeThread");
             resumeNativeThread();
         }
     }
@@ -567,6 +575,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         Log.v(TAG, "onConfigurationChanged()");
+        Log.i(TAG, "onConfigurationChanged: orientation=" + newConfig.orientation);
         super.onConfigurationChanged(newConfig);
 
         if (SDLActivity.mBrokenLibraries) {
@@ -582,6 +591,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
     @Override
     protected void onDestroy() {
         Log.v(TAG, "onDestroy()");
+        Log.i(TAG, "onDestroy: Starting activity destruction");
 
         if (mHIDDeviceManager != null) {
             HIDDeviceManager.release(mHIDDeviceManager);
@@ -598,19 +608,24 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
         if (SDLActivity.mSDLThread != null) {
 
             // Send Quit event to "SDLThread" thread
+            Log.i(TAG, "onDestroy: Sending nativeSendQuit");
             SDLActivity.nativeSendQuit();
 
             // Wait for "SDLThread" thread to end
             try {
+                Log.i(TAG, "onDestroy: Waiting for SDLThread to join");
                 SDLActivity.mSDLThread.join();
+                Log.i(TAG, "onDestroy: SDLThread joined");
             } catch(Exception e) {
                 Log.v(TAG, "Problem stopping SDLThread: " + e);
             }
         }
 
+        Log.i(TAG, "onDestroy: Calling nativeQuit");
         SDLActivity.nativeQuit();
 
         super.onDestroy();
+        Log.i(TAG, "onDestroy: Completed");
     }
 
     @Override
@@ -679,8 +694,11 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
 
         if (mNextNativeState == mCurrentNativeState) {
             // Already in same state, discard.
+            Log.v(TAG, "handleNativeState: Already in state " + mCurrentNativeState);
             return;
         }
+
+        Log.i(TAG, "handleNativeState: Transitioning from " + mCurrentNativeState + " to " + mNextNativeState);
 
         // Try a transition to init state
         if (mNextNativeState == NativeState.INIT) {
@@ -691,6 +709,7 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
 
         // Try a transition to paused state
         if (mNextNativeState == NativeState.PAUSED) {
+            Log.i(TAG, "handleNativeState: Entering PAUSED state, calling nativePause");
             if (mSDLThread != null) {
                 nativePause();
             }
@@ -698,28 +717,36 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
                 mSurface.handlePause();
             }
             mCurrentNativeState = mNextNativeState;
+            Log.i(TAG, "handleNativeState: PAUSED state complete");
             return;
         }
 
         // Try a transition to resumed state
         if (mNextNativeState == NativeState.RESUMED) {
+            Log.i(TAG, "handleNativeState: Attempting RESUMED state, isSurfaceReady=" + mSurface.mIsSurfaceReady + 
+                  " hasFocus=" + mHasFocus + " isResumedCalled=" + mIsResumedCalled);
             if (mSurface.mIsSurfaceReady && mHasFocus && mIsResumedCalled) {
                 if (mSDLThread == null) {
                     // This is the entry point to the C app.
                     // Start up the C app thread and enable sensor input for the first time
                     // FIXME: Why aren't we enabling sensor input at start?
 
+                    Log.i(TAG, "handleNativeState: Creating new SDLThread");
                     mSDLThread = new Thread(new SDLMain(), "SDLThread");
                     mSurface.enableSensor(Sensor.TYPE_ACCELEROMETER, true);
                     mSDLThread.start();
 
                     // No nativeResume(), don't signal Android_ResumeSem
                 } else {
+                    Log.i(TAG, "handleNativeState: SDLThread exists, calling nativeResume");
                     nativeResume();
                 }
                 mSurface.handleResume();
 
                 mCurrentNativeState = mNextNativeState;
+                Log.i(TAG, "handleNativeState: RESUMED state complete");
+            } else {
+                Log.i(TAG, "handleNativeState: RESUMED state conditions not met, deferring");
             }
         }
     }
