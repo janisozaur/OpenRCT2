@@ -33,12 +33,12 @@ namespace OpenRCT2::File
     bool Exists(u8string_view path)
     {
 #ifdef __ANDROID__
-        if (::OpenRCT2::String::startsWith(path, "/android_asset/"))
+        if (String::startsWith(path, Platform::kAndroidAssetPathPrefix))
         {
-            auto assetManager = static_cast<AAssetManager*>(::OpenRCT2::Platform::GetAssetManager());
+            auto assetManager = static_cast<AAssetManager*>(Platform::GetAssetManager());
             if (assetManager != nullptr)
             {
-                std::string assetPath = std::string(path.substr(15));
+                std::string assetPath = std::string(path.substr(Platform::kAndroidAssetPathPrefix.length()));
                 auto asset = AAssetManager_open(assetManager, assetPath.c_str(), AASSET_MODE_UNKNOWN);
                 if (asset != nullptr)
                 {
