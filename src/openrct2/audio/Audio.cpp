@@ -100,18 +100,24 @@ namespace OpenRCT2::Audio
 
     void LoadAudioObjects()
     {
+        LOG_INFO("Audio::LoadAudioObjects: Starting, Context::Instance=%p", GetContext());
         auto& objManager = GetContext()->GetObjectManager();
 
+        LOG_INFO("Audio::LoadAudioObjects: Loading kRCT2");
         Object* baseAudio = objManager.LoadObject(AudioObjectIdentifiers::kRCT2);
         if (baseAudio != nullptr)
         {
             _soundsAudioObjectEntryIndex = objManager.GetLoadedObjectEntryIndex(baseAudio);
         }
 
+        LOG_INFO("Audio::LoadAudioObjects: Loading kOpenRCT2Additional");
         objManager.LoadObject(AudioObjectIdentifiers::kOpenRCT2Additional);
         _soundsAdditionalAudioObjectEntryIndex = objManager.GetLoadedObjectEntryIndex(
             AudioObjectIdentifiers::kOpenRCT2Additional);
+
+        LOG_INFO("Audio::LoadAudioObjects: Loading kRCT2Circus");
         objManager.LoadObject(AudioObjectIdentifiers::kRCT2Circus);
+        LOG_INFO("Audio::LoadAudioObjects: Completed");
     }
 
     void PopulateDevices()

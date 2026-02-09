@@ -364,6 +364,9 @@ namespace OpenRCT2
             if (ori == nullptr)
                 return nullptr;
 
+            LOG_INFO(
+                "RepositoryItemToObject: Loading ID=%s, GetContext()=%p", std::string(ori->Identifier).c_str(), GetContext());
+
             Object* loadedObject = ori->LoadedObject.get();
             if (loadedObject != nullptr)
                 return loadedObject;
@@ -733,15 +736,23 @@ namespace OpenRCT2
                 return loadedObject;
 
             // Try to load object
+            LOG_INFO(
+                "GetOrLoadObject: Calling _objectRepository.LoadObject() for ID=%s, GetContext()=%p",
+                std::string(ori->Identifier).c_str(), GetContext());
             auto object = _objectRepository.LoadObject(ori);
             if (object != nullptr)
             {
+                LOG_INFO("GetOrLoadObject: Repository returned object, calling object->Load()");
                 loadedObject = object.get();
 
                 object->Load();
 
                 // Connect the ori to the registered object
                 _objectRepository.RegisterLoadedObject(ori, std::move(object));
+            }
+            else
+            {
+                LOG_WARNING("GetOrLoadObject: Repository returned nullptr for ID=%s", std::string(ori->Identifier).c_str());
             }
 
             return loadedObject;

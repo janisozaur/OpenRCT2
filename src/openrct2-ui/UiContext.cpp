@@ -658,6 +658,7 @@ public:
         ScreenCoordsXY windowPos;
         SDL_SetWindowFullscreen(_window, 0);
 #ifdef __ANDROID__
+        LOG_WARNING("RecreateWindow called on Android, GetContext()=%p", GetContext());
         // On Android, don't query window position as it may be invalid
         windowPos = ScreenCoordsXY{ SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED };
 #else
@@ -864,6 +865,7 @@ private:
 
     void OnResize(int32_t width, int32_t height)
     {
+        LOG_VERBOSE("UiContext::OnResize called: %d x %d, GetContext()=%p", width, height, GetContext());
         // Scale the native window size to the game's canvas size
         _width = static_cast<int32_t>(width / Config::Get().general.windowScale);
         _height = static_cast<int32_t>(height / Config::Get().general.windowScale);

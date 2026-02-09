@@ -188,6 +188,7 @@ namespace OpenRCT2
             // Can't have more than one context currently.
             Guard::Assert(Instance == nullptr);
 
+            LOG_INFO("Context constructor: Setting Instance");
             Instance = this;
             _mainThreadId = std::this_thread::get_id();
         }
@@ -196,6 +197,7 @@ namespace OpenRCT2
         {
             // NOTE: We must shutdown all systems here before Instance is set back to null.
             //       If objects use GetContext() in their destructor things won't go well.
+            LOG_INFO("Context destructor started");
 
 #ifdef ENABLE_SCRIPTING
             _scriptEngine.StopUnloadRegisterAllPlugins();
@@ -223,6 +225,7 @@ namespace OpenRCT2
             GfxUnloadG1();
             Audio::Close();
 
+            LOG_INFO("Context destructor: Setting Instance to null");
             Instance = nullptr;
         }
 
@@ -582,6 +585,7 @@ namespace OpenRCT2
     private:
         void InitialiseRepositories()
         {
+            LOG_INFO("InitialiseRepositories: Starting");
             if (!_initialised)
             {
                 throw std::runtime_error("Context needs to be initialised first.");
@@ -589,6 +593,7 @@ namespace OpenRCT2
 
             auto currentLanguage = _localisationService->GetCurrentLanguage();
 
+            LOG_INFO("InitialiseRepositories: Loading/constructing repository");
             OpenProgress(STR_CHECKING_OBJECT_FILES);
             _objectRepository->LoadOrConstruct(currentLanguage);
 
@@ -597,12 +602,14 @@ namespace OpenRCT2
             // which are only loaded once.
             if (!gOpenRCT2Headless)
             {
+                LOG_INFO("InitialiseRepositories: Scanning/loading asset packs");
                 OpenProgress(STR_CHECKING_ASSET_PACKS);
                 _assetPackManager->Scan();
                 _assetPackManager->LoadEnabledAssetPacks();
                 _assetPackManager->Reload();
             }
 
+            LOG_INFO("InitialiseRepositories: Loading audio objects, Context::Instance=%p", Instance);
             OpenProgress(STR_LOADING_GENERIC);
             Audio::LoadAudioObjects();
 
