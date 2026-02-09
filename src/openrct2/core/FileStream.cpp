@@ -50,12 +50,12 @@ namespace OpenRCT2
     FileStream::FileStream(const utf8* path, FileMode fileMode)
     {
 #ifdef __ANDROID__
-        if (fileMode == FileMode::open && String::startsWith(path, "/android_asset/"))
+        if (fileMode == FileMode::open && String::startsWith(path, Platform::kAndroidAssetPathPrefix))
         {
             auto assetManager = static_cast<AAssetManager*>(Platform::GetAssetManager());
             if (assetManager != nullptr)
             {
-                std::string assetPath = path + 15;
+                std::string assetPath = path + Platform::kAndroidAssetPathPrefix.length();
                 _asset = AAssetManager_open(assetManager, assetPath.c_str(), AASSET_MODE_RANDOM);
                 if (_asset != nullptr)
                 {

@@ -65,9 +65,9 @@ namespace OpenRCT2::Platform
     std::string GetInstallPath()
     {
         // If assets are bundled, use them as install path
-        if (File::Exists("/android_asset/openrct2/data/g2.dat"))
+        if (File::Exists(std::string(Platform::kAndroidAssetPathPrefix) + "openrct2/data/g2.dat"))
         {
-            return "/android_asset/openrct2/data";
+            return std::string(Platform::kAndroidAssetPathPrefix) + "openrct2/data";
         }
 
         // Fallback to external storage for backward compatibility
@@ -169,7 +169,7 @@ namespace OpenRCT2::Platform
 
     uint64_t GetLastModified(std::string_view path)
     {
-        if (String::startsWith(path, "/android_asset/"))
+        if (String::startsWith(path, Platform::kAndroidAssetPathPrefix))
         {
             // Assets don't have a modification time in the traditional sense.
             return 0;
@@ -186,12 +186,12 @@ namespace OpenRCT2::Platform
 
     uint64_t GetFileSize(std::string_view path)
     {
-        if (String::startsWith(path, "/android_asset/"))
+        if (String::startsWith(path, Platform::kAndroidAssetPathPrefix))
         {
             auto assetManager = static_cast<AAssetManager*>(GetAssetManager());
             if (assetManager != nullptr)
             {
-                std::string assetPath = std::string(path).substr(15);
+                std::string assetPath = std::string(path).substr(Platform::kAndroidAssetPathPrefix.length());
                 auto asset = AAssetManager_open(assetManager, assetPath.c_str(), AASSET_MODE_UNKNOWN);
                 if (asset != nullptr)
                 {

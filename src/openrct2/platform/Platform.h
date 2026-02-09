@@ -112,6 +112,13 @@ namespace OpenRCT2::Platform
         u8"RCT Classic+.app" PATH_SEPARATOR "Contents" PATH_SEPARATOR "Resources";
     // clang-format on
 
+#ifdef __ANDROID__
+    // Android asset path prefix
+    constexpr u8string_view kAndroidAssetPathPrefix = u8"/android_asset/";
+    // Android asset path must end with slash
+    static_assert(kAndroidAssetPathPrefix.back() == '/', "kAndroidAssetPathPrefix must end with a slash");
+#endif // __ANDROID__
+
     std::string GetEnvironmentVariable(std::string_view name);
     std::string GetFolderPath(SpecialFolder folder);
     std::string GetInstallPath();

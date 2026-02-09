@@ -22,11 +22,12 @@ public class ZipArchive {
     private ZipFile _zipArchive;
     private List<String> _entryNames;
     private Map<String, byte[]> _entries;
+    private final String assetPrefix = "/android_asset/";
 
     public ZipArchive(Context context, String path) throws IOException {
-        if (path.startsWith("/android_asset/"))
+        if (path.startsWith(assetPrefix))
         {
-            String assetPath = path.substring(15);
+            String assetPath = path.substring(assetPrefix.length());
             AssetManager assetManager = context.getAssets();
             try (InputStream is = assetManager.open(assetPath); ZipInputStream zis = new ZipInputStream(is)) {
                 _entryNames = new ArrayList<>();
