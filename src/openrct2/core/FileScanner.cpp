@@ -389,7 +389,7 @@ private:
 std::unique_ptr<IFileScanner> Path::ScanDirectory(const std::string& pattern, bool recurse)
 {
 #ifdef __ANDROID__
-    if (String::startsWith(pattern, "/android_asset/"))
+    if (String::startsWith(pattern, Platform::kAndroidAssetPathPrefix))
     {
         return std::make_unique<FileScannerAndroidAssets>(pattern, recurse);
     }
