@@ -626,15 +626,9 @@ public:
         SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, Config::Get().general.minimizeFullscreenFocusLoss ? "1" : "0");
 
         // Set window position to default display
-        ScreenCoordsXY windowPos;
-#ifdef __ANDROID__
-        // On Android, the native window is managed by the Java activity, so use centered positioning
-        windowPos = ScreenCoordsXY{ SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED };
-#else
         int32_t defaultDisplay = std::clamp(Config::Get().general.defaultDisplay, 0, 0xFFFF);
-        windowPos = ScreenCoordsXY{ static_cast<int32_t>(SDL_WINDOWPOS_UNDEFINED_DISPLAY(defaultDisplay)),
-                                    static_cast<int32_t>(SDL_WINDOWPOS_UNDEFINED_DISPLAY(defaultDisplay)) };
-#endif
+        auto windowPos = ScreenCoordsXY{ static_cast<int32_t>(SDL_WINDOWPOS_UNDEFINED_DISPLAY(defaultDisplay)),
+                                         static_cast<int32_t>(SDL_WINDOWPOS_UNDEFINED_DISPLAY(defaultDisplay)) };
 
         CreateWindow(windowPos);
 
