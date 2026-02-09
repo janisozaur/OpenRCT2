@@ -626,9 +626,15 @@ public:
         SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, Config::Get().general.minimizeFullscreenFocusLoss ? "1" : "0");
 
         // Set window position to default display
+        ScreenCoordsXY windowPos;
+#ifdef __ANDROID__
+        // On Android, the native window is managed by the Java activity
+        windowPos = ScreenCoordsXY{ SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED };
+#else
         int32_t defaultDisplay = std::clamp(Config::Get().general.defaultDisplay, 0, 0xFFFF);
-        auto windowPos = ScreenCoordsXY{ static_cast<int32_t>(SDL_WINDOWPOS_UNDEFINED_DISPLAY(defaultDisplay)),
-                                         static_cast<int32_t>(SDL_WINDOWPOS_UNDEFINED_DISPLAY(defaultDisplay)) };
+        windowPos = ScreenCoordsXY{ static_cast<int32_t>(SDL_WINDOWPOS_UNDEFINED_DISPLAY(defaultDisplay)),
+                                    static_cast<int32_t>(SDL_WINDOWPOS_UNDEFINED_DISPLAY(defaultDisplay)) };
+#endif
 
         CreateWindow(windowPos);
 
@@ -651,7 +657,12 @@ public:
         // Use the position of the current window for the new window
         ScreenCoordsXY windowPos;
         SDL_SetWindowFullscreen(_window, 0);
+#ifdef __ANDROID__
+        // On Android, don't query window position as it may be invalid
+        windowPos = ScreenCoordsXY{ SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED };
+#else
         SDL_GetWindowPosition(_window, &windowPos.x, &windowPos.y);
+#endif
 
         CloseWindow();
         CreateWindow(windowPos);
