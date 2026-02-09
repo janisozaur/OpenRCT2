@@ -357,6 +357,19 @@ public:
                 case SDL_QUIT:
                     ContextQuit();
                     break;
+                case SDL_DISPLAYEVENT:
+                    // Handle Android orientation changes that are posted via SDL_PushEvent
+                    // in Java_org_libsdl_app_SDLActivity_onNativeOrientationChanged
+                    if (e.display.type == SDL_DISPLAYEVENT_ORIENTATION)
+                    {
+                        LOG_INFO("SDL_DISPLAYEVENT_ORIENTATION received, orientation=%d\n", e.display.data1);
+                        // Orientation change event is processed. The actual window/surface
+                        // recreation happens through the normal SDL window event flow
+                        // (SDL_WINDOWEVENT_RESIZED), so we just log it here for now.
+                        // This ensures orientation changes flow through the event queue
+                        // synchronously rather than being handled via direct JNI calls.
+                    }
+                    break;
                 case SDL_WINDOWEVENT:
                     if (e.window.event == SDL_WINDOWEVENT_RESIZED)
                     {
