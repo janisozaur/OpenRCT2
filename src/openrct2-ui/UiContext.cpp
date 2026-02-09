@@ -794,17 +794,28 @@ private:
         int32_t width = 0;
         int32_t height = 0;
         emscripten_get_canvas_element_size("!canvas", &width, &height);
+#elif defined(__ANDROID__)
+        // On Android, get the actual display size instead of using config values
+        // to avoid portrait/landscape mismatches with the native window
+        int32_t width = 1280;
+        int32_t height = 720;
+        SDL_DisplayMode displayMode;
+        if (SDL_GetCurrentDisplayMode(0, &displayMode) == 0)
+        {
+            width = displayMode.w;
+            height = displayMode.h;
+        }
 #else
         // Get saved window size
         int32_t width = Config::Get().general.windowWidth;
         int32_t height = Config::Get().general.windowHeight;
-#endif
 
         // Set defaults if size is invalid
         if (width <= 0)
             width = 1280;
         if (height <= 0)
             height = 720;
+#endif
 
         // Create window in window first rather than fullscreen so we have the display the window is on first
         uint32_t flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
