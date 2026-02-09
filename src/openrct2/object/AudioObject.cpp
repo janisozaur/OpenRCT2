@@ -11,6 +11,7 @@
 
 #include "../AssetPackManager.h"
 #include "../Context.h"
+#include "../Diagnostic.h"
 #include "../PlatformEnvironment.h"
 #include "../audio/AudioContext.h"
 #include "../core/Guard.hpp"
@@ -21,11 +22,17 @@ namespace OpenRCT2
 {
     void AudioObject::Load()
     {
+        auto* context = GetContext();
+        if (context == nullptr)
+        {
+            LOG_WARNING("AudioObject::Load skipped: context is null for '%s'", std::string(GetIdentifier()).c_str());
+            return;
+        }
+
         // Start with base samples
         _loadedSampleTable.LoadFrom(_sampleTable, 0, _sampleTable.GetCount());
 
         // Override samples from asset packs
-        auto context = GetContext();
         auto assetManager = context->GetAssetPackManager();
         if (assetManager != nullptr)
         {

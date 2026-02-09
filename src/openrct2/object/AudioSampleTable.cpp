@@ -10,6 +10,7 @@
 #include "AudioSampleTable.h"
 
 #include "../Context.h"
+#include "../Diagnostic.h"
 #include "../PlatformEnvironment.h"
 #include "../audio/AudioContext.h"
 #include "../core/File.h"
@@ -159,7 +160,14 @@ namespace OpenRCT2
                 auto stream = entry.Asset->GetStream();
                 if (stream != nullptr)
                 {
-                    auto& audioContext = GetContext()->GetAudioContext();
+                    auto* context = GetContext();
+                    if (context == nullptr)
+                    {
+                        LOG_WARNING("AudioSampleTable::LoadSample skipped: context is null (index=%u)", index);
+                        return nullptr;
+                    }
+
+                    auto& audioContext = context->GetAudioContext();
                     if (entry.PathIndex)
                     {
                         auto originalPosition = stream->GetPosition();
@@ -168,7 +176,7 @@ namespace OpenRCT2
 
                         if (*entry.PathIndex >= numSounds)
                         {
-                            auto& ui = GetContext()->GetUiContext();
+                            auto& ui = context->GetUiContext();
                             ui.ShowMessageBox(FormatStringID(
                                 STR_AUDIO_FILE_TRUNCATED, entry.Asset->GetPath().c_str(), *entry.PathIndex, numSounds));
                         }
