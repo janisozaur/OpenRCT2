@@ -9,20 +9,21 @@
 
 #include "Crash.h"
 
-#ifdef USE_BREAKPAD
-    #include <iterator>
+#ifdef USE_CRASHPAD
+    #include <atomic>
+    #include <base/files/file_path.h>
+    #include <client/crash_report_database.h>
+    #include <client/crashpad_client.h>
+    #include <client/settings.h>
     #include <map>
     #include <memory>
     #include <mutex>
-    #include <stdio.h>
+    #include <string>
+    #include <vector>
 
-    #if defined(_WIN32)
-        #include <ShlObj.h>
-        #include <client/windows/handler/exception_handler.h>
-        #include <common/windows/http_upload.h>
-        #include <string>
-    #else
-        #error Breakpad support not implemented yet for this platform
+    #ifdef _WIN32
+        #include <shlobj.h>
+        #include <windows.h>
     #endif
 
     #include "../Context.h"
@@ -32,9 +33,8 @@
     #include "../PlatformEnvironment.h"
     #include "../Version.h"
     #include "../config/Config.h"
-    #include "../core/Compression.h"
     #include "../core/Console.hpp"
-    #include "../core/FileStream.h"
+    #include "../core/File.h"
     #include "../core/Guard.hpp"
     #include "../core/Path.hpp"
     #include "../core/String.hpp"
@@ -42,324 +42,200 @@
     #include "../interface/Screenshot.h"
     #include "../object/ObjectManager.h"
     #include "../park/ParkFile.h"
-    #include "../sawyer_coding/SawyerCoding.h"
     #include "Platform.h"
-
-    #define WSZ(x) L"" x
-
-    #ifdef OPENRCT2_COMMIT_SHA1_SHORT
-static const wchar_t* _wszCommitSha1Short = WSZ(OPENRCT2_COMMIT_SHA1_SHORT);
-    #else
-static const wchar_t* _wszCommitSha1Short = WSZ("");
-    #endif
-
-// OPENRCT2_ARCHITECTURE is required to be defined in version.h
-static const wchar_t* _wszArchitecture = WSZ(OPENRCT2_ARCHITECTURE);
-static std::map<std::wstring, std::wstring> _uploadFiles;
-static std::mutex _uploadFilesMutex;
 
     #define BACKTRACE_TOKEN "0ff94b99e7911919eaadfa9b44ab3d1cefe4862df849aa873c5185446525c2cc"
 
 using namespace OpenRCT2;
 
-// Note: uploading gzipped crash dumps manually requires specifying
-// 'Content-Encoding: gzip' header in HTTP request, but we cannot do that,
-// so just hope the file name with '.gz' suffix is enough.
-// For docs on uploading to backtrace.io check
-// https://documentation.backtrace.io/product_integration_minidump_breakpad/
-static bool UploadMinidump(const std::map<std::wstring, std::wstring>& files, int& error, std::wstring& response)
+static std::map<std::string, std::string> _additionalFiles;
+static std::mutex _additionalFilesMutex;
+static crashpad::CrashpadClient* _crashpadClient;
+
+    #ifdef _WIN32
+static LPTOP_LEVEL_EXCEPTION_FILTER _previousExceptionFilter = nullptr;
+
+static void EnableUploads(bool enable)
 {
-    for (const auto& file : files)
+    auto& env = GetContext()->GetPlatformEnvironment();
+    auto crashDumpsPath = env.GetDirectoryPath(DirBase::user, DirId::crashDumps);
+    auto database = crashpad::CrashReportDatabase::Initialize(base::FilePath(String::toWideChar(crashDumpsPath.c_str())));
+    if (database)
     {
-        wprintf(L"files[%s] = %s\n", file.first.c_str(), file.second.c_str());
+        database->GetSettings()->SetUploadsEnabled(enable);
     }
-    std::wstring url(
-        L"https://openrct2.sp.backtrace.io:6098/"
-        L"post?format=minidump&token=" BACKTRACE_TOKEN);
-    std::map<std::wstring, std::wstring> parameters;
-    parameters[L"product_name"] = L"openrct2";
-    parameters[L"version"] = String::toWideChar(gVersionInfoFull);
-    // In case of releases this can be empty
-    if (wcslen(_wszCommitSha1Short) > 0)
-    {
-        parameters[L"commit"] = _wszCommitSha1Short;
-    }
-    else
-    {
-        parameters[L"commit"] = String::toWideChar(gVersionInfoFull);
-    }
-
-    auto assertMsg = Guard::GetLastAssertMessage();
-    if (assertMsg.has_value())
-    {
-        parameters[L"assert_failure"] = String::toWideChar(assertMsg.value());
-    }
-
-    int timeout = 10000;
-    bool success = google_breakpad::HTTPUpload::SendMultipartPostRequest(url, parameters, files, &timeout, &response, &error);
-    wprintf(L"Success = %d, error = %d, response = %s\n", success, error, response.c_str());
-    return success;
 }
 
-static bool OnCrash(
-    const wchar_t* dumpPath, const wchar_t* miniDumpId, void* context, EXCEPTION_POINTERS* exinfo,
-    MDRawAssertionInfo* assertion, bool succeeded)
+static void PerformPreCrashTasks(const std::string& dumpPath)
 {
-    if (!succeeded)
-    {
-        constexpr const wchar_t* DumpFailedMessage = L"Failed to create the dump. Please file an issue with OpenRCT2 on GitHub "
-                                                     L"and provide latest save, and provide information about what you did "
-                                                     L"before the crash occurred.";
-        wprintf(L"%ls\n", DumpFailedMessage);
-        if (!gOpenRCT2SilentBreakpad)
-        {
-            MessageBoxW(nullptr, DumpFailedMessage, L"" OPENRCT2_NAME, MB_OK | MB_ICONERROR);
-        }
-        return succeeded;
-    }
+    auto savePath = Path::Combine(dumpPath, "crash.park");
+    auto configPath = Path::Combine(dumpPath, "crash.ini");
+    auto screenshotPath = Path::Combine(dumpPath, "crash.png");
+    auto replayPath = Path::Combine(dumpPath, "crash.parkrep");
+    auto extraPath = Path::Combine(dumpPath, "crash_extra.dat");
 
-    // Get filenames
-    wchar_t dumpFilePath[MAX_PATH];
-    wchar_t saveFilePath[MAX_PATH];
-    wchar_t configFilePath[MAX_PATH];
-    wchar_t recordFilePathNew[MAX_PATH];
-    swprintf_s(dumpFilePath, std::size(dumpFilePath), L"%s\\%s.dmp", dumpPath, miniDumpId);
-    swprintf_s(saveFilePath, std::size(saveFilePath), L"%s\\%s.park", dumpPath, miniDumpId);
-    swprintf_s(configFilePath, std::size(configFilePath), L"%s\\%s.ini", dumpPath, miniDumpId);
-    swprintf_s(recordFilePathNew, std::size(recordFilePathNew), L"%s\\%s.parkrep", dumpPath, miniDumpId);
-
-    wchar_t dumpFilePathNew[MAX_PATH];
-    swprintf_s(
-        dumpFilePathNew, std::size(dumpFilePathNew), L"%s\\%s(%s_%s).dmp", dumpPath, miniDumpId, _wszCommitSha1Short,
-        _wszArchitecture);
-
-    wchar_t dumpFilePathGZIP[MAX_PATH];
-    swprintf_s(dumpFilePathGZIP, std::size(dumpFilePathGZIP), L"%s.gz", dumpFilePathNew);
-
-    // Compress the dump
-    {
-        FileStream source(dumpFilePath, FileMode::open);
-        FileStream dest(dumpFilePathGZIP, FileMode::write);
-
-        // We could switch this to zstdCompress() if supported by backtrace.io. If you switch it,
-        // use the extension .zst and ZstdMetadataType::both to use the appropriate metadata.
-        if (Compression::zlibCompress(source, source.GetLength(), dest, Compression::ZlibHeaderType::gzip))
-        {
-            // TODO: enable upload of gzip-compressed dumps once supported on
-            // backtrace.io (uncomment the line below). For now leave compression
-            // on, as GitHub will accept .gz files, even though it does not
-            // advertise it officially.
-
-            /*
-            _uploadFiles[L"upload_file_minidump"] = dumpFilePathGZIP;
-            */
-        }
-    }
-
-    bool with_record = StopSilentRecord();
-
-    // Try to rename the files
-    if (_wrename(dumpFilePath, dumpFilePathNew) == 0)
-    {
-        std::wcscpy(dumpFilePath, dumpFilePathNew);
-    }
-    _uploadFiles[L"upload_file_minidump"] = dumpFilePath;
-
-    // Compress to gzip-compatible stream
-
-    // Log information to output
-    wprintf(L"Dump Path: %s\n", dumpPath);
-    wprintf(L"Dump File Path: %s\n", dumpFilePath);
-    wprintf(L"Dump Id: %s\n", miniDumpId);
-    wprintf(L"Version: %s\n", WSZ(kOpenRCT2Version));
-    wprintf(L"Commit: %s\n", _wszCommitSha1Short);
-
-    bool savedGameDumped = false;
-    auto saveFilePathUTF8 = String::toUtf8(saveFilePath);
+    // Save game
     try
     {
         PrepareMapForSave();
-
-        // Export all loaded objects to avoid having custom objects missing in the reports.
         auto exporter = std::make_unique<ParkFileExporter>();
         auto ctx = OpenRCT2::GetContext();
         auto& objManager = ctx->GetObjectManager();
         exporter->ExportObjectsList = objManager.GetPackableObjects();
-
         auto& gameState = getGameState();
-        exporter->Export(gameState, saveFilePathUTF8.c_str(), kParkFileSaveCompressionLevel);
-        savedGameDumped = true;
+        exporter->Export(gameState, savePath.c_str(), kParkFileSaveCompressionLevel);
     }
     catch (const std::exception& e)
     {
         printf("Failed to export save. Error: %s\n", e.what());
     }
 
-    // Compress the save
-    if (savedGameDumped)
-    {
-        _uploadFiles[L"attachment_park.park"] = saveFilePath;
-    }
+    // Save config
+    Config::SaveToPath(configPath);
 
-    auto configFilePathUTF8 = String::toUtf8(configFilePath);
-    if (Config::SaveToPath(configFilePathUTF8))
-    {
-        _uploadFiles[L"attachment_config.ini"] = configFilePath;
-    }
-
-    // janisozaur: https://github.com/OpenRCT2/OpenRCT2/pull/17634
-    // By the time we reach this point, OpenGL context is already lost causing *any* call to gl* to stall or fail in unexpected
-    // way. Implementing a proof of concept with glGetGraphicsResetStatus in
-    // https://github.com/OpenRCT2/OpenRCT2/commit/3974594fc36e24d14549921d378251242e3a23e2 yielded no additional information,
-    // while potentially significantly raising the required OpenGL version.
-    // There are (at least) two ways out of this:
-    // 1. Create the screenshot with software renderer - requires allocations
-    // 2. Not create screenshot at all.
-    // Discovering which of the approaches got implemented is left as an excercise for the reader.
+    // Screenshot
     if (OpenRCT2::GetContext()->GetDrawingEngineType() != DrawingEngine::OpenGL)
     {
-        std::string screenshotPath = ScreenshotDump();
-        if (!screenshotPath.empty())
+        std::string tempScreenshot = ScreenshotDump();
+        if (!tempScreenshot.empty())
         {
-            auto screenshotPathW = String::toWideChar(screenshotPath.c_str());
-            _uploadFiles[L"attachment_screenshot.png"] = screenshotPathW;
+            File::Copy(tempScreenshot, screenshotPath, true);
         }
     }
 
+    // Replay
+    bool with_record = StopSilentRecord();
     if (with_record)
     {
-        auto parkReplayPathW = String::toWideChar(gSilentRecordingName);
-        bool record_copied = CopyFileW(parkReplayPathW.c_str(), recordFilePathNew, true);
-        if (record_copied)
+        File::Copy(gSilentRecordingName, replayPath, true);
+    }
+
+    // Extra file
+    {
+        std::lock_guard<std::mutex> lock(_additionalFilesMutex);
+        if (!_additionalFiles.empty())
         {
-            _uploadFiles[L"attachment_replay.parkrep"] = recordFilePathNew;
-        }
-        else
-        {
-            with_record = false;
+            // Just take the first one for now as a slot
+            File::Copy(_additionalFiles.begin()->second, extraPath, true);
         }
     }
+}
+
+static LONG WINAPI OpenRCT2CrashFilter(EXCEPTION_POINTERS* exceptionInfo)
+{
+    static std::atomic<bool> handlingCrash(false);
+    if (handlingCrash.exchange(true))
+        return EXCEPTION_CONTINUE_SEARCH;
+
+    auto& env = GetContext()->GetPlatformEnvironment();
+    auto dumpPath = env.GetDirectoryPath(DirBase::user, DirId::crashDumps);
+
+    PerformPreCrashTasks(dumpPath);
 
     if (gOpenRCT2SilentBreakpad)
     {
-        printf("Uploading minidump in silent mode...\n");
-        int error;
-        std::wstring response;
-        UploadMinidump(_uploadFiles, error, response);
-        return succeeded;
+        EnableUploads(true);
+        return _previousExceptionFilter ? _previousExceptionFilter(exceptionInfo) : EXCEPTION_CONTINUE_SEARCH;
     }
 
-    constexpr const wchar_t* MessageFormat = L"A crash has occurred and a dump was created at\n%s.\n\nPlease file an issue "
+    constexpr const wchar_t* MessageFormat = L"A crash has occurred and a dump was created in\n%s.\n\nPlease file an issue "
                                              L"with OpenRCT2 on GitHub, and provide "
-                                             L"the dump and saved game there.\n\nVersion: %s\nCommit: %s\n\n"
+                                             L"the dump and saved game there.\n\nVersion: %S\n\n"
                                              L"We would like to upload the crash dump for automated analysis, do you agree?\n"
                                              L"The automated analysis is done by courtesy of https://backtrace.io/";
-    wchar_t message[MAX_PATH * 2];
-    swprintf_s(message, MessageFormat, dumpFilePath, WSZ(kOpenRCT2Version), _wszCommitSha1Short);
+    wchar_t message[MAX_PATH * 3];
+    swprintf_s(message, MessageFormat, String::toWideChar(dumpPath).c_str(), kOpenRCT2Version);
 
-    // Cannot use platform_show_messagebox here, it tries to set parent window already dead.
-    int answer = MessageBoxW(nullptr, message, WSZ(OPENRCT2_NAME), MB_YESNO | MB_ICONERROR);
+    int answer = MessageBoxW(nullptr, message, L"" OPENRCT2_NAME, MB_YESNO | MB_ICONERROR);
     if (answer == IDYES)
     {
-        int error;
-        std::wstring response;
-        bool ok = UploadMinidump(_uploadFiles, error, response);
-        if (!ok)
-        {
-            const wchar_t* MessageFormat2 = L"There was a problem while uploading the dump. Please upload it manually to "
-                                            L"GitHub. It should be highlighted for you once you close this message.\n"
-                                            L"It might be because you are using outdated build and we have disabled its "
-                                            L"access token. Make sure you are running recent version.\n"
-                                            L"Dump file = %s\n"
-                                            L"Please provide following information as well:\n"
-                                            L"Error code = %d\n"
-                                            L"Response = %s";
-            swprintf_s(message, MessageFormat2, dumpFilePath, error, response.c_str());
-            MessageBoxW(nullptr, message, WSZ(OPENRCT2_NAME), MB_OK | MB_ICONERROR);
-        }
-        else
-        {
-            MessageBoxW(nullptr, L"Dump uploaded successfully.", WSZ(OPENRCT2_NAME), MB_OK | MB_ICONINFORMATION);
-        }
+        EnableUploads(true);
     }
+
+    // Highlighting files
     HRESULT coInitializeResult = CoInitialize(nullptr);
     if (SUCCEEDED(coInitializeResult))
     {
-        LPITEMIDLIST pidl = ILCreateFromPathW(dumpPath);
-        LPITEMIDLIST files[6];
-        uint32_t numFiles = 0;
-
-        files[numFiles++] = ILCreateFromPathW(dumpFilePath);
-        // There should be no need to check if this file exists, if it doesn't
-        // it simply shouldn't get selected.
-        files[numFiles++] = ILCreateFromPathW(dumpFilePathGZIP);
-        files[numFiles++] = ILCreateFromPathW(configFilePath);
-        if (savedGameDumped)
-        {
-            files[numFiles++] = ILCreateFromPathW(saveFilePath);
-        }
-        if (with_record)
-        {
-            files[numFiles++] = ILCreateFromPathW(recordFilePathNew);
-        }
+        auto dumpPathW = String::toWideChar(dumpPath);
+        LPITEMIDLIST pidl = ILCreateFromPathW(dumpPathW.c_str());
         if (pidl != nullptr)
         {
-            SHOpenFolderAndSelectItems(pidl, numFiles, (LPCITEMIDLIST*)files, 0);
+            SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0);
             ILFree(pidl);
-            for (uint32_t i = 0; i < numFiles; i++)
-            {
-                ILFree(files[i]);
-            }
         }
         CoUninitialize();
     }
 
-    // Return whether the dump was successful
-    return succeeded;
+    return _previousExceptionFilter ? _previousExceptionFilter(exceptionInfo) : EXCEPTION_CONTINUE_SEARCH;
 }
+    #endif
 
-static std::wstring GetDumpDirectory()
-{
-    auto& env = GetContext()->GetPlatformEnvironment();
-    auto crashPath = env.GetDirectoryPath(DirBase::user, DirId::crashDumps);
-
-    auto result = String::toWideChar(crashPath);
-    return result;
-}
-
-// Using non-null pipe name here lets breakpad try setting OOP crash handling
-constexpr const wchar_t* PipeName = L"openrct2-bpad";
-
-#endif // USE_BREAKPAD
+#endif // USE_CRASHPAD
 
 CExceptionHandler CrashInit()
 {
-#ifdef USE_BREAKPAD
-    // Path must exist and be RW!
-    auto exHandler = new google_breakpad::ExceptionHandler(
-        GetDumpDirectory(), 0, OnCrash, 0, google_breakpad::ExceptionHandler::HANDLER_ALL, MiniDumpWithDataSegs, PipeName, 0);
-    return reinterpret_cast<CExceptionHandler>(exHandler);
-#else  // USE_BREAKPAD
+#ifdef USE_CRASHPAD
+    auto& env = GetContext()->GetPlatformEnvironment();
+    auto crashDumpsPath = env.GetDirectoryPath(DirBase::user, DirId::crashDumps);
+    auto handlerPath = Path::Combine(Platform::GetCurrentExecutableDirectory(), "crashpad_handler.exe");
+
+    std::string url = "https://openrct2.sp.backtrace.io:6098/post?format=minidump&token=" BACKTRACE_TOKEN;
+
+    std::map<std::string, std::string> annotations;
+    annotations["product_name"] = "openrct2";
+    annotations["version"] = gVersionInfoFull;
+    #ifdef OPENRCT2_COMMIT_SHA1_SHORT
+    annotations["commit"] = OPENRCT2_COMMIT_SHA1_SHORT;
+    #else
+    annotations["commit"] = gVersionInfoFull;
+    #endif
+
+    std::vector<std::string> arguments;
+    arguments.push_back("--no-rate-limit");
+
+    // Pre-define attachment paths
+    auto savePath = Path::Combine(crashDumpsPath, "crash.park");
+    auto configPath = Path::Combine(crashDumpsPath, "crash.ini");
+    auto screenshotPath = Path::Combine(crashDumpsPath, "crash.png");
+    auto replayPath = Path::Combine(crashDumpsPath, "crash.parkrep");
+    auto extraPath = Path::Combine(crashDumpsPath, "crash_extra.dat");
+
+    std::vector<base::FilePath> attachments;
+    attachments.push_back(base::FilePath(String::toWideChar(savePath)));
+    attachments.push_back(base::FilePath(String::toWideChar(configPath)));
+    attachments.push_back(base::FilePath(String::toWideChar(screenshotPath)));
+    attachments.push_back(base::FilePath(String::toWideChar(replayPath)));
+    attachments.push_back(base::FilePath(String::toWideChar(extraPath)));
+
+    _crashpadClient = new crashpad::CrashpadClient();
+    bool success = _crashpadClient->StartHandler(
+        base::FilePath(String::toWideChar(handlerPath)), base::FilePath(String::toWideChar(crashDumpsPath)),
+        base::FilePath(String::toWideChar(crashDumpsPath)), url, annotations, arguments, true, false, attachments);
+
+    if (success)
+    {
+        EnableUploads(false);
+    #ifdef _WIN32
+        _previousExceptionFilter = SetUnhandledExceptionFilter(OpenRCT2CrashFilter);
+    #endif
+        return reinterpret_cast<CExceptionHandler>(_crashpadClient);
+    }
+#endif
     return nullptr;
-#endif // USE_BREAKPAD
 }
 
 void CrashRegisterAdditionalFile(const std::string& key, const std::string& path)
 {
-#ifdef USE_BREAKPAD
-    std::lock_guard<std::mutex> lock(_uploadFilesMutex);
-    _uploadFiles[String::toWideChar(key.c_str())] = String::toWideChar(path.c_str());
-#endif // USE_BREAKPAD
+#ifdef USE_CRASHPAD
+    std::lock_guard<std::mutex> lock(_additionalFilesMutex);
+    _additionalFiles[key] = path;
+#endif
 }
 
 void CrashUnregisterAdditionalFile(const std::string& key)
 {
-#ifdef USE_BREAKPAD
-    std::lock_guard<std::mutex> lock(_uploadFilesMutex);
-    auto it = _uploadFiles.find(String::toWideChar(key.c_str()));
-    if (it != _uploadFiles.end())
-    {
-        _uploadFiles.erase(it);
-    }
-#endif // USE_BREAKPAD
+#ifdef USE_CRASHPAD
+    std::lock_guard<std::mutex> lock(_additionalFilesMutex);
+    _additionalFiles.erase(key);
+#endif
 }

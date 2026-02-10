@@ -184,4 +184,16 @@
            AlwaysCreate="true" />
   </Target>
   <Target Name="palettes" DependsOnTargets="BuildPalettes" />
+
+  <Target Name="CopyCrashpadHandler" AfterTargets="Build" Condition="'$(Crashpad)' == 'true'">
+    <ItemGroup>
+      <CrashpadHandlerSource Include="$(SolutionDir)lib\$(Platform)\bin\crashpad_handler.exe" />
+      <CrashpadHandlerSource Include="$(SolutionDir)lib\$(Platform)\tools\crashpad\crashpad_handler.exe" />
+      <CrashpadHandlerSource Include="$(SolutionDir)lib\$(Platform)\crashpad_handler.exe" />
+    </ItemGroup>
+    <Copy SourceFiles="@(CrashpadHandlerSource)"
+          DestinationFolder="$(OutDir)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('%(FullPath)')" />
+  </Target>
 </Project>

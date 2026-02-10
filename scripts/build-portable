@@ -20,7 +20,7 @@ if [[ "$OSTYPE" == "cygwin" || "$OSTYPE" == "msys" ]]; then
         rm $destination
     fi
     7z a -r $destination \
-        openrct2.exe openrct2.com data \
+        openrct2.exe openrct2.com crashpad_handler.exe data \
         ../contributors.md \
         ../PRIVACY.md \
         ../licence.txt \

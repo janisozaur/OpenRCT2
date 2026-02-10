@@ -903,7 +903,7 @@ namespace OpenRCT2
                 }
 #endif
 
-#ifdef USE_BREAKPAD
+#ifdef USE_CRASHPAD
                 if (_network.GetMode() == Network::Mode::none)
                 {
                     StartSilentRecord();
