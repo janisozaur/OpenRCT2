@@ -60,26 +60,18 @@ namespace OpenRCT2::Path
 
     bool DirectoryExists(u8string_view path)
     {
-#ifdef __ANDROID__
-        if (String::startsWith(path, Platform::kAndroidAssetPathPrefix))
+        auto assetCheckResult = Platform::CheckAssetDirectoryExists(path);
+        switch (assetCheckResult)
         {
-            const auto& assetList = Platform::GetAssetList();
-            std::string prefix = std::string(path).substr(Platform::kAndroidAssetPathPrefix.length());
-            if (!prefix.empty() && prefix.back() != '/')
-            {
-                prefix += '/';
-            }
-
-            for (const auto& entry : assetList)
-            {
-                if (String::startsWith(entry.Path, prefix))
-                {
-                    return true;
-                }
-            }
-            return false;
+            case Platform::AssetDirectoryCheckResult::Found:
+                return true;
+            case Platform::AssetDirectoryCheckResult::NotFound:
+                return false;
+            case Platform::AssetDirectoryCheckResult::NotApplicable:
+            default:
+                break;
         }
-#endif
+
         std::error_code ec;
         const auto result = fs::is_directory(fs::u8path(path), ec);
         return result && ec.value() == 0;
