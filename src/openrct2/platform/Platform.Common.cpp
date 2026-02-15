@@ -91,6 +91,11 @@ namespace OpenRCT2::Platform
         return outTime;
     }
 
+    AssetDirectoryCheckResult CheckAssetDirectoryExists([[maybe_unused]] u8string_view path)
+    {
+        return AssetDirectoryCheckResult::NotApplicable;
+    }
+
     std::optional<RCT2Variant> classifyGamePath(std::string_view path)
     {
         auto combinedPath = Path::ResolveCasing(Path::Combine(path, u8"Data", u8"g1.dat"));

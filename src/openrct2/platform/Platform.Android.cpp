@@ -267,6 +267,30 @@ namespace OpenRCT2::Platform
         return _assetManager;
     }
 
+    AssetDirectoryCheckResult CheckAssetDirectoryExists(u8string_view path)
+    {
+        if (!String::startsWith(path, Platform::kAndroidAssetPathPrefix))
+        {
+            return AssetDirectoryCheckResult::NotApplicable;
+        }
+
+        const auto& assetList = GetAssetList();
+        std::string prefix = std::string(path).substr(Platform::kAndroidAssetPathPrefix.length());
+        if (!prefix.empty() && prefix.back() != '/')
+        {
+            prefix += '/';
+        }
+
+        for (const auto& entry : assetList)
+        {
+            if (String::startsWith(entry.Path, prefix))
+            {
+                return AssetDirectoryCheckResult::Found;
+            }
+        }
+        return AssetDirectoryCheckResult::NotFound;
+    }
+
     const std::vector<AssetInfo>& GetAssetList()
     {
         if (_assetList.empty())
