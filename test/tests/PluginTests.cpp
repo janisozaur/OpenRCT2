@@ -182,10 +182,13 @@ TEST_F(PluginTests, RideConstruction)
     // Initialize empty map
     auto& gameState = getGameState();
     gameStateInitAll(gameState, { 64, 64 });
-    for (int32_t y = 0; y < 64; y++) {
-        for (int32_t x = 0; x < 64; x++) {
+    for (int32_t y = 0; y < 64; y++)
+    {
+        for (int32_t x = 0; x < 64; x++)
+        {
             auto* surface = MapGetSurfaceElementAt(TileCoordsXY(x, y));
-            if (surface) surface->SetOwnership(OWNERSHIP_OWNED);
+            if (surface)
+                surface->SetOwnership(OWNERSHIP_OWNED);
         }
     }
     gameState.park.flags |= PARK_FLAGS_UNLOCK_ALL_PRICES | PARK_FLAGS_NO_MONEY;
@@ -203,8 +206,10 @@ TEST_F(PluginTests, RideConstruction)
 
     // Find our Carousel
     Ride* ride = nullptr;
-    for (auto& r : rideManager) {
-        if (r.type == RIDE_TYPE_MERRY_GO_ROUND) {
+    for (auto& r : rideManager)
+    {
+        if (r.type == RIDE_TYPE_MERRY_GO_ROUND)
+        {
             ride = &r;
             break;
         }
