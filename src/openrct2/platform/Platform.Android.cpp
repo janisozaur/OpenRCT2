@@ -267,11 +267,11 @@ namespace OpenRCT2::Platform
         return _assetManager;
     }
 
-    AssetDirectoryCheckResult CheckAssetDirectoryExists(u8string_view path)
+    AssetCheckResult CheckAssetDirectoryExists(u8string_view path)
     {
         if (!String::startsWith(path, Platform::kAndroidAssetPathPrefix))
         {
-            return AssetDirectoryCheckResult::NotApplicable;
+            return AssetCheckResult::NotApplicable;
         }
 
         const auto& assetList = GetAssetList();
@@ -285,10 +285,52 @@ namespace OpenRCT2::Platform
         {
             if (String::startsWith(entry.Path, prefix))
             {
-                return AssetDirectoryCheckResult::Found;
+                return AssetCheckResult::Found;
             }
         }
-        return AssetDirectoryCheckResult::NotFound;
+        return AssetCheckResult::NotFound;
+    }
+
+    AssetCheckResult CheckAssetExists(u8string_view path)
+    {
+        if (!String::startsWith(path, Platform::kAndroidAssetPathPrefix))
+        {
+            return AssetCheckResult::NotApplicable;
+        }
+
+        auto assetManager = static_cast<AAssetManager*>(GetAssetManager());
+        if (assetManager == nullptr)
+        {
+            return AssetCheckResult::NotFound;
+        }
+
+        std::string assetPath = std::string(path.substr(Platform::kAndroidAssetPathPrefix.length()));
+
+        // Try to open as a file
+        auto asset = AAssetManager_open(assetManager, assetPath.c_str(), AASSET_MODE_UNKNOWN);
+        if (asset != nullptr)
+        {
+            AAsset_close(asset);
+            return AssetCheckResult::Found;
+        }
+
+        // Check if it is a directory
+        auto dir = AAssetManager_openDir(assetManager, assetPath.c_str());
+        if (dir != nullptr)
+        {
+            // AAssetManager_openDir returns a non-null pointer even if the directory does not exist,
+            // but calling AAssetDir_getNextFileName will return null.
+            // However, we can't easily tell if it's an empty directory or a non-existent one.
+            // But for assets, we usually know what we are looking for.
+            auto firstFile = AAssetDir_getNextFileName(dir);
+            AAssetDir_close(dir);
+            if (firstFile != nullptr)
+            {
+                return AssetCheckResult::Found;
+            }
+        }
+
+        return AssetCheckResult::NotFound;
     }
 
     const std::vector<AssetInfo>& GetAssetList()

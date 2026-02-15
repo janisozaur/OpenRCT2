@@ -63,11 +63,11 @@ namespace OpenRCT2::Path
         auto assetCheckResult = Platform::CheckAssetDirectoryExists(path);
         switch (assetCheckResult)
         {
-            case Platform::AssetDirectoryCheckResult::Found:
+            case Platform::AssetCheckResult::Found:
                 return true;
-            case Platform::AssetDirectoryCheckResult::NotFound:
+            case Platform::AssetCheckResult::NotFound:
                 return false;
-            case Platform::AssetDirectoryCheckResult::NotApplicable:
+            case Platform::AssetCheckResult::NotApplicable:
             default:
                 break;
         }
