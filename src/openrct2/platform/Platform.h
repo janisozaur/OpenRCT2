@@ -55,7 +55,7 @@ enum class RCT2Variant : uint8_t
     rctClassicPlusMac,
 };
 
-enum class AssetDirectoryCheckResult
+enum class AssetCheckResult
 {
     NotApplicable,
     Found,
@@ -139,7 +139,8 @@ namespace OpenRCT2::Platform
     std::string ResolveCasing(std::string_view path, bool fileExists);
     std::string SanitiseFilename(std::string_view originalName);
     bool IsFilenameValid(u8string_view fileName);
-    AssetDirectoryCheckResult CheckAssetDirectoryExists(u8string_view path);
+    AssetCheckResult CheckAssetDirectoryExists(u8string_view path);
+    AssetCheckResult CheckAssetExists(u8string_view path);
 
     uint16_t GetLocaleLanguage();
     CurrencyType GetLocaleCurrency();
