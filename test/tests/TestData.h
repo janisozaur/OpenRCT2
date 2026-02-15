@@ -15,4 +15,5 @@ namespace TestData
 {
     std::string GetBasePath();
     std::string GetParkPath(std::string name);
+    std::string GetPluginsPath();
 } // namespace TestData

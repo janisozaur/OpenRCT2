@@ -39,6 +39,7 @@ namespace OpenRCT2::GameActions
 
 class FileWatcher;
 class InteractiveConsole;
+class PluginTests;
 
 namespace OpenRCT2
 {
@@ -139,6 +140,8 @@ namespace OpenRCT2::Scripting
 
     class ScriptEngine
     {
+        friend class ::PluginTests;
+
     private:
         InteractiveConsole& _console;
         IPlatformEnvironment& _env;

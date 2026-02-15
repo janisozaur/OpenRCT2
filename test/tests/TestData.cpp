@@ -23,4 +23,9 @@ namespace TestData
         std::string path = OpenRCT2::Path::Combine(GetBasePath(), u8"parks", name);
         return path;
     }
+
+    std::string GetPluginsPath()
+    {
+        return OpenRCT2::Path::Combine(GetBasePath(), u8"plugin");
+    }
 } // namespace TestData
