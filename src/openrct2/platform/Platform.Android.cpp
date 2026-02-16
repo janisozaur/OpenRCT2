@@ -24,6 +24,7 @@
     #include <android/asset_manager_jni.h>
     #include <jni.h>
     #include <memory>
+    #include <mutex>
     #include <sys/stat.h>
 
 AndroidClassLoader::~AndroidClassLoader()
@@ -36,6 +37,7 @@ jobject AndroidClassLoader::_classLoader;
 jmethodID AndroidClassLoader::_findClassMethod;
 static AAssetManager* _assetManager;
 static std::vector<OpenRCT2::Platform::AssetInfo> _assetList;
+static std::once_flag _assetListInitialized;
 
 // Initialized in JNI_OnLoad. Cannot be initialized here as JVM is not
 // available until after JNI_OnLoad is called.
@@ -406,8 +408,7 @@ namespace OpenRCT2::Platform
 
     const std::vector<AssetInfo>& GetAssetList()
     {
-        if (_assetList.empty())
-        {
+        std::call_once(_assetListInitialized, []() {
             AAssetManager* am = static_cast<AAssetManager*>(GetAssetManager());
             if (am != nullptr)
             {
@@ -460,7 +461,7 @@ namespace OpenRCT2::Platform
                     });
                 }
             }
-        }
+        });
         return _assetList;
     }
 
