@@ -179,8 +179,8 @@ namespace OpenRCT2::Platform
         }
 
         uint64_t lastModified = 0;
-        struct ::stat statInfo{};
-        if (::stat(std::string(path).c_str(), &statInfo) == 0)
+        struct stat statInfo{};
+        if (stat(std::string(path).c_str(), &statInfo) == 0)
         {
             lastModified = statInfo.st_mtime;
         }
@@ -207,8 +207,8 @@ namespace OpenRCT2::Platform
         }
 
         uint64_t size = 0;
-        struct ::stat statInfo{};
-        if (::stat(std::string(path).c_str(), &statInfo) == 0)
+        struct stat statInfo{};
+        if (stat(std::string(path).c_str(), &statInfo) == 0)
         {
             size = statInfo.st_size;
         }
