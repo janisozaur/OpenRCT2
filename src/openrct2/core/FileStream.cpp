@@ -26,10 +26,6 @@
     #define fseeko _fseeki64
 #endif
 
-#ifdef __ANDROID__
-    #include <android/asset_manager.h>
-#endif
-
 namespace OpenRCT2
 {
     FileStream::FileStream(const fs::path& path, FileMode fileMode)
@@ -49,25 +45,19 @@ namespace OpenRCT2
 
     FileStream::FileStream(const utf8* path, FileMode fileMode)
     {
-#ifdef __ANDROID__
-        if (fileMode == FileMode::open && String::startsWith(path, Platform::kAndroidAssetPathPrefix))
+        if (fileMode == FileMode::open)
         {
-            auto assetManager = static_cast<AAssetManager*>(Platform::GetAssetManager());
-            if (assetManager != nullptr)
+            auto assetOpen = Platform::OpenAssetFile(path);
+            if (assetOpen.result == Platform::AssetCheckResult::Found)
             {
-                std::string assetPath = path + Platform::kAndroidAssetPathPrefix.length();
-                _asset = AAssetManager_open(assetManager, assetPath.c_str(), AASSET_MODE_RANDOM);
-                if (_asset != nullptr)
-                {
-                    _fileSize = static_cast<uint64_t>(AAsset_getLength(static_cast<AAsset*>(_asset)));
-                    _canRead = true;
-                    _canWrite = false;
-                    _ownsFilePtr = true;
-                    return;
-                }
+                _asset = assetOpen.handle;
+                _fileSize = assetOpen.size;
+                _canRead = true;
+                _canWrite = false;
+                _ownsFilePtr = true;
+                return;
             }
         }
-#endif
 
         const char* mode;
         switch (fileMode)
@@ -142,13 +132,11 @@ namespace OpenRCT2
             _disposed = true;
             if (_ownsFilePtr)
             {
-#ifdef __ANDROID__
                 if (_asset != nullptr)
                 {
-                    AAsset_close(static_cast<AAsset*>(_asset));
+                    Platform::CloseAssetFile(_asset);
                 }
                 else
-#endif
                 {
                     if (_file != nullptr)
                     {
@@ -176,12 +164,10 @@ namespace OpenRCT2
 
     uint64_t FileStream::GetPosition() const
     {
-#ifdef __ANDROID__
         if (_asset != nullptr)
         {
-            return static_cast<uint64_t>(AAsset_seek(static_cast<AAsset*>(_asset), 0, SEEK_CUR));
+            return Platform::GetAssetPosition(_asset);
         }
-#endif
         return ftello(_file);
     }
 
@@ -192,28 +178,11 @@ namespace OpenRCT2
 
     void FileStream::Seek(int64_t offset, int32_t origin)
     {
-#ifdef __ANDROID__
         if (_asset != nullptr)
         {
-            int whence;
-            switch (origin)
-            {
-                case STREAM_SEEK_BEGIN:
-                    whence = SEEK_SET;
-                    break;
-                case STREAM_SEEK_CURRENT:
-                    whence = SEEK_CUR;
-                    break;
-                case STREAM_SEEK_END:
-                    whence = SEEK_END;
-                    break;
-                default:
-                    return;
-            }
-            AAsset_seek(static_cast<AAsset*>(_asset), static_cast<off_t>(offset), whence);
+            Platform::SeekAsset(_asset, offset, origin);
             return;
         }
-#endif
         switch (origin)
         {
             case STREAM_SEEK_BEGIN:
@@ -230,16 +199,14 @@ namespace OpenRCT2
 
     void FileStream::Read(void* buffer, uint64_t length)
     {
-#ifdef __ANDROID__
         if (_asset != nullptr)
         {
-            if (static_cast<uint64_t>(AAsset_read(static_cast<AAsset*>(_asset), buffer, static_cast<size_t>(length))) == length)
+            if (Platform::ReadAsset(_asset, buffer, length) == length)
             {
                 return;
             }
             throw IOException("Attempted to read past end of file.");
         }
-#endif
         if (fread(buffer, 1, static_cast<size_t>(length), _file) == length)
         {
             return;
@@ -266,12 +233,10 @@ namespace OpenRCT2
 
     uint64_t FileStream::TryRead(void* buffer, uint64_t length)
     {
-#ifdef __ANDROID__
         if (_asset != nullptr)
         {
-            return AAsset_read(static_cast<AAsset*>(_asset), buffer, static_cast<size_t>(length));
+            return Platform::TryReadAsset(_asset, buffer, length);
         }
-#endif
         size_t readBytes = fread(buffer, 1, static_cast<size_t>(length), _file);
         return readBytes;
     }

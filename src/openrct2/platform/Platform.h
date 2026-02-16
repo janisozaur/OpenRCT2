@@ -55,19 +55,19 @@ enum class RCT2Variant : uint8_t
     rctClassicPlusMac,
 };
 
-enum class AssetCheckResult
-{
-    NotApplicable,
-    Found,
-    NotFound,
-};
-
 struct RealWorldDate;
 struct RealWorldTime;
 struct TTFFontDescriptor;
 
 namespace OpenRCT2::Platform
 {
+    enum class AssetCheckResult
+    {
+        NotApplicable,
+        Found,
+        NotFound,
+    };
+
     struct SteamGameData
     {
         u8string nativeFolder;
@@ -126,6 +126,13 @@ namespace OpenRCT2::Platform
     static_assert(kAndroidAssetPathPrefix.back() == '/', "kAndroidAssetPathPrefix must end with a slash");
 #endif // __ANDROID__
 
+    struct AssetFileOpenResult
+    {
+        AssetCheckResult result;
+        void* handle;
+        uint64_t size;
+    };
+
     std::string GetEnvironmentVariable(std::string_view name);
     std::string GetFolderPath(SpecialFolder folder);
     std::string GetInstallPath();
@@ -141,6 +148,12 @@ namespace OpenRCT2::Platform
     bool IsFilenameValid(u8string_view fileName);
     AssetCheckResult CheckAssetDirectoryExists(u8string_view path);
     AssetCheckResult CheckAssetExists(u8string_view path);
+    AssetFileOpenResult OpenAssetFile(u8string_view path);
+    void CloseAssetFile(void* handle);
+    uint64_t GetAssetPosition(void* handle);
+    void SeekAsset(void* handle, int64_t offset, int32_t origin);
+    uint64_t ReadAsset(void* handle, void* buffer, uint64_t length);
+    uint64_t TryReadAsset(void* handle, void* buffer, uint64_t length);
 
     uint16_t GetLocaleLanguage();
     CurrencyType GetLocaleCurrency();

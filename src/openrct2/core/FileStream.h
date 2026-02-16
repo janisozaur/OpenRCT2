@@ -28,9 +28,7 @@ namespace OpenRCT2
     {
     private:
         FILE* _file = nullptr;
-#ifdef __ANDROID__
         void* _asset = nullptr;
-#endif
         bool _ownsFilePtr = false;
         bool _canRead = false;
         bool _canWrite = false;
