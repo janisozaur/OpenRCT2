@@ -420,11 +420,7 @@ namespace OpenRCT2::Platform
                     AAsset_read(asset, content.data(), size);
                     AAsset_close(asset);
 
-                    size_t start = 0;
-                    size_t end = content.find('\n');
-                    while (end != std::string::npos)
-                    {
-                        std::string line = content.substr(start, end - start);
+                    auto processLine = [](std::string line) {
                         if (!line.empty() && line.back() == '\r')
                         {
                             line.pop_back();
@@ -448,25 +444,17 @@ namespace OpenRCT2::Platform
                                 }
                             }
                         }
+                    };
+
+                    size_t start = 0;
+                    size_t end = content.find('\n');
+                    while (end != std::string::npos)
+                    {
+                        processLine(content.substr(start, end - start));
                         start = end + 1;
                         end = content.find('\n', start);
                     }
-                    std::string lastLine = content.substr(start);
-                    if (!lastLine.empty() && lastLine.back() == '\r')
-                    {
-                        lastLine.pop_back();
-                    }
-                    if (!lastLine.empty())
-                    {
-                        auto sep = lastLine.find('|');
-                        if (sep != std::string::npos)
-                        {
-                            AssetInfo info;
-                            info.Path = lastLine.substr(0, sep);
-                            info.Size = std::stoull(lastLine.substr(sep + 1));
-                            _assetList.push_back(std::move(info));
-                        }
-                    }
+                    processLine(content.substr(start));
                     std::sort(_assetList.begin(), _assetList.end(), [](const AssetInfo& a, const AssetInfo& b) {
                         return a.Path < b.Path;
                     });
