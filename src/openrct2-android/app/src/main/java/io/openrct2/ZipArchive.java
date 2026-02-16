@@ -7,6 +7,7 @@ import android.util.Log;
 import org.apache.commons.io.IOUtils;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -146,19 +147,24 @@ public class ZipArchive {
             }
 
             try (InputStream inputStream = _zipArchive.getInputStream(entry)) {
-                int numBytesToRead = (int)entry.getSize();
+                long numBytesToRead = entry.getSize();
                 if (numBytesToRead == -1) {
                     Log.e("ZipArchive", "Unknown length for zip entry");
                     return null;
                 }
 
-                byte[] inBuffer = new byte[numBytesToRead];
-                int bytesRead = IOUtils.read(inputStream, inBuffer);
-                if (bytesRead != numBytesToRead) {
-                    Log.w("ZipArchive", "Truncated zip entry: " + entry.getName() + ", expected " + numBytesToRead + ", got " + bytesRead);
-                    return Arrays.copyOf(inBuffer, Math.max(0, bytesRead));
+                // Validate that the entry size fits in memory
+                if (numBytesToRead > Integer.MAX_VALUE) {
+                    Log.e("ZipArchive", "Entry too large: " + entry.getName() + " (" + numBytesToRead + " bytes exceeds max " + Integer.MAX_VALUE + ")");
+                    throw new IOException("Zip entry exceeds maximum size: " + entry.getName());
                 }
-                return inBuffer;
+
+                // Use IOUtils.toByteArray to safely read without preallocation concerns
+                byte[] data = IOUtils.toByteArray(inputStream);
+                if (data.length != (int)numBytesToRead) {
+                    Log.w("ZipArchive", "Truncated zip entry: " + entry.getName() + ", expected " + numBytesToRead + ", got " + data.length);
+                }
+                return data;
             }
         } else {
             if (index >= 0 && index < _entryNames.size()) {

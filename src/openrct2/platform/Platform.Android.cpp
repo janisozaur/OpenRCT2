@@ -196,9 +196,9 @@ namespace OpenRCT2::Platform
                 auto asset = AAssetManager_open(assetManager, assetPath.c_str(), AASSET_MODE_UNKNOWN);
                 if (asset != nullptr)
                 {
-                    auto size = AAsset_getLength(asset);
+                    auto size = AAsset_getLength64(asset);
                     AAsset_close(asset);
-                    return static_cast<uint64_t>(size);
+                    return size;
                 }
             }
             return 0;
@@ -340,7 +340,7 @@ namespace OpenRCT2::Platform
             return AssetFileOpenResult{ AssetCheckResult::NotFound, nullptr, 0 };
         }
 
-        uint64_t assetSize = static_cast<uint64_t>(AAsset_getLength(asset));
+        uint64_t assetSize = AAsset_getLength64(asset);
         return AssetFileOpenResult{ AssetCheckResult::Found, asset, assetSize };
     }
 
@@ -358,7 +358,7 @@ namespace OpenRCT2::Platform
         {
             return 0;
         }
-        return static_cast<uint64_t>(AAsset_seek(static_cast<AAsset*>(handle), 0, SEEK_CUR));
+        return static_cast<uint64_t>(AAsset_seek64(static_cast<AAsset*>(handle), 0, SEEK_CUR));
     }
 
     void SeekAsset(void* handle, int64_t offset, int32_t origin)
@@ -383,7 +383,7 @@ namespace OpenRCT2::Platform
             default:
                 return;
         }
-        AAsset_seek(static_cast<AAsset*>(handle), static_cast<off_t>(offset), whence);
+        AAsset_seek64(static_cast<AAsset*>(handle), static_cast<off64_t>(offset), whence);
     }
 
     uint64_t ReadAsset(void* handle, void* buffer, uint64_t length)
@@ -415,7 +415,7 @@ namespace OpenRCT2::Platform
                 AAsset* asset = AAssetManager_open(am, "openrct2/manifest.txt", AASSET_MODE_BUFFER);
                 if (asset != nullptr)
                 {
-                    size_t size = AAsset_getLength(asset);
+                    size_t size = AAsset_getLength64(asset);
                     std::string content;
                     content.resize(size);
                     AAsset_read(asset, content.data(), size);
