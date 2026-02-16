@@ -150,7 +150,9 @@ public:
         if (!assetPath.empty())
         {
             auto combinedAssetPath = Path::Combine(assetPath, basePath, fileName);
-            LOG_WARNING("janis: Looking for file %s in asset path: %s", fileName.data(), combinedAssetPath.c_str());
+            LOG_WARNING(
+                "janis: Looking for file %s in asset path: %s; assetPath: %s, basePath: %s", fileName.data(),
+                combinedAssetPath.c_str(), assetPath.c_str(), basePath.c_str());
             if (File::Exists(combinedAssetPath))
             {
                 return combinedAssetPath;
