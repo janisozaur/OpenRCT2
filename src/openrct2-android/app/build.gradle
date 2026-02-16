@@ -70,6 +70,9 @@ def prepareAndroidAssetsScript = "${rootProject.projectDir}/../../scripts/prepar
 tasks.register('prepareOpenRCT2Assets', Exec) {
     workingDir rootProject.projectDir
     commandLine 'bash', prepareAndroidAssetsScript
+    inputs.file(prepareAndroidAssetsScript)
+    inputs.file("${rootProject.projectDir}/../../assets.json")
+    outputs.dir("${projectDir}/src/main/assets/openrct2")
 }
 
 preBuild.dependsOn(tasks.named('prepareOpenRCT2Assets'))
