@@ -72,6 +72,8 @@ tasks.register('prepareOpenRCT2Assets', Exec) {
     commandLine 'bash', prepareAndroidAssetsScript
     inputs.file(prepareAndroidAssetsScript)
     inputs.file("${rootProject.projectDir}/../../assets.json")
+    inputs.file("${rootProject.projectDir}/../../distribution/changelog.txt")
+    inputs.file("${rootProject.projectDir}/../../contributors.md")
     outputs.dir("${projectDir}/src/main/assets/openrct2")
 }
 
