@@ -129,6 +129,11 @@ namespace OpenRCT2::Platform
     {
         return 0;
     }
+
+    AssetCheckResult CheckDocumentationAssetExists([[maybe_unused]] u8string_view fileName)
+    {
+        return AssetCheckResult::NotApplicable;
+    }
 #endif
 
     std::optional<RCT2Variant> classifyGamePath(std::string_view path)

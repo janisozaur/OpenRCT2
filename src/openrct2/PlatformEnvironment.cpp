@@ -145,6 +145,17 @@ public:
         auto dirbase = GetDefaultBaseDirectory(pathid);
         auto basePath = GetDirectoryPath(dirbase);
         auto fileName = kFileNames[EnumValue(pathid)];
+
+        // For documentation files on Android, check if they exist in the asset root
+        if (pathid == PathId::changelog || pathid == PathId::contributors)
+        {
+            auto result = Platform::CheckDocumentationAssetExists(fileName);
+            if (result == Platform::AssetCheckResult::Found)
+            {
+                return std::string(Platform::kAndroidAssetPathPrefix) + std::string(fileName);
+            }
+        }
+
         return Path::Combine(basePath, fileName);
     }
 
