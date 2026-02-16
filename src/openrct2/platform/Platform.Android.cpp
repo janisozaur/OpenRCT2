@@ -284,12 +284,12 @@ namespace OpenRCT2::Platform
 
         if (!directoryOnly)
         {
-            for (const auto& entry : assetList)
+            auto it = std::lower_bound(
+                assetList.begin(), assetList.end(), assetPath,
+                [](const AssetInfo& a, const std::string& b) { return a.Path < b; });
+            if (it != assetList.end() && it->Path == assetPath)
             {
-                if (String::equals(entry.Path, assetPath))
-                {
-                    return AssetCheckResult::Found;
-                }
+                return AssetCheckResult::Found;
             }
         }
 
@@ -299,12 +299,11 @@ namespace OpenRCT2::Platform
             prefix += '/';
         }
 
-        for (const auto& entry : assetList)
+        auto it = std::lower_bound(
+            assetList.begin(), assetList.end(), prefix, [](const AssetInfo& a, const std::string& b) { return a.Path < b; });
+        if (it != assetList.end() && String::startsWith(it->Path, prefix))
         {
-            if (String::startsWith(entry.Path, prefix))
-            {
-                return AssetCheckResult::Found;
-            }
+            return AssetCheckResult::Found;
         }
 
         return AssetCheckResult::NotFound;
