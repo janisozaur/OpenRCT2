@@ -37,6 +37,7 @@ jobject AndroidClassLoader::_classLoader;
 jmethodID AndroidClassLoader::_findClassMethod;
 static AAssetManager* _assetManager;
 static std::vector<OpenRCT2::Platform::AssetInfo> _assetList;
+static std::once_flag _assetManagerInitialized;
 static std::once_flag _assetListInitialized;
 
 // Initialized in JNI_OnLoad. Cannot be initialized here as JVM is not
@@ -253,8 +254,7 @@ namespace OpenRCT2::Platform
 
     void* GetAssetManager()
     {
-        if (_assetManager == nullptr)
-        {
+        std::call_once(_assetManagerInitialized, []() {
             JNIEnv* env = static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv());
             jobject activity = static_cast<jobject>(SDL_AndroidGetActivity());
             jclass activityClass = env->GetObjectClass(activity);
@@ -265,7 +265,7 @@ namespace OpenRCT2::Platform
             env->DeleteLocalRef(assetManagerObj);
             env->DeleteLocalRef(activityClass);
             env->DeleteLocalRef(activity);
-        }
+        });
 
         return _assetManager;
     }
