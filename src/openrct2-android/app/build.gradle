@@ -66,6 +66,14 @@ android {
     }
 }
 
+def prepareAndroidAssetsScript = "${rootProject.projectDir}/../../scripts/prepare-android-assets"
+tasks.register('prepareOpenRCT2Assets', Exec) {
+    workingDir rootProject.projectDir
+    commandLine 'bash', prepareAndroidAssetsScript
+}
+
+preBuild.dependsOn(tasks.named('prepareOpenRCT2Assets'))
+
 dependencies {
     implementation 'commons-io:commons-io:2.20.0'
     implementation 'androidx.appcompat:appcompat:1.7.1'

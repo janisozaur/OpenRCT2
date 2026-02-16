@@ -170,10 +170,7 @@ jobs:
           echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
       - name: Build graphics .dat files
         run: |
-          gxc build g2.dat OpenRCT2/resources/g2/sprites.json
-          gxc build palettes.dat OpenRCT2/resources/palettes/sprites.json
-          gxc build fonts.dat OpenRCT2/resources/fonts/sprites.json
-          gxc build tracks.dat OpenRCT2/resources/tracks/sprites.json
+          OpenRCT2/scripts/build-graphics-dat "$PWD"
       - name: Upload graphics .dat files
         uses: actions/upload-artifact@v6
         with:
@@ -643,39 +640,10 @@ jobs:
         with:
           name: graphics-${{ needs.build_variables.outputs.name }}
           path: bin/data
-      - name: Prepare assets
-        run: |
-          ASSETS_DIR=src/openrct2-android/app/src/main/assets/openrct2
-          DATA_DIR=$ASSETS_DIR/data
-          mkdir -p $DATA_DIR
-
-          # Copy graphics
-          cp bin/data/*.dat $DATA_DIR/
-
-          # Copy data files from repo
-          cp -r data/language $DATA_DIR/
-          cp -r data/shaders $DATA_DIR/
-          cp -r data/scenario_patches $DATA_DIR/
-
-          # Download objects and sequence from assets.json
-          OBJECTS_URL=$(jq -r '.objects.url' assets.json)
-          TS_URL=$(jq -r '.["title-sequences"].url' assets.json)
-
-          curl -L "$OBJECTS_URL" -o objects.zip
-          mkdir -p $DATA_DIR/object
-          unzip -q objects.zip -d $DATA_DIR/object
-
-          curl -L "$TS_URL" -o title-sequences.zip
-          mkdir -p $DATA_DIR/sequence
-          unzip -q title-sequences.zip -d $DATA_DIR/sequence
-
-          # Generate manifest
-          pushd src/openrct2-android/app/src/main/assets
-          find openrct2 -type f -printf "%p|%s\n" > openrct2/manifest.txt
-          popd
       - name: Build OpenRCT2
         run: |
           . scripts/setenv
+          export OPENRCT2_DAT_DIR="$GITHUB_WORKSPACE/bin/data"
           pushd src/openrct2-android
           ./gradlew app:assembleRelease
           popd
