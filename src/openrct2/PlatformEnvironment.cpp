@@ -149,7 +149,8 @@ public:
         auto assetPath = Platform::GetAssetPath();
         if (!assetPath.empty())
         {
-            auto combinedAssetPath = Path::Combine(assetPath, fileName);
+            auto combinedAssetPath = Path::Combine(assetPath, basePath, fileName);
+            LOG_WARNING("janis: Looking for file %s in asset path: %s", fileName.data(), combinedAssetPath.c_str());
             if (File::Exists(combinedAssetPath))
             {
                 return combinedAssetPath;
