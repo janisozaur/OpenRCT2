@@ -268,7 +268,7 @@ namespace OpenRCT2::Platform
         return _assetManager;
     }
 
-    AssetCheckResult CheckAssetDirectoryExists(u8string_view path)
+    static AssetCheckResult CheckAssetExistsInList(u8string_view path, bool directoryOnly)
     {
         if (!String::startsWith(path, Platform::kAndroidAssetPathPrefix))
         {
@@ -276,7 +276,24 @@ namespace OpenRCT2::Platform
         }
 
         const auto& assetList = GetAssetList();
-        std::string prefix = std::string(path).substr(Platform::kAndroidAssetPathPrefix.length());
+        std::string assetPath = std::string(path.substr(Platform::kAndroidAssetPathPrefix.length()));
+        if (assetPath.empty())
+        {
+            return assetList.empty() ? AssetCheckResult::NotFound : AssetCheckResult::Found;
+        }
+
+        if (!directoryOnly)
+        {
+            for (const auto& entry : assetList)
+            {
+                if (String::equals(entry.Path, assetPath))
+                {
+                    return AssetCheckResult::Found;
+                }
+            }
+        }
+
+        std::string prefix = assetPath;
         if (!prefix.empty() && prefix.back() != '/')
         {
             prefix += '/';
@@ -289,49 +306,18 @@ namespace OpenRCT2::Platform
                 return AssetCheckResult::Found;
             }
         }
+
         return AssetCheckResult::NotFound;
+    }
+
+    AssetCheckResult CheckAssetDirectoryExists(u8string_view path)
+    {
+        return CheckAssetExistsInList(path, true);
     }
 
     AssetCheckResult CheckAssetExists(u8string_view path)
     {
-        if (!String::startsWith(path, Platform::kAndroidAssetPathPrefix))
-        {
-            return AssetCheckResult::NotApplicable;
-        }
-
-        auto assetManager = static_cast<AAssetManager*>(GetAssetManager());
-        if (assetManager == nullptr)
-        {
-            return AssetCheckResult::NotFound;
-        }
-
-        std::string assetPath = std::string(path.substr(Platform::kAndroidAssetPathPrefix.length()));
-
-        // Try to open as a file
-        auto asset = AAssetManager_open(assetManager, assetPath.c_str(), AASSET_MODE_UNKNOWN);
-        if (asset != nullptr)
-        {
-            AAsset_close(asset);
-            return AssetCheckResult::Found;
-        }
-
-        // Check if it is a directory
-        auto dir = AAssetManager_openDir(assetManager, assetPath.c_str());
-        if (dir != nullptr)
-        {
-            // AAssetManager_openDir returns a non-null pointer even if the directory does not exist,
-            // but calling AAssetDir_getNextFileName will return null.
-            // However, we can't easily tell if it's an empty directory or a non-existent one.
-            // But for assets, we usually know what we are looking for.
-            auto firstFile = AAssetDir_getNextFileName(dir);
-            AAssetDir_close(dir);
-            if (firstFile != nullptr)
-            {
-                return AssetCheckResult::Found;
-            }
-        }
-
-        return AssetCheckResult::NotFound;
+        return CheckAssetExistsInList(path, false);
     }
 
     AssetFileOpenResult OpenAssetFile(u8string_view path)
