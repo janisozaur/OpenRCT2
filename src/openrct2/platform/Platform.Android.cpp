@@ -14,6 +14,7 @@
     #include "../Diagnostic.h"
     #include "../core/File.h"
     #include "../core/Guard.hpp"
+    #include "../core/IStream.hpp"
     #include "../core/String.hpp"
     #include "../localisation/Language.h"
 
@@ -331,6 +332,91 @@ namespace OpenRCT2::Platform
         }
 
         return AssetCheckResult::NotFound;
+    }
+
+    AssetFileOpenResult OpenAssetFile(u8string_view path)
+    {
+        if (!String::startsWith(path, Platform::kAndroidAssetPathPrefix))
+        {
+            return AssetFileOpenResult{ AssetCheckResult::NotApplicable, nullptr, 0 };
+        }
+
+        auto assetManager = static_cast<AAssetManager*>(GetAssetManager());
+        if (assetManager == nullptr)
+        {
+            return AssetFileOpenResult{ AssetCheckResult::NotFound, nullptr, 0 };
+        }
+
+        std::string assetPath = std::string(path.substr(Platform::kAndroidAssetPathPrefix.length()));
+        auto asset = AAssetManager_open(assetManager, assetPath.c_str(), AASSET_MODE_RANDOM);
+        if (asset == nullptr)
+        {
+            return AssetFileOpenResult{ AssetCheckResult::NotFound, nullptr, 0 };
+        }
+
+        uint64_t assetSize = static_cast<uint64_t>(AAsset_getLength(asset));
+        return AssetFileOpenResult{ AssetCheckResult::Found, asset, assetSize };
+    }
+
+    void CloseAssetFile(void* handle)
+    {
+        if (handle != nullptr)
+        {
+            AAsset_close(static_cast<AAsset*>(handle));
+        }
+    }
+
+    uint64_t GetAssetPosition(void* handle)
+    {
+        if (handle == nullptr)
+        {
+            return 0;
+        }
+        return static_cast<uint64_t>(AAsset_seek(static_cast<AAsset*>(handle), 0, SEEK_CUR));
+    }
+
+    void SeekAsset(void* handle, int64_t offset, int32_t origin)
+    {
+        if (handle == nullptr)
+        {
+            return;
+        }
+
+        int whence;
+        switch (origin)
+        {
+            case STREAM_SEEK_BEGIN:
+                whence = SEEK_SET;
+                break;
+            case STREAM_SEEK_CURRENT:
+                whence = SEEK_CUR;
+                break;
+            case STREAM_SEEK_END:
+                whence = SEEK_END;
+                break;
+            default:
+                return;
+        }
+        AAsset_seek(static_cast<AAsset*>(handle), static_cast<off_t>(offset), whence);
+    }
+
+    uint64_t ReadAsset(void* handle, void* buffer, uint64_t length)
+    {
+        if (handle == nullptr)
+        {
+            return 0;
+        }
+        int readBytes = AAsset_read(static_cast<AAsset*>(handle), buffer, static_cast<size_t>(length));
+        if (readBytes < 0)
+        {
+            return 0;
+        }
+        return static_cast<uint64_t>(readBytes);
+    }
+
+    uint64_t TryReadAsset(void* handle, void* buffer, uint64_t length)
+    {
+        return ReadAsset(handle, buffer, length);
     }
 
     const std::vector<AssetInfo>& GetAssetList()
