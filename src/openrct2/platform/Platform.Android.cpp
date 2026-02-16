@@ -441,7 +441,6 @@ namespace OpenRCT2::Platform
                                 catch (const std::exception&)
                                 {
                                     LOG_WARNING("Failed to parse asset entry: %s", line.c_str());
-                                    throw;
                                 }
                             }
                         }
