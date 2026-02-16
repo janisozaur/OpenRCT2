@@ -267,7 +267,7 @@ public:
     void GetDirectoryChildren(std::vector<DirectoryChild>& children, const std::string& path) override
     {
         const auto& assetList = Platform::GetAssetList();
-        std::string prefix = path.substr(15);
+        std::string prefix = path.substr(Platform::kAndroidAssetPathPrefix.length());
         if (!prefix.empty() && prefix.back() != '/')
         {
             prefix += '/';

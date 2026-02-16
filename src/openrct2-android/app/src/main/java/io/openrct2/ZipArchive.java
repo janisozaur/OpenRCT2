@@ -10,6 +10,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -152,7 +153,11 @@ public class ZipArchive {
                 }
 
                 byte[] inBuffer = new byte[numBytesToRead];
-                IOUtils.read(inputStream, inBuffer);
+                int bytesRead = IOUtils.read(inputStream, inBuffer);
+                if (bytesRead != numBytesToRead) {
+                    Log.w("ZipArchive", "Truncated zip entry: " + entry.getName() + ", expected " + numBytesToRead + ", got " + bytesRead);
+                    return Arrays.copyOf(inBuffer, Math.max(0, bytesRead));
+                }
                 return inBuffer;
             }
         } else {

@@ -43,6 +43,7 @@ public:
         if (env->ExceptionCheck())
         {
             env->ExceptionClear();
+            env->DeleteLocalRef(jniClass);
             env->DeleteLocalRef(jniPath);
             env->DeleteLocalRef(activity);
             throw std::runtime_error("Failed to open zip archive: " + std::string(path));
@@ -51,6 +52,7 @@ public:
         _zip = env->NewGlobalRef(zip);
 
         env->DeleteLocalRef(zip);
+        env->DeleteLocalRef(jniClass);
         env->DeleteLocalRef(jniPath);
         env->DeleteLocalRef(activity);
     }

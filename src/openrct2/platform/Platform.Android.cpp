@@ -435,10 +435,18 @@ namespace OpenRCT2::Platform
                             auto sep = line.find('|');
                             if (sep != std::string::npos)
                             {
-                                AssetInfo info;
-                                info.Path = line.substr(0, sep);
-                                info.Size = std::stoull(line.substr(sep + 1));
-                                _assetList.push_back(std::move(info));
+                                try
+                                {
+                                    AssetInfo info;
+                                    info.Path = line.substr(0, sep);
+                                    info.Size = std::stoull(line.substr(sep + 1));
+                                    _assetList.push_back(std::move(info));
+                                }
+                                catch (const std::exception&)
+                                {
+                                    LOG_WARNING("Failed to parse asset entry: %s", line.c_str());
+                                    throw;
+                                }
                             }
                         }
                         start = end + 1;

@@ -220,6 +220,10 @@ namespace OpenRCT2
         {
             return;
         }
+        if (_file == nullptr)
+        {
+            throw IOException("Cannot write to a read-only asset stream.");
+        }
         if (auto count = fwrite(buffer, static_cast<size_t>(length), 1, _file); count != 1)
         {
             std::string error = "Unable to write " + std::to_string(length) + " bytes to file. Count = " + std::to_string(count)
