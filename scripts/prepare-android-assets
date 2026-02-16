@@ -22,8 +22,8 @@ cp -r "$ROOT_DIR/data/shaders" "$DATA_DIR/"
 cp -r "$ROOT_DIR/data/scenario_patches" "$DATA_DIR/"
 
 # Copy documentation files to the root of the openrct2 assets directory
-cp "$ROOT_DIR/distribution/changelog.txt" "$ASSETS_DIR/"
-cp "$ROOT_DIR/contributors.md" "$ASSETS_DIR/"
+cp "$ROOT_DIR/distribution/changelog.txt" "$DATA_DIR/"
+cp "$ROOT_DIR/contributors.md" "$DATA_DIR/"
 
 OBJECTS_URL=$(jq -r '.objects.url' "$ROOT_DIR/assets.json")
 TS_URL=$(jq -r '."title-sequences".url' "$ROOT_DIR/assets.json")
