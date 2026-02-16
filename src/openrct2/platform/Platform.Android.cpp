@@ -293,8 +293,10 @@ namespace OpenRCT2::Platform
             {
                 return AssetCheckResult::Found;
             }
+            return AssetCheckResult::NotFound;
         }
 
+        // Only check for directory/prefix matches if directoryOnly is true
         std::string prefix = assetPath;
         if (!prefix.empty() && prefix.back() != '/')
         {
