@@ -147,10 +147,13 @@ public:
         auto fileName = kFileNames[EnumValue(pathid)];
 
         auto assetPath = Platform::GetAssetPath();
-        auto combinedAssetPath = Path::Combine(assetPath, fileName);
-        if (File::Exists(combinedAssetPath))
+        if (!assetPath.empty())
         {
-            return combinedAssetPath;
+            auto combinedAssetPath = Path::Combine(assetPath, fileName);
+            if (File::Exists(combinedAssetPath))
+            {
+                return combinedAssetPath;
+            }
         }
 
         return Path::Combine(basePath, fileName);
