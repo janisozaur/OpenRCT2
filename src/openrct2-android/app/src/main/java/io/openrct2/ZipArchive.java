@@ -22,8 +22,8 @@ import java.util.zip.ZipInputStream;
 
 public class ZipArchive {
     private ZipFile _zipArchive;
-    private List<String> _entryNames;
-    private Map<String, byte[]> _entries;
+    private List<String> _entryNames = new ArrayList<>();
+    private Map<String, byte[]> _entries = new HashMap<>();
 
     public ZipArchive(Context context, String path) throws IOException {
         if (path.startsWith(PlatformConstants.ANDROID_ASSET_PATH_PREFIX))
