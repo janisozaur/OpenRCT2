@@ -154,7 +154,7 @@ namespace OpenRCT2::Platform
     void SeekAsset(void* handle, int64_t offset, int32_t origin);
     uint64_t ReadAsset(void* handle, void* buffer, uint64_t length);
     uint64_t TryReadAsset(void* handle, void* buffer, uint64_t length);
-    AssetCheckResult CheckDocumentationAssetExists(u8string_view fileName);
+    u8string GetAssetPath();
 
     uint16_t GetLocaleLanguage();
     CurrencyType GetLocaleCurrency();

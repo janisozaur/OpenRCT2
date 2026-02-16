@@ -408,15 +408,9 @@ namespace OpenRCT2::Platform
         return ReadAsset(handle, buffer, length);
     }
 
-    AssetCheckResult CheckDocumentationAssetExists(u8string_view fileName)
+    u8string GetAssetPath()
     {
-        // On Android, documentation files (changelog, contributors) are in the root of the openrct2 assets
-        auto assetPath = std::string(Platform::kAndroidAssetPathPrefix) + std::string(fileName);
-        if (File::Exists(assetPath))
-        {
-            return AssetCheckResult::Found;
-        }
-        return AssetCheckResult::NotFound;
+        return std::string(Platform::kAndroidAssetPathPrefix);
     }
 
     const std::vector<AssetInfo>& GetAssetList()

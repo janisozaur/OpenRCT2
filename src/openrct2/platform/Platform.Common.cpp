@@ -130,9 +130,9 @@ namespace OpenRCT2::Platform
         return 0;
     }
 
-    AssetCheckResult CheckDocumentationAssetExists([[maybe_unused]] u8string_view fileName)
+    u8string GetAssetPath()
     {
-        return AssetCheckResult::NotApplicable;
+        return std::string();
     }
 #endif
 

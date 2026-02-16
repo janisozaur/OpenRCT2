@@ -146,14 +146,11 @@ public:
         auto basePath = GetDirectoryPath(dirbase);
         auto fileName = kFileNames[EnumValue(pathid)];
 
-        // For documentation files on Android, check if they exist in the asset root
-        if (pathid == PathId::changelog || pathid == PathId::contributors)
+        auto assetPath = Platform::GetAssetPath();
+        auto combinedAssetPath = Path::Combine(assetPath, fileName);
+        if (File::Exists(combinedAssetPath))
         {
-            auto result = Platform::CheckDocumentationAssetExists(fileName);
-            if (result == Platform::AssetCheckResult::Found)
-            {
-                return std::string(Platform::kAndroidAssetPathPrefix) + std::string(fileName);
-            }
+            return combinedAssetPath;
         }
 
         return Path::Combine(basePath, fileName);
