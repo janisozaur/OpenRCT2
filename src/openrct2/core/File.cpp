@@ -76,9 +76,9 @@ namespace OpenRCT2::File
 
     std::vector<uint8_t> ReadAllBytes(u8string_view path)
     {
-        FileStream fs(path, FileMode::open);
+        FileStream fstream(path, FileMode::open);
         std::vector<uint8_t> result;
-        auto fsize = fs.GetLength();
+        auto fsize = fstream.GetLength();
         if (fsize > SIZE_MAX)
         {
             u8string message = String::stdFormat(
@@ -88,7 +88,7 @@ namespace OpenRCT2::File
         else
         {
             result.resize(static_cast<size_t>(fsize));
-            fs.Read(result.data(), result.size());
+            fstream.Read(result.data(), result.size());
         }
         return result;
     }
@@ -133,8 +133,8 @@ namespace OpenRCT2::File
 
     void WriteAllBytes(u8string_view path, const void* buffer, size_t length)
     {
-        auto fs = FileStream(path, FileMode::write);
-        fs.Write(buffer, length);
+        auto fstream = FileStream(path, FileMode::write);
+        fstream.Write(buffer, length);
     }
 
     uint64_t GetLastModified(u8string_view path)
