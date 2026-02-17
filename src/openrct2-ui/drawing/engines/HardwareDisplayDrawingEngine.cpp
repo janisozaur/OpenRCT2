@@ -33,6 +33,7 @@
 #include <openrct2/ui/UiContext.h>
 #include <openrct2/ui/WindowManager.h>
 #include <thread>
+#ifdef ENABLE_VIDEO_RECORDING
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -41,6 +42,7 @@ extern "C" {
 #include <libavutil/opt.h>
 #include <libswscale/swscale.h>
 }
+#endif
 #ifdef _WIN32
     #include <direct.h>
     #define getcwd _getcwd
@@ -55,6 +57,7 @@ using namespace OpenRCT2::Ui;
 
 bool gShouldRender = true;
 
+#ifdef ENABLE_VIDEO_RECORDING
 static bool IsEncoderHW(const AVCodec* encoder)
 {
     if (encoder->capabilities & AV_CODEC_CAP_HARDWARE)
@@ -153,6 +156,7 @@ static int encode_frame(AVCodecContext* enc_ctx, AVFrame* frame, AVFormatContext
 
     return 0;
 }
+#endif
 
 struct EncodeThreadData
 {
@@ -160,12 +164,14 @@ struct EncodeThreadData
     std::condition_variable* NotifyCV;
     std::atomic<int>* Ready;
 
+#ifdef ENABLE_VIDEO_RECORDING
     AVFormatContext* formatContext{};
     AVCodecContext* codecContext{};
     AVStream* videoStream{};
     AVFrame* frame{};
     std::atomic<bool> forceKeyframe{ false };
     int frameCount{ 0 };
+#endif
     uint32_t width{};
     uint32_t height{};
     uint32_t scale{};
@@ -224,10 +230,16 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                         }
                         // Convert to YUV for encoding
                         function(
-                            static_cast<uint8_t*>(scaledSurface->pixels), scaledSurface->pitch, etd.frame->data[0],
-                            etd.frame->linesize[0], etd.frame->data[1], etd.frame->linesize[1], etd.frame->data[2],
-                            etd.frame->linesize[2], scaledWidth, scaledHeight);
+                            static_cast<uint8_t*>(scaledSurface->pixels), scaledSurface->pitch,
+#ifdef ENABLE_VIDEO_RECORDING
+                            etd.frame->data[0], etd.frame->linesize[0], etd.frame->data[1], etd.frame->linesize[1],
+                            etd.frame->data[2], etd.frame->linesize[2],
+#else
+                            nullptr, 0, nullptr, 0, nullptr, 0,
+#endif
+                            scaledWidth, scaledHeight);
 
+#ifdef ENABLE_VIDEO_RECORDING
                         etd.frame->pts = etd.frameCount++;
                         if (etd.forceKeyframe.exchange(false))
                         {
@@ -243,6 +255,7 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                             printf("%d", etd.frameCount);
                             fflush(stdout);
                         }
+#endif
                     }
                     else
                     {
@@ -278,10 +291,12 @@ private:
 
     bool smoothNN = false;
 
+#ifdef ENABLE_VIDEO_RECORDING
     AVFormatContext* _formatContext = nullptr;
     AVCodecContext* _codecContext = nullptr;
     AVStream* _videoStream = nullptr;
     AVFrame* _frame = nullptr;
+#endif
 
     std::thread EncodeThread{};
     std::mutex SurfaceMutex{};
@@ -330,6 +345,7 @@ public:
         SDL_FreeFormat(_screenTextureFormat);
         SDL_DestroyRenderer(_sdlRenderer);
 
+#ifdef ENABLE_VIDEO_RECORDING
         if (_codecContext)
         {
             encode_frame(_codecContext, nullptr, _formatContext, _videoStream);
@@ -341,6 +357,7 @@ public:
                 avio_closep(&_formatContext->pb);
             avformat_free_context(_formatContext);
         }
+#endif
     }
 
     void Initialise() override
@@ -471,6 +488,7 @@ public:
 private:
     void InitializeVideoEncoding()
     {
+#ifdef ENABLE_VIDEO_RECORDING
         if (_videoInitialized)
             return;
 
@@ -482,8 +500,7 @@ private:
 
         if (frame_width <= 0 || frame_height <= 0 || (frame_width % 2) != 0 || (frame_height % 2) != 0)
         {
-            LOG_FATAL(
-                "Invalid frame size: %dx%d (need to be larger than zero and even-sized)", frame_width, frame_height);
+            LOG_FATAL("Invalid frame size: %dx%d (need to be larger than zero and even-sized)", frame_width, frame_height);
         }
 
         const char* envEncoder = getenv("OPENRCT2_ENCODER");
@@ -623,6 +640,7 @@ private:
         etd.frame = _frame;
 
         _videoInitialized = true;
+#endif
     }
 
     void SetPalette(const GamePalette& palette) override
@@ -747,11 +765,13 @@ private:
             // Only proceed with encoding if video is initialized
             if (_videoInitialized)
             {
+#ifdef ENABLE_VIDEO_RECORDING
                 auto* player = static_cast<ITitleSequencePlayer*>(TitleGetSequencePlayer());
                 if (player != nullptr && player->PopCommandExecutedSignal())
                 {
                     etd.forceKeyframe.store(true);
                 }
+#endif
 
                 // Determine which buffer to write to (opposite of the one being encoded)
                 int writeBuffer = (etd.activeBuffer == 0) ? 1 : 0;
