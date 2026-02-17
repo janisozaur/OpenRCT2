@@ -24,6 +24,10 @@ else ()
         PKG_CHECK_MODULES(OGG REQUIRED IMPORTED_TARGET ogg)
         PKG_CHECK_MODULES(VORBISFILE REQUIRED IMPORTED_TARGET vorbisfile)
     endif ()
+    PKG_CHECK_MODULES(AVCODEC REQUIRED IMPORTED_TARGET libavcodec)
+    PKG_CHECK_MODULES(AVFORMAT REQUIRED IMPORTED_TARGET libavformat)
+    PKG_CHECK_MODULES(AVUTIL REQUIRED IMPORTED_TARGET libavutil)
+    PKG_CHECK_MODULES(SWSCALE REQUIRED IMPORTED_TARGET libswscale)
 endif ()
 
 if (NOT DISABLE_OPENGL AND NOT EMSCRIPTEN)
@@ -98,7 +102,11 @@ endif ()
 target_include_directories(openrct2 PRIVATE "${CMAKE_CURRENT_LIST_DIR}/.."
                                               ${OGG_INCLUDE_DIRS}
                                               ${VORBIS_INCLUDE_DIRS}
-                                              ${FLAC_INCLUDE_DIRS})
+                                              ${FLAC_INCLUDE_DIRS}
+                                              ${AVCODEC_INCLUDE_DIRS}
+                                              ${AVFORMAT_INCLUDE_DIRS}
+                                              ${AVUTIL_INCLUDE_DIRS}
+                                              ${SWSCALE_INCLUDE_DIRS})
 target_include_directories(openrct2 SYSTEM PRIVATE ${SDL2_INCLUDE_DIRS}
                                                      "${CMAKE_CURRENT_LIST_DIR}/../thirdparty")
 
@@ -265,4 +273,10 @@ if(MACOS_BUNDLE)
     )
 endif ()
 
-target_link_libraries(${PROJECT_NAME} vpx yuv)
+target_link_libraries(${PROJECT_NAME}
+    PkgConfig::AVCODEC
+    PkgConfig::AVFORMAT
+    PkgConfig::AVUTIL
+    PkgConfig::SWSCALE
+    yuv
+)

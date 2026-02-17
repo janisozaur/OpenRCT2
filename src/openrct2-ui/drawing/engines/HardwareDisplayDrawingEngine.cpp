@@ -33,7 +33,14 @@
 #include <openrct2/ui/UiContext.h>
 #include <openrct2/ui/WindowManager.h>
 #include <thread>
-#include <vpx/vpx_image.h>
+extern "C" {
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
+#include <libavutil/imgutils.h>
+#include <libavutil/opt.h>
+#include <libswscale/swscale.h>
+}
 #ifdef _WIN32
     #include <direct.h>
     #define getcwd _getcwd
@@ -41,212 +48,124 @@
     #include <unistd.h>
 #endif
 #include <vector>
-#include <vpx/vp8cx.h>
-#include <vpx/vpx_encoder.h>
 
 using namespace OpenRCT2;
 using namespace OpenRCT2::Drawing;
 using namespace OpenRCT2::Ui;
 
 bool gShouldRender = true;
-struct VpxRational
+
+static bool IsEncoderHW(const AVCodec* encoder)
 {
-    int numerator;
-    int denominator;
-};
+    if (encoder->capabilities & AV_CODEC_CAP_HARDWARE)
+        return true;
 
-typedef struct
-{
-    uint32_t codec_fourcc;
-    int frame_width;
-    int frame_height;
-    struct VpxRational time_base;
-} VpxVideoInfo;
-
-typedef struct VpxInterface
-{
-    const char* name;
-    uint32_t fourcc;
-    vpx_codec_iface_t* (*codec_interface)(void);
-} VpxInterface;
-
-#define VP9_FOURCC 0x30395056
-
-static const VpxInterface vpx_encoders[] = {
-    { "vp9", VP9_FOURCC, &vpx_codec_vp9_cx },
-};
-
-struct VpxVideoWriterStruct
-{
-    VpxVideoInfo info;
-    FILE* file;
-    int frame_count;
-};
-
-typedef struct VpxVideoWriterStruct VpxVideoWriter;
-
-typedef enum
-{
-    kContainerIVF
-} VpxContainer;
-
-static void mem_put_le16(void* dst, uint16_t data)
-{
-    memcpy(dst, &data, 2);
-}
-static void mem_put_le32(void* dst, uint32_t data)
-{
-    memcpy(dst, &data, 4);
-}
-static void ivf_write_file_header_with_video_info(
-    FILE* outfile, unsigned int fourcc, int frame_cnt, int frame_width, int frame_height, vpx_rational_t timebase)
-{
-    char header[32];
-
-    header[0] = 'D';
-    header[1] = 'K';
-    header[2] = 'I';
-    header[3] = 'F';
-    mem_put_le16(header + 4, 0);             // version
-    mem_put_le16(header + 6, 32);            // header size
-    mem_put_le32(header + 8, fourcc);        // fourcc
-    mem_put_le16(header + 12, frame_width);  // width
-    mem_put_le16(header + 14, frame_height); // height
-    mem_put_le32(header + 16, timebase.den); // rate
-    mem_put_le32(header + 20, timebase.num); // scale
-    mem_put_le32(header + 24, frame_cnt);    // length
-    mem_put_le32(header + 28, 0);            // unused
-
-    fwrite(header, 1, 32, outfile);
-}
-
-static void ivf_write_file_header(FILE* outfile, const struct vpx_codec_enc_cfg* cfg, unsigned int fourcc, int frame_cnt)
-{
-    ivf_write_file_header_with_video_info(outfile, fourcc, frame_cnt, cfg->g_w, cfg->g_h, cfg->g_timebase);
-}
-
-static void ivf_write_frame_header(FILE* outfile, int64_t pts, size_t frame_size)
-{
-    char header[12];
-
-    mem_put_le32(header, static_cast<int>(frame_size));
-    mem_put_le32(header + 4, static_cast<int>(pts & 0xFFFFFFFF));
-    mem_put_le32(header + 8, static_cast<int>(pts >> 32));
-    fwrite(header, 1, 12, outfile);
-}
-
-static void write_header(FILE* file, const VpxVideoInfo* info, int frame_count)
-{
-    struct vpx_codec_enc_cfg cfg;
-    cfg.g_w = info->frame_width;
-    cfg.g_h = info->frame_height;
-    cfg.g_timebase.num = info->time_base.numerator;
-    cfg.g_timebase.den = info->time_base.denominator;
-
-    ivf_write_file_header(file, &cfg, info->codec_fourcc, frame_count);
-}
-
-static VpxVideoWriter* vpx_video_writer_open(const char* filename, VpxContainer container, const VpxVideoInfo* info)
-{
-    if (container == kContainerIVF)
+    for (int i = 0;; i++)
     {
-        VpxVideoWriter* writer = NULL;
-        FILE* const file = fopen(filename, "wb");
-        if (!file)
+        const AVCodecHWConfig* config = avcodec_get_hw_config(encoder, i);
+        if (!config)
+            break;
+        if (config->methods & (AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX | AV_CODEC_HW_CONFIG_METHOD_HW_FRAMES_CTX))
         {
-            fprintf(stderr, "%s can't be written to.\n", filename);
-            return NULL;
+            return true;
         }
-        writer = static_cast<VpxVideoWriter*>(malloc(sizeof(*writer)));
-        if (!writer)
-        {
-            fprintf(stderr, "Can't allocate VpxVideoWriter.\n");
-            return NULL;
-        }
-        writer->frame_count = 0;
-        writer->info = *info;
-        writer->file = file;
-
-        write_header(writer->file, info, 0);
-
-        return writer;
     }
-    fprintf(stderr, "VpxVideoWriter supports only IVF.\n");
-    return NULL;
+
+    static const char* hw_prefixes[] = { "nvenc", "vaapi", "qsv", "videotoolbox", "omx", "d3d11va", "dxva2", "amf" };
+    for (const char* prefix : hw_prefixes)
+    {
+        if (strstr(encoder->name, prefix))
+            return true;
+    }
+
+    return false;
 }
 
-static void vpx_video_writer_close(VpxVideoWriter* writer)
+static void LogHWAlternatives(AVCodecID codecId)
 {
-    if (writer)
+    const AVCodec* encoder = nullptr;
+    void* i = nullptr;
+    std::vector<std::string> alternatives;
+    while ((encoder = av_codec_iterate(&i)))
     {
-        // Rewriting frame header with real frame count
-        rewind(writer->file);
-        write_header(writer->file, &writer->info, writer->frame_count);
+        if (av_codec_is_encoder(encoder) && encoder->id == codecId && IsEncoderHW(encoder))
+        {
+            alternatives.push_back(encoder->name);
+        }
+    }
 
-        fclose(writer->file);
-        free(writer);
+    if (!alternatives.empty())
+    {
+        std::string list;
+        for (const auto& name : alternatives)
+        {
+            if (!list.empty())
+                list += ", ";
+            list += name;
+        }
+        LOG_INFO("Hardware accelerated alternatives for this codec: %s", list.c_str());
     }
 }
 
-static int vpx_video_writer_write_frame(VpxVideoWriter* writer, const uint8_t* buffer, size_t size, int64_t pts)
+static int encode_frame(AVCodecContext* enc_ctx, AVFrame* frame, AVFormatContext* fmt_ctx, AVStream* st)
 {
-    ivf_write_frame_header(writer->file, pts, size);
-    if (fwrite(buffer, 1, size, writer->file) != size)
-        return 0;
+    int ret;
 
-    ++writer->frame_count;
-
-    return 1;
-}
-
-static void die_codec(vpx_codec_ctx_t* ctx, const char* s)
-{
-    const char* detail = vpx_codec_error_detail(ctx);
-
-    LOG_ERROR("%s: %s\n", s, vpx_codec_error(ctx));
-    if (detail)
-        LOG_ERROR("    %s\n", detail);
-    exit(EXIT_FAILURE);
-}
-
-static int encode_frame(vpx_codec_ctx_t* codec, vpx_image_t* img, int frame_index, int flags, VpxVideoWriter* writer)
-{
-    int got_pkts = 0;
-    vpx_codec_iter_t iter = NULL;
-    const vpx_codec_cx_pkt_t* pkt = NULL;
-    const vpx_codec_err_t res = vpx_codec_encode(codec, img, frame_index, 1, flags, VPX_DL_GOOD_QUALITY);
-    if (res != VPX_CODEC_OK)
-        die_codec(codec, "Failed to encode frame");
-    while ((pkt = vpx_codec_get_cx_data(codec, &iter)) != NULL)
+    // send the frame to the encoder
+    ret = avcodec_send_frame(enc_ctx, frame);
+    if (ret < 0)
     {
-        got_pkts = 1;
-        if (pkt->kind == VPX_CODEC_CX_FRAME_PKT)
-        {
-            const int keyframe = (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0;
-            if (!vpx_video_writer_write_frame(
-                    writer, static_cast<uint8_t*>(pkt->data.frame.buf), pkt->data.frame.sz, pkt->data.frame.pts))
-            {
-                die_codec(codec, "Failed to write compressed frame");
-            }
-            printf(keyframe ? "K" : ".");
-            if (frame_index % 100 == 0)
-            {
-                printf("%d", frame_index);
-            }
-            fflush(stdout);
-        }
+        LOG_ERROR("Error sending a frame for encoding\n");
+        return ret;
     }
-    return got_pkts;
+
+    while (ret >= 0)
+    {
+        AVPacket* pkt = av_packet_alloc();
+        ret = avcodec_receive_packet(enc_ctx, pkt);
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+        {
+            av_packet_free(&pkt);
+            return 0;
+        }
+        else if (ret < 0)
+        {
+            LOG_ERROR("Error during encoding\n");
+            av_packet_free(&pkt);
+            return ret;
+        }
+
+        av_packet_rescale_ts(pkt, enc_ctx->time_base, st->time_base);
+        pkt->stream_index = st->index;
+
+        const int keyframe = (pkt->flags & AV_PKT_FLAG_KEY) != 0;
+        ret = av_interleaved_write_frame(fmt_ctx, pkt);
+        av_packet_free(&pkt);
+        if (ret < 0)
+        {
+            LOG_ERROR("Error while writing video frame\n");
+            return ret;
+        }
+
+        printf(keyframe ? "K" : ".");
+        fflush(stdout);
+    }
+
+    return 0;
 }
 
 struct EncodeThreadData
 {
     std::mutex* SurfaceMutex;
     std::condition_variable* NotifyCV;
-    int* Ready;
-    VpxVideoWriter** writer;
-    vpx_codec_ctx_t* codec{};
-    vpx_image_t* raw{};
+    std::atomic<int>* Ready;
+
+    AVFormatContext* formatContext{};
+    AVCodecContext* codecContext{};
+    AVStream* videoStream{};
+    AVFrame* frame{};
+    std::atomic<bool> forceKeyframe{ false };
+    int frameCount{ 0 };
     uint32_t width{};
     uint32_t height{};
     uint32_t scale{};
@@ -305,12 +224,25 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                         }
                         // Convert to YUV for encoding
                         function(
-                            static_cast<uint8_t*>(scaledSurface->pixels), scaledSurface->pitch, etd.raw->planes[0],
-                            etd.raw->stride[0], etd.raw->planes[1], etd.raw->stride[1], etd.raw->planes[2], etd.raw->stride[1],
-                            scaledWidth, scaledHeight);
+                            static_cast<uint8_t*>(scaledSurface->pixels), scaledSurface->pitch, etd.frame->data[0],
+                            etd.frame->linesize[0], etd.frame->data[1], etd.frame->linesize[1], etd.frame->data[2],
+                            etd.frame->linesize[2], scaledWidth, scaledHeight);
 
-                        static int frame_count;
-                        encode_frame(etd.codec, etd.raw, frame_count++, 0, *etd.writer);
+                        etd.frame->pts = etd.frameCount++;
+                        if (etd.forceKeyframe.exchange(false))
+                        {
+                            etd.frame->pict_type = AV_PICTURE_TYPE_I;
+                        }
+                        else
+                        {
+                            etd.frame->pict_type = AV_PICTURE_TYPE_NONE;
+                        }
+                        encode_frame(etd.codecContext, etd.frame, etd.formatContext, etd.videoStream);
+                        if (etd.frameCount % 100 == 0)
+                        {
+                            printf("%d", etd.frameCount);
+                            fflush(stdout);
+                        }
                     }
                     else
                     {
@@ -346,15 +278,15 @@ private:
 
     bool smoothNN = false;
 
-    VpxVideoInfo info{};
-    const VpxInterface* encoder = NULL;
-    vpx_image_t raw{};
-    VpxVideoWriter* writer = NULL;
-    vpx_codec_ctx_t codec{};
+    AVFormatContext* _formatContext = nullptr;
+    AVCodecContext* _codecContext = nullptr;
+    AVStream* _videoStream = nullptr;
+    AVFrame* _frame = nullptr;
+
     std::thread EncodeThread{};
     std::mutex SurfaceMutex{};
     std::condition_variable NotifyCV{};
-    int Ready{};
+    std::atomic<int> Ready{};
     EncodeThreadData etd{};
     bool _videoInitialized = false;
 
@@ -379,6 +311,7 @@ public:
 
     ~HardwareDisplayDrawingEngine() override
     {
+        gShouldRender = false;
         {
             std::unique_lock lock(SurfaceMutex);
             Ready = 2;
@@ -397,28 +330,25 @@ public:
         SDL_FreeFormat(_screenTextureFormat);
         SDL_DestroyRenderer(_sdlRenderer);
 
-        while (encode_frame(&codec, NULL, -1, 0, writer))
+        if (_codecContext)
         {
-        }
+            encode_frame(_codecContext, nullptr, _formatContext, _videoStream);
+            av_write_trailer(_formatContext);
 
-        vpx_img_free(&raw);
-        if (vpx_codec_destroy(&codec))
-        {
-            die_codec(&codec, "Failed to destroy codec.");
+            avcodec_free_context(&_codecContext);
+            av_frame_free(&_frame);
+            if (!(_formatContext->oformat->flags & AVFMT_NOFILE))
+                avio_closep(&_formatContext->pb);
+            avformat_free_context(_formatContext);
         }
-        vpx_video_writer_close(writer);
     }
 
     void Initialise() override
     {
         _sdlRenderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | (_useVsync ? SDL_RENDERER_PRESENTVSYNC : 0));
 
-        encoder = &vpx_encoders[0];
-        etd.codec = &codec;
         etd.NotifyCV = &NotifyCV;
-        etd.raw = &raw;
         etd.Ready = &Ready;
-        etd.writer = &writer;
         etd.SurfaceMutex = &SurfaceMutex;
 
         etd.yuv444 = _yuv444;
@@ -546,40 +476,59 @@ private:
 
         auto width = etd.width;
         auto height = etd.height;
+        uint32_t scale = Config::Get().general.windowScale;
+        uint32_t frame_width = width * scale;
+        uint32_t frame_height = height * scale;
 
-        info.codec_fourcc = encoder->fourcc;
-        info.frame_width = width * Config::Get().general.windowScale;
-        info.frame_height = height * Config::Get().general.windowScale;
-        info.time_base.numerator = 1;
-        info.time_base.denominator = FPS;
-        if (info.frame_width <= 0 || info.frame_height <= 0 || (info.frame_width % 2) != 0 || (info.frame_height % 2) != 0)
+        if (frame_width <= 0 || frame_height <= 0 || (frame_width % 2) != 0 || (frame_height % 2) != 0)
         {
             LOG_FATAL(
-                "Invalid frame size: %dx%d (need to be larger than zero and even-sized)", info.frame_width, info.frame_height);
+                "Invalid frame size: %dx%d (need to be larger than zero and even-sized)", frame_width, frame_height);
         }
 
-        vpx_img_fmt_t fmt = VPX_IMG_FMT_I420;
-        if (_yuv444)
+        const char* envEncoder = getenv("OPENRCT2_ENCODER");
+        const char* envPreset = getenv("OPENRCT2_ENCODER_PRESET");
+
+        const AVCodec* encoder = nullptr;
+        if (envEncoder)
         {
-            fmt = VPX_IMG_FMT_I444;
+            encoder = avcodec_find_encoder_by_name(envEncoder);
+            if (!encoder)
+            {
+                LOG_ERROR("Requested encoder '%s' not found, falling back to default libvpx-vp9", envEncoder);
+            }
         }
-        if (!vpx_img_alloc(&raw, fmt, info.frame_width, info.frame_height, 1))
+
+        if (!encoder)
         {
-            LOG_FATAL("Failed to allocate image.");
+            encoder = avcodec_find_encoder_by_name("libvpx-vp9");
         }
-        LOG_INFO("Using %s\n", vpx_codec_iface_name(encoder->codec_interface()));
-        vpx_codec_enc_cfg_t cfg{};
-        vpx_codec_err_t res = vpx_codec_enc_config_default(encoder->codec_interface(), &cfg, 0);
-        if (res)
+
+        if (!encoder)
         {
-            die_codec(&codec, "Failed to get default codec config.");
+            encoder = avcodec_find_encoder(AV_CODEC_ID_VP9);
         }
-        cfg.g_w = info.frame_width;
-        cfg.g_h = info.frame_height;
-        cfg.g_timebase.num = info.time_base.numerator;
-        cfg.g_timebase.den = info.time_base.denominator;
-        cfg.g_threads = 8;
-        cfg.g_profile = _yuv444 ? 1 : 0;
+
+        if (!encoder)
+        {
+            encoder = avcodec_find_encoder(AV_CODEC_ID_VP8);
+        }
+
+        if (!encoder)
+        {
+            LOG_FATAL("No suitable encoder found");
+        }
+
+        LOG_INFO("Using encoder: %s", encoder->name);
+        if (IsEncoderHW(encoder))
+        {
+            LOG_INFO("Encoder is hardware accelerated");
+        }
+        else
+        {
+            LOG_INFO("Encoder is NOT hardware accelerated");
+            LogHWAlternatives(encoder->id);
+        }
 
         using namespace std::string_literals;
         char* titleSeqName = getenv("TITLE_SEQUENCE_NAME");
@@ -590,25 +539,88 @@ private:
         }
         std::string filename = "out"s + titleSequenceNameStr + ".webm";
 
-        // Get absolute path for logging
-        char* cwd = getcwd(nullptr, 0);
-        std::string absolutePath = std::string(cwd) + "/" + filename;
-        free(cwd);
+        if (avformat_alloc_output_context2(&_formatContext, nullptr, nullptr, filename.c_str()) < 0)
+        {
+            LOG_FATAL("Could not allocate output context");
+        }
 
-        LOG_INFO("Starting video encoding to file: %s", absolutePath.c_str());
-        writer = vpx_video_writer_open(filename.c_str(), kContainerIVF, &info);
-        if (!writer)
+        // Check if the chosen encoder is compatible with webm
+        if (avformat_query_codec(_formatContext->oformat, encoder->id, 1) != 1)
         {
-            LOG_FATAL("Failed to open %s for writing.", absolutePath.c_str());
+            LOG_INFO("Encoder %s is not supported by WebM, switching to MKV container", encoder->name);
+            avformat_free_context(_formatContext);
+            _formatContext = nullptr;
+            filename = "out"s + titleSequenceNameStr + ".mkv";
+            if (avformat_alloc_output_context2(&_formatContext, nullptr, nullptr, filename.c_str()) < 0)
+            {
+                LOG_FATAL("Could not allocate output context for MKV");
+            }
         }
-        if (vpx_codec_enc_init(&codec, encoder->codec_interface(), &cfg, 0))
+
+        _videoStream = avformat_new_stream(_formatContext, nullptr);
+        if (!_videoStream)
         {
-            LOG_FATAL("Failed to initialize encoder");
+            LOG_FATAL("Could not allocate stream");
         }
-        if (vpx_codec_control_(&codec, VP9E_SET_LOSSLESS, 1))
+
+        _codecContext = avcodec_alloc_context3(encoder);
+        if (!_codecContext)
         {
-            die_codec(&codec, "Failed to use lossless mode");
+            LOG_FATAL("Could not allocate codec context");
         }
+
+        _codecContext->width = frame_width;
+        _codecContext->height = frame_height;
+        _videoStream->time_base = { 1, static_cast<int>(kGameUpdateFPS) };
+        _codecContext->time_base = _videoStream->time_base;
+        _codecContext->pix_fmt = _yuv444 ? AV_PIX_FMT_YUV444P : AV_PIX_FMT_YUV420P;
+
+        if (_formatContext->oformat->flags & AVFMT_GLOBALHEADER)
+            _codecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+
+        if (envPreset)
+        {
+            av_opt_set(_codecContext->priv_data, "preset", envPreset, 0);
+        }
+        else if (encoder->id == AV_CODEC_ID_VP9)
+        {
+            av_opt_set(_codecContext->priv_data, "lossless", "1", 0);
+        }
+
+        if (avcodec_open2(_codecContext, encoder, nullptr) < 0)
+        {
+            LOG_FATAL("Could not open codec");
+        }
+
+        avcodec_parameters_from_context(_videoStream->codecpar, _codecContext);
+
+        if (!(_formatContext->oformat->flags & AVFMT_NOFILE))
+        {
+            if (avio_open(&_formatContext->pb, filename.c_str(), AVIO_FLAG_WRITE) < 0)
+            {
+                LOG_FATAL("Could not open '%s' for writing", filename.c_str());
+            }
+        }
+
+        if (avformat_write_header(_formatContext, nullptr) < 0)
+        {
+            LOG_FATAL("Error occurred when opening output file");
+        }
+
+        _frame = av_frame_alloc();
+        _frame->format = _codecContext->pix_fmt;
+        _frame->width = _codecContext->width;
+        _frame->height = _codecContext->height;
+
+        if (av_frame_get_buffer(_frame, 0) < 0)
+        {
+            LOG_FATAL("Could not allocate the video frame data");
+        }
+
+        etd.formatContext = _formatContext;
+        etd.codecContext = _codecContext;
+        etd.videoStream = _videoStream;
+        etd.frame = _frame;
 
         _videoInitialized = true;
     }
@@ -735,6 +747,12 @@ private:
             // Only proceed with encoding if video is initialized
             if (_videoInitialized)
             {
+                auto* player = static_cast<ITitleSequencePlayer*>(TitleGetSequencePlayer());
+                if (player != nullptr && player->PopCommandExecutedSignal())
+                {
+                    etd.forceKeyframe.store(true);
+                }
+
                 // Determine which buffer to write to (opposite of the one being encoded)
                 int writeBuffer = (etd.activeBuffer == 0) ? 1 : 0;
                 uint8_t* writePixelBuffer = (writeBuffer == 0) ? etd.pixelBufferA.get() : etd.pixelBufferB.get();
