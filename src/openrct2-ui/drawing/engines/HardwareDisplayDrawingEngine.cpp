@@ -674,10 +674,10 @@ private:
                         fseek(f, 0, SEEK_END);
                         long size = ftell(f);
                         fseek(f, 0, SEEK_SET);
-                        char* stats = (char*)av_malloc(size + 1);
+                        char* stats = static_cast<char*>(av_malloc(size + 1));
                         if (stats)
                         {
-                            if (fread(stats, 1, size, f) == (size_t)size)
+                            if (fread(stats, 1, size, f) == static_cast<size_t>(size))
                             {
                                 stats[size] = '\0';
                                 _codecContext->stats_in = stats;
