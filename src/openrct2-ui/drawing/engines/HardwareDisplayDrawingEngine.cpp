@@ -506,6 +506,7 @@ private:
 
         const char* envEncoder = getenv("OPENRCT2_ENCODER");
         const char* envPreset = getenv("OPENRCT2_ENCODER_PRESET");
+        const char* envTune = getenv("OPENRCT2_ENCODER_TUNE");
 
         const AVCodec* encoder = nullptr;
         if (envEncoder)
@@ -605,7 +606,11 @@ private:
         {
             av_opt_set(_codecContext->priv_data, "preset", envPreset, 0);
         }
-        else if (encoder->id == AV_CODEC_ID_VP9)
+        if (envTune)
+        {
+            av_opt_set(_codecContext->priv_data, "tune", envTune, 0);
+        }
+        if (!envPreset && encoder->id == AV_CODEC_ID_VP9)
         {
             av_opt_set(_codecContext->priv_data, "lossless", "1", 0);
         }
