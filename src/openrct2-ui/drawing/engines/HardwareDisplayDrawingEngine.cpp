@@ -594,7 +594,7 @@ private:
 
         _codecContext->width = frame_width;
         _codecContext->height = frame_height;
-        _videoStream->time_base = { 1, static_cast<int>(kGameUpdateFPS) };
+        _videoStream->time_base = { 1, static_cast<int>(FPS) };
         _codecContext->time_base = _videoStream->time_base;
         _codecContext->pix_fmt = _yuv444 ? AV_PIX_FMT_YUV444P : AV_PIX_FMT_YUV420P;
 
