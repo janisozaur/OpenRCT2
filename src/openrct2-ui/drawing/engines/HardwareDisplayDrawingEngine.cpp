@@ -143,6 +143,17 @@ static int encode_frame(AVCodecContext* enc_ctx, AVFrame* frame, AVFormatContext
 
         const int keyframe = (pkt->flags & AV_PKT_FLAG_KEY) != 0;
         ret = av_interleaved_write_frame(fmt_ctx, pkt);
+
+        char type = '.';
+        if (keyframe)
+        {
+            type = 'I';
+        }
+        else if (pkt->pts != pkt->dts && pkt->dts != AV_NOPTS_VALUE)
+        {
+            type = 'B';
+        }
+
         av_packet_free(&pkt);
         if (ret < 0)
         {
@@ -150,7 +161,7 @@ static int encode_frame(AVCodecContext* enc_ctx, AVFrame* frame, AVFormatContext
             return ret;
         }
 
-        printf(keyframe ? "K" : ".");
+        printf("%c", type);
         fflush(stdout);
     }
 
@@ -351,6 +362,20 @@ public:
             encode_frame(_codecContext, nullptr, _formatContext, _videoStream);
             av_write_trailer(_formatContext);
 
+            if (_codecContext->flags & AV_CODEC_FLAG_PASS1 && _codecContext->stats_out)
+            {
+                const char* envStats = getenv("OPENRCT2_ENCODER_STATS");
+                if (envStats)
+                {
+                    FILE* f = fopen(envStats, "wb");
+                    if (f)
+                    {
+                        fwrite(_codecContext->stats_out, 1, strlen(_codecContext->stats_out), f);
+                        fclose(f);
+                    }
+                }
+            }
+
             avcodec_free_context(&_codecContext);
             av_frame_free(&_frame);
             if (!(_formatContext->oformat->flags & AVFMT_NOFILE))
@@ -507,6 +532,10 @@ private:
         const char* envEncoder = getenv("OPENRCT2_ENCODER");
         const char* envPreset = getenv("OPENRCT2_ENCODER_PRESET");
         const char* envTune = getenv("OPENRCT2_ENCODER_TUNE");
+        const char* envBitrate = getenv("OPENRCT2_ENCODER_BITRATE");
+        const char* envGop = getenv("OPENRCT2_ENCODER_GOP");
+        const char* envQuality = getenv("OPENRCT2_ENCODER_QUALITY");
+        const char* envPass = getenv("OPENRCT2_ENCODER_PASS");
 
         const AVCodec* encoder = nullptr;
         if (envEncoder)
@@ -609,6 +638,59 @@ private:
         if (envTune)
         {
             av_opt_set(_codecContext->priv_data, "tune", envTune, 0);
+        }
+        if (envBitrate)
+        {
+            _codecContext->bit_rate = atoll(envBitrate);
+            _codecContext->rc_max_rate = _codecContext->bit_rate;
+            _codecContext->rc_buffer_size = _codecContext->bit_rate * 2;
+        }
+        if (envGop)
+        {
+            _codecContext->gop_size = atoi(envGop);
+        }
+        if (envQuality)
+        {
+            av_opt_set(_codecContext->priv_data, "crf", envQuality, 0);
+            _codecContext->global_quality = atoi(envQuality) * FF_QP2LAMBDA;
+            _codecContext->flags |= AV_CODEC_FLAG_QSCALE;
+        }
+        if (envPass)
+        {
+            int pass = atoi(envPass);
+            if (pass == 1)
+            {
+                _codecContext->flags |= AV_CODEC_FLAG_PASS1;
+            }
+            else if (pass == 2)
+            {
+                _codecContext->flags |= AV_CODEC_FLAG_PASS2;
+                const char* envStats = getenv("OPENRCT2_ENCODER_STATS");
+                if (envStats)
+                {
+                    FILE* f = fopen(envStats, "rb");
+                    if (f)
+                    {
+                        fseek(f, 0, SEEK_END);
+                        long size = ftell(f);
+                        fseek(f, 0, SEEK_SET);
+                        char* stats = (char*)av_malloc(size + 1);
+                        if (stats)
+                        {
+                            if (fread(stats, 1, size, f) == (size_t)size)
+                            {
+                                stats[size] = '\0';
+                                _codecContext->stats_in = stats;
+                            }
+                            else
+                            {
+                                av_free(stats);
+                            }
+                        }
+                        fclose(f);
+                    }
+                }
+            }
         }
         if (!envPreset && encoder->id == AV_CODEC_ID_VP9)
         {
