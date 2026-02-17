@@ -35,12 +35,12 @@
 #include <thread>
 #ifdef ENABLE_VIDEO_RECORDING
 extern "C" {
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libavutil/avutil.h>
-#include <libavutil/imgutils.h>
-#include <libavutil/opt.h>
-#include <libswscale/swscale.h>
+    #include <libavcodec/avcodec.h>
+    #include <libavformat/avformat.h>
+    #include <libavutil/avutil.h>
+    #include <libavutil/imgutils.h>
+    #include <libavutil/opt.h>
+    #include <libswscale/swscale.h>
 }
 #endif
 #ifdef _WIN32
