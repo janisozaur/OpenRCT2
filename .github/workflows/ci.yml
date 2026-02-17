@@ -495,7 +495,10 @@ jobs:
         with:
           key: linux-${{ matrix.platform }}-${{ matrix.distro }}-${{ matrix.release }}
       - name: Get pre-reqs
-        run: . scripts/setenv && get-discord-rpc
+        run: |
+          . scripts/setenv
+          get-discord-rpc
+          apt-get update && apt-get install -y libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libyuv-dev
       - name: Install GCC problem matcher
         uses: ammaraskar/gcc-problem-matcher@master
       - name: Build OpenRCT2
@@ -524,7 +527,9 @@ jobs:
         with:
           key: linux-appimage
       - name: Get pre-reqs
-        run: . scripts/setenv -q && get-discord-rpc
+        run: |
+          . scripts/setenv -q && get-discord-rpc
+          apt-get update && apt-get install -y libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libyuv-dev
       - name: Build OpenRCT2
         run: |
           . scripts/setenv -q && build -DCMAKE_CXX_COMPILER=clang++-20 -DCMAKE_BUILD_TYPE=Release -DAPPIMAGE=ON -DOPENRCT2_USE_CCACHE=on
@@ -578,6 +583,8 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2.21
         with:
           key: linux-clang
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libyuv-dev
       - name: Install GCC problem matcher
         uses: ammaraskar/gcc-problem-matcher@master
       - name: Build OpenRCT2
@@ -594,6 +601,8 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2.21
         with:
           key: linux-clang-tests
+      - name: Install dependencies
+        run: apt-get update && apt-get install -y libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libyuv-dev
       - name: Install GCC problem matcher
         uses: ammaraskar/gcc-problem-matcher@master
       - name: Build OpenRCT2
