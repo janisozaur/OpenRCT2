@@ -23,4 +23,10 @@ struct ITitleSequencePlayer
     virtual bool Update() = 0;
     virtual void Seek(int32_t position) = 0;
     virtual void Eject() = 0;
+
+    /**
+     * Checks if a command has been executed since the last time this was called.
+     * @return True if a command was executed, false otherwise.
+     */
+    virtual bool PopCommandExecutedSignal() = 0;
 };
