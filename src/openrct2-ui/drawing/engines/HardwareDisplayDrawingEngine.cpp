@@ -501,6 +501,7 @@ private:
         if (frame_width <= 0 || frame_height <= 0 || (frame_width % 2) != 0 || (frame_height % 2) != 0)
         {
             LOG_FATAL("Invalid frame size: %dx%d (need to be larger than zero and even-sized)", frame_width, frame_height);
+            return;
         }
 
         const char* envEncoder = getenv("OPENRCT2_ENCODER");
@@ -534,6 +535,7 @@ private:
         if (!encoder)
         {
             LOG_FATAL("No suitable encoder found");
+            return;
         }
 
         LOG_INFO("Using encoder: %s", encoder->name);
@@ -559,6 +561,7 @@ private:
         if (avformat_alloc_output_context2(&_formatContext, nullptr, nullptr, filename.c_str()) < 0)
         {
             LOG_FATAL("Could not allocate output context");
+            return;
         }
 
         // Check if the chosen encoder is compatible with webm
@@ -571,6 +574,7 @@ private:
             if (avformat_alloc_output_context2(&_formatContext, nullptr, nullptr, filename.c_str()) < 0)
             {
                 LOG_FATAL("Could not allocate output context for MKV");
+                return;
             }
         }
 
@@ -578,12 +582,14 @@ private:
         if (!_videoStream)
         {
             LOG_FATAL("Could not allocate stream");
+            return;
         }
 
         _codecContext = avcodec_alloc_context3(encoder);
         if (!_codecContext)
         {
             LOG_FATAL("Could not allocate codec context");
+            return;
         }
 
         _codecContext->width = frame_width;
@@ -607,6 +613,7 @@ private:
         if (avcodec_open2(_codecContext, encoder, nullptr) < 0)
         {
             LOG_FATAL("Could not open codec");
+            return;
         }
 
         avcodec_parameters_from_context(_videoStream->codecpar, _codecContext);
@@ -616,12 +623,14 @@ private:
             if (avio_open(&_formatContext->pb, filename.c_str(), AVIO_FLAG_WRITE) < 0)
             {
                 LOG_FATAL("Could not open '%s' for writing", filename.c_str());
+                return;
             }
         }
 
         if (avformat_write_header(_formatContext, nullptr) < 0)
         {
             LOG_FATAL("Error occurred when opening output file");
+            return;
         }
 
         _frame = av_frame_alloc();
@@ -632,6 +641,7 @@ private:
         if (av_frame_get_buffer(_frame, 0) < 0)
         {
             LOG_FATAL("Could not allocate the video frame data");
+            return;
         }
 
         etd.formatContext = _formatContext;
