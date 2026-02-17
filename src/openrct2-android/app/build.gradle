@@ -68,7 +68,31 @@ android {
     lintOptions {
         abortOnError = false
     }
+
+    androidResources {
+        noCompress 'parkseq', 'zip', 'dat', 'parkobj'
+    }
 }
+
+def prepareAndroidAssetsScript = "${rootProject.projectDir}/../../scripts/prepare-android-assets"
+tasks.register('prepareOpenRCT2Assets', Exec) {
+    workingDir rootProject.projectDir
+    commandLine 'bash', prepareAndroidAssetsScript
+    inputs.file(prepareAndroidAssetsScript)
+    inputs.file("${rootProject.projectDir}/../../assets.json")
+    inputs.file("${rootProject.projectDir}/../../contributors.md")
+    inputs.file("${rootProject.projectDir}/../../distribution/changelog.txt")
+    inputs.file("${rootProject.projectDir}/../../resources/fonts/sprites.json")
+    inputs.file("${rootProject.projectDir}/../../resources/g2/sprites.json")
+    inputs.file("${rootProject.projectDir}/../../resources/palettes/sprites.json")
+    inputs.file("${rootProject.projectDir}/../../resources/tracks/sprites.json")
+    inputs.dir("${rootProject.projectDir}/../../data/language")
+    inputs.dir("${rootProject.projectDir}/../../data/shaders")
+    inputs.dir("${rootProject.projectDir}/../../data/scenario_patches")
+    outputs.dir("${projectDir}/src/main/assets/openrct2")
+}
+
+preBuild.dependsOn(tasks.named('prepareOpenRCT2Assets'))
 
 dependencies {
     implementation 'commons-io:commons-io:2.20.0'
