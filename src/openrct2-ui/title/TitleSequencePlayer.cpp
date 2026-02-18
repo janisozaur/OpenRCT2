@@ -52,6 +52,7 @@ namespace OpenRCT2::Title
         int32_t _position = 0;
         int32_t _waitCounter = 0;
         bool _initialLoadCommand = true;
+        bool _commandExecuted = false;
 
         int32_t _previousWindowWidth = 0;
         int32_t _previousWindowHeight = 0;
@@ -75,6 +76,13 @@ namespace OpenRCT2::Title
         void Eject() override
         {
             _sequence = nullptr;
+        }
+
+        bool PopCommandExecutedSignal() override
+        {
+            bool ret = _commandExecuted;
+            _commandExecuted = false;
+            return ret;
         }
 
         bool Begin(size_t titleSequenceId) override
@@ -174,6 +182,7 @@ namespace OpenRCT2::Title
                     }
 
                     IncrementPosition();
+                    _commandExecuted = true;
                 }
                 catch (std::exception& e)
                 {

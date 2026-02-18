@@ -24,6 +24,13 @@ else ()
         PKG_CHECK_MODULES(OGG REQUIRED IMPORTED_TARGET ogg)
         PKG_CHECK_MODULES(VORBISFILE REQUIRED IMPORTED_TARGET vorbisfile)
     endif ()
+    PKG_CHECK_MODULES(AVCODEC IMPORTED_TARGET libavcodec)
+    PKG_CHECK_MODULES(AVFORMAT IMPORTED_TARGET libavformat)
+    PKG_CHECK_MODULES(AVUTIL IMPORTED_TARGET libavutil)
+    PKG_CHECK_MODULES(SWSCALE IMPORTED_TARGET libswscale)
+    if (AVCODEC_FOUND AND AVFORMAT_FOUND AND AVUTIL_FOUND AND SWSCALE_FOUND)
+        set(ENABLE_VIDEO_RECORDING ON)
+    endif ()
 endif ()
 
 if (NOT DISABLE_OPENGL AND NOT EMSCRIPTEN)
@@ -98,7 +105,11 @@ endif ()
 target_include_directories(openrct2 PRIVATE "${CMAKE_CURRENT_LIST_DIR}/.."
                                               ${OGG_INCLUDE_DIRS}
                                               ${VORBIS_INCLUDE_DIRS}
-                                              ${FLAC_INCLUDE_DIRS})
+                                              ${FLAC_INCLUDE_DIRS}
+                                              ${AVCODEC_INCLUDE_DIRS}
+                                              ${AVFORMAT_INCLUDE_DIRS}
+                                              ${AVUTIL_INCLUDE_DIRS}
+                                              ${SWSCALE_INCLUDE_DIRS})
 target_include_directories(openrct2 SYSTEM PRIVATE ${SDL2_INCLUDE_DIRS}
                                                      "${CMAKE_CURRENT_LIST_DIR}/../thirdparty")
 
@@ -136,6 +147,7 @@ endif ()
 target_compile_definitions(openrct2 PUBLIC
     $<$<BOOL:${DISABLE_FLAC}>:DISABLE_FLAC>
     $<$<BOOL:${DISABLE_VORBIS}>:DISABLE_VORBIS>
+    $<$<BOOL:${ENABLE_VIDEO_RECORDING}>:ENABLE_VIDEO_RECORDING>
     # If OpenGL is enabled then we want to dynamically look up symbols.
     # If its disabled and somehow we magically end up linking to OpenGL we don't want look up the OpenGL symbols????
     $<IF:$<BOOL:${DISABLE_OPENGL}>,DISABLE_OPENGL,OPENGL_NO_LINK>
@@ -265,4 +277,10 @@ if(MACOS_BUNDLE)
     )
 endif ()
 
-target_link_libraries(${PROJECT_NAME} vpx yuv)
+target_link_libraries(${PROJECT_NAME}
+    $<$<BOOL:${ENABLE_VIDEO_RECORDING}>:PkgConfig::AVCODEC>
+    $<$<BOOL:${ENABLE_VIDEO_RECORDING}>:PkgConfig::AVFORMAT>
+    $<$<BOOL:${ENABLE_VIDEO_RECORDING}>:PkgConfig::AVUTIL>
+    $<$<BOOL:${ENABLE_VIDEO_RECORDING}>:PkgConfig::SWSCALE>
+    yuv
+)
