@@ -92,7 +92,27 @@ tasks.register('prepareOpenRCT2Assets', Exec) {
     outputs.dir("${projectDir}/src/main/assets/openrct2")
 }
 
-preBuild.dependsOn(tasks.named('prepareOpenRCT2Assets'))
+if (!project.hasProperty('skipAssets')) {
+    preBuild.dependsOn(tasks.named('prepareOpenRCT2Assets'))
+}
+
+if (project.hasProperty('skipJava')) {
+    tasks.withType(JavaCompile).configureEach {
+        enabled = false
+    }
+    def skippablePrefixes = ["process", "merge", "generate", "compile", "lint", "check"]
+    def skippableKeywords = ["Java", "Resources", "Manifest", "Asset", "Lint", "Runtime"]
+    tasks.configureEach { task ->
+        def name = task.name
+        def hasPrefix = skippablePrefixes.any { name.startsWith(it) }
+        def hasKeyword = skippableKeywords.any { name.contains(it) }
+        if (hasPrefix && hasKeyword) {
+            if (!name.contains("externalNativeBuild") && !name.contains("CMake") && !name.contains("Ninja")) {
+                task.enabled = false
+            }
+        }
+    }
+}
 
 dependencies {
     implementation 'commons-io:commons-io:2.20.0'
