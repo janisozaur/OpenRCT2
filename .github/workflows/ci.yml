@@ -632,7 +632,7 @@ jobs:
           # The gradle cache is by default ~/.gradle/caches, but ~ gets resolved by GitHub Actions to the runner's
           # home directory (/home/github), not the user inside the container (/root). Name the path explicitly.
           path: /root/.gradle/caches
-          key: gradle-${{ runner.os }}-26-android-${{ hashFiles('src/openrct2-android/**/*.gradle','src/openrct2-android/**/*.properties') }}
+          key: gradle-${{ runner.os }}-26-android-${{ hashFiles('src/openrct2-android/build.gradle', 'src/openrct2-android/settings.gradle', 'src/openrct2-android/app/build.gradle', 'src/openrct2-android/gradle.properties', 'src/openrct2-android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             gradle-${{ runner.os }}-26-android-
       - name: Install GCC problem matcher
@@ -664,7 +664,7 @@ jobs:
           # The gradle cache is by default ~/.gradle/caches, but ~ gets resolved by GitHub Actions to the runner's
           # home directory (/home/github), not the user inside the container (/root). Name the path explicitly.
           path: /root/.gradle/caches
-          key: gradle-${{ runner.os }}-26-android-${{ hashFiles('src/openrct2-android/**/*.gradle','src/openrct2-android/**/*.properties') }}
+          key: gradle-${{ runner.os }}-26-android-${{ hashFiles('src/openrct2-android/build.gradle', 'src/openrct2-android/settings.gradle', 'src/openrct2-android/app/build.gradle', 'src/openrct2-android/gradle.properties', 'src/openrct2-android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             gradle-${{ runner.os }}-26-android-
       - name: Setup keystore
