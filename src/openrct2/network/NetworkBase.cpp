@@ -155,6 +155,7 @@ namespace OpenRCT2::Network
 
     bool NetworkBase::Init()
     {
+        LOG_INFO("Initializing network, mode %d, status %d", static_cast<int>(mode), static_cast<int>(status));
         status = Status::ready;
 
         ServerName.clear();
@@ -168,6 +169,9 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Reconnect()
     {
+        LOG_INFO(
+            "Reconnecting to %s:%u, mode %d, status %d", _host.c_str(), _port, static_cast<int>(mode),
+            static_cast<int>(status));
         if (status != Status::none)
         {
             Close();
@@ -182,6 +186,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Close()
     {
+        LOG_INFO("Closing network connection, mode %d, status %d", static_cast<int>(mode), static_cast<int>(status));
         if (status != Status::none)
         {
             // HACK Because Close() is closed all over the place, it sometimes gets called inside an Update
@@ -219,6 +224,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::DecayCooldown(Player* player)
     {
+        LOG_INFO("Decaying cooldowns for player %u", player->Id);
         if (player == nullptr)
             return; // No valid connection yet.
 
@@ -234,6 +240,9 @@ namespace OpenRCT2::Network
 
     void NetworkBase::CloseConnection()
     {
+        LOG_INFO(
+            "Closing connection to %s:%u, mode %d, status %d", _host.c_str(), _port, static_cast<int>(mode),
+            static_cast<int>(status));
         if (mode == Mode::client)
         {
             _serverConnection.reset();
@@ -332,7 +341,7 @@ namespace OpenRCT2::Network
             bool ok = false;
             try
             {
-                LOG_VERBOSE("Loading key from %s", keyPath.c_str());
+                LOG_INFO("Loading key from %s", keyPath.c_str());
                 auto fs = FileStream(keyPath, FileMode::open);
                 ok = _key.LoadPrivate(&fs);
             }
@@ -347,6 +356,7 @@ namespace OpenRCT2::Network
             return ok;
         }
 
+        LOG_INFO("Key loaded successfully, connecting to server...");
         return true;
     }
 
@@ -360,7 +370,7 @@ namespace OpenRCT2::Network
 
         _userManager.Load();
 
-        LOG_VERBOSE("Begin listening for clients");
+        LOG_INFO("Begin listening for clients");
 
         _listenSocket = CreateTcpSocket();
         try
@@ -414,6 +424,7 @@ namespace OpenRCT2::Network
         GameLoadScripts();
         GameNotifyMapChanged();
 
+        LOG_INFO("Server started successfully on %s:%u", szAddress, port);
         return true;
     }
 
@@ -503,6 +514,7 @@ namespace OpenRCT2::Network
         _closeLock = false;
         if (_requireClose)
         {
+            LOG_INFO("Close was requested during update, closing now.");
             Close();
             if (_requireReconnect)
             {
@@ -513,6 +525,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Flush()
     {
+        LOG_INFO("Flushing network data, mode %d, status %d", static_cast<int>(mode), static_cast<int>(status));
         if (GetMode() == Mode::client)
         {
             _serverConnection->SendQueuedData();
@@ -581,6 +594,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::UpdateClient()
     {
+        LOG_INFO("Updating client connection, mode %d, status %d", static_cast<int>(mode), static_cast<int>(status));
         _serverConnection->update();
     }
 
@@ -588,10 +602,12 @@ namespace OpenRCT2::Network
     {
         assert(_serverConnection != nullptr);
 
+        LOG_INFO("Ticking client connection, mode %d, status %d", static_cast<int>(mode), static_cast<int>(status));
         switch (status)
         {
             case Status::connecting:
             {
+                LOG_INFO("Checking connection status...");
                 switch (_serverConnection->Socket->GetStatus())
                 {
                     case SocketStatus::resolving:
@@ -607,6 +623,7 @@ namespace OpenRCT2::Network
                             intent.PutExtra(
                                 INTENT_EXTRA_CALLBACK, []() -> void { OpenRCT2::GetContext()->GetNetwork().Close(); });
                             ContextOpenIntent(&intent);
+                            LOG_INFO("Resolving server address...");
                         }
                         break;
                     }
@@ -625,6 +642,7 @@ namespace OpenRCT2::Network
                             ContextOpenIntent(&intent);
 
                             server_connect_time = Platform::GetTicks();
+                            LOG_INFO("Connection established, authenticating...");
                         }
                         break;
                     }
@@ -639,6 +657,7 @@ namespace OpenRCT2::Network
                         intent.PutExtra(INTENT_EXTRA_MESSAGE, std::string{ str_authenticating });
                         intent.PutExtra(INTENT_EXTRA_CALLBACK, []() -> void { OpenRCT2::GetContext()->GetNetwork().Close(); });
                         ContextOpenIntent(&intent);
+                        LOG_INFO("Client authenticated, mode %d, status %d", static_cast<int>(mode), static_cast<int>(status));
                         break;
                     }
                     default:
@@ -648,6 +667,9 @@ namespace OpenRCT2::Network
                         {
                             Console::Error::WriteLine(error);
                         }
+                        LOG_ERROR(
+                            "Connection error, mode %d, status %d, error: %s", static_cast<int>(mode), static_cast<int>(status),
+                            error != nullptr ? error : "unknown");
 
                         Close();
                         ContextForceCloseWindowByClass(WindowClass::networkStatus);
@@ -661,6 +683,7 @@ namespace OpenRCT2::Network
             {
                 if (!ProcessConnection(*_serverConnection))
                 {
+                    LOG_INFO("Disconnected from server, mode %d, status %d", static_cast<int>(mode), static_cast<int>(status));
                     // Do not show disconnect message window when password window closed/canceled
                     if (_serverConnection->AuthStatus == Auth::requirePassword)
                     {
@@ -692,6 +715,7 @@ namespace OpenRCT2::Network
                 }
                 else
                 {
+                    LOG_INFO("Connection is healthy, mode %d, status %d", static_cast<int>(mode), static_cast<int>(status));
                     uint32_t ticks = Platform::GetTicks();
                     if (ticks - _lastSentHeartbeat >= 3000)
                     {
@@ -1289,7 +1313,7 @@ namespace OpenRCT2::Network
             return;
         }
 
-        LOG_VERBOSE("Requesting gamestate from server for tick %u", tick);
+        LOG_INFO("Requesting gamestate from server for tick %u", tick);
 
         Packet packet(Command::requestGameState);
         packet << tick;
@@ -1298,7 +1322,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Send_TOKEN()
     {
-        LOG_VERBOSE("requesting token");
+        LOG_INFO("Requesting token");
         Packet packet(Command::token);
         _serverConnection->AuthStatus = Auth::requested;
         _serverConnection->QueuePacket(std::move(packet));
@@ -1307,6 +1331,7 @@ namespace OpenRCT2::Network
     void NetworkBase::Client_Send_AUTH(
         const std::string& name, const std::string& password, const std::string& pubkey, const std::vector<uint8_t>& signature)
     {
+        LOG_INFO("Sending authentication packet for user %s", name.c_str());
         Packet packet(Command::auth);
         packet.WriteString(GetVersion());
         packet.WriteString(name);
@@ -1321,13 +1346,13 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Send_MAPREQUEST(const std::vector<ObjectEntryDescriptor>& objects)
     {
-        LOG_VERBOSE("client requests %u objects", uint32_t(objects.size()));
+        LOG_INFO("Client requests %u objects", uint32_t(objects.size()));
         Packet packet(Command::mapRequest);
         packet << static_cast<uint32_t>(objects.size());
         for (const auto& object : objects)
         {
             std::string name(object.GetName());
-            LOG_VERBOSE("client requests object %s", name.c_str());
+            LOG_INFO("Client requests object %s", name.c_str());
             if (object.Generation == ObjectGeneration::DAT)
             {
                 packet << static_cast<uint8_t>(0);
@@ -1416,7 +1441,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Send_HEARTBEAT(Connection& connection) const
     {
-        LOG_VERBOSE("Sending heartbeat");
+        LOG_INFO("Sending heartbeat");
 
         Packet packet(Command::heartbeat);
         connection.QueuePacket(std::move(packet));
@@ -1555,6 +1580,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Send_GAME_ACTION(const GameActions::GameAction* action)
     {
+        LOG_INFO("Sending game action of type %d", static_cast<int>(action->GetType()));
         Packet packet(Command::gameAction);
 
         uint32_t networkId = 0;
@@ -1812,6 +1838,9 @@ namespace OpenRCT2::Network
                     // closed connection or network error
                     if (!connection.GetLastDisconnectReason())
                     {
+                        LOG_INFO(
+                            "Connection %s disconnected or network error occurred, disconnecting connection.",
+                            connection.Socket->GetIpAddress().c_str());
                         connection.SetLastDisconnectReason(STR_MULTIPLAYER_CONNECTION_CLOSED);
                     }
                     return false;
@@ -1821,6 +1850,9 @@ namespace OpenRCT2::Network
                     ProcessPacket(connection, connection.InboundPacket);
                     if (!connection.IsValid())
                     {
+                        LOG_INFO(
+                            "Connection %s became invalid during packet processing, disconnecting connection.",
+                            connection.Socket->GetIpAddress().c_str());
                         return false;
                     }
                     break;
@@ -2275,6 +2307,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_TOKEN(Connection& connection, Packet& packet)
     {
+        LOG_INFO("Received authentication token from server, signing challenge");
         auto keyPath = GetPrivateKeyPath(Config::Get().network.playerName);
         if (!File::Exists(keyPath))
         {
@@ -2370,20 +2403,24 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_AUTH(Connection& connection, Packet& packet)
     {
+        LOG_INFO("Handling authentication response from server");
         uint32_t auth_status;
         packet >> auth_status >> const_cast<uint8_t&>(player_id);
         connection.AuthStatus = static_cast<Auth>(auth_status);
         switch (connection.AuthStatus)
         {
             case Auth::ok:
+                LOG_INFO("Authentication successful, player id %d", player_id);
                 Client_Send_GAMEINFO();
                 break;
             case Auth::badName:
+                LOG_WARNING("Authentication failed: bad player name");
                 connection.SetLastDisconnectReason(STR_MULTIPLAYER_BAD_PLAYER_NAME);
                 connection.Disconnect();
                 break;
             case Auth::badVersion:
             {
+                LOG_WARNING("Authentication failed: incorrect software version");
                 auto version = std::string(packet.ReadString());
                 auto versionp = version.c_str();
                 connection.SetLastDisconnectReason(STR_MULTIPLAYER_INCORRECT_SOFTWARE_VERSION, &versionp);
@@ -2391,25 +2428,31 @@ namespace OpenRCT2::Network
                 break;
             }
             case Auth::badPassword:
+                LOG_WARNING("Authentication failed: bad password");
                 connection.SetLastDisconnectReason(STR_MULTIPLAYER_BAD_PASSWORD);
                 connection.Disconnect();
                 break;
             case Auth::verificationFailure:
+                LOG_WARNING("Authentication failed: verification failure");
                 connection.SetLastDisconnectReason(STR_MULTIPLAYER_VERIFICATION_FAILURE);
                 connection.Disconnect();
                 break;
             case Auth::full:
+                LOG_WARNING("Authentication failed: server full");
                 connection.SetLastDisconnectReason(STR_MULTIPLAYER_SERVER_FULL);
                 connection.Disconnect();
                 break;
             case Auth::requirePassword:
+                LOG_INFO("Authentication requires password");
                 ContextOpenWindowView(WindowView::networkPassword);
                 break;
             case Auth::unknownKeyDisallowed:
+                LOG_WARNING("Authentication failed: unknown key disallowed");
                 connection.SetLastDisconnectReason(STR_MULTIPLAYER_UNKNOWN_KEY_DISALLOWED);
                 connection.Disconnect();
                 break;
             default:
+                LOG_WARNING("Authentication failed: received invalid data");
                 connection.SetLastDisconnectReason(STR_MULTIPLAYER_RECEIVED_INVALID_DATA);
                 connection.Disconnect();
                 break;
@@ -2456,6 +2499,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_OBJECTS_LIST(Connection& connection, Packet& packet)
     {
+        LOG_INFO("Received objects list from server, checking for missing objects");
         auto& repo = GetContext().GetObjectRepository();
 
         uint32_t objectCount{};
@@ -2478,7 +2522,7 @@ namespace OpenRCT2::Network
                     if (object == nullptr)
                     {
                         auto objectName = std::string(entry->GetName());
-                        LOG_VERBOSE("Requesting object %s with checksum %x from server", objectName.c_str(), entry->checksum);
+                        LOG_INFO("Requesting object %s with checksum %x from server", objectName.c_str(), entry->checksum);
                         missingObjects.push_back(ObjectEntryDescriptor(*entry));
                     }
                     else if (object->ObjectEntry.checksum != entry->checksum || object->ObjectEntry.flags != entry->flags)
@@ -2500,19 +2544,20 @@ namespace OpenRCT2::Network
                     if (object == nullptr)
                     {
                         auto objectName = std::string(identifier);
-                        LOG_VERBOSE("Requesting object %s from server", objectName.c_str());
+                        LOG_INFO("Requesting object %s from server", objectName.c_str());
                         missingObjects.push_back(ObjectEntryDescriptor(objectName));
                     }
                 }
             }
         }
 
-        LOG_VERBOSE("client received object list, it has %u entries, %zu missing", objectCount, missingObjects.size());
+        LOG_INFO("client received object list, it has %u entries, %zu missing", objectCount, missingObjects.size());
         Client_Send_MAPREQUEST(missingObjects);
     }
 
     void NetworkBase::Client_Handle_SCRIPTS_DATA(Connection& connection, Packet& packet)
     {
+        LOG_INFO("Received scripts data from server, loading plugins");
     #ifdef ENABLE_SCRIPTING
         auto& scriptEngine = GetContext().GetScriptEngine();
 
@@ -2557,7 +2602,7 @@ namespace OpenRCT2::Network
         const uint8_t* data = packet.Read(dataSize);
         _serverGameState.Write(data, dataSize);
 
-        LOG_VERBOSE(
+        LOG_INFO(
             "Received Game State %.02f%%",
             (static_cast<float>(_serverGameState.GetLength()) / static_cast<float>(totalSize)) * 100.0f);
 
@@ -2781,6 +2826,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_BEGINMAP([[maybe_unused]] Connection& connection, Packet& packet)
     {
+        LOG_INFO("Received map load start from server, preparing for map load");
         // Start of a new map load, clear the queue now as we have to buffer them
         // until the map is fully loaded.
         GameActions::ClearQueue();
@@ -2791,6 +2837,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_MAP([[maybe_unused]] Connection& connection, Packet& packet)
     {
+        LOG_INFO("Received map data from server, loading map");
         // Allow queue processing of game actions again.
         GameActions::ResumeQueue();
 
@@ -2824,9 +2871,11 @@ namespace OpenRCT2::Network
             // Given that during map load game actions are buffered we have to process the
             // player list first to have valid players for the queued game actions.
             ProcessPlayerList();
+            LOG_INFO("Finished loading map from server");
         }
         else
         {
+            LOG_WARNING("Failed to load map from server");
             // Something went wrong, game is not loaded. Return to main screen.
             auto loadOrQuitAction = GameActions::LoadOrQuitAction(
                 GameActions::LoadOrQuitModes::OpenSavePrompt, PromptMode::saveBeforeQuit);
@@ -2837,6 +2886,7 @@ namespace OpenRCT2::Network
 
     bool NetworkBase::LoadMap(IStream* stream)
     {
+        LOG_INFO("Loading map from stream");
         bool result = false;
         try
         {
@@ -2860,6 +2910,7 @@ namespace OpenRCT2::Network
         catch (const std::exception& e)
         {
             Console::Error::WriteLine("Unable to read map from server: %s", e.what());
+            LOG_ERROR("Unable to read map from server: %s", e.what());
         }
         return result;
     }
@@ -2961,6 +3012,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_GAME_ACTION([[maybe_unused]] Connection& connection, Packet& packet)
     {
+        LOG_INFO("Received game action from server, deserialising and enqueueing");
         uint32_t tick;
         GameCommand actionType;
         packet >> tick >> actionType;
@@ -3069,6 +3121,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_TICK([[maybe_unused]] Connection& connection, Packet& packet)
     {
+        LOG_INFO("Received tick update from server, updating internal tick and storing tick data");
         uint32_t srand0;
         uint32_t flags;
         uint32_t serverTick;
@@ -3100,6 +3153,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_PLAYERINFO([[maybe_unused]] Connection& connection, Packet& packet)
     {
+        LOG_INFO("Received player info from server");
         uint32_t tick;
         packet >> tick;
 
@@ -3111,6 +3165,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_PLAYERLIST([[maybe_unused]] Connection& connection, Packet& packet)
     {
+        LOG_INFO("Received player list from server");
         uint32_t tick;
         uint8_t size;
         packet >> tick >> size;
@@ -3129,6 +3184,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_PING([[maybe_unused]] Connection& connection, [[maybe_unused]] Packet& packet)
     {
+        LOG_INFO("Received ping request from server, sending ping response");
         Client_Send_PING();
     }
 
@@ -3149,6 +3205,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_PINGLIST([[maybe_unused]] Connection& connection, Packet& packet)
     {
+        LOG_INFO("Received ping list from server, updating player pings");
         uint8_t size;
         packet >> size;
         for (uint32_t i = 0; i < size; i++)
@@ -3169,6 +3226,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_SETDISCONNECTMSG(Connection& connection, Packet& packet)
     {
+        LOG_INFO("Received disconnect message from server");
         auto disconnectmsg = packet.ReadString();
         if (!disconnectmsg.empty())
         {
@@ -3183,6 +3241,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_SHOWERROR([[maybe_unused]] Connection& connection, Packet& packet)
     {
+        LOG_INFO("Received error message from server, showing error");
         StringId title, message;
         packet >> title >> message;
         ContextShowError(title, message, {});
@@ -3190,6 +3249,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_GROUPLIST([[maybe_unused]] Connection& connection, Packet& packet)
     {
+        LOG_INFO("Received group list from server, updating groups");
         group_list.clear();
         uint8_t size;
         packet >> size >> default_group;
@@ -3204,6 +3264,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_EVENT([[maybe_unused]] Connection& connection, Packet& packet)
     {
+        LOG_INFO("Received event from server");
         ServerEvent eventType;
         packet >> eventType;
         switch (eventType)
@@ -3236,13 +3297,14 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Send_GAMEINFO()
     {
-        LOG_VERBOSE("requesting gameinfo");
+        LOG_INFO("Requesting gameinfo from server");
         Packet packet(Command::gameInfo);
         _serverConnection->QueuePacket(std::move(packet));
     }
 
     void NetworkBase::Client_Handle_GAMEINFO([[maybe_unused]] Connection& connection, Packet& packet)
     {
+        LOG_INFO("Received game info from server, updating server info");
         auto jsonString = packet.ReadString();
         packet >> _serverState.gamestateSnapshotsEnabled;
         packet >> IsServerPlayerInvisible;
