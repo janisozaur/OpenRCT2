@@ -170,10 +170,7 @@ jobs:
           echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
       - name: Build graphics .dat files
         run: |
-          gxc build g2.dat OpenRCT2/resources/g2/sprites.json
-          gxc build palettes.dat OpenRCT2/resources/palettes/sprites.json
-          gxc build fonts.dat OpenRCT2/resources/fonts/sprites.json
-          gxc build tracks.dat OpenRCT2/resources/tracks/sprites.json
+          OpenRCT2/scripts/build-graphics-dat "$PWD"
       - name: Upload graphics .dat files
         uses: actions/upload-artifact@v6
         with:
@@ -615,7 +612,7 @@ jobs:
   android:
     name: Android
     runs-on: ubuntu-latest
-    needs: [check-code-formatting, build_variables]
+    needs: [check-code-formatting, build_variables, g2dat]
     container: openrct2/openrct2-build:25-android
     steps:
       - name: Checkout
@@ -638,9 +635,15 @@ jobs:
           echo "OPENRCT2_KEYSTORE_PASSWORD=${{ secrets.OPENRCT2_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
       - name: Install GCC problem matcher
         uses: ammaraskar/gcc-problem-matcher@master
+      - name: Download graphics .dat files
+        uses: actions/download-artifact@v7
+        with:
+          name: graphics-${{ needs.build_variables.outputs.name }}
+          path: bin/data
       - name: Build OpenRCT2
         run: |
           . scripts/setenv
+          export OPENRCT2_DAT_DIR="$GITHUB_WORKSPACE/bin/data"
           pushd src/openrct2-android
           ./gradlew app:assembleRelease
           popd
