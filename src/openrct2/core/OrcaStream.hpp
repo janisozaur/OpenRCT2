@@ -66,6 +66,7 @@ namespace OpenRCT2
             uint64_t offset{};
             uint64_t length{};
         };
+        static_assert(sizeof(ChunkEntry) == 20, "ChunkEntry should be 20 bytes");
 #pragma pack(pop)
 
         IStream* _stream;

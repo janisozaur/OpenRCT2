@@ -163,7 +163,7 @@ namespace OpenRCT2::Compression
         std::unique_ptr<ZSTD_CCtx, decltype(deleter)> ctx(ZSTD_createCCtx(), deleter);
         if (ctx == nullptr)
         {
-            LOG_ERROR("Failed to create zstd context");
+            LOG_ERROR("Failed to create zstd cpr context");
             return false;
         }
 
@@ -234,7 +234,7 @@ namespace OpenRCT2::Compression
         std::unique_ptr<ZSTD_DCtx, decltype(deleter)> ctx(ZSTD_createDCtx(), deleter);
         if (ctx == nullptr)
         {
-            LOG_ERROR("Failed to create zstd context");
+            LOG_ERROR("Failed to create zstd dcpr context");
             return false;
         }
 
@@ -257,7 +257,7 @@ namespace OpenRCT2::Compression
                 ret = ZSTD_decompressStream(ctx.get(), &output, &input);
                 if (ZSTD_isError(ret))
                 {
-                    LOG_ERROR("Failed to compress data with error: %s", ZSTD_getErrorName(ret));
+                    LOG_ERROR("Failed to decompress data with error: %s", ZSTD_getErrorName(ret));
                     return false;
                 }
 
