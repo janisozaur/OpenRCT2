@@ -2848,6 +2848,17 @@ namespace OpenRCT2::Network
         GameNotifyMapChange();
 
         auto ms = MemoryStream(packet.Data.data(), packet.Data.size());
+        try
+        {
+            LOG_INFO("Writing map data to temporary file for debugging purposes");
+            FileStream fs("/tmp/network_map.tmp", FileMode::write);
+            fs.CopyFromStream(ms, ms.GetLength());
+            LOG_INFO("Finished writing map data to temporary file, size %u bytes", ms.GetLength());
+        }
+        catch (const std::exception& e)
+        {
+            LOG_ERROR("Failed to write map data to temporary file: %s", e.what());
+        }
         if (LoadMap(&ms))
         {
             GameLoadInit();
