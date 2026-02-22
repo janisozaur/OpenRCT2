@@ -525,7 +525,7 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Flush()
     {
-        LOG_INFO("Flushing network data, mode %d, status %d", static_cast<int>(mode), static_cast<int>(status));
+        // LOG_INFO("Flushing network data, mode %d, status %d", static_cast<int>(mode), static_cast<int>(status));
         if (GetMode() == Mode::client)
         {
             _serverConnection->SendQueuedData();
