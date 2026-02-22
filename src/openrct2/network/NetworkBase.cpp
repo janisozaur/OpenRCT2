@@ -224,9 +224,9 @@ namespace OpenRCT2::Network
 
     void NetworkBase::DecayCooldown(Player* player)
     {
-        LOG_INFO("Decaying cooldowns for player %u", player->Id);
         if (player == nullptr)
             return; // No valid connection yet.
+        LOG_INFO("Decaying cooldowns for player %u", player->Id);
 
         for (auto it = std::begin(player->CooldownTime); it != std::end(player->CooldownTime);)
         {
@@ -2851,7 +2851,11 @@ namespace OpenRCT2::Network
         try
         {
             LOG_INFO("Writing map data to temporary file for debugging purposes");
+    #ifdef __ANDROID__
+            FileStream fs("/data/local/tmp/network_map.tmp", FileMode::write);
+    #else
             FileStream fs("/tmp/network_map.tmp", FileMode::write);
+    #endif
             fs.CopyFromStream(ms, ms.GetLength());
             LOG_INFO("Finished writing map data to temporary file, size %u bytes", ms.GetLength());
         }
