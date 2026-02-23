@@ -15,9 +15,9 @@
 #include <openrct2/core/File.h>
 #include <openrct2/core/Path.hpp>
 #include <openrct2/drawing/Drawing.Sprite.h>
+#include <openrct2/object/ImageTable.h>
 #include <openrct2/object/Object.h>
 #include <openrct2/object/ObjectFactory.h>
-#include <openrct2/object/ImageTable.h>
 
 using namespace OpenRCT2;
 
@@ -45,7 +45,8 @@ protected:
             return;
 
         auto* entry = reinterpret_cast<const RCTObjectEntry*>(data);
-        ObjectFactory::CreateObjectFromLegacyData(entry, data + sizeof(RCTObjectEntry), size - sizeof(RCTObjectEntry));
+        [[maybe_unused]] auto object = ObjectFactory::CreateObjectFromLegacyData(
+            entry, data + sizeof(RCTObjectEntry), size - sizeof(RCTObjectEntry));
     }
 };
 

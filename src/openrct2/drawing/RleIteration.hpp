@@ -10,8 +10,9 @@
 #pragma once
 
 #include "G1Element.h"
-#include <cstring>
+
 #include <cstdint>
+#include <cstring>
 
 namespace OpenRCT2::Drawing
 {

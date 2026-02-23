@@ -8,7 +8,6 @@
  *****************************************************************************/
 
 #include "Drawing.Sprite.h"
-#include "RleIteration.hpp"
 
 #include "../Context.h"
 #include "../Diagnostic.h"
@@ -24,6 +23,7 @@
 #include "../rct1/Csg.h"
 #include "../ui/UiContext.h"
 #include "Drawing.h"
+#include "RleIteration.hpp"
 #include "ScrollingText.h"
 
 #include <cassert>
