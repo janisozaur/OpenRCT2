@@ -314,6 +314,7 @@ namespace OpenRCT2::ObjectFactory
         catch (const std::exception& e)
         {
             LOG_ERROR("Error: %s when processing object %s", e.what(), path);
+            result.reset();
         }
         return result;
     }
@@ -338,6 +339,7 @@ namespace OpenRCT2::ObjectFactory
             if (readContext.WasError())
             {
                 LOG_ERROR("Error when processing object.");
+                result.reset();
             }
             else
             {

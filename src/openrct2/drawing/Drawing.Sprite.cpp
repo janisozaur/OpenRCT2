@@ -8,6 +8,7 @@
  *****************************************************************************/
 
 #include "Drawing.Sprite.h"
+#include "RleIteration.hpp"
 
 #include "../Context.h"
 #include "../Diagnostic.h"
@@ -1191,7 +1192,7 @@ bool IsCsgLoaded()
     return _csgLoaded;
 }
 
-size_t G1CalculateDataSize(const G1Element* g1)
+size_t G1CalculateDataSize(const G1Element* g1, const uint8_t* end)
 {
     if (const auto* asPalette = g1->asPalette())
     {
@@ -1200,24 +1201,22 @@ size_t G1CalculateDataSize(const G1Element* g1)
 
     if (g1->flags.has(G1Flag::hasRLECompression))
     {
-        if (g1->offset == nullptr)
+        if (g1->offset == nullptr || g1->height <= 0)
         {
             return 0;
         }
 
-        auto idx = (g1->height - 1) * 2;
-        uint16_t offset = g1->offset[idx] | (g1->offset[idx + 1] << 8);
-        uint8_t* ptr = g1->offset + offset;
-        bool endOfLine = false;
-        do
-        {
-            uint8_t chunk0 = *ptr++;
-            ptr++; // offset
-            uint8_t chunkSize = chunk0 & 0x7F;
-            ptr += chunkSize;
-            endOfLine = (chunk0 & 0x80) != 0;
-        } while (!endOfLine);
-        return ptr - g1->offset;
+        const uint8_t* lastPtr = nullptr;
+        bool success = IterateRleSprite<true>(
+            *g1, end, [&](int32_t y, uint8_t firstPixelX, uint8_t numPixels, const uint8_t* ptr) {
+                lastPtr = ptr + numPixels;
+                return true;
+            });
+
+        if (!success || lastPtr == nullptr)
+            return 0;
+
+        return lastPtr - g1->offset;
     }
 
     return g1->width * g1->height;

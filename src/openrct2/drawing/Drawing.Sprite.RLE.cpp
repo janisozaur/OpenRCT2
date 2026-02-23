@@ -14,11 +14,12 @@
 
 using namespace OpenRCT2::Drawing;
 
-template<DrawBlendOp TBlendOp>
+template<DrawBlendOp TBlendOp, bool TCheckBounds = false>
 static void FASTCALL DrawRLESpriteMagnify(RenderTarget& rt, const DrawSpriteArgs& args)
 {
     auto& paletteMap = args.PalMap;
     auto imgData = args.SourceImage.offset;
+    auto imageWidth = args.SourceImage.width;
     auto* dst = reinterpret_cast<PaletteIndex*>(args.DestinationBits);
     auto srcX = args.SrcX;
     auto srcY = args.SrcY;
@@ -49,6 +50,14 @@ static void FASTCALL DrawRLESpriteMagnify(RenderTarget& rt, const DrawSpriteArgs
                 pixelRunStart = *data8++;
                 lastDataForLine = numPixels & 0x80;
                 numPixels &= 0x7F;
+
+                if constexpr (TCheckBounds)
+                {
+                    if (pixelRunStart + numPixels > imageWidth)
+                    {
+                        return;
+                    }
+                }
             }
             if (pixelRunStart <= colNum && colNum < pixelRunStart + numPixels)
                 BlitPixel<TBlendOp>(reinterpret_cast<const PaletteIndex*>(data8 + colNum - pixelRunStart), dst, paletteMap);
@@ -59,10 +68,11 @@ static void FASTCALL DrawRLESpriteMagnify(RenderTarget& rt, const DrawSpriteArgs
     }
 }
 
-template<DrawBlendOp TBlendOp, size_t TZoom>
+template<DrawBlendOp TBlendOp, size_t TZoom, bool TCheckBounds = false>
 static void FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs& args)
 {
     auto src0 = args.SourceImage.offset;
+    auto imageWidth = args.SourceImage.width;
     auto dst0 = args.DestinationBits;
     auto srcX = args.SrcX;
     auto srcY = args.SrcY;
@@ -100,6 +110,14 @@ static void FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs&
             auto firstPixelX = *src++;
             isEndOfLine = (dataSize & 0x80) != 0;
             dataSize &= 0x7F;
+
+            if constexpr (TCheckBounds)
+            {
+                if (firstPixelX + dataSize > imageWidth)
+                {
+                    return;
+                }
+            }
 
             // Have our next source pointer point to the next data section
             nextRun = src + dataSize;
@@ -154,7 +172,7 @@ static void FASTCALL DrawRLESpriteMinify(RenderTarget& rt, const DrawSpriteArgs&
     }
 }
 
-template<DrawBlendOp TBlendOp>
+template<DrawBlendOp TBlendOp, bool TCheckBounds = false>
 static void FASTCALL DrawRLESprite(RenderTarget& rt, const DrawSpriteArgs& args)
 {
     auto zoom_level = static_cast<int8_t>(rt.zoom_level);
@@ -162,23 +180,47 @@ static void FASTCALL DrawRLESprite(RenderTarget& rt, const DrawSpriteArgs& args)
     {
         case -2:
         case -1:
-            DrawRLESpriteMagnify<TBlendOp>(rt, args);
+            DrawRLESpriteMagnify<TBlendOp, TCheckBounds>(rt, args);
             break;
         case 0:
-            DrawRLESpriteMinify<TBlendOp, 0>(rt, args);
+            DrawRLESpriteMinify<TBlendOp, 0, TCheckBounds>(rt, args);
             break;
         case 1:
-            DrawRLESpriteMinify<TBlendOp, 1>(rt, args);
+            DrawRLESpriteMinify<TBlendOp, 1, TCheckBounds>(rt, args);
             break;
         case 2:
-            DrawRLESpriteMinify<TBlendOp, 2>(rt, args);
+            DrawRLESpriteMinify<TBlendOp, 2, TCheckBounds>(rt, args);
             break;
         case 3:
-            DrawRLESpriteMinify<TBlendOp, 3>(rt, args);
+            DrawRLESpriteMinify<TBlendOp, 3, TCheckBounds>(rt, args);
             break;
         default:
             assert(false);
             break;
+    }
+}
+
+template<bool TCheckBounds>
+static void FASTCALL GfxRleSpriteToBufferInner(RenderTarget& rt, const DrawSpriteArgs& args)
+{
+    if (args.Image.HasPrimary())
+    {
+        if (args.Image.IsBlended())
+        {
+            DrawRLESprite<kBlendTransparent | kBlendSrc | kBlendDst, TCheckBounds>(rt, args);
+        }
+        else
+        {
+            DrawRLESprite<kBlendTransparent | kBlendSrc, TCheckBounds>(rt, args);
+        }
+    }
+    else if (args.Image.IsBlended())
+    {
+        DrawRLESprite<kBlendTransparent | kBlendDst, TCheckBounds>(rt, args);
+    }
+    else
+    {
+        DrawRLESprite<kBlendTransparent, TCheckBounds>(rt, args);
     }
 }
 
@@ -190,23 +232,10 @@ static void FASTCALL DrawRLESprite(RenderTarget& rt, const DrawSpriteArgs& args)
  */
 void FASTCALL GfxRleSpriteToBuffer(RenderTarget& rt, const DrawSpriteArgs& args)
 {
-    if (args.Image.HasPrimary())
-    {
-        if (args.Image.IsBlended())
-        {
-            DrawRLESprite<kBlendTransparent | kBlendSrc | kBlendDst>(rt, args);
-        }
-        else
-        {
-            DrawRLESprite<kBlendTransparent | kBlendSrc>(rt, args);
-        }
-    }
-    else if (args.Image.IsBlended())
-    {
-        DrawRLESprite<kBlendTransparent | kBlendDst>(rt, args);
-    }
-    else
-    {
-        DrawRLESprite<kBlendTransparent>(rt, args);
-    }
+    GfxRleSpriteToBufferInner<false>(rt, args);
+}
+
+void FASTCALL GfxRleSpriteToBufferChecked(RenderTarget& rt, const DrawSpriteArgs& args)
+{
+    GfxRleSpriteToBufferInner<true>(rt, args);
 }

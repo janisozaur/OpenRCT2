@@ -491,6 +491,19 @@ namespace OpenRCT2
 
             _data = std::move(data);
             _entries.insert(_entries.end(), newEntries.begin(), newEntries.end());
+
+            // Validate RLE images
+            const uint8_t* dataEnd = _data.get() + dataSize;
+            for (const auto& entry : newEntries)
+            {
+                if (entry.flags.has(G1Flag::hasRLECompression))
+                {
+                    if (G1CalculateDataSize(&entry, dataEnd) == 0)
+                    {
+                        throw std::runtime_error("Invalid RLE data in image table.");
+                    }
+                }
+            }
         }
         catch (const std::exception&)
         {
