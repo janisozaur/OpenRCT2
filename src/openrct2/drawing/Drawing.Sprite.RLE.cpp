@@ -15,7 +15,7 @@
 
 using namespace OpenRCT2::Drawing;
 
-template<DrawBlendOp TBlendOp>
+template<DrawBlendOp TBlendOp, bool TCheckBounds = false>
 static bool FASTCALL DrawRLESpriteMagnify(RenderTarget& rt, const DrawSpriteArgs& args)
 {
     auto& paletteMap = args.PalMap;
@@ -28,12 +28,46 @@ static bool FASTCALL DrawRLESpriteMagnify(RenderTarget& rt, const DrawSpriteArgs
     auto zoom = rt.zoom_level;
     auto dstLineWidth = rt.LineStride();
 
+    // Bounds checking setup
+    const uint8_t* srcEnd = nullptr;
+    if constexpr (TCheckBounds)
+    {
+        if (args.SourceImage.size == 0)
+        {
+            printf("%s:%d: Invalid sprite data: no size information\n", __FILE__, __LINE__);
+            return false; // Invalid sprite data: no size information
+        }
+        srcEnd = imgData + args.SourceImage.size;
+    }
+
     for (int32_t y = 0; y < height; y++)
     {
         PaletteIndex* nextDst = dst + dstLineWidth;
         const int32_t rowNum = zoom.ApplyTo(srcY + y);
+
+        if constexpr (TCheckBounds)
+        {
+            // Check line offset table bounds
+            const size_t lineOffsetPos = static_cast<size_t>(rowNum) * sizeof(uint16_t);
+            if (lineOffsetPos + 1 >= args.SourceImage.size)
+            {
+                printf("%s:%d: Line offset table out of bounds\n", __FILE__, __LINE__);
+                return false; // Line offset table out of bounds
+            }
+        }
+
         uint16_t lineOffset;
         std::memcpy(&lineOffset, &imgData[rowNum * sizeof(uint16_t)], sizeof(uint16_t));
+
+        if constexpr (TCheckBounds)
+        {
+            if (lineOffset >= args.SourceImage.size)
+            {
+                printf("%s:%d: Line offset points beyond sprite data\n", __FILE__, __LINE__);
+                return false; // Line offset points beyond sprite data
+            }
+        }
+
         const uint8_t* data8 = imgData + lineOffset;
 
         bool lastDataForLine = false;
@@ -46,10 +80,31 @@ static bool FASTCALL DrawRLESpriteMagnify(RenderTarget& rt, const DrawSpriteArgs
             while (colNum >= pixelRunStart + numPixels && !lastDataForLine)
             {
                 data8 += numPixels;
+
+                if constexpr (TCheckBounds)
+                {
+                    // Check we can read chunk header (2 bytes)
+                    if (data8 + 2 > srcEnd)
+                    {
+                        printf("%s:%d: Chunk header out of bounds\n", __FILE__, __LINE__);
+                        return false; // Chunk header out of bounds
+                    }
+                }
+
                 numPixels = *data8++;
                 pixelRunStart = *data8++;
                 lastDataForLine = numPixels & 0x80;
                 numPixels &= 0x7F;
+
+                if constexpr (TCheckBounds)
+                {
+                    // Check pixel data bounds
+                    if (data8 + numPixels > srcEnd)
+                    {
+                        printf("%s:%d: Pixel data out of bounds\n", __FILE__, __LINE__);
+                        return false; // Pixel data out of bounds
+                    }
+                }
             }
             if (pixelRunStart <= colNum && colNum < pixelRunStart + numPixels)
                 BlitPixel<TBlendOp>(reinterpret_cast<const PaletteIndex*>(data8 + colNum - pixelRunStart), dst, paletteMap);
@@ -213,7 +268,7 @@ static bool FASTCALL DrawRLESprite(RenderTarget& rt, const DrawSpriteArgs& args)
     {
         case -2:
         case -1:
-            return DrawRLESpriteMagnify<TBlendOp>(rt, args);
+            return DrawRLESpriteMagnify<TBlendOp, TCheckBounds>(rt, args);
         case 0:
             return DrawRLESpriteMinify<TBlendOp, 0, TCheckBounds>(rt, args);
         case 1:
@@ -269,5 +324,5 @@ bool FASTCALL GfxRleSpriteToBuffer(RenderTarget& rt, const DrawSpriteArgs& args)
  */
 bool FASTCALL GfxRleSpriteToBufferWithBoundsCheck(RenderTarget& rt, const DrawSpriteArgs& args)
 {
-    return GfxRleSpriteToBufferInternal<false>(rt, args);
+    return GfxRleSpriteToBufferInternal<true>(rt, args);
 }

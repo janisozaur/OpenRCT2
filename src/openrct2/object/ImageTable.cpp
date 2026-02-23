@@ -521,7 +521,10 @@ namespace OpenRCT2
             _entries.insert(_entries.end(), newEntries.begin(), newEntries.end());
 
             // Validate all loaded images for malformed RLE sprite data
-            ValidateImages(context);
+            if (!ValidateImages(context))
+            {
+                throw std::runtime_error("RLE validation failed");
+            }
         }
         catch (const std::exception&)
         {
@@ -657,13 +660,18 @@ namespace OpenRCT2
         _objDataCache.clear();
 
         // Validate all loaded images for malformed RLE sprite data
-        ValidateImages(context);
+        if (!ValidateImages(context))
+        {
+            return false;
+        }
 
         return usesFallbackSprites;
     }
 
-    void ImageTable::ValidateImages(IReadObjectContext* context)
+    bool ImageTable::ValidateImages(IReadObjectContext* context)
     {
+        bool allValid = true;
+
         // Validate each RLE-compressed image for bounds violations
         for (size_t i = 0; i < _entries.size(); i++)
         {
@@ -683,7 +691,7 @@ namespace OpenRCT2
 
             // Create a temporary dummy buffer and render target for validation
             // We don't need the actual output, just to check if the sprite data is valid
-            std::vector<uint8_t> dummyBuffer(g1.width * g1.height);
+            std::vector<uint8_t> dummyBuffer(std::max<int32_t>(1, g1.width) * std::max<int32_t>(1, g1.height));
             auto* paletteBits = reinterpret_cast<OpenRCT2::Drawing::PaletteIndex*>(dummyBuffer.data());
             OpenRCT2::Drawing::RenderTarget rt;
             rt.bits = paletteBits;
@@ -701,10 +709,13 @@ namespace OpenRCT2
             if (!isValid)
             {
                 auto message = String::stdFormat(
-                    "Image %zu contains malformed RLE sprite data and may cause rendering issues.", i);
-                context->LogWarning(ObjectError::invalidProperty, message.c_str());
+                    "Image %zu contains malformed RLE sprite data.", i);
+                context->LogError(ObjectError::invalidProperty, message.c_str());
+                allValid = false;
             }
         }
+
+        return allValid;
     }
 
     void ImageTable::AddImage(const G1Element* g1)
