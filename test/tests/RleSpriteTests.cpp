@@ -180,4 +180,113 @@ namespace
             RleDrawParam{ 1, 0, 0 }, RleDrawParam{ 1, -1, -1 }, RleDrawParam{ 1, 1, 0 }, RleDrawParam{ 2, 0, 1 },
             RleDrawParam{ 2, -1, 0 }, RleDrawParam{ 3, 0, -1 }));
 
+    TEST(RleSpriteTests, ValidRleDataPasses)
+    {
+        // 2x2 image, valid data
+        std::vector<uint8_t> data = {
+            0x04,     0x00,             // Line 0 offset (4)
+            0x08,     0x00,             // Line 1 offset (8)
+            2,        0,    0x11, 0x22, // Line 0: 2 pixels at 0: 0x11, 0x22
+            2 | 0x80, 0,    0x33, 0x44  // Line 1: 2 pixels at 0: 0x33, 0x44 (end of line)
+        };
+
+        G1Element g1{};
+        g1.width = 2;
+        g1.height = 2;
+        g1.offset = data.data();
+        g1.size = static_cast<uint32_t>(data.size());
+        g1.flags = G1Flag::hasRLECompression;
+
+        std::vector<uint8_t> buffer(4);
+        auto* paletteBits = reinterpret_cast<OpenRCT2::Drawing::PaletteIndex*>(buffer.data());
+        OpenRCT2::Drawing::RenderTarget rt;
+        rt.bits = paletteBits;
+        rt.width = 2;
+        rt.height = 2;
+        rt.pitch = 0;
+        rt.zoom_level = ZoomLevel{ 0 };
+
+        DrawSpriteArgs args(ImageId(), PaletteMap::GetDefault(), g1, 0, 0, 2, 2, paletteBits);
+
+        bool result = GfxRleSpriteToBufferWithBoundsCheck(rt, args);
+        EXPECT_TRUE(result) << "Valid RLE data should pass validation";
+    }
+
+    TEST(RleSpriteTests, MalformedRleDataDetected)
+    {
+        // 1x1 image, but data says it has a run of 10 pixels, and we only provide 2 bytes of data
+        std::vector<uint8_t> data = {
+            0x02, 0x00, // Line 0 offset (2)
+            10,   0,    // 10 pixels, start at 0
+            0xAA, 0xBB  // Only 2 pixels provided
+        };
+
+        G1Element g1{};
+        g1.width = 10;
+        g1.height = 1;
+        g1.offset = data.data();
+        g1.size = static_cast<uint32_t>(data.size());
+        g1.flags = G1Flag::hasRLECompression;
+
+        std::vector<uint8_t> buffer(10);
+        auto* paletteBits = reinterpret_cast<OpenRCT2::Drawing::PaletteIndex*>(buffer.data());
+        OpenRCT2::Drawing::RenderTarget rt;
+        rt.bits = paletteBits;
+        rt.width = 10;
+        rt.height = 1;
+        rt.pitch = 0;
+        rt.zoom_level = ZoomLevel{ 0 };
+
+        DrawSpriteArgs args(ImageId(), PaletteMap::GetDefault(), g1, 0, 0, 10, 1, paletteBits);
+
+        bool result = GfxRleSpriteToBufferWithBoundsCheck(rt, args);
+        EXPECT_FALSE(result) << "Malformed RLE data (run exceeds buffer) should be detected";
+    }
+
+    TEST(RleSpriteTests, MagnificationBoundsCheck)
+    {
+        // Malformed data: Line 0 offset points beyond buffer
+        std::vector<uint8_t> data = {
+            0x10, 0x00 // Line 0 offset (16), but data size is only 2
+        };
+
+        G1Element g1{};
+        g1.width = 10;
+        g1.height = 1;
+        g1.offset = data.data();
+        g1.size = static_cast<uint32_t>(data.size());
+        g1.flags = G1Flag::hasRLECompression;
+
+        std::vector<uint8_t> buffer(40);
+        auto* paletteBits = reinterpret_cast<OpenRCT2::Drawing::PaletteIndex*>(buffer.data());
+        OpenRCT2::Drawing::RenderTarget rt;
+        rt.bits = paletteBits;
+        rt.width = 20;
+        rt.height = 2;
+        rt.pitch = 0;
+        rt.zoom_level = ZoomLevel{ -1 }; // 2x zoom
+
+        DrawSpriteArgs args(ImageId(), PaletteMap::GetDefault(), g1, 0, 0, 10, 1, paletteBits);
+
+        bool result = GfxRleSpriteToBufferWithBoundsCheck(rt, args);
+        EXPECT_FALSE(result) << "Malformed RLE data (offset out of bounds) should be detected in magnification";
+    }
+
+    TEST(RleSpriteTests, MtrBoatFailsValidation)
+    {
+        // Initialize context
+        gOpenRCT2Headless = true;
+        auto context = CreateContext();
+        context->Initialise();
+
+        auto path = OpenRCT2::Path::Combine(TestData::GetBasePath(), "objects", "MTRBOAT.DAT");
+        if (!OpenRCT2::File::Exists(path))
+        {
+            GTEST_SKIP() << "MTRBOAT.DAT not found in testdata";
+        }
+
+        std::unique_ptr<Object> obj = OpenRCT2::ObjectFactory::CreateObjectFromFile(path, true);
+        EXPECT_EQ(obj, nullptr) << "MTRBOAT.DAT should fail RLE validation and not be loaded";
+    }
+
 } // namespace
