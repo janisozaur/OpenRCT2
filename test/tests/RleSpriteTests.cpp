@@ -184,10 +184,10 @@ namespace
     {
         // 2x2 image, valid data
         std::vector<uint8_t> data = {
-            0x04, 0x00, // Line 0 offset (4)
-            0x08, 0x00, // Line 1 offset (8)
-            2, 0, 0x11, 0x22, // Line 0: 2 pixels at 0: 0x11, 0x22
-            2 | 0x80, 0, 0x33, 0x44 // Line 1: 2 pixels at 0: 0x33, 0x44 (end of line)
+            0x04,     0x00,             // Line 0 offset (4)
+            0x08,     0x00,             // Line 1 offset (8)
+            2,        0,    0x11, 0x22, // Line 0: 2 pixels at 0: 0x11, 0x22
+            2 | 0x80, 0,    0x33, 0x44  // Line 1: 2 pixels at 0: 0x33, 0x44 (end of line)
         };
 
         G1Element g1{};
@@ -217,7 +217,7 @@ namespace
         // 1x1 image, but data says it has a run of 10 pixels, and we only provide 2 bytes of data
         std::vector<uint8_t> data = {
             0x02, 0x00, // Line 0 offset (2)
-            10, 0,      // 10 pixels, start at 0
+            10,   0,    // 10 pixels, start at 0
             0xAA, 0xBB  // Only 2 pixels provided
         };
 
