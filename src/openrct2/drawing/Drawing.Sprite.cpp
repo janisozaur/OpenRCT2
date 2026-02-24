@@ -23,7 +23,6 @@
 #include "../rct1/Csg.h"
 #include "../ui/UiContext.h"
 #include "Drawing.h"
-#include "RleIteration.hpp"
 #include "ScrollingText.h"
 
 #include <cassert>
@@ -1206,17 +1205,51 @@ size_t G1CalculateDataSize(const G1Element* g1, const uint8_t* end)
             return 0;
         }
 
-        const uint8_t* lastPtr = nullptr;
-        bool success = IterateRleSprite<true>(
-            *g1, end, [&](int32_t y, uint8_t firstPixelX, uint8_t numPixels, const uint8_t* ptr) {
-                lastPtr = ptr + numPixels;
-                return true;
-            });
+        const uint8_t* data = g1->offset;
 
-        if (!success || lastPtr == nullptr)
+        if (end != nullptr && data + g1->height * sizeof(uint16_t) > end)
+        {
             return 0;
+        }
 
-        return lastPtr - g1->offset;
+        const uint8_t* ptr = nullptr;
+        for (int32_t y = 0; y < g1->height; y++)
+        {
+            uint16_t lineOffset;
+            std::memcpy(&lineOffset, data + y * sizeof(uint16_t), sizeof(uint16_t));
+            ptr = data + lineOffset;
+
+            if (end != nullptr && (ptr < data || ptr >= end))
+            {
+                return 0;
+            }
+
+            bool isEndOfLine = false;
+            while (!isEndOfLine)
+            {
+                if (end != nullptr && ptr + 2 > end)
+                {
+                    return 0;
+                }
+
+                uint8_t chunk0 = *ptr++;
+                uint8_t firstPixelX = *ptr++;
+                uint8_t numPixels = chunk0 & 0x7F;
+                isEndOfLine = (chunk0 & 0x80) != 0;
+
+                if (static_cast<int32_t>(firstPixelX) + numPixels > g1->width)
+                {
+                    return 0;
+                }
+                if (end != nullptr && ptr + numPixels > end)
+                {
+                    return 0;
+                }
+
+                ptr += numPixels;
+            }
+        }
+        return ptr - data;
     }
 
     return g1->width * g1->height;

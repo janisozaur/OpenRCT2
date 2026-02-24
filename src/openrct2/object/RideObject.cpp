@@ -252,7 +252,6 @@ namespace OpenRCT2
                 if (((numPeepLoadingPositions - 1) % 8) != 0)
                 {
                     context->LogError(ObjectError::invalidProperty, "Malformed peep loading positions");
-                    return;
                 }
 
                 for (int32_t j = 1; j < numPeepLoadingPositions; j += 4 * 2)
