@@ -109,16 +109,15 @@ TEST_P(RleSpriteTests, ValidateRleObject)
 
     if (filename == "MTRBOAT.DAT")
     {
-        bool foundImageError = false;
+        size_t imageErrorCount = 0;
         for (const auto& err : mockContext.Errors)
         {
             if (err.first == ObjectError::badImageTable)
             {
-                foundImageError = true;
-                break;
+                imageErrorCount++;
             }
         }
-        EXPECT_TRUE(foundImageError) << "MTRBOAT.DAT should have a bad image table error";
+        EXPECT_GT(imageErrorCount, 0u) << "MTRBOAT.DAT should have at least one bad image table error";
     }
     else
     {
