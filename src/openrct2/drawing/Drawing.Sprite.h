@@ -177,7 +177,7 @@ void FASTCALL GfxDrawSpriteRawMaskedSoftware(
     OpenRCT2::Drawing::RenderTarget& rt, const ScreenCoordsXY& scrCoords, ImageId maskImage, ImageId colourImage);
 
 // sprite data
-size_t G1CalculateDataSize(const OpenRCT2::G1Element* g1);
+size_t G1CalculateDataSize(const OpenRCT2::G1Element* g1, const uint8_t* end = nullptr);
 
 void MaskScalar(
     int32_t width, int32_t height, const uint8_t* RESTRICT maskSrc, const uint8_t* RESTRICT colourSrc,

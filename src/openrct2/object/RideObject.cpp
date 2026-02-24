@@ -249,7 +249,10 @@ namespace OpenRCT2
                     _legacyType.Cars[i].peep_loading_waypoint_segments = 8;
                 }
 
-                Guard::Assert(((numPeepLoadingPositions - 1) % 8) == 0, "Malformed peep loading positions");
+                if (((numPeepLoadingPositions - 1) % 8) != 0)
+                {
+                    context->LogError(ObjectError::invalidProperty, "Malformed peep loading positions");
+                }
 
                 for (int32_t j = 1; j < numPeepLoadingPositions; j += 4 * 2)
                 {

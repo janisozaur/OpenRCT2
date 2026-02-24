@@ -1191,7 +1191,7 @@ bool IsCsgLoaded()
     return _csgLoaded;
 }
 
-size_t G1CalculateDataSize(const G1Element* g1)
+size_t G1CalculateDataSize(const G1Element* g1, const uint8_t* end)
 {
     if (const auto* asPalette = g1->asPalette())
     {
@@ -1200,24 +1200,56 @@ size_t G1CalculateDataSize(const G1Element* g1)
 
     if (g1->flags.has(G1Flag::hasRLECompression))
     {
-        if (g1->offset == nullptr)
+        if (g1->offset == nullptr || g1->height <= 0)
         {
             return 0;
         }
 
-        auto idx = (g1->height - 1) * 2;
-        uint16_t offset = g1->offset[idx] | (g1->offset[idx + 1] << 8);
-        uint8_t* ptr = g1->offset + offset;
-        bool endOfLine = false;
-        do
+        const uint8_t* data = g1->offset;
+
+        if (end != nullptr && data + g1->height * sizeof(uint16_t) > end)
         {
-            uint8_t chunk0 = *ptr++;
-            ptr++; // offset
-            uint8_t chunkSize = chunk0 & 0x7F;
-            ptr += chunkSize;
-            endOfLine = (chunk0 & 0x80) != 0;
-        } while (!endOfLine);
-        return ptr - g1->offset;
+            return 0;
+        }
+
+        const uint8_t* ptr = nullptr;
+        for (int32_t y = 0; y < g1->height; y++)
+        {
+            uint16_t lineOffset;
+            std::memcpy(&lineOffset, data + y * sizeof(uint16_t), sizeof(uint16_t));
+            ptr = data + lineOffset;
+
+            if (end != nullptr && (ptr < data || ptr >= end))
+            {
+                return 0;
+            }
+
+            bool isEndOfLine = false;
+            while (!isEndOfLine)
+            {
+                if (end != nullptr && ptr + 2 > end)
+                {
+                    return 0;
+                }
+
+                uint8_t chunk0 = *ptr++;
+                uint8_t firstPixelX = *ptr++;
+                uint8_t numPixels = chunk0 & 0x7F;
+                isEndOfLine = (chunk0 & 0x80) != 0;
+
+                if (static_cast<int32_t>(firstPixelX) + numPixels > g1->width)
+                {
+                    return 0;
+                }
+                if (end != nullptr && ptr + numPixels > end)
+                {
+                    return 0;
+                }
+
+                ptr += numPixels;
+            }
+        }
+        return ptr - data;
     }
 
     return g1->width * g1->height;
