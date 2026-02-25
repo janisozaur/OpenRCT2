@@ -56,14 +56,14 @@ ipo_set_target_properties(openrct2)
 
 # mingw builds cannot use the PkgConfig imported targets
 if (EMSCRIPTEN)
-    target_link_libraries(openrct2 "libopenrct2"
+    target_link_libraries(openrct2 "$<LINK_ONLY:libopenrct2>"
                                     ${ICU_DATA_LIBRARIES}
                                     ${ICU_DT_LIBRARY_RELEASE})
 elseif (NOT MSVC AND NOT WIN32)
-    target_link_libraries(openrct2 "libopenrct2"
+    target_link_libraries(openrct2 "$<LINK_ONLY:libopenrct2>"
                                     PkgConfig::SDL2)
 else ()
-    target_link_libraries(openrct2 "libopenrct2"
+    target_link_libraries(openrct2 "$<LINK_ONLY:libopenrct2>"
                                     ${SDL2_LDFLAGS})
 endif ()
 target_link_platform_libraries(openrct2)
