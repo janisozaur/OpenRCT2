@@ -489,7 +489,7 @@ jobs:
         uses: ammaraskar/gcc-problem-matcher@master
       - name: Build OpenRCT2
         run: |
-          . scripts/setenv -q && build -DWITH_TESTS=on -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-g1 -gz -fno-var-tracking-assignments" -DBUILD_SHARED_LIBS=ON -DPORTABLE=ON ${{ matrix.build_flags }}
+          . scripts/setenv -q && build -DWITH_TESTS=on -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-g1 -gz -fno-var-tracking-assignments" -DBUILD_SHARED_LIBS=Off -DPORTABLE=ON ${{ matrix.build_flags }}
       - name: Build artifacts
         run: . scripts/setenv -q && build-portable artifacts/OpenRCT2-${{ needs.build_variables.outputs.name }}-${{ runner.os }}-${{ matrix.release }}-${{ matrix.platform }}.tar.gz bin/install/usr
       - name: Upload artifacts (CI)
