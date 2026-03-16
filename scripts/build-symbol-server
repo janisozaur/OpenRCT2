@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Download pdbconv and generate a compressed MSFZ symbol-server tree for the PDB.
+curl -fL --retry 3 -o pdbconv.exe \
+    https://github.com/janisozaur/pdbconv/releases/download/v1.0.0/pdbconv-windows-latest-msvc-x64.exe
+./pdbconv.exe -i bin/openrct2-win.pdb -y -o symbols -c -s=SingleFragment -l=19
+
+# Use symstore to add openrct2.exe (plain and cabinet-compressed) so the EXE
+# identity path follows Microsoft symbol server conventions.
+symstore_path="$(find "C:/Program Files (x86)/Windows Kits" -iname symstore.exe 2>/dev/null | head -1)"
+
+if [[ -z "$symstore_path" ]]; then
+    echo "symstore.exe not found on runner; skipping openrct2.exe/openrct2.ex_ entries."
+else
+    echo "Using symstore at: $symstore_path"
+    "$symstore_path" add /f bin/openrct2.exe /s symbols /t OpenRCT2
+    "$symstore_path" add /f bin/openrct2.exe /s symbols /t OpenRCT2 /compress
+    echo symbols:
+    find symbols -type f | sort
+fi
+
+# Produce a fully-lowercase copy of the symbol tree; downstream tooling expects lowercase paths.
+rm -rf symbols-lower
+find symbols -mindepth 1 | while IFS= read -r src; do
+    dst="symbols-lower/$(echo "${src#symbols/}" | tr '[:upper:]' '[:lower:]')"
+    if [[ -d "$src" ]]; then
+        mkdir -p "$dst"
+    else
+        mkdir -p "$(dirname "$dst")"
+        cp "$src" "$dst"
+    fi
+done
