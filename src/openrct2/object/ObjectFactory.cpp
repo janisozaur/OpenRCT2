@@ -47,6 +47,7 @@
 #include "StationObject.h"
 #include "TerrainEdgeObject.h"
 #include "TerrainSurfaceObject.h"
+#include "../profiling/Profiling.h"
 #include "WallObject.h"
 #include "WaterObject.h"
 
@@ -256,11 +257,12 @@ namespace OpenRCT2::ObjectFactory
 
     std::unique_ptr<Object> CreateObjectFromFile(u8string_view path, bool loadImages)
     {
+        auto pathStr = u8string(path);
+        PROFILED_FUNCTION_DATA(pathStr.c_str());
         std::unique_ptr<Object> object;
         auto extension = Path::GetExtension(path);
         if (String::iequals(extension, ".json"))
         {
-            auto pathStr = u8string(path);
             object = CreateObjectFromJsonFile(pathStr, loadImages);
         }
         else if (String::iequals(extension, ".parkobj"))
@@ -269,7 +271,6 @@ namespace OpenRCT2::ObjectFactory
         }
         else
         {
-            auto pathStr = u8string(path);
             object = CreateObjectFromLegacyFile(pathStr.c_str(), loadImages);
         }
 
@@ -278,6 +279,7 @@ namespace OpenRCT2::ObjectFactory
 
     std::unique_ptr<Object> CreateObjectFromLegacyFile(const utf8* path, bool loadImages)
     {
+        PROFILED_FUNCTION_DATA(path);
         LOG_VERBOSE("CreateObjectFromLegacyFile(..., \"%s\")", path);
 
         std::unique_ptr<Object> result;
@@ -473,6 +475,7 @@ namespace OpenRCT2::ObjectFactory
 
     std::unique_ptr<Object> CreateObjectFromJsonFile(const std::string& path, bool loadImages)
     {
+        PROFILED_FUNCTION_DATA(path.c_str());
         LOG_VERBOSE("CreateObjectFromJsonFile(\"%s\")", path.c_str());
 
         try

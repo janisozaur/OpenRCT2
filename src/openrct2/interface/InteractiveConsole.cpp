@@ -1722,7 +1722,12 @@ static void ConsoleCommandProfilerStart([[maybe_unused]] InteractiveConsole& con
 {
     if (!Profiling::isEnabled())
         console.WriteLine("Started profiler");
-    Profiling::enable();
+
+    std::string filePath;
+    if (!argv.empty())
+        filePath = argv[0];
+
+    Profiling::enable(filePath);
 }
 
 static void ConsoleCommandProfilerExport([[maybe_unused]] InteractiveConsole& console, [[maybe_unused]] const arguments_t& argv)
@@ -1877,7 +1882,8 @@ static constexpr ConsoleCommand console_command_table[] = {
     { "mp_desync", ConsoleCommandMpDesync, "Forces a multiplayer desync",
       "ConsoleCommandMpDesync [desync_type, 0 = Random t-shirt color on random guest, 1 = Remove random guest ]" },
     { "profiler_reset", ConsoleCommandProfilerReset, "Resets the profiler data.", "profiler_reset" },
-    { "profiler_start", ConsoleCommandProfilerStart, "Starts the profiler.", "profiler_start" },
+    { "profiler_start", ConsoleCommandProfilerStart, "Starts the profiler and optionally begins a trace stream.",
+      "profiler_start [<file.json>]" },
     { "profiler_status", ConsoleCommandProfilerStatus, "Shows profiler status and statistics.", "profiler_status" },
     { "profiler_stop", ConsoleCommandProfilerStop, "Stops the profiler and optionally exports data.",
       "profiler_stop [<file.csv|file.json>]" },

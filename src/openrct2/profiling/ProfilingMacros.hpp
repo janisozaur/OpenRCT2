@@ -37,6 +37,11 @@ namespace OpenRCT2::Profiling
         PROFILED_FUNCTION_NAME(PROFILING_FUNC_NAME)                                                                            \
         static auto& _profiling_func = ::OpenRCT2::Profiling::Detail::Storage<Profiler_FunctionLiteral>::Data;                 \
         ::OpenRCT2::Profiling::ScopedProfiling<decltype(_profiling_func)> _profiling_scope(_profiling_func);
+
+    #define PROFILED_FUNCTION_DATA(data)                                                                                       \
+        PROFILED_FUNCTION_NAME(PROFILING_FUNC_NAME)                                                                            \
+        static auto& _profiling_func = ::OpenRCT2::Profiling::Detail::Storage<Profiler_FunctionLiteral>::Data;                 \
+        ::OpenRCT2::Profiling::ScopedProfiling<decltype(_profiling_func)> _profiling_scope(_profiling_func, data);
 #endif
 
 } // namespace OpenRCT2::Profiling

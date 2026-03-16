@@ -37,6 +37,7 @@
 #include "ObjectFactory.h"
 #include "ObjectList.h"
 #include "ObjectManager.h"
+#include "../profiling/Profiling.h"
 #include "RideObject.h"
 
 #include <memory>
@@ -188,6 +189,7 @@ namespace OpenRCT2
 
         void LoadOrConstruct(int32_t language) override
         {
+            PROFILED_FUNCTION();
             ClearItems();
             auto items = _fileIndex.LoadOrBuild(language);
             AddItems(items);
@@ -196,6 +198,7 @@ namespace OpenRCT2
 
         void Construct(int32_t language) override
         {
+            PROFILED_FUNCTION();
             auto items = _fileIndex.Rebuild(language);
             AddItems(items);
             SortItems();
@@ -449,6 +452,7 @@ namespace OpenRCT2
 
         void ScanObject(const std::string& path)
         {
+            PROFILED_FUNCTION_DATA(path.c_str());
             auto language = LocalisationService_GetCurrentLanguage();
             if (auto result = _fileIndex.Create(language, path); result.has_value())
             {

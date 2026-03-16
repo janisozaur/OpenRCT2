@@ -62,6 +62,7 @@
 #include "../world/Weather.h"
 #include "../world/tile_element/PathElement.h"
 #include "../world/tile_element/SmallSceneryElement.h"
+#include "../profiling/Profiling.h"
 #include "../world/tile_element/TrackElement.h"
 #include "Legacy.h"
 #include "ParkPreview.h"
@@ -144,6 +145,7 @@ namespace OpenRCT2
 
         void Load(IStream& stream, const bool skipObjectCheck)
         {
+            PROFILED_FUNCTION();
             _os = std::make_unique<OrcaStream>(stream, OrcaStream::Mode::reading);
             ThrowIfIncompatibleVersion();
 
@@ -157,6 +159,7 @@ namespace OpenRCT2
 
         void Import(GameState_t& gameState)
         {
+            PROFILED_FUNCTION();
             auto& os = *_os;
             ReadWriteTilesChunk(gameState, os);
             ReadWriteBannersChunk(gameState, os);

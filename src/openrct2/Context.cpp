@@ -223,6 +223,8 @@ namespace OpenRCT2
             GfxUnloadG1();
             Audio::Close();
 
+            Profiling::disable();
+
             Instance = nullptr;
         }
 
@@ -743,6 +745,7 @@ namespace OpenRCT2
 
         bool LoadParkFromFile(const u8string& path, bool loadTitleScreenOnFail = false, bool asScenario = false) final override
         {
+            PROFILED_FUNCTION_DATA(path.c_str());
             LOG_VERBOSE("Context::LoadParkFromFile(%s)", path.c_str());
 
             struct CrashAdditionalFileRegistration
