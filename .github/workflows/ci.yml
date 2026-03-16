@@ -215,7 +215,7 @@ jobs:
           if [[ $BRANCH == 'develop' || $GITHUB_REF_TYPE == 'tag' ]]; then
              echo "CONFIGURATION=ReleaseLTCG" >> "$GITHUB_ENV"
           else
-             echo "CONFIGURATION=Release" >> "$GITHUB_ENV"
+             echo "CONFIGURATION=Debug" >> "$GITHUB_ENV"
           fi
       - name: Checkout
         uses: actions/checkout@v6
