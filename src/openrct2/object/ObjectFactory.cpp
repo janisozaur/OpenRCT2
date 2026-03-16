@@ -24,6 +24,7 @@
 #include "../core/Path.hpp"
 #include "../core/String.hpp"
 #include "../core/Zip.h"
+#include "../profiling/Profiling.h"
 #include "../sawyer_coding/SawyerChunkReader.h"
 #include "AudioObject.h"
 #include "BannerObject.h"
@@ -47,7 +48,6 @@
 #include "StationObject.h"
 #include "TerrainEdgeObject.h"
 #include "TerrainSurfaceObject.h"
-#include "../profiling/Profiling.h"
 #include "WallObject.h"
 #include "WaterObject.h"
 

@@ -46,6 +46,7 @@
 #include "../object/ObjectManager.h"
 #include "../object/ObjectRepository.h"
 #include "../peep/RideUseSystem.h"
+#include "../profiling/Profiling.h"
 #include "../rct2/RCT2.h"
 #include "../ride/RideManager.hpp"
 #include "../ride/ShopItem.h"
@@ -62,7 +63,6 @@
 #include "../world/Weather.h"
 #include "../world/tile_element/PathElement.h"
 #include "../world/tile_element/SmallSceneryElement.h"
-#include "../profiling/Profiling.h"
 #include "../world/tile_element/TrackElement.h"
 #include "Legacy.h"
 #include "ParkPreview.h"
@@ -298,8 +298,8 @@ namespace OpenRCT2
                     std::vector<std::string> authors;
                     cs.readWriteVector(authors, [](std::string& s) {});
                     cs.write(std::string_view());                  // custom notes that can be attached to the save
-                    cs.write(static_cast<uint64_t>(std::time(0))); // date started
-                    cs.write(static_cast<uint64_t>(std::time(0))); // date modified
+                    cs.write(static_cast<uint64_t>(std::time(nullptr))); // date started
+                    cs.write(static_cast<uint64_t>(std::time(nullptr))); // date modified
                 });
             }
         }
