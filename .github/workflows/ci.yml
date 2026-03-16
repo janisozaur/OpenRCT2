@@ -315,6 +315,84 @@ jobs:
           name: OpenRCT2-${{ needs.build_variables.outputs.name }}-${{ runner.os }}-symbols-${{ matrix.platform }}
           path: artifacts/OpenRCT2-${{ needs.build_variables.outputs.name }}-windows-symbols-${{ matrix.platform }}.zip
           if-no-files-found: error
+      - name: Prepare symbol-server files for DigitalOcean Spaces
+        id: prepare-do-symbols
+        # if: ${{ needs.build_variables.outputs.push == 'true' }}
+        run: |
+          set -euo pipefail
+
+          # Download and run pdbconv to generate compressed symbol server layout for PDB files.
+          curl -fL --retry 3 -o pdbconv.exe https://github.com/janisozaur/pdbconv/releases/download/v1.0.0/pdbconv-windows-latest-msvc-x64.exe
+          ./pdbconv.exe -i bin/openrct2-win.pdb -y -o symbols -c -s=SingleFragment -l=19
+
+          # Use symstore so EXE indexing follows Microsoft symbol server conventions.
+          symstore_path="$(powershell.exe -NoProfile -Command \"\
+            $candidates = @(
+              (Get-Command symstore -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue),
+              (Get-ChildItem 'C:\\Program Files (x86)\\Windows Kits' -Filter symstore.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName)
+            ) | Where-Object { $_ -and (Test-Path $_) };
+            if ($candidates.Count -gt 0) { Write-Output $candidates[0] }
+          \" | tr -d '\\r')"
+
+          if [[ -z "$symstore_path" ]]; then
+            echo "symstore.exe not found on runner; skipping openrct2.exe/openrct2.ex_ symbol-store entries."
+          else
+            echo "Using symstore at: $symstore_path"
+            "$symstore_path" add /f bin/openrct2.exe /s symbols /t OpenRCT2
+            "$symstore_path" add /f bin/openrct2.exe /s symbols /t OpenRCT2 /compress
+          fi
+
+          # Normalize all symbol-server paths to lowercase for downstream tooling compatibility.
+          python - << 'PY'
+          from pathlib import Path
+          import shutil
+
+          src = Path("symbols")
+          dst = Path("symbols-lower")
+
+          if dst.exists():
+              shutil.rmtree(dst)
+
+          for path in src.rglob("*"):
+              rel = path.relative_to(src)
+              lowered_rel = Path(*[part.lower() for part in rel.parts])
+              out_path = dst / lowered_rel
+
+              if path.is_dir():
+                  out_path.mkdir(parents=True, exist_ok=True)
+              else:
+                  out_path.parent.mkdir(parents=True, exist_ok=True)
+                  shutil.copy2(path, out_path)
+          PY
+      - name: Upload compressed symbols to DigitalOcean Spaces
+        if: needs.build_variables.outputs.push == 'true'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.DIGITALOCEAN_SPACES_SECRET_ACCESS_KEY }}
+          AWS_EC2_METADATA_DISABLED: true
+          DIGITALOCEAN_SPACES_ENDPOINT: ${{ secrets.DIGITALOCEAN_SPACES_ENDPOINT }}
+          DIGITALOCEAN_SPACES_REGION: ${{ secrets.DIGITALOCEAN_SPACES_REGION }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${AWS_ACCESS_KEY_ID:-}" || -z "${AWS_SECRET_ACCESS_KEY:-}" || -z "${DIGITALOCEAN_SPACES_ENDPOINT:-}" ]]; then
+            echo "DigitalOcean Spaces credentials are not configured; skipping symbol upload."
+            exit 0
+          fi
+
+          if ! command -v aws >/dev/null 2>&1; then
+            powershell.exe -NoProfile -Command "choco install awscli -y"
+          fi
+
+          aws s3 cp symbols-lower s3://dev-openrct2/awesome/symbols/ \
+            --recursive \
+            --acl public-read \
+            --endpoint-url "$DIGITALOCEAN_SPACES_ENDPOINT" \
+            --region "${DIGITALOCEAN_SPACES_REGION:-us-east-1}" \
+            --only-show-errors
+
+          echo "Uploaded lowercase compressed symbols to s3://dev-openrct2/awesome/symbols/"
+          echo "Uploaded symbol-server payload including openrct2-win.pdb and (if symstore was available) openrct2.exe/openrct2.ex_."
       - name: Run Tests
         if: matrix.platform != 'arm64'
         run: . scripts/setenv -q && run-tests
