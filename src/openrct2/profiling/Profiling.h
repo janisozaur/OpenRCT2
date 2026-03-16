@@ -61,7 +61,7 @@ namespace OpenRCT2::Profiling
                 registerFunction(this);
             }
 
-            virtual ~FunctionInternal() = default;
+            ~FunctionInternal() override = default;
 
             // Mutex only for call graph access, not the hot path.
             mutable std::mutex Mutex;
