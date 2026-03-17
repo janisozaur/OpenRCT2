@@ -33,8 +33,8 @@ static std::vector<std::string> GetCommandLineArgs(int argc, wchar_t** argvW);
  * Windows entry point to OpenRCT2 with a console window using a traditional C main function.
  */
 int WINAPI wWinMain(
-    [[maybe_unused]] HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance,
-    [[maybe_unused]] LPWSTR lpCmdLine, [[maybe_unused]] int nShowCmd)
+    [[maybe_unused]] HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance, [[maybe_unused]] LPWSTR lpCmdLine,
+    [[maybe_unused]] int nShowCmd)
 {
     int argc;
     wchar_t** argvW = CommandLineToArgvW(GetCommandLineW(), &argc);
