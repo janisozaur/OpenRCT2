@@ -24,12 +24,10 @@ add_symstore_candidate() {
     symstore_candidates+=("$candidate")
 }
 
-probe_symstore_candidate() {
+run_symstore() {
     local candidate="$1"
-    "$candidate" /? >/dev/null 2>&1 && return 0
-    "$candidate" -? >/dev/null 2>&1 && return 0
-    "$candidate" /help >/dev/null 2>&1 && return 0
-    return 1
+    shift
+    MSYS2_ARG_CONV_EXCL='*' "$candidate" "$@"
 }
 
 # Detect runner architecture and prefer matching debugger tools.
@@ -87,19 +85,26 @@ else
     done
 fi
 
+symstore_success=0
 for candidate in "${symstore_candidates[@]}"; do
-    if probe_symstore_candidate "$candidate"; then
-        symstore_path="$candidate"
-        break
+    echo "Trying symstore candidate: $candidate"
+    if ! run_symstore "$candidate" add /f bin/openrct2.exe /s symbols /t OpenRCT2; then
+        echo "symstore candidate failed: $candidate"
+        continue
     fi
+    if ! run_symstore "$candidate" add /f bin/openrct2.exe /s symbols /t OpenRCT2 /compress; then
+        echo "symstore candidate failed during compress step: $candidate"
+        continue
+    fi
+    symstore_path="$candidate"
+    symstore_success=1
+    break
 done
 
-if [[ -z "$symstore_path" ]]; then
-    echo "No runnable symstore found on runner; skipping openrct2.exe/openrct2.ex_ entries."
+if [[ "$symstore_success" -eq 0 ]]; then
+    echo "No working symstore candidate found on runner; skipping openrct2.exe/openrct2.ex_ entries."
 else
     echo "Using symstore at: $symstore_path"
-    "$symstore_path" add /f bin/openrct2.exe /s symbols /t OpenRCT2
-    "$symstore_path" add /f bin/openrct2.exe /s symbols /t OpenRCT2 /compress
     echo symbols:
     find symbols -type f | sort
 fi
