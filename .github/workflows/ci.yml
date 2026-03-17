@@ -327,6 +327,13 @@ jobs:
           DIGITALOCEAN_SPACES_ENDPOINT: ${{ secrets.DIGITALOCEAN_SPACES_ENDPOINT }}
           DIGITALOCEAN_SPACES_REGION: ${{ secrets.DIGITALOCEAN_SPACES_REGION }}
         run: . scripts/setenv -q && upload-symbol-server
+      - name: Upload openrct2.exe and .ex_ artifacts (CI)
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: OpenRCT2-${{ needs.build_variables.outputs.name }}-${{ runner.os }}-exe-symbols-${{ matrix.platform }}
+          path: symbols-lower/openrct2.exe/
+          if-no-files-found: ignore
       - name: Run Tests
         if: matrix.platform != 'arm64'
         run: . scripts/setenv -q && run-tests
