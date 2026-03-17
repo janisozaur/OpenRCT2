@@ -30,6 +30,26 @@ run_symstore() {
     MSYS2_ARG_CONV_EXCL='*' "$candidate" "$@"
 }
 
+resolve_path() {
+    local path="$1"
+    if command -v realpath >/dev/null 2>&1; then
+        realpath "$path"
+    else
+        readlink -f "$path"
+    fi
+}
+
+to_windows_path() {
+    local path="$1"
+    local resolved_path
+    resolved_path="$(resolve_path "$path")"
+    if command -v cygpath >/dev/null 2>&1; then
+        cygpath -aw "$resolved_path"
+    else
+        printf '%s\n' "$resolved_path"
+    fi
+}
+
 # Detect runner architecture and prefer matching debugger tools.
 host_arch="$(uname -m | tr '[:upper:]' '[:lower:]')"
 native_debugger_arch=""
@@ -85,15 +105,29 @@ else
     done
 fi
 
+symstore_input_path="$(to_windows_path bin/openrct2.exe)"
+symstore_store_path="$(to_windows_path symbols)"
+symstore_plain_dir="symbols/openrct2.exe"
+symstore_compressed_dir="symbols/openrct2.ex_"
+
 symstore_success=0
 for candidate in "${symstore_candidates[@]}"; do
     echo "Trying symstore candidate: $candidate"
-    if ! run_symstore "$candidate" add /f bin/openrct2.exe /s symbols /t OpenRCT2; then
+    rm -rf "$symstore_plain_dir" "$symstore_compressed_dir"
+    if ! run_symstore "$candidate" add /f "$symstore_input_path" /s "$symstore_store_path" /t OpenRCT2; then
         echo "symstore candidate failed: $candidate"
         continue
     fi
-    if ! run_symstore "$candidate" add /f bin/openrct2.exe /s symbols /t OpenRCT2 /compress; then
+    if [[ ! -d "$symstore_plain_dir" ]]; then
+        echo "symstore candidate did not create openrct2.exe entries: $candidate"
+        continue
+    fi
+    if ! run_symstore "$candidate" add /f "$symstore_input_path" /s "$symstore_store_path" /t OpenRCT2 /compress ZIP; then
         echo "symstore candidate failed during compress step: $candidate"
+        continue
+    fi
+    if [[ ! -d "$symstore_compressed_dir" ]]; then
+        echo "symstore candidate did not create openrct2.ex_ entries: $candidate"
         continue
     fi
     symstore_path="$candidate"
