@@ -9,10 +9,56 @@ curl -fL --retry 3 -o pdbconv.exe \
 
 # Use symstore to add openrct2.exe (plain and cabinet-compressed) so the EXE
 # identity path follows Microsoft symbol server conventions.
-symstore_path="$(find "C:/Program Files (x86)/Windows Kits" -iname symstore.exe 2>/dev/null | head -1)"
+symstore_path=""
+symstore_root="C:/Program Files (x86)/Windows Kits"
+
+# Detect runner architecture and prefer matching debugger tools.
+host_arch="$(uname -m | tr '[:upper:]' '[:lower:]')"
+native_debugger_arch=""
+case "$host_arch" in
+    x86_64|amd64)
+        native_debugger_arch="x64"
+        ;;
+    i386|i686|x86)
+        native_debugger_arch="x86"
+        ;;
+    aarch64|arm64)
+        native_debugger_arch="arm64"
+        ;;
+    arm|armv7l|armv8l)
+        native_debugger_arch="arm"
+        ;;
+esac
+
+search_arches=()
+if [[ -n "$native_debugger_arch" ]]; then
+    search_arches+=("$native_debugger_arch")
+fi
+for arch in x64 x86 arm64 arm; do
+    if [[ "$arch" != "$native_debugger_arch" ]]; then
+        search_arches+=("$arch")
+    fi
+done
+
+if [[ -d "$symstore_root" ]]; then
+    for arch in "${search_arches[@]}"; do
+        candidate="$(find "$symstore_root" -type f -path "*/Debuggers/$arch/symstore.exe" 2>/dev/null | sort -V | tail -1)"
+        if [[ -n "$candidate" ]]; then
+            symstore_path="$candidate"
+            break
+        fi
+    done
+fi
+
+# Last resort: use whatever is on PATH.
+if [[ -z "$symstore_path" ]] && command -v symstore.exe >/dev/null 2>&1; then
+    symstore_path="$(command -v symstore.exe)"
+fi
 
 if [[ -z "$symstore_path" ]]; then
     echo "symstore.exe not found on runner; skipping openrct2.exe/openrct2.ex_ entries."
+elif ! "$symstore_path" /? >/dev/null 2>&1; then
+    echo "symstore.exe exists but is not executable on this runner ($symstore_path); skipping openrct2.exe/openrct2.ex_ entries."
 else
     echo "Using symstore at: $symstore_path"
     "$symstore_path" add /f bin/openrct2.exe /s symbols /t OpenRCT2
