@@ -324,7 +324,7 @@ jobs:
           name: OpenRCT2-${{ needs.build_variables.outputs.name }}-${{ runner.os }}-symbol-server-${{ matrix.platform }}
           path: |
             symbols-upload/openrct2-win.pdb/
-            symbols-upload/openrct2.ex_/
+            symbols-upload/openrct2.exe/
           compression-level: 0
           if-no-files-found: error
       - name: Upload symbol-server files to DigitalOcean Spaces

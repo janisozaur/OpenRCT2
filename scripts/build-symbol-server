@@ -73,7 +73,7 @@ compressed_exe_temp_win="$(to_windows_path "$compressed_exe_temp")"
 echo "Creating cabinet-compressed EXE with makecab: $makecab_path"
 run_windows_tool "$makecab_path" /D CompressionType=LZX /D CompressionMemory=21 "$symstore_input_path" "$compressed_exe_temp_win"
 
-compressed_exe_dir="symbols/openrct2.ex_/$exe_symstore_id"
+compressed_exe_dir="symbols/openrct2.exe/$exe_symstore_id"
 compressed_exe_file="$compressed_exe_dir/openrct2.ex_"
 mkdir -p "$compressed_exe_dir"
 mv "$compressed_exe_temp" "$compressed_exe_file"
@@ -85,7 +85,7 @@ fi
 
 mkdir -p "$upload_root"
 cp -R symbols/openrct2-win.pdb "$upload_root/"
-cp -R symbols/openrct2.ex_ "$upload_root/"
+cp -R symbols/openrct2.exe "$upload_root/"
 
 echo 'Symbol upload payload:'
 find "$upload_root" -type f | sort
