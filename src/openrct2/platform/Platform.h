@@ -174,6 +174,7 @@ namespace OpenRCT2::Platform
 
     bool IsRunningInWine();
     bool IsColourTerminalSupported();
+    void TryAllocateConsole(bool forceAllocate);
     bool HandleSpecialCommandLineArgument(const char* argument);
     u8string StrDecompToPrecomp(u8string_view input);
     bool RequireNewWindow(bool openGL);

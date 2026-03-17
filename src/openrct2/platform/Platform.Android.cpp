@@ -76,6 +76,10 @@ namespace OpenRCT2::Platform
         return false;
     }
 
+    void TryAllocateConsole(bool forceAllocate)
+    {
+    }
+
     uint16_t GetLocaleLanguage()
     {
         JNIEnv* env = static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv());

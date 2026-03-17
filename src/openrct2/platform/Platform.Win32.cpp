@@ -297,6 +297,31 @@ namespace OpenRCT2::Platform
         return isSupported;
     }
 
+    void TryAllocateConsole(bool forceAllocate)
+    {
+        bool attached = false;
+        if (AttachConsole(ATTACH_PARENT_PROCESS))
+        {
+            attached = true;
+        }
+        else if (forceAllocate && AllocConsole())
+        {
+            attached = true;
+        }
+
+        if (attached)
+        {
+            // Redirect stdio to the console
+            FILE* fDummy;
+            freopen_s(&fDummy, "CONIN$", "r", stdin);
+            freopen_s(&fDummy, "CONOUT$", "w", stdout);
+            freopen_s(&fDummy, "CONOUT$", "w", stderr);
+
+            SetConsoleCP(CP_UTF8);
+            SetConsoleOutputCP(CP_UTF8);
+        }
+    }
+
     static std::string WIN32_GetKnownFolderPath(REFKNOWNFOLDERID rfid)
     {
         std::string path;

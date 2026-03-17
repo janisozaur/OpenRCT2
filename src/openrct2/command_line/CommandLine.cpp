@@ -529,6 +529,20 @@ namespace OpenRCT2
 {
     int32_t CommandLineRun(const char** argv, int32_t argc)
     {
+        // Check for flags that imply terminal allocation
+        bool forceAllocate = false;
+        for (int32_t i = 1; i < argc; i++)
+        {
+            if (String::equals(argv[i], "--console") || String::equals(argv[i], "-h") || String::equals(argv[i], "--help")
+                || String::equals(argv[i], "-v") || String::equals(argv[i], "--version") || String::equals(argv[i], "-a")
+                || String::equals(argv[i], "--all") || String::equals(argv[i], "--about"))
+            {
+                forceAllocate = true;
+                break;
+            }
+        }
+        Platform::TryAllocateConsole(forceAllocate);
+
         auto argEnumerator = CommandLineArgEnumerator(argv, argc);
 
         // Pop process path
