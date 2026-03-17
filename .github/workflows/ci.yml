@@ -327,17 +327,14 @@ jobs:
             symbols-upload/openrct2.ex_/
           compression-level: 0
           if-no-files-found: error
-      - name: Set up s3cmd
-        # if: needs.build_variables.outputs.push == 'true'
-        uses: s3-actions/s3cmd@v2.1.0
-        with:
-          provider: digitalocean
-          region: ams3
-          access_key: ${{ secrets.S3_SYMBOL_UPLOAD_ACCESS_KEY }}
-          secret_key: ${{ secrets.S3_SYMBOL_UPLOAD_SECRET }}
       - name: Upload symbol-server files to DigitalOcean Spaces
         # if: needs.build_variables.outputs.push == 'true'
-        run: s3cmd sync --recursive --acl-public symbols-upload/ s3://dev-openrct2/awesome/symbols/
+        env:
+          S3_ACCESS_KEY: ${{ secrets.S3_SYMBOL_UPLOAD_ACCESS_KEY }}
+          S3_SECRET_KEY: ${{ secrets.S3_SYMBOL_UPLOAD_SECRET }}
+        run: |
+          pip install s4cmd
+          s4cmd --endpoint-url https://ams3.digitaloceanspaces.com --API-ACL=public-read put --recursive symbols-upload/* s3://dev-openrct2/awesome/symbols/
       - name: Run Tests
         if: matrix.platform != 'arm64'
         run: . scripts/setenv -q && run-tests
