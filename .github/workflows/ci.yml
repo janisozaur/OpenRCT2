@@ -328,7 +328,7 @@ jobs:
           compression-level: 0
           if-no-files-found: error
       - name: Set up s3cmd
-        if: needs.build_variables.outputs.push == 'true'
+        # if: needs.build_variables.outputs.push == 'true'
         uses: s3-actions/s3cmd@v2.1.0
         with:
           provider: digitalocean
@@ -336,7 +336,7 @@ jobs:
           access_key: ${{ secrets.S3_SYMBOL_UPLOAD_ACCESS_KEY }}
           secret_key: ${{ secrets.S3_SYMBOL_UPLOAD_SECRET }}
       - name: Upload symbol-server files to DigitalOcean Spaces
-        if: needs.build_variables.outputs.push == 'true'
+        # if: needs.build_variables.outputs.push == 'true'
         run: s3cmd sync --recursive --acl-public symbols-upload/ s3://dev-openrct2/awesome/symbols/
       - name: Run Tests
         if: matrix.platform != 'arm64'
