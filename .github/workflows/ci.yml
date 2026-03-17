@@ -334,7 +334,12 @@ jobs:
           S3_SECRET_KEY: ${{ secrets.S3_SYMBOL_UPLOAD_SECRET }}
         run: |
           pip install s4cmd
-          s4cmd --endpoint-url https://ams3.digitaloceanspaces.com --API-ACL=public-read put --recursive symbols-upload/* s3://dev-openrct2/awesome/symbols/
+          find symbols-upload -type f | while IFS= read -r file; do
+            rel_path="${file#symbols-upload/}"
+            rel_path="${rel_path//\\//}"
+            rel_path="$(echo "$rel_path" | tr '[:upper:]' '[:lower:]')"
+            s4cmd --endpoint-url https://ams3.digitaloceanspaces.com --API-ACL=public-read put "$file" "s3://dev-openrct2/awesome/symbols/$rel_path"
+          done
       - name: Run Tests
         if: matrix.platform != 'arm64'
         run: . scripts/setenv -q && run-tests
