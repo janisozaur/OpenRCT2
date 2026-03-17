@@ -50,6 +50,85 @@ to_windows_path() {
     fi
 }
 
+normalize_hex_value() {
+    local value="$1"
+    local width="${2:-0}"
+    value="${value#0x}"
+    value="${value#0X}"
+    if [[ -z "$value" ]]; then
+        return 1
+    fi
+    if [[ "$width" -gt 0 ]]; then
+        printf "%0${width}X\n" "$((16#$value))"
+    else
+        printf '%X\n' "$((16#$value))"
+    fi
+}
+
+get_exe_symstore_id() {
+    local exe_path="$1"
+    local exe_path_win="$2"
+    local output=""
+    local timestamp=""
+    local size_of_image=""
+
+    if command -v llvm-readobj >/dev/null 2>&1; then
+        output="$(llvm-readobj --file-headers "$exe_path" 2>/dev/null || true)"
+        timestamp="$(printf '%s\n' "$output" | sed -nE 's/.*TimeDateStamp: 0x([0-9A-Fa-f]+).*/\1/p' | head -1)"
+        size_of_image="$(printf '%s\n' "$output" | sed -nE 's/.*SizeOfImage: 0x([0-9A-Fa-f]+).*/\1/p' | head -1)"
+    fi
+
+    if [[ -z "$timestamp" || -z "$size_of_image" ]] && command -v dumpbin >/dev/null 2>&1; then
+        output="$(MSYS2_ARG_CONV_EXCL='*' dumpbin /headers "$exe_path_win" 2>/dev/null || true)"
+        timestamp="$(printf '%s\n' "$output" | awk 'tolower($0) ~ /time date stamp/ { print $1; exit }')"
+        size_of_image="$(printf '%s\n' "$output" | awk 'tolower($0) ~ /size of image/ { print $1; exit }')"
+    fi
+
+    if [[ -z "$timestamp" || -z "$size_of_image" ]] && command -v link >/dev/null 2>&1; then
+        output="$(MSYS2_ARG_CONV_EXCL='*' link /dump /headers "$exe_path_win" 2>/dev/null || true)"
+        timestamp="$(printf '%s\n' "$output" | awk 'tolower($0) ~ /time date stamp/ { print $1; exit }')"
+        size_of_image="$(printf '%s\n' "$output" | awk 'tolower($0) ~ /size of image/ { print $1; exit }')"
+    fi
+
+    if [[ -z "$timestamp" || -z "$size_of_image" ]] && command -v objdump >/dev/null 2>&1; then
+        output="$(objdump -x "$exe_path" 2>/dev/null || true)"
+        timestamp="$(printf '%s\n' "$output" | awk 'tolower($1) == "time/date" { print $2; exit }')"
+        size_of_image="$(printf '%s\n' "$output" | awk 'tolower($1) == "sizeofimage" { print $2; exit }')"
+    fi
+
+#     if [[ -z "$timestamp" || -z "$size_of_image" ]] && command -v python3 >/dev/null 2>&1; then
+#         python3 - "$exe_path" <<'PY'
+# import struct
+# import sys
+
+# path = sys.argv[1]
+
+# with open(path, 'rb') as handle:
+#     data = handle.read()
+
+# pe_offset = struct.unpack_from('<I', data, 0x3C)[0]
+# if data[pe_offset:pe_offset + 4] != b'PE\0\0':
+#     raise SystemExit(1)
+
+# file_header_offset = pe_offset + 4
+# timestamp = struct.unpack_from('<I', data, file_header_offset + 4)[0]
+# optional_header_offset = file_header_offset + 20
+# size_of_image = struct.unpack_from('<I', data, optional_header_offset + 56)[0]
+
+# print(f'{timestamp:08X}{size_of_image:X}')
+# PY
+#         return
+#     fi
+
+    if [[ -z "$timestamp" || -z "$size_of_image" ]]; then
+        return 1
+    fi
+
+    timestamp="$(normalize_hex_value "$timestamp" 8)"
+    size_of_image="$(normalize_hex_value "$size_of_image")"
+    printf '%s%s\n' "$timestamp" "$size_of_image"
+}
+
 # Detect runner architecture and prefer matching debugger tools.
 host_arch="$(uname -m | tr '[:upper:]' '[:lower:]')"
 native_debugger_arch=""
@@ -107,8 +186,13 @@ fi
 
 symstore_input_path="$(to_windows_path bin/openrct2.exe)"
 symstore_store_path="$(to_windows_path symbols)"
-symstore_plain_dir="symbols/openrct2.exe"
-symstore_compressed_dir="symbols/openrct2.ex_"
+symstore_input_unix_path="$(resolve_path bin/openrct2.exe)"
+exe_symstore_id="$(get_exe_symstore_id "$symstore_input_unix_path" "$symstore_input_path")"
+echo "Expected EXE symstore ID: $exe_symstore_id"
+symstore_plain_dir="symbols/openrct2.exe/$exe_symstore_id"
+symstore_plain_file="$symstore_plain_dir/openrct2.exe"
+symstore_compressed_dir="symbols/openrct2.ex_/$exe_symstore_id"
+symstore_compressed_file="$symstore_compressed_dir/openrct2.ex_"
 
 symstore_success=0
 for candidate in "${symstore_candidates[@]}"; do
@@ -118,16 +202,16 @@ for candidate in "${symstore_candidates[@]}"; do
         echo "symstore candidate failed: $candidate"
         continue
     fi
-    if [[ ! -d "$symstore_plain_dir" ]]; then
-        echo "symstore candidate did not create openrct2.exe entries: $candidate"
+    if [[ ! -f "$symstore_plain_file" ]]; then
+        echo "symstore candidate did not create expected EXE entry: $symstore_plain_file"
         continue
     fi
     if ! run_symstore "$candidate" add /f "$symstore_input_path" /s "$symstore_store_path" /t OpenRCT2 /compress ZIP; then
         echo "symstore candidate failed during compress step: $candidate"
         continue
     fi
-    if [[ ! -d "$symstore_compressed_dir" ]]; then
-        echo "symstore candidate did not create openrct2.ex_ entries: $candidate"
+    if [[ ! -f "$symstore_compressed_file" ]]; then
+        echo "symstore candidate did not create expected compressed EXE entry: $symstore_compressed_file"
         continue
     fi
     symstore_path="$candidate"
