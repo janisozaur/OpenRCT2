@@ -2,239 +2,90 @@
 
 set -euo pipefail
 
-# Download pdbconv and generate a compressed MSFZ symbol-server tree for the PDB.
-curl -fL --retry 3 -o pdbconv.exe \
-    https://github.com/janisozaur/pdbconv/releases/download/v1.0.0/pdbconv-windows-latest-msvc-x64.exe
-./pdbconv.exe -i bin/openrct2-win.pdb -y -o symbols -c -s=SingleFragment -l=19
+symstore_path='C:/Program Files (x86)/Windows Kits/10/Debuggers/x64/symstore.exe'
+upload_root='symbols-upload'
 
-# Use symstore to add openrct2.exe (plain and cabinet-compressed) so the EXE
-# identity path follows Microsoft symbol server conventions.
-symstore_path=""
-symstore_candidates=()
-symstore_root="C:/Program Files (x86)/Windows Kits"
-
-add_symstore_candidate() {
-    local candidate="$1"
-    [[ -z "$candidate" ]] && return
-    for existing in "${symstore_candidates[@]}"; do
-        if [[ "$existing" == "$candidate" ]]; then
-            return
-        fi
-    done
-    symstore_candidates+=("$candidate")
-}
-
-run_symstore() {
-    local candidate="$1"
+run_windows_tool() {
+    local tool="$1"
     shift
-    MSYS2_ARG_CONV_EXCL='*' "$candidate" "$@"
-}
-
-resolve_path() {
-    local path="$1"
-    if command -v realpath >/dev/null 2>&1; then
-        realpath "$path"
-    else
-        readlink -f "$path"
-    fi
+    MSYS2_ARG_CONV_EXCL='*' "$tool" "$@"
 }
 
 to_windows_path() {
     local path="$1"
-    local resolved_path
-    resolved_path="$(resolve_path "$path")"
+    local absolute_path="$path"
+    if [[ "$absolute_path" != /* ]]; then
+        absolute_path="$PWD/$absolute_path"
+    fi
     if command -v cygpath >/dev/null 2>&1; then
-        cygpath -aw "$resolved_path"
+        cygpath -aw "$absolute_path"
     else
-        printf '%s\n' "$resolved_path"
+        printf '%s\n' "$absolute_path"
     fi
 }
 
-normalize_hex_value() {
-    local value="$1"
-    local width="${2:-0}"
-    value="${value#0x}"
-    value="${value#0X}"
-    if [[ -z "$value" ]]; then
-        return 1
-    fi
-    if [[ "$width" -gt 0 ]]; then
-        printf "%0${width}X\n" "$((16#$value))"
-    else
-        printf '%X\n' "$((16#$value))"
-    fi
-}
+# Download pdbconv and generate a compressed MSFZ symbol-server tree for the PDB.
+curl -fL --retry 3 -o pdbconv.exe \
+    https://github.com/janisozaur/pdbconv/releases/download/v1.0.0/pdbconv-windows-latest-msvc-x64.exe
+rm -rf symbols "$upload_root"
+./pdbconv.exe -i bin/openrct2-win.pdb -y -o symbols -c -s=SingleFragment -l=19
 
-get_exe_symstore_id() {
-    local exe_path="$1"
-    local exe_path_win="$2"
-    local output=""
-    local timestamp=""
-    local size_of_image=""
-
-    if command -v llvm-readobj >/dev/null 2>&1; then
-        output="$(llvm-readobj --file-headers "$exe_path" 2>/dev/null || true)"
-        timestamp="$(printf '%s\n' "$output" | sed -nE 's/.*TimeDateStamp: 0x([0-9A-Fa-f]+).*/\1/p' | head -1)"
-        size_of_image="$(printf '%s\n' "$output" | sed -nE 's/.*SizeOfImage: 0x([0-9A-Fa-f]+).*/\1/p' | head -1)"
-    fi
-
-    if [[ -z "$timestamp" || -z "$size_of_image" ]] && command -v dumpbin >/dev/null 2>&1; then
-        output="$(MSYS2_ARG_CONV_EXCL='*' dumpbin /headers "$exe_path_win" 2>/dev/null || true)"
-        timestamp="$(printf '%s\n' "$output" | awk 'tolower($0) ~ /time date stamp/ { print $1; exit }')"
-        size_of_image="$(printf '%s\n' "$output" | awk 'tolower($0) ~ /size of image/ { print $1; exit }')"
-    fi
-
-    if [[ -z "$timestamp" || -z "$size_of_image" ]] && command -v link >/dev/null 2>&1; then
-        output="$(MSYS2_ARG_CONV_EXCL='*' link /dump /headers "$exe_path_win" 2>/dev/null || true)"
-        timestamp="$(printf '%s\n' "$output" | awk 'tolower($0) ~ /time date stamp/ { print $1; exit }')"
-        size_of_image="$(printf '%s\n' "$output" | awk 'tolower($0) ~ /size of image/ { print $1; exit }')"
-    fi
-
-    if [[ -z "$timestamp" || -z "$size_of_image" ]] && command -v objdump >/dev/null 2>&1; then
-        output="$(objdump -x "$exe_path" 2>/dev/null || true)"
-        timestamp="$(printf '%s\n' "$output" | awk 'tolower($1) == "time/date" { print $2; exit }')"
-        size_of_image="$(printf '%s\n' "$output" | awk 'tolower($1) == "sizeofimage" { print $2; exit }')"
-    fi
-
-#     if [[ -z "$timestamp" || -z "$size_of_image" ]] && command -v python3 >/dev/null 2>&1; then
-#         python3 - "$exe_path" <<'PY'
-# import struct
-# import sys
-
-# path = sys.argv[1]
-
-# with open(path, 'rb') as handle:
-#     data = handle.read()
-
-# pe_offset = struct.unpack_from('<I', data, 0x3C)[0]
-# if data[pe_offset:pe_offset + 4] != b'PE\0\0':
-#     raise SystemExit(1)
-
-# file_header_offset = pe_offset + 4
-# timestamp = struct.unpack_from('<I', data, file_header_offset + 4)[0]
-# optional_header_offset = file_header_offset + 20
-# size_of_image = struct.unpack_from('<I', data, optional_header_offset + 56)[0]
-
-# print(f'{timestamp:08X}{size_of_image:X}')
-# PY
-#         return
-#     fi
-
-    if [[ -z "$timestamp" || -z "$size_of_image" ]]; then
-        return 1
-    fi
-
-    timestamp="$(normalize_hex_value "$timestamp" 8)"
-    size_of_image="$(normalize_hex_value "$size_of_image")"
-    printf '%s%s\n' "$timestamp" "$size_of_image"
-}
-
-# Detect runner architecture and prefer matching debugger tools.
-host_arch="$(uname -m | tr '[:upper:]' '[:lower:]')"
-native_debugger_arch=""
-case "$host_arch" in
-    x86_64|amd64)
-        native_debugger_arch="x64"
-        ;;
-    i386|i686|x86)
-        native_debugger_arch="x86"
-        ;;
-    aarch64|arm64)
-        native_debugger_arch="arm64"
-        ;;
-    arm|armv7l|armv8l)
-        native_debugger_arch="arm"
-        ;;
-esac
-
-search_arches=()
-if [[ -n "$native_debugger_arch" ]]; then
-    search_arches+=("$native_debugger_arch")
-fi
-for arch in x64 x86 arm64 arm; do
-    if [[ "$arch" != "$native_debugger_arch" ]]; then
-        search_arches+=("$arch")
-    fi
-done
-
-if [[ -d "$symstore_root" ]]; then
-    for arch in "${search_arches[@]}"; do
-        while IFS= read -r candidate; do
-            add_symstore_candidate "$candidate"
-        done < <(find "$symstore_root" -type f -path "*/Debuggers/$arch/symstore.exe" 2>/dev/null | sort -Vr)
-    done
+if [[ ! -f "$symstore_path" ]]; then
+    echo "Required x64 symstore was not found: $symstore_path"
+    exit 1
 fi
 
-# Also consider PATH entries, including native names.
-for tool_name in symstore symstore.exe; do
-    if command -v "$tool_name" >/dev/null 2>&1; then
-        while IFS= read -r candidate; do
-            add_symstore_candidate "$candidate"
-        done < <(which -a "$tool_name" 2>/dev/null | awk '!seen[$0]++')
-        add_symstore_candidate "$(command -v "$tool_name")"
-    fi
-done
-
-echo "Discovered symstore candidates:"
-if [[ "${#symstore_candidates[@]}" -eq 0 ]]; then
-    echo "  (none)"
-else
-    for candidate in "${symstore_candidates[@]}"; do
-        echo "  - $candidate"
-    done
+makecab_path="$(command -v makecab.exe 2>/dev/null || command -v makecab 2>/dev/null || true)"
+if [[ -z "$makecab_path" ]]; then
+    echo 'makecab was not found on PATH.'
+    exit 1
 fi
 
 symstore_input_path="$(to_windows_path bin/openrct2.exe)"
 symstore_store_path="$(to_windows_path symbols)"
-symstore_input_unix_path="$(resolve_path bin/openrct2.exe)"
-exe_symstore_id="$(get_exe_symstore_id "$symstore_input_unix_path" "$symstore_input_path")"
-echo "Expected EXE symstore ID: $exe_symstore_id"
-symstore_plain_dir="symbols/openrct2.exe/$exe_symstore_id"
-symstore_plain_file="$symstore_plain_dir/openrct2.exe"
-symstore_compressed_dir="symbols/openrct2.ex_/$exe_symstore_id"
-symstore_compressed_file="$symstore_compressed_dir/openrct2.ex_"
 
-symstore_success=0
-for candidate in "${symstore_candidates[@]}"; do
-    echo "Trying symstore candidate: $candidate"
-    rm -rf "$symstore_plain_dir" "$symstore_compressed_dir"
-    if ! run_symstore "$candidate" add /f "$symstore_input_path" /s "$symstore_store_path" /t OpenRCT2; then
-        echo "symstore candidate failed: $candidate"
-        continue
-    fi
-    if [[ ! -f "$symstore_plain_file" ]]; then
-        echo "symstore candidate did not create expected EXE entry: $symstore_plain_file"
-        continue
-    fi
-    if ! run_symstore "$candidate" add /f "$symstore_input_path" /s "$symstore_store_path" /t OpenRCT2 /compress ZIP; then
-        echo "symstore candidate failed during compress step: $candidate"
-        continue
-    fi
-    if [[ ! -f "$symstore_compressed_file" ]]; then
-        echo "symstore candidate did not create expected compressed EXE entry: $symstore_compressed_file"
-        continue
-    fi
-    symstore_path="$candidate"
-    symstore_success=1
-    break
-done
+echo "Using symstore at: $symstore_path"
+run_windows_tool "$symstore_path" add /f "$symstore_input_path" /s "$symstore_store_path" /t OpenRCT2
 
-if [[ "$symstore_success" -eq 0 ]]; then
-    echo "No working symstore candidate found on runner; skipping openrct2.exe/openrct2.ex_ entries."
-else
-    echo "Using symstore at: $symstore_path"
-    echo symbols:
-    find symbols -type f | sort
+if [[ ! -d symbols/openrct2.exe ]]; then
+    echo 'symstore did not create an openrct2.exe symbol-store directory.'
+    exit 1
 fi
 
-# Produce a fully-lowercase copy of the symbol tree; downstream tooling expects lowercase paths.
-rm -rf symbols-lower
-find symbols -mindepth 1 | while IFS= read -r src; do
-    dst="symbols-lower/$(echo "${src#symbols/}" | tr '[:upper:]' '[:lower:]')"
-    if [[ -d "$src" ]]; then
-        mkdir -p "$dst"
-    else
-        mkdir -p "$(dirname "$dst")"
-        cp "$src" "$dst"
-    fi
-done
+exe_symstore_dir="$(find symbols/openrct2.exe -mindepth 1 -maxdepth 1 -type d | sort | head -1)"
+if [[ -z "$exe_symstore_dir" ]]; then
+    echo 'symstore did not create an openrct2.exe symbol-store entry.'
+    exit 1
+fi
+
+exe_symstore_id="$(basename "$exe_symstore_dir")"
+exe_symstore_file="$exe_symstore_dir/openrct2.exe"
+if [[ ! -f "$exe_symstore_file" ]]; then
+    echo "symstore did not create the expected EXE entry: $exe_symstore_file"
+    exit 1
+fi
+
+temp_dir="$(mktemp -d)"
+trap 'rm -rf "$temp_dir"' EXIT
+compressed_exe_temp="$temp_dir/openrct2.ex_"
+compressed_exe_temp_win="$(to_windows_path "$compressed_exe_temp")"
+
+echo "Creating cabinet-compressed EXE with makecab: $makecab_path"
+run_windows_tool "$makecab_path" /D CompressionType=LZX /D CompressionMemory=21 "$symstore_input_path" "$compressed_exe_temp_win"
+
+compressed_exe_dir="symbols/openrct2.ex_/$exe_symstore_id"
+compressed_exe_file="$compressed_exe_dir/openrct2.ex_"
+mkdir -p "$compressed_exe_dir"
+mv "$compressed_exe_temp" "$compressed_exe_file"
+
+if [[ ! -d symbols/openrct2-win.pdb ]]; then
+    echo 'pdbconv did not create the expected openrct2-win.pdb symbol-store entry.'
+    exit 1
+fi
+
+mkdir -p "$upload_root"
+cp -R symbols/openrct2-win.pdb "$upload_root/"
+cp -R symbols/openrct2.ex_ "$upload_root/"
+
+echo 'Symbol upload payload:'
+find "$upload_root" -type f | sort

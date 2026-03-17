@@ -318,22 +318,26 @@ jobs:
       - name: Build symbol-server files
         # if: needs.build_variables.outputs.push == 'true'
         run: . scripts/setenv -q && build-symbol-server
+      - name: Upload symbol-server artifact (CI)
+        uses: actions/upload-artifact@v6
+        with:
+          name: OpenRCT2-${{ needs.build_variables.outputs.name }}-${{ runner.os }}-symbol-server-${{ matrix.platform }}
+          path: |
+            symbols-upload/openrct2-win.pdb/
+            symbols-upload/openrct2.ex_/
+          compression-level: 0
+          if-no-files-found: error
+      - name: Set up s3cmd
+        if: needs.build_variables.outputs.push == 'true'
+        uses: s3-actions/s3cmd@v2.1.0
+        with:
+          provider: digitalocean
+          region: ams3
+          access_key: ${{ secrets.S3_SYMBOL_UPLOAD_ACCESS_KEY }}
+          secret_key: ${{ secrets.S3_SYMBOL_UPLOAD_SECRET }}
       - name: Upload symbol-server files to DigitalOcean Spaces
         if: needs.build_variables.outputs.push == 'true'
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.DIGITALOCEAN_SPACES_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.DIGITALOCEAN_SPACES_SECRET_ACCESS_KEY }}
-          AWS_EC2_METADATA_DISABLED: true
-          DIGITALOCEAN_SPACES_ENDPOINT: ${{ secrets.DIGITALOCEAN_SPACES_ENDPOINT }}
-          DIGITALOCEAN_SPACES_REGION: ${{ secrets.DIGITALOCEAN_SPACES_REGION }}
-        run: . scripts/setenv -q && upload-symbol-server
-      - name: Upload openrct2.exe and .ex_ artifacts (CI)
-        uses: actions/upload-artifact@v6
-        if: always()
-        with:
-          name: OpenRCT2-${{ needs.build_variables.outputs.name }}-${{ runner.os }}-exe-symbols-${{ matrix.platform }}
-          path: symbols-lower/openrct2.exe/
-          if-no-files-found: ignore
+        run: s3cmd sync --recursive --acl-public symbols-upload/ s3://dev-openrct2/awesome/symbols/
       - name: Run Tests
         if: matrix.platform != 'arm64'
         run: . scripts/setenv -q && run-tests
