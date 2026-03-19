@@ -35,17 +35,12 @@ if [[ ! -f "$symstore_path" ]]; then
     exit 1
 fi
 
-makecab_path="$(command -v makecab.exe 2>/dev/null || command -v makecab 2>/dev/null || true)"
-if [[ -z "$makecab_path" ]]; then
-    echo 'makecab was not found on PATH.'
-    exit 1
-fi
-
+# Use symstore directly with /compress so we produce openrct2.ex_ in symbol-store layout.
 symstore_input_path="$(to_windows_path bin/openrct2.exe)"
 symstore_store_path="$(to_windows_path symbols)"
 
 echo "Using symstore at: $symstore_path"
-run_windows_tool "$symstore_path" add /f "$symstore_input_path" /s "$symstore_store_path" /t OpenRCT2
+run_windows_tool "$symstore_path" add /f "$symstore_input_path" /s "$symstore_store_path" /t OpenRCT2 /compress
 
 if [[ ! -d symbols/openrct2.exe ]]; then
     echo 'symstore did not create an openrct2.exe symbol-store directory.'
@@ -59,24 +54,11 @@ if [[ -z "$exe_symstore_dir" ]]; then
 fi
 
 exe_symstore_id="$(basename "$exe_symstore_dir")"
-exe_symstore_file="$exe_symstore_dir/openrct2.exe"
-if [[ ! -f "$exe_symstore_file" ]]; then
-    echo "symstore did not create the expected EXE entry: $exe_symstore_file"
+compressed_exe_file="$exe_symstore_dir/openrct2.ex_"
+if [[ ! -f "$compressed_exe_file" ]]; then
+    echo "symstore did not create the expected compressed EXE entry: $compressed_exe_file"
     exit 1
 fi
-
-temp_dir="$(mktemp -d)"
-trap 'rm -rf "$temp_dir"' EXIT
-compressed_exe_temp="$temp_dir/openrct2.ex_"
-compressed_exe_temp_win="$(to_windows_path "$compressed_exe_temp")"
-
-echo "Creating cabinet-compressed EXE with makecab: $makecab_path"
-run_windows_tool "$makecab_path" /D CompressionType=LZX /D CompressionMemory=21 "$symstore_input_path" "$compressed_exe_temp_win"
-
-compressed_exe_dir="symbols/openrct2.exe/$exe_symstore_id"
-compressed_exe_file="$compressed_exe_dir/openrct2.ex_"
-mkdir -p "$compressed_exe_dir"
-mv "$compressed_exe_temp" "$compressed_exe_file"
 
 if [[ ! -d symbols/openrct2-win.pdb ]]; then
     echo 'pdbconv did not create the expected openrct2-win.pdb symbol-store entry.'
@@ -85,7 +67,8 @@ fi
 
 mkdir -p "$upload_root"
 cp -R symbols/openrct2-win.pdb "$upload_root/"
-cp -R symbols/openrct2.exe "$upload_root/"
+mkdir -p "$upload_root/openrct2.exe/$exe_symstore_id"
+cp "$compressed_exe_file" "$upload_root/openrct2.exe/$exe_symstore_id/openrct2.ex_"
 
 echo 'Symbol upload payload:'
 find "$upload_root" -type f | sort
