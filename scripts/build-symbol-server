@@ -5,6 +5,7 @@ set -euo pipefail
 symstore_path='C:/Program Files (x86)/Windows Kits/10/Debuggers/x64/symstore.exe'
 upload_root='symbols-upload'
 
+# This is needed to prevent MSYS2 from converting arguments to Windows tools, which would break symstore.exe.
 run_windows_tool() {
     local tool="$1"
     shift
@@ -43,17 +44,6 @@ symstore_store_path="$(to_windows_path "$upload_root")"
 echo "Using symstore at: $symstore_path"
 run_windows_tool "$symstore_path" add /f "$symstore_input_path" /s "$symstore_store_path" /t OpenRCT2 /compress
 
-if [[ ! -d "$upload_root/openrct2.exe" ]]; then
-    echo 'symstore did not create an openrct2.exe symbol-store directory.'
-    exit 1
-fi
-
-exe_symstore_dir="$(find "$upload_root/openrct2.exe" -mindepth 1 -maxdepth 1 -type d | sort | head -1)"
-if [[ -z "$exe_symstore_dir" ]]; then
-    echo 'symstore did not create an openrct2.exe symbol-store entry.'
-    exit 1
-fi
-
 exe_symstore_id="$(basename "$exe_symstore_dir")"
 compressed_exe_file="$exe_symstore_dir/openrct2.ex_"
 if [[ ! -f "$compressed_exe_file" ]]; then
@@ -65,6 +55,24 @@ if [[ ! -d "$upload_root/openrct2-win.pdb" ]]; then
     echo 'pdbconv did not create the expected openrct2-win.pdb symbol-store entry.'
     exit 1
 fi
+
+# Keep only publishable symbol payload; drop symstore transaction metadata files.
+find "$upload_root" -mindepth 1 -maxdepth 1 \
+    ! -name 'openrct2-win.pdb' \
+    ! -name 'openrct2.ex_' \
+    -exec rm -rf {} +
+
+# Add cross-references between the symstore and pdbconv outputs, so that the EXE and PDB entries can be linked together in the symbol server.
+pdb_symstore_dir="$(find "$upload_root/openrct2-win.pdb" -mindepth 1 -maxdepth 1 -type d | sort | head -1)"
+if [[ -z "$pdb_symstore_dir" ]]; then
+    echo 'pdbconv did not create an openrct2-win.pdb symbol-store entry.'
+    exit 1
+fi
+
+pdb_symstore_id="$(basename "$pdb_symstore_dir")"
+
+printf '%s\n' "$exe_symstore_id" > "$pdb_symstore_dir/exe"
+printf '%s\n' "$pdb_symstore_id" > "$exe_symstore_dir/pdb"
 
 echo 'Symbol upload payload:'
 find "$upload_root" -type f | sort

@@ -338,7 +338,7 @@ jobs:
             rel_path="${file#symbols-upload/}"
             rel_path="${rel_path//\\//}"
             rel_path="$(echo "$rel_path" | tr '[:upper:]' '[:lower:]')"
-            s4cmd --endpoint-url https://ams3.digitaloceanspaces.com --API-ACL=public-read put "$file" "s3://dev-openrct2/awesome/symbols/$rel_path"
+            s4cmd --endpoint-url https://ams3.digitaloceanspaces.com --API-ACL=public-read put -f "$file" "s3://dev-openrct2/awesome/symbols/$rel_path"
           done
       - name: Run Tests
         if: matrix.platform != 'arm64'
