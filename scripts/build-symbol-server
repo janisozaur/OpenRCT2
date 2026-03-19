@@ -27,8 +27,9 @@ to_windows_path() {
 # Download pdbconv and generate a compressed MSFZ symbol-server tree for the PDB.
 curl -fL --retry 3 -o pdbconv.exe \
     https://github.com/janisozaur/pdbconv/releases/download/v1.0.0/pdbconv-windows-latest-msvc-x64.exe
-rm -rf symbols "$upload_root"
-./pdbconv.exe -i bin/openrct2-win.pdb -y -o symbols -c -s=SingleFragment -l=19
+rm -rf "$upload_root"
+mkdir -p "$upload_root"
+./pdbconv.exe -i bin/openrct2-win.pdb -y -o "$upload_root" -c -s=SingleFragment -l=19
 
 if [[ ! -f "$symstore_path" ]]; then
     echo "Required x64 symstore was not found: $symstore_path"
@@ -37,17 +38,17 @@ fi
 
 # Use symstore directly with /compress so we produce openrct2.ex_ in symbol-store layout.
 symstore_input_path="$(to_windows_path bin/openrct2.exe)"
-symstore_store_path="$(to_windows_path symbols)"
+symstore_store_path="$(to_windows_path "$upload_root")"
 
 echo "Using symstore at: $symstore_path"
 run_windows_tool "$symstore_path" add /f "$symstore_input_path" /s "$symstore_store_path" /t OpenRCT2 /compress
 
-if [[ ! -d symbols/openrct2.exe ]]; then
+if [[ ! -d "$upload_root/openrct2.exe" ]]; then
     echo 'symstore did not create an openrct2.exe symbol-store directory.'
     exit 1
 fi
 
-exe_symstore_dir="$(find symbols/openrct2.exe -mindepth 1 -maxdepth 1 -type d | sort | head -1)"
+exe_symstore_dir="$(find "$upload_root/openrct2.exe" -mindepth 1 -maxdepth 1 -type d | sort | head -1)"
 if [[ -z "$exe_symstore_dir" ]]; then
     echo 'symstore did not create an openrct2.exe symbol-store entry.'
     exit 1
@@ -60,15 +61,10 @@ if [[ ! -f "$compressed_exe_file" ]]; then
     exit 1
 fi
 
-if [[ ! -d symbols/openrct2-win.pdb ]]; then
+if [[ ! -d "$upload_root/openrct2-win.pdb" ]]; then
     echo 'pdbconv did not create the expected openrct2-win.pdb symbol-store entry.'
     exit 1
 fi
-
-mkdir -p "$upload_root"
-cp -R symbols/openrct2-win.pdb "$upload_root/"
-mkdir -p "$upload_root/openrct2.exe/$exe_symstore_id"
-cp "$compressed_exe_file" "$upload_root/openrct2.exe/$exe_symstore_id/openrct2.ex_"
 
 echo 'Symbol upload payload:'
 find "$upload_root" -type f | sort
