@@ -25,7 +25,7 @@
 namespace OpenRCT2::Network
 {
     static constexpr size_t kDisconnectReasonBufSize = 256;
-    static constexpr size_t kBufferSize = 1024 * 128; // 128 KiB.
+    static constexpr size_t kBufferSize = 1024 * 128;                 // 128 KiB.
     static constexpr size_t kMaxInboundBufferSize = 1024 * 1024 * 64; // 64 MiB.
     static constexpr size_t kMaxPacketSize = 1024 * 1024 * 32;        // 32 MiB.
     static constexpr size_t kNoDataTimeout = 40;                      // Seconds.
