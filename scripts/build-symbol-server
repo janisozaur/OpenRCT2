@@ -82,8 +82,39 @@ fi
 
 pdb_symstore_id="$(basename "$pdb_symstore_dir")"
 
-printf '%s\n' "$exe_symstore_id" > "$pdb_symstore_dir/exe"
-printf '%s\n' "$pdb_symstore_id" > "$exe_symstore_dir/pdb"
+# Gather metadata for symbol entries
+git_commit="$(git rev-parse HEAD)"
+git_tag="$(git describe --tags --exact-match 2>/dev/null || echo "")"
+
+# Construct GitHub Actions run link if running in CI
+if [[ -n "${GITHUB_RUN_ID:-}" ]]; then
+    github_actions_run="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+else
+    github_actions_run="local"
+fi
+
+# Calculate SHA256 checksums of the symbol files
+exe_sha256="$(sha256sum "$compressed_exe_file" | awk '{print $1}')"
+pdb_sha256="$(sha256sum "$pdb_symstore_dir/openrct2-win.pdb" | awk '{print $1}')"
+
+# Create info files with cross-references and metadata in both symbol directories
+{
+    echo "exe_symstore_id: $exe_symstore_id"
+    echo "pdb_symstore_id: $pdb_symstore_id"
+    echo "git_commit: $git_commit"
+    [[ -n "$git_tag" ]] && echo "git_tag: $git_tag"
+    echo "github_actions_run: $github_actions_run"
+    echo "sha256: $pdb_sha256"
+} > "$pdb_symstore_dir/info"
+
+{
+    echo "exe_symstore_id: $exe_symstore_id"
+    echo "pdb_symstore_id: $pdb_symstore_id"
+    echo "git_commit: $git_commit"
+    [[ -n "$git_tag" ]] && echo "git_tag: $git_tag"
+    echo "github_actions_run: $github_actions_run"
+    echo "sha256: $exe_sha256"
+} > "$exe_symstore_dir/info"
 
 echo 'Symbol upload payload:'
 find "$upload_root" -type f | sort
