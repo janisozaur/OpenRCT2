@@ -399,5 +399,7 @@ void MapGetObstructionErrorText(TileElement* tileElement, GameActions::Result& r
         }
         case TileElementType::Banner:
             break;
+        default:
+            break;
     }
 }

@@ -26,7 +26,9 @@ namespace OpenRCT2::Network
 {
     static constexpr size_t kDisconnectReasonBufSize = 256;
     static constexpr size_t kBufferSize = 1024 * 128; // 128 KiB.
-    static constexpr size_t kNoDataTimeout = 40;      // Seconds.
+    static constexpr size_t kMaxInboundBufferSize = 1024 * 1024 * 64; // 64 MiB.
+    static constexpr size_t kMaxPacketSize = 1024 * 1024 * 32;        // 32 MiB.
+    static constexpr size_t kNoDataTimeout = 40;                      // Seconds.
 
     Connection::Connection() noexcept
     {
@@ -59,6 +61,14 @@ namespace OpenRCT2::Network
         if (status == ReadPacket::success)
         {
             _lastReceiveTime = Platform::GetTicks();
+
+            if (_inboundBuffer.size() + bytesRead > kMaxInboundBufferSize)
+            {
+                LOG_ERROR("Inbound buffer size exceeded, disconnecting.");
+                Disconnect();
+                return;
+            }
+
             _inboundBuffer.insert(_inboundBuffer.end(), buffer, buffer + bytesRead);
         }
     }
@@ -90,6 +100,13 @@ namespace OpenRCT2::Network
             header.version = Convert::NetworkToHost(header.version);
             header.size = Convert::NetworkToHost(header.size);
             header.id = Convert::NetworkToHost(header.id);
+
+            if (header.size > kMaxPacketSize)
+            {
+                LOG_ERROR("Packet size too large (%u), disconnecting.", header.size);
+                Disconnect();
+                return ReadPacket::disconnected;
+            }
 
             headerSize = sizeof(header);
             totalPacketLength = sizeof(header) + header.size;

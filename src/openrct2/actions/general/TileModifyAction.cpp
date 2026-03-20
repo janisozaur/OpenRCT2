@@ -59,12 +59,34 @@ namespace OpenRCT2::GameActions
         return QueryExecute(true);
     }
 
+    static bool IsValidTileElement(const TileElement& element)
+    {
+        const auto type = element.GetType();
+        if (type == TileElementType::Banner || type == TileElementType::Wall || type == TileElementType::LargeScenery)
+        {
+            auto bannerIndex = element.GetBannerIndex();
+            if (!bannerIndex.IsNull() && bannerIndex.ToUnderlying() >= kMaxBanners)
+                return false;
+        }
+
+        return true;
+    }
+
     Result TileModifyAction::QueryExecute(bool isExecuting) const
     {
         if (!LocationValid(_loc))
         {
             return Result(Status::invalidParameters, STR_CANT_CHANGE_THIS, STR_OFF_EDGE_OF_MAP);
         }
+
+        if (_setting == TileModifyType::AnyPaste)
+        {
+            if (!IsValidTileElement(_pasteElement))
+            {
+                return Result(Status::invalidParameters, STR_CANT_PASTE, STR_STRING);
+            }
+        }
+
         auto res = Result();
         switch (_setting)
         {

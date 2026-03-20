@@ -296,6 +296,8 @@ static void PaintTileElementBase(PaintSession& session, const CoordsXY& origCoor
             case TileElementType::Banner:
                 PaintBanner(session, direction, baseZ, *(tile_element->AsBanner()));
                 break;
+            default:
+                break;
         }
         session.MapPosition = mapPosition;
     } while (!(tile_element++)->IsLastForTile());

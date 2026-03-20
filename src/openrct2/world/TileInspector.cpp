@@ -279,6 +279,8 @@ namespace OpenRCT2::TileInspector
                 case TileElementType::Surface:
                 case TileElementType::LargeScenery:
                     break;
+                default:
+                    break;
             }
         }
 
