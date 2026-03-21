@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
-set -e
+# This script creates both a symbols archive for upload to backtrace.io and a symbol-server
+# tree for upload to the S3-compatible bucket. It uses pdbconv to generate a compressed MSFZ
+# symbol-store layout for the PDB, and symstore.exe with /compress to generate a compressed
+# EXE entry. The resulting compressed files are included in both the archive and the
+# symbol-server tree, which are written to artifacts/ and symbols-upload/ respectively.
+
+set -euo pipefail
 
 # Check 7z or zip is available
 if [ -x "$(command -v 7z)" ]; then
@@ -8,21 +14,171 @@ if [ -x "$(command -v 7z)" ]; then
 elif [ -x "$(command -v zip)" ]; then
     archiver=zip
 else
-    echo -e >&2 "\033[0;7z and zip not found\033[0m"
+    echo -e >&2 "\033[0;36merror: 7z and zip not found\033[0m"
     exit 1
 fi
 
-# Create a Windows symbols archive for OpenRCT2
-basedir="$(readlink -f `dirname $0`/..)"
-cd $basedir/bin
+symstore_path='C:/Program Files (x86)/Windows Kits/10/Debuggers/x64/symstore.exe'
+symbol_server_root='symbols-upload'
 
-destination=../artifacts/openrct2-symbols-$CONFIGURATION-$PLATFORM.zip
+# This is needed to prevent MSYS2 from converting arguments to Windows tools, which would break symstore.exe.
+run_windows_tool() {
+    local tool="$1"
+    shift
+    MSYS2_ARG_CONV_EXCL='*' "$tool" "$@"
+}
+
+to_windows_path() {
+    local path="$1"
+    local absolute_path="$path"
+    if [[ "$absolute_path" != /* ]]; then
+        absolute_path="$PWD/$absolute_path"
+    fi
+    if command -v cygpath >/dev/null 2>&1; then
+        cygpath -aw "$absolute_path"
+    else
+        printf '%s\n' "$absolute_path"
+    fi
+}
+
+basedir="$(readlink -f "$(dirname "$0")"/..)"
+cd "$basedir/bin"
+
+# Download pdbconv and generate a compressed MSFZ symbol-server tree for the PDB
+echo -e "\033[0;36mDownloading pdbconv...\033[0m"
+curl -fL --retry 3 -o pdbconv.exe \
+    https://github.com/janisozaur/pdbconv/releases/download/v1.0.0/pdbconv-windows-latest-msvc-x64.exe
+
+rm -rf "$symbol_server_root"
+mkdir -p "$symbol_server_root"
+
+echo -e "\033[0;36mGenerating compressed PDB symbol-server tree...\033[0m"
+./pdbconv.exe -i openrct2-win.pdb -y -o "$symbol_server_root" -c -s=SingleFragment -l=19
+
+if [[ ! -f "$symstore_path" ]]; then
+    echo "Required x64 symstore was not found: $symstore_path"
+    exit 1
+fi
+
+# Use symstore directly with /compress so we produce openrct2.ex_ in symbol-store layout
+symstore_input_path="$(to_windows_path openrct2.exe)"
+symstore_store_path="$(to_windows_path "$symbol_server_root")"
+
+echo -e "\033[0;36mGenerating compressed EXE symbol-server tree...\033[0m"
+run_windows_tool "$symstore_path" add /f "$symstore_input_path" /s "$symstore_store_path" /t OpenRCT2 /compress
+
+if [[ ! -d "$symbol_server_root/openrct2.exe" ]]; then
+    echo 'symstore did not create an openrct2.exe symbol-store directory.'
+    exit 1
+fi
+
+exe_symstore_dir="$(find "$symbol_server_root/openrct2.exe" -mindepth 1 -maxdepth 1 -type d | sort | head -1)"
+if [[ -z "$exe_symstore_dir" ]]; then
+    echo 'symstore did not create an openrct2.exe symbol-store entry.'
+    exit 1
+fi
+
+exe_symstore_id="$(basename "$exe_symstore_dir")"
+compressed_exe_file="$exe_symstore_dir/openrct2.ex_"
+if [[ ! -f "$compressed_exe_file" ]]; then
+    echo "symstore did not create the expected compressed EXE entry: $compressed_exe_file"
+    exit 1
+fi
+
+if [[ ! -d "$symbol_server_root/openrct2-win.pdb" ]]; then
+    echo 'pdbconv did not create the expected openrct2-win.pdb symbol-store entry.'
+    exit 1
+fi
+
+# Keep only publishable symbol payload; drop symstore transaction metadata files
+find "$symbol_server_root" -mindepth 1 -maxdepth 1 \
+    ! -name 'openrct2-win.pdb' \
+    ! -name 'openrct2.exe' \
+    -exec rm -rf {} +
+
+# Add cross-references and metadata between the symstore and pdbconv outputs
+pdb_symstore_dir="$(find "$symbol_server_root/openrct2-win.pdb" -mindepth 1 -maxdepth 1 -type d | sort | head -1)"
+if [[ -z "$pdb_symstore_dir" ]]; then
+    echo 'pdbconv did not create an openrct2-win.pdb symbol-store entry.'
+    exit 1
+fi
+
+# Store excessive metadata in the info files, since the symbol server uses cold storage which counts objects smaller
+# than 128 KiB as 128 KiB for billing.
+
+pdb_symstore_id="$(basename "$pdb_symstore_dir")"
+
+# Gather metadata for symbol entries
+git_commit="$(git rev-parse HEAD)"
+git_tag="$(git describe --tags --exact-match 2>/dev/null || echo "")"
+
+# Construct GitHub Actions run link if running in CI
+if [[ -n "${GITHUB_RUN_ID:-}" ]]; then
+    github_actions_run="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+else
+    github_actions_run="local"
+fi
+
+# Get target architecture (from CI matrix, or default to x64)
+architecture="${PLATFORM:-x64}"
+
+# Calculate SHA256 checksums of the symbol files
+exe_sha256="$(sha256sum "$compressed_exe_file" | awk '{print $1}')"
+pdb_sha256="$(sha256sum "$pdb_symstore_dir/openrct2-win.pdb" | awk '{print $1}')"
+
+# Timestamp for this info file (UTC ISO 8601)
+timestamp="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+# File sizes in bytes
+exe_size_bytes="$(stat -c%s "$compressed_exe_file")"
+pdb_size_bytes="$(stat -c%s "$pdb_symstore_dir/openrct2-win.pdb")"
+
+# Helper function to write info file with cross-references and metadata
+write_info_file() {
+    local dir="$1"
+    local sha_field="$2"
+    local sha_value="$3"
+    local size_value="$4"
+
+    {
+        echo "exe_symstore_id: $exe_symstore_id"
+        echo "pdb_symstore_id: $pdb_symstore_id"
+        echo "git_commit: $git_commit"
+        [[ -n "$git_tag" ]] && echo "git_tag: $git_tag"
+        echo "github_actions_run: $github_actions_run"
+        echo "architecture: $architecture"
+        echo "timestamp: $timestamp"
+        echo "size_bytes: $size_value"
+        echo "$sha_field: $sha_value"
+    } > "$dir/info"
+}
+
+write_info_file "$pdb_symstore_dir" "sha256_pdb" "$pdb_sha256" "$pdb_size_bytes"
+write_info_file "$exe_symstore_dir" "sha256_exe" "$exe_sha256" "$exe_size_bytes"
+
+# Archive the compressed files: compressed EXE, COM, and compressed PDB
+mkdir -p ../artifacts
+artifact_name="../artifacts/openrct2-symbols-$CONFIGURATION-$PLATFORM.zip"
 
 echo -e "\033[0;36mCreating symbols archive for OpenRCT2...\033[0m"
-if [[ -f $destination ]]; then
-    rm $destination
+if [[ -f "$artifact_name" ]]; then
+    rm "$artifact_name"
 fi
-$archiver $destination openrct2.exe openrct2.com openrct2-win.pdb
 
-destination=$(cygpath -w $(readlink -f $destination))
-printf '\033[0;32m%s\033[0m\n' "${destination} created successfully"
+# Flatten the archive by copying files to temp dir and archiving from there
+temp_dir=$(mktemp -d)
+mkdir -p "$temp_dir"
+cp "$compressed_exe_file" "$temp_dir/openrct2.ex_"
+cp "openrct2.com" "$temp_dir/openrct2.com"
+cp "$pdb_symstore_dir/openrct2-win.pdb" "$temp_dir/openrct2-win.pdb"
+
+artifact_full_path="$(readlink -f "$artifact_name")"
+cd "$temp_dir"
+$archiver "$artifact_full_path" .
+cd - >/dev/null
+rm -rf "$temp_dir"
+
+printf '\033[0;32m%s\033[0m\n' "Created successfully: $artifact_full_path"
+
+echo -e "\033[0;36mSymbol upload payload:\033[0m"
+find "$symbol_server_root" -type f | sort
