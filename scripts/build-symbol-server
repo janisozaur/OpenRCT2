@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+# This script prepares a symbol server upload payload for the Windows OpenRCT2 executable and PDB.
+# It uses pdbconv to generate a compressed MSFZ symbol store layout for the PDB, and symstore.exe
+# with /compress to generate a compressed EXE entry. It then cross-references the two entries with
+# metadata in info files, so that file management in the target bucket is simplified.
+# Since we use cold storage for the symbol server, which counts objects smaller than 128 KiB as
+# 128 KiB for billing, we can include superfluous metadata in the info files without increasing costs.
+
 set -euo pipefail
 
 symstore_path='C:/Program Files (x86)/Windows Kits/10/Debuggers/x64/symstore.exe'
