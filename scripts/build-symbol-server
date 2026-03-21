@@ -107,11 +107,19 @@ architecture="${PLATFORM:-x64}"
 exe_sha256="$(sha256sum "$compressed_exe_file" | awk '{print $1}')"
 pdb_sha256="$(sha256sum "$pdb_symstore_dir/openrct2-win.pdb" | awk '{print $1}')"
 
+# Timestamp for this info file (UTC ISO 8601)
+timestamp="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+# File sizes in bytes
+exe_size_bytes="$(stat -c%s "$compressed_exe_file")"
+pdb_size_bytes="$(stat -c%s "$pdb_symstore_dir/openrct2-win.pdb")"
+
 # Helper function to write info file with cross-references and metadata
 write_info_file() {
     local dir="$1"
     local sha_field="$2"
     local sha_value="$3"
+    local size_value="$4"
 
     {
         echo "exe_symstore_id: $exe_symstore_id"
@@ -120,12 +128,14 @@ write_info_file() {
         [[ -n "$git_tag" ]] && echo "git_tag: $git_tag"
         echo "github_actions_run: $github_actions_run"
         echo "architecture: $architecture"
+        echo "timestamp: $timestamp"
+        echo "size_bytes: $size_value"
         echo "$sha_field: $sha_value"
     } > "$dir/info"
 }
 
-write_info_file "$pdb_symstore_dir" "sha256_pdb" "$pdb_sha256"
-write_info_file "$exe_symstore_dir" "sha256_exe" "$exe_sha256"
+write_info_file "$pdb_symstore_dir" "sha256_pdb" "$pdb_sha256" "$pdb_size_bytes"
+write_info_file "$exe_symstore_dir" "sha256_exe" "$exe_sha256" "$exe_size_bytes"
 
 echo 'Symbol upload payload:'
 find "$upload_root" -type f | sort
