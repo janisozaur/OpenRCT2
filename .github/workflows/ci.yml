@@ -319,7 +319,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: OpenRCT2-${{ needs.build_variables.outputs.name }}-${{ runner.os }}-symbol-server-${{ matrix.platform }}
-          path: symbols-upload/
+          path: bin/symbols-upload/
           compression-level: 0
           if-no-files-found: error
       - name: Upload symbol-server files to DigitalOcean Spaces
@@ -329,8 +329,8 @@ jobs:
           S3_SECRET_KEY: ${{ secrets.S3_SYMBOL_UPLOAD_SECRET }}
         run: |
           pip install s4cmd
-          find symbols-upload -type f | while IFS= read -r file; do
-            rel_path="${file#symbols-upload/}"
+          find bin/symbols-upload -type f | while IFS= read -r file; do
+            rel_path="${file#bin/symbols-upload/}"
             rel_path="${rel_path//\\//}"
             rel_path="$(echo "$rel_path" | tr '[:upper:]' '[:lower:]')"
             s4cmd --endpoint-url https://ams3.digitaloceanspaces.com put -f "$file" "s3://openrct2-symbols/symstore/$rel_path"
