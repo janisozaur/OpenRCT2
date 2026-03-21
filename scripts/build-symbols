@@ -90,11 +90,28 @@ if [[ ! -d "$symbol_server_root/openrct2-win.pdb" ]]; then
     exit 1
 fi
 
+echo -e "\033[0;32mSymbol-server tree created successfully at: $symbol_server_root\033[0m"
+echo -e "\033[0;36mCleaning symbol-server tree...\033[0m"
+
 # Keep only publishable symbol payload; drop symstore transaction metadata files
+# Remove everything except the two symbol directories at the top level
 find "$symbol_server_root" -mindepth 1 -maxdepth 1 \
     ! -name 'openrct2-win.pdb' \
     ! -name 'openrct2.exe' \
-    -exec rm -rf {} +
+    -print -exec rm -rf {} +
+
+echo -e "\033[0;36mCleaning symbol directories...\033[0m"
+
+# Remove stray metadata files inside the symbol directories (e.g., refs.ptr, 000Admin, File.ptr)
+find "$symbol_server_root/openrct2.exe" -type f \
+    ! -name 'openrct2.ex_' \
+    -print -delete
+
+find "$symbol_server_root/openrct2-win.pdb" -type f \
+    ! -name 'openrct2-win.pdb' \
+    -print -delete
+
+echo -e "\033[0;32mSymbol-server tree cleaned successfully.\033[0m"
 
 # Add cross-references and metadata between the symstore and pdbconv outputs
 pdb_symstore_dir="$(find "$symbol_server_root/openrct2-win.pdb" -mindepth 1 -maxdepth 1 -type d | sort | head -1)"
