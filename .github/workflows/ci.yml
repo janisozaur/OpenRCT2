@@ -313,12 +313,6 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: OpenRCT2-${{ needs.build_variables.outputs.name }}-${{ runner.os }}-symbols-${{ matrix.platform }}
-          path: artifacts/OpenRCT2-${{ needs.build_variables.outputs.name }}-windows-symbols-${{ matrix.platform }}.zip
-          if-no-files-found: error
-      - name: Upload symbol-server artifact (CI)
-        uses: actions/upload-artifact@v6
-        with:
-          name: OpenRCT2-${{ needs.build_variables.outputs.name }}-${{ runner.os }}-symbol-server-${{ matrix.platform }}
           path: bin/symbols-upload/
           compression-level: 0
           if-no-files-found: error
