@@ -47,7 +47,7 @@ cd "$basedir/bin"
 # Download pdbconv and generate a compressed MSFZ symbol-server tree for the PDB
 echo -e "\033[0;36mDownloading pdbconv...\033[0m"
 curl -fL --retry 3 -o pdbconv.exe \
-    https://github.com/janisozaur/pdbconv/releases/download/v1.0.0/pdbconv-windows-latest-msvc-x64.exe
+    https://github.com/janisozaur/pdbconv/releases/download/v1.0.1/pdbconv-windows-latest-msvc-x64.exe
 
 rm -rf "$symbol_server_root"
 mkdir -p "$symbol_server_root"
@@ -103,8 +103,9 @@ if [[ -z "$pdb_symstore_dir" ]]; then
     exit 1
 fi
 
-# Store excessive metadata in the info files, since the symbol server uses cold storage which counts objects smaller
-# than 128 KiB as 128 KiB for billing.
+# Store excessive metadata in the info files, since the symbol server uses cold storage which
+# counts objects smaller than 128 KiB as 128 KiB for billing.
+# See https://docs.digitalocean.com/products/spaces/details/limits/#spaces-cold-storage-limits
 
 pdb_symstore_id="$(basename "$pdb_symstore_dir")"
 
