@@ -2098,7 +2098,7 @@ inline void linenoiseEditDeletePrevWord(struct linenoiseState *l) {
 
 inline void linenoiseEditRefreshLine()
 {
-    std::lock_guard lock(lnstate_mutex);
+    std::lock_guard<std::mutex> lock(lnstate_mutex);
     refreshLine(&lnstate);
 }
 
@@ -2112,7 +2112,7 @@ inline void linenoiseEditRefreshLine()
  * The function returns the length of the current buffer. */
 inline int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, int buflen, const char *prompt)
 {
-    std::unique_lock lock(lnstate_mutex);
+    std::unique_lock<std::mutex> lock(lnstate_mutex);
     auto& l = lnstate;
 
     /* Populate the linenoise state that we pass to functions implementing

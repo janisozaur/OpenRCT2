@@ -16,12 +16,10 @@
 #include "../platform/Platform.h"
 #include "../scripting/ScriptEngine.h"
 
+#include <atomic>
+#include <csignal>
 #include <cstdlib>
 #include <linenoise.hpp>
-
-#ifndef _WIN32
-    #include <csignal>
-#endif
 
 using namespace OpenRCT2;
 
@@ -31,11 +29,12 @@ using namespace OpenRCT2;
 #endif
 
 #ifndef _WIN32
-static std::atomic<bool> _terminalNeedsRestoration{ false };
-static void HandleSignal(int32_t signal)
+static volatile sig_atomic_t _terminalNeedsRestoration = 0;
+static void HandleSignal(int signal)
 {
-    if (_terminalNeedsRestoration.exchange(false))
+    if (_terminalNeedsRestoration)
     {
+        _terminalNeedsRestoration = 0;
         // Note: linenoiseAtExit is not strictly async-signal-safe, but common for terminal apps
         linenoise::linenoiseAtExit();
     }
@@ -111,11 +110,11 @@ void StdInOutConsole::Start()
             std::string left = prompt;
             _isPromptShowing = true;
 #ifndef _WIN32
-            _terminalNeedsRestoration = true;
+            _terminalNeedsRestoration = 1;
 #endif
             auto quit = linenoise::Readline(left.c_str(), line);
 #ifndef _WIN32
-            _terminalNeedsRestoration = false;
+            _terminalNeedsRestoration = 0;
 #endif
             _isPromptShowing = false;
             if (quit)
