@@ -2039,3 +2039,25 @@ bool InteractiveConsole::IsExecuting()
 {
     return _commandExecuting.test();
 }
+
+std::vector<std::string> InteractiveConsole::GetCommandNames() const
+{
+    std::vector<std::string> names;
+    names.reserve(std::size(console_command_table));
+    for (const auto& c : console_command_table)
+    {
+        names.emplace_back(c.command);
+    }
+    return names;
+}
+
+std::vector<std::string> InteractiveConsole::GetVariableNames() const
+{
+    std::vector<std::string> names;
+    names.reserve(std::size(console_variable_table));
+    for (const auto& v : console_variable_table)
+    {
+        names.emplace_back(v);
+    }
+    return names;
+}

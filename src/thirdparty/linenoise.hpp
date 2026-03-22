@@ -1795,6 +1795,7 @@ inline int completeLine(struct linenoiseState *ls, char *cbuf, int *c) {
             }
 
             //nread = read(ls->ifd,&c,1);
+            lnstate_mutex.unlock();
 #ifdef _WIN32
             nread = win32read(c);
             if (nread == 1) {
@@ -1803,6 +1804,7 @@ inline int completeLine(struct linenoiseState *ls, char *cbuf, int *c) {
 #else
             nread = unicodeReadUTF8Char(ls->ifd,cbuf,c);
 #endif
+            lnstate_mutex.lock();
             if (nread <= 0) {
                 *c = -1;
                 return nread;
@@ -2213,14 +2215,27 @@ inline int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, int buflen, con
             /* Read the next two bytes representing the escape sequence.
              * Use two calls to handle slow terminals returning the two
              * chars at different times. */
-            if (read(l.ifd,seq,1) == -1) break;
-            if (read(l.ifd,seq+1,1) == -1) break;
+            lnstate_mutex.unlock();
+            if (read(l.ifd,seq,1) == -1) {
+                lnstate_mutex.lock();
+                break;
+            }
+            if (read(l.ifd,seq+1,1) == -1) {
+                lnstate_mutex.lock();
+                break;
+            }
+            lnstate_mutex.lock();
 
             /* ESC [ sequences. */
             if (seq[0] == '[') {
                 if (seq[1] >= '0' && seq[1] <= '9') {
                     /* Extended escape, read additional byte. */
-                    if (read(l.ifd,seq+2,1) == -1) break;
+                    lnstate_mutex.unlock();
+                    if (read(l.ifd,seq+2,1) == -1) {
+                        lnstate_mutex.lock();
+                        break;
+                    }
+                    lnstate_mutex.lock();
                     if (seq[2] == '~') {
                         switch(seq[1]) {
                         case '3': /* Delete key. */
