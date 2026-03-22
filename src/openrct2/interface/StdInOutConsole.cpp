@@ -36,6 +36,7 @@ static void HandleSignal(int32_t signal)
 {
     if (_terminalNeedsRestoration.exchange(false))
     {
+        // Note: linenoiseAtExit is not strictly async-signal-safe, but common for terminal apps
         linenoise::linenoiseAtExit();
     }
     std::raise(signal);
@@ -57,9 +58,7 @@ void StdInOutConsole::Start()
     }
 
 #ifndef _WIN32
-    struct sigaction sa
-    {
-    };
+    struct sigaction sa{};
     sa.sa_handler = HandleSignal;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESETHAND;
@@ -74,14 +73,15 @@ void StdInOutConsole::Start()
 #endif
 
     std::thread replThread([this]() -> void {
-        _terminalNeedsRestoration = true;
         linenoise::SetMultiLine(true);
         linenoise::SetHistoryMaxLen(32);
 
+        _commands = GetCommandNames();
+        _variables = GetVariableNames();
+
         linenoise::SetCompletionCallback([this](const char* buf, std::vector<std::string>& completions) {
             std::string input(buf);
-            auto commands = GetCommandNames();
-            for (const auto& cmd : commands)
+            for (const auto& cmd : _commands)
             {
                 if (cmd.find(input) == 0)
                 {
@@ -93,8 +93,7 @@ void StdInOutConsole::Start()
             {
                 std::string prefix = input.substr(0, 4);
                 std::string varPart = input.substr(4);
-                auto variables = GetVariableNames();
-                for (const auto& var : variables)
+                for (const auto& var : _variables)
                 {
                     if (var.find(varPart) == 0)
                     {
@@ -111,9 +110,14 @@ void StdInOutConsole::Start()
             std::string line;
             std::string left = prompt;
             _isPromptShowing = true;
+#ifndef _WIN32
+            _terminalNeedsRestoration = true;
+#endif
             auto quit = linenoise::Readline(left.c_str(), line);
-            _isPromptShowing = false;
+#ifndef _WIN32
             _terminalNeedsRestoration = false;
+#endif
+            _isPromptShowing = false;
             if (quit)
             {
                 if (lastPromptQuit)
