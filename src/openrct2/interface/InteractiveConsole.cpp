@@ -1654,8 +1654,9 @@ static void ConsoleCommandAddNewsItem([[maybe_unused]] InteractiveConsole& conso
         console.WriteLine("    9 (News::ItemType::graph)");
         console.WriteLine("   10 (News::ItemType::campaign)");
         console.WriteLine("message is the message to display, wrapped in quotes for multiple words");
-        console.WriteLine("assoc is the associated id of ride/peep/tile/etc. If the selected ItemType doesn't need an assoc "
-                          "(Null, Money, Award, Graph), you can leave this field blank");
+        console.WriteLine(
+            "assoc is the associated id of ride/peep/tile/etc. If the selected ItemType doesn't need an assoc "
+            "(Null, Money, Award, Graph), you can leave this field blank");
         return;
     }
 
