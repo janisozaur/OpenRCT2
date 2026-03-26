@@ -403,7 +403,7 @@ namespace OpenRCT2
             ContextOpenWindow(WindowClass::savePrompt);
         }
 
-        bool Initialise() final override
+        bool Initialise() final
         {
             if (_initialised)
             {
@@ -633,7 +633,7 @@ namespace OpenRCT2
         }
 
     public:
-        void InitialiseDrawingEngine() final override
+        void InitialiseDrawingEngine() final
         {
             assert(_drawingEngine == nullptr);
 
@@ -700,7 +700,7 @@ namespace OpenRCT2
             WindowCheckAllValidZoom();
         }
 
-        void DisposeDrawingEngine() final override
+        void DisposeDrawingEngine() final
         {
             _drawingEngine = nullptr;
         }
@@ -744,7 +744,7 @@ namespace OpenRCT2
             ContextOpenIntent(&intent);
         }
 
-        bool LoadParkFromFile(const u8string& path, bool loadTitleScreenOnFail = false, bool asScenario = false) final override
+        bool LoadParkFromFile(const u8string& path, bool loadTitleScreenOnFail = false, bool asScenario = false) final
         {
             PROFILED_FUNCTION_DATA(path.c_str());
             LOG_VERBOSE("Context::LoadParkFromFile(%s)", path.c_str());
@@ -798,7 +798,7 @@ namespace OpenRCT2
 
         bool LoadParkFromStream(
             IStream* stream, const std::string& path, bool loadTitleScreenFirstOnFail = false,
-            bool asScenario = false) final override
+            bool asScenario = false) final
         {
             try
             {

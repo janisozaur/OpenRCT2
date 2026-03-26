@@ -228,7 +228,7 @@ namespace OpenRCT2
             return nullptr;
         }
 
-        const ObjectRepositoryItem* FindObject(std::string_view identifier) const final override
+        const ObjectRepositoryItem* FindObject(std::string_view identifier) const final
         {
             auto kvp = _newItemMap.find(identifier);
             if (kvp != _newItemMap.end())
@@ -238,7 +238,7 @@ namespace OpenRCT2
             return nullptr;
         }
 
-        const ObjectRepositoryItem* FindObject(const RCTObjectEntry* objectEntry) const final override
+        const ObjectRepositoryItem* FindObject(const RCTObjectEntry* objectEntry) const final
         {
             auto kvp = _itemMap.find(*objectEntry);
             if (kvp != _itemMap.end())
@@ -248,7 +248,7 @@ namespace OpenRCT2
             return nullptr;
         }
 
-        const ObjectRepositoryItem* FindObject(const ObjectEntryDescriptor& entry) const final override
+        const ObjectRepositoryItem* FindObject(const ObjectEntryDescriptor& entry) const final
         {
             if (entry.Generation == ObjectGeneration::DAT)
                 return FindObject(&entry.Entry);
