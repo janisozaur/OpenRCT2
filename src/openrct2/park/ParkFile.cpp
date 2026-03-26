@@ -47,6 +47,7 @@
 #include "../object/ObjectRepository.h"
 #include "../peep/RideUseSystem.h"
 #include "../profiling/Profiling.h"
+#include "../profiling/ProfilingMacros.hpp"
 #include "../rct2/RCT2.h"
 #include "../ride/RideManager.hpp"
 #include "../ride/ShopItem.h"

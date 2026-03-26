@@ -30,6 +30,7 @@
 #include "../park/Legacy.h"
 #include "../platform/Platform.h"
 #include "../profiling/Profiling.h"
+#include "../profiling/ProfilingMacros.hpp"
 #include "../sawyer_coding/SawyerChunkReader.h"
 #include "../sawyer_coding/SawyerChunkWriter.h"
 #include "../sawyer_coding/SawyerCoding.h"
@@ -227,7 +228,7 @@ namespace OpenRCT2
             return nullptr;
         }
 
-        const ObjectRepositoryItem* FindObject(std::string_view identifier) const final
+        const ObjectRepositoryItem* FindObject(std::string_view identifier) const final override
         {
             auto kvp = _newItemMap.find(identifier);
             if (kvp != _newItemMap.end())
@@ -237,7 +238,7 @@ namespace OpenRCT2
             return nullptr;
         }
 
-        const ObjectRepositoryItem* FindObject(const RCTObjectEntry* objectEntry) const final
+        const ObjectRepositoryItem* FindObject(const RCTObjectEntry* objectEntry) const final override
         {
             auto kvp = _itemMap.find(*objectEntry);
             if (kvp != _itemMap.end())
@@ -247,7 +248,7 @@ namespace OpenRCT2
             return nullptr;
         }
 
-        const ObjectRepositoryItem* FindObject(const ObjectEntryDescriptor& entry) const final
+        const ObjectRepositoryItem* FindObject(const ObjectEntryDescriptor& entry) const final override
         {
             if (entry.Generation == ObjectGeneration::DAT)
                 return FindObject(&entry.Entry);

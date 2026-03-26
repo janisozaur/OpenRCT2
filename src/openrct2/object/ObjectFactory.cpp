@@ -25,6 +25,7 @@
 #include "../core/String.hpp"
 #include "../core/Zip.h"
 #include "../profiling/Profiling.h"
+#include "../profiling/ProfilingMacros.hpp"
 #include "../sawyer_coding/SawyerChunkReader.h"
 #include "AudioObject.h"
 #include "BannerObject.h"
