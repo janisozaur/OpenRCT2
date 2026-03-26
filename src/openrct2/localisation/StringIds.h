@@ -73,6 +73,10 @@ enum : StringId
 
     // STR_0858 to 0864 are removed.
     STR_STRINGID = 865,
+    STR_ARG_2_STRINGID = 866, // Unused
+    STR_ARG_4_STRINGID = 867, // Unused
+    STR_ARG_8_STRINGID = 869, // Unused
+    STR_ARG_12_STRINGID = 871,
 
     STR_TOO_LOW = 877,
     STR_TOO_HIGH = 878,
@@ -1761,9 +1765,6 @@ enum : StringId
     STR_REPLAY_NOT_STARTED = 7011,
 
     STR_ACTION_PATH_DRAG_AREA = 7013,
-
-    STR_QUARTER_HELIX_UP = 7028,
-    STR_QUARTER_HELIX_DOWN = 7029,
 
     // Have to include resource strings (from scenarios and objects) for the time being now that language is partially working
     /* MAX_STR_COUNT = 32768 */ // MAX_STR_COUNT - upper limit for number of strings, not the current count strings

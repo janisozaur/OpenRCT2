@@ -14,12 +14,13 @@
 #include "PaletteIndex.h"
 #include "TTF.h"
 
+struct TextDrawInfo;
+
 namespace OpenRCT2::Drawing
 {
     struct IDrawingEngine;
     struct PaletteMap;
     struct RenderTarget;
-    struct TextDrawInfo;
 
     struct IDrawingContext
     {
@@ -39,7 +40,7 @@ namespace OpenRCT2::Drawing
         virtual void DrawSpriteSolid(RenderTarget& rt, ImageId image, int32_t x, int32_t y, PaletteIndex colour) = 0;
         virtual void DrawGlyph(RenderTarget& rt, ImageId image, int32_t x, int32_t y, const PaletteMap& palette) = 0;
         virtual void DrawTTFBitmap(
-            RenderTarget& rt, const TextDrawInfo& info, TTFSurface* surface, int32_t x, int32_t y, uint8_t hintingThreshold)
+            RenderTarget& rt, TextDrawInfo* info, TTFSurface* surface, int32_t x, int32_t y, uint8_t hintingThreshold)
             = 0;
     };
 

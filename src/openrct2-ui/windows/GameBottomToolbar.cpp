@@ -18,10 +18,8 @@
 #include <openrct2/OpenRCT2.h>
 #include <openrct2/SpriteIds.h>
 #include <openrct2/config/Config.h>
-#include <openrct2/drawing/Drawing.String.h>
 #include <openrct2/drawing/Drawing.h>
 #include <openrct2/drawing/Rectangle.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/entity/EntityRegistry.h>
 #include <openrct2/entity/Guest.h>
 #include <openrct2/entity/Staff.h>
@@ -119,7 +117,7 @@ namespace OpenRCT2::Ui::Windows
                 StringId stringId = gameState.park.cash < 0 ? STR_BOTTOM_TOOLBAR_CASH_NEGATIVE : STR_BOTTOM_TOOLBAR_CASH;
                 auto ft = Formatter();
                 ft.Add<money64>(gameState.park.cash);
-                drawText(rt, screenCoords, stringId, ft, { colour, TextAlignment::centre });
+                DrawTextBasic(rt, screenCoords, stringId, ft, { colour, TextAlignment::centre });
             }
 
             static constexpr StringId _guestCountFormats[] = {
@@ -145,7 +143,7 @@ namespace OpenRCT2::Ui::Windows
                 auto colour = GetHoverWidgetColour(WIDX_GUESTS);
                 auto ft = Formatter();
                 ft.Add<uint32_t>(gameState.park.numGuestsInPark);
-                drawText(rt, screenCoords, stringId, ft, { colour, TextAlignment::centre });
+                DrawTextBasic(rt, screenCoords, stringId, ft, { colour, TextAlignment::centre });
             }
 
             // Draw park rating
@@ -205,7 +203,7 @@ namespace OpenRCT2::Ui::Windows
             ft.Add<StringId>(DateDayNames[day]);
             ft.Add<int16_t>(month);
             ft.Add<int16_t>(year);
-            drawText(rt, screenCoords, stringId, ft, { colour, TextAlignment::centre });
+            DrawTextBasic(rt, screenCoords, stringId, ft, { colour, TextAlignment::centre });
 
             // Figure out how much line height we have to work with.
             uint32_t line_height = FontGetLineHeight(FontStyle::medium);
@@ -222,7 +220,7 @@ namespace OpenRCT2::Ui::Windows
             }
             ft = Formatter();
             ft.Add<int16_t>(temperature);
-            drawText(rt, screenCoords + ScreenCoordsXY{ 0, 6 }, format, ft);
+            DrawTextBasic(rt, screenCoords + ScreenCoordsXY{ 0, 6 }, format, ft);
             screenCoords.x += 30;
 
             // Current weather
@@ -257,7 +255,7 @@ namespace OpenRCT2::Ui::Windows
             // Text
             auto screenCoords = windowPos + ScreenCoordsXY{ middleOutsetWidget.midX(), middleOutsetWidget.top + 11 };
             int32_t itemWidth = middleOutsetWidget.width() - 63;
-            drawNewsTicker(
+            DrawNewsTicker(
                 rt, screenCoords, itemWidth, Drawing::Colour::brightGreen, STR_BOTTOM_TOOLBAR_NEWS_TEXT, newsItem->text,
                 newsItem->ticks);
 
@@ -381,13 +379,13 @@ namespace OpenRCT2::Ui::Windows
             if (stringId == kStringIdNone)
             {
                 // TODO: this string probably shouldn't be reused for this
-                drawTextWrapped(
+                DrawTextWrapped(
                     rt, middleWidgetCoords, panelWidth, STR_TITLE_SEQUENCE_OPENRCT2, ft, { colours[0], TextAlignment::centre });
             }
             else
             {
                 // Show tooltip in bottom toolbar
-                drawTextWrapped(rt, middleWidgetCoords, panelWidth, STR_STRINGID, ft, { colours[0], TextAlignment::centre });
+                DrawTextWrapped(rt, middleWidgetCoords, panelWidth, STR_STRINGID, ft, { colours[0], TextAlignment::centre });
             }
         }
 

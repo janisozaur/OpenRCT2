@@ -19,11 +19,9 @@
 #include <openrct2/core/String.hpp>
 #include <openrct2/core/UnitConversion.h>
 #include <openrct2/drawing/ColourMap.h>
-#include <openrct2/drawing/Drawing.String.h>
 #include <openrct2/drawing/Drawing.h>
 #include <openrct2/drawing/IDrawingEngine.h>
 #include <openrct2/drawing/Rectangle.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/localisation/Formatting.h>
 #include <openrct2/ride/RideConstruction.h>
 #include <openrct2/ride/RideData.h>
@@ -88,7 +86,6 @@ namespace OpenRCT2::Ui::Windows
         TrackDesignPreviewBuffer _trackDesignPreviewPixels{};
         bool _selectedItemIsBeingUpdated;
         bool _reloadTrackDesigns;
-        u8string _windowTitle;
 
         void filterList()
         {
@@ -393,19 +390,17 @@ namespace OpenRCT2::Ui::Windows
                 stringId = rideName.Name;
             }
 
-            StringId titleFormat;
+            Formatter::Common().Add<StringId>(stringId);
             if (gLegacyScene == LegacyScene::trackDesignsManager)
             {
-                titleFormat = STR_TRACK_DESIGNS;
+                widgets[WIDX_TITLE].text = STR_TRACK_DESIGNS;
                 widgets[WIDX_TRACK_LIST].tooltip = STR_CLICK_ON_DESIGN_TO_RENAME_OR_DELETE_IT;
             }
             else
             {
-                titleFormat = STR_SELECT_DESIGN;
+                widgets[WIDX_TITLE].text = STR_SELECT_DESIGN;
                 widgets[WIDX_TRACK_LIST].tooltip = STR_CLICK_ON_DESIGN_TO_BUILD_IT_TIP;
             }
-            _windowTitle = FormatStringID(titleFormat, stringId);
-            widgets[WIDX_TITLE].setString(_windowTitle.c_str());
 
             if ((gLegacyScene == LegacyScene::trackDesignsManager) || selectedListItem != 0)
             {
@@ -481,10 +476,10 @@ namespace OpenRCT2::Ui::Windows
             // Show track file path (in debug mode)
             if (Config::Get().general.debuggingTools)
             {
-                const auto shortPath = shortenPath(path, width, FontStyle::medium);
+                const auto shortPath = ShortenPath(path, width, FontStyle::medium);
                 auto ft = Formatter();
                 ft.Add<utf8*>(shortPath.c_str());
-                drawText(
+                DrawTextBasic(
                     rt, windowPos + ScreenCoordsXY{ 0, height - kDebugPathHeight - 3 }, STR_STRING, ft,
                     { colours[1] }); // TODO Check dpi
             }
@@ -529,7 +524,7 @@ namespace OpenRCT2::Ui::Windows
                 && gLegacyScene != LegacyScene::trackDesignsManager)
             {
                 // Vehicle design not available
-                drawTextEllipsised(rt, screenPos, 368, STR_VEHICLE_DESIGN_UNAVAILABLE, {}, { TextAlignment::centre });
+                DrawTextEllipsised(rt, screenPos, 368, STR_VEHICLE_DESIGN_UNAVAILABLE, {}, { TextAlignment::centre });
                 screenPos.y -= kScrollableRowHeight;
             }
 
@@ -538,7 +533,7 @@ namespace OpenRCT2::Ui::Windows
                 if (!gTrackDesignSceneryToggle)
                 {
                     // Scenery not available
-                    drawTextEllipsised(
+                    DrawTextEllipsised(
                         rt, screenPos, 368, STR_DESIGN_INCLUDES_SCENERY_WHICH_IS_UNAVAILABLE, {}, { TextAlignment::centre });
                     screenPos.y -= kScrollableRowHeight;
                 }
@@ -547,7 +542,7 @@ namespace OpenRCT2::Ui::Windows
             // Track design name
             auto ft = Formatter();
             ft.Add<const utf8*>(_trackDesigns[trackIndex].name.c_str());
-            drawTextEllipsised(rt, screenPos, 368, STR_TRACK_PREVIEW_NAME_FORMAT, ft, { TextAlignment::centre });
+            DrawTextEllipsised(rt, screenPos, 368, STR_TRACK_PREVIEW_NAME_FORMAT, ft, { TextAlignment::centre });
 
             // Information
             screenPos = windowPos + ScreenCoordsXY{ tdWidget.left + 1, tdWidget.bottom + 2 };
@@ -555,17 +550,17 @@ namespace OpenRCT2::Ui::Windows
             // Stats
             ft = Formatter();
             ft.Add<fixed32_2dp>(_loadedTrackDesign->statistics.ratings.excitement);
-            drawText(rt, screenPos, STR_TRACK_LIST_EXCITEMENT_RATING, ft);
+            DrawTextBasic(rt, screenPos, STR_TRACK_LIST_EXCITEMENT_RATING, ft);
             screenPos.y += kListRowHeight;
 
             ft = Formatter();
             ft.Add<fixed32_2dp>(_loadedTrackDesign->statistics.ratings.intensity);
-            drawText(rt, screenPos, STR_TRACK_LIST_INTENSITY_RATING, ft);
+            DrawTextBasic(rt, screenPos, STR_TRACK_LIST_INTENSITY_RATING, ft);
             screenPos.y += kListRowHeight;
 
             ft = Formatter();
             ft.Add<fixed32_2dp>(_loadedTrackDesign->statistics.ratings.nausea);
-            drawText(rt, screenPos, STR_TRACK_LIST_NAUSEA_RATING, ft);
+            DrawTextBasic(rt, screenPos, STR_TRACK_LIST_NAUSEA_RATING, ft);
             screenPos.y += kListRowHeight + 4;
 
             // Information for tracked rides.
@@ -579,7 +574,7 @@ namespace OpenRCT2::Ui::Windows
                         // Holes
                         ft = Formatter();
                         ft.Add<uint16_t>(_loadedTrackDesign->statistics.holes);
-                        drawText(rt, screenPos, STR_HOLES, ft);
+                        DrawTextBasic(rt, screenPos, STR_HOLES, ft);
                         screenPos.y += kListRowHeight;
                     }
                     else
@@ -587,13 +582,13 @@ namespace OpenRCT2::Ui::Windows
                         // Maximum speed
                         ft = Formatter();
                         ft.Add<uint16_t>(ToHumanReadableSpeed(_loadedTrackDesign->statistics.maxSpeed << 16));
-                        drawText(rt, screenPos, STR_MAX_SPEED, ft);
+                        DrawTextBasic(rt, screenPos, STR_MAX_SPEED, ft);
                         screenPos.y += kListRowHeight;
 
                         // Average speed
                         ft = Formatter();
                         ft.Add<uint16_t>(ToHumanReadableSpeed(_loadedTrackDesign->statistics.averageSpeed << 16));
-                        drawText(rt, screenPos, STR_AVERAGE_SPEED, ft);
+                        DrawTextBasic(rt, screenPos, STR_AVERAGE_SPEED, ft);
                         screenPos.y += kListRowHeight;
                     }
 
@@ -601,7 +596,7 @@ namespace OpenRCT2::Ui::Windows
                     ft = Formatter();
                     ft.Add<StringId>(STR_RIDE_LENGTH_ENTRY);
                     ft.Add<uint16_t>(_loadedTrackDesign->statistics.rideLength);
-                    drawTextEllipsised(rt, screenPos, 214, STR_TRACK_LIST_RIDE_LENGTH, ft);
+                    DrawTextEllipsised(rt, screenPos, 214, STR_TRACK_LIST_RIDE_LENGTH, ft);
                     screenPos.y += kListRowHeight;
                 }
 
@@ -610,19 +605,19 @@ namespace OpenRCT2::Ui::Windows
                     // Maximum positive vertical Gs
                     ft = Formatter();
                     ft.Add<int32_t>(_loadedTrackDesign->statistics.maxPositiveVerticalG);
-                    drawText(rt, screenPos, STR_MAX_POSITIVE_VERTICAL_G, ft);
+                    DrawTextBasic(rt, screenPos, STR_MAX_POSITIVE_VERTICAL_G, ft);
                     screenPos.y += kListRowHeight;
 
                     // Maximum negative vertical Gs
                     ft = Formatter();
                     ft.Add<int32_t>(_loadedTrackDesign->statistics.maxNegativeVerticalG);
-                    drawText(rt, screenPos, STR_MAX_NEGATIVE_VERTICAL_G, ft);
+                    DrawTextBasic(rt, screenPos, STR_MAX_NEGATIVE_VERTICAL_G, ft);
                     screenPos.y += kListRowHeight;
 
                     // Maximum lateral Gs
                     ft = Formatter();
                     ft.Add<int32_t>(_loadedTrackDesign->statistics.maxLateralG);
-                    drawText(rt, screenPos, STR_MAX_LATERAL_G, ft);
+                    DrawTextBasic(rt, screenPos, STR_MAX_LATERAL_G, ft);
                     screenPos.y += kListRowHeight;
 
                     if (_loadedTrackDesign->statistics.totalAirTime != 0)
@@ -630,7 +625,7 @@ namespace OpenRCT2::Ui::Windows
                         // Total air time
                         ft = Formatter();
                         ft.Add<int32_t>(ToHumanReadableAirTime(_loadedTrackDesign->statistics.totalAirTime));
-                        drawText(rt, screenPos, STR_TOTAL_AIR_TIME, ft);
+                        DrawTextBasic(rt, screenPos, STR_TOTAL_AIR_TIME, ft);
                         screenPos.y += kListRowHeight;
                     }
                 }
@@ -640,13 +635,13 @@ namespace OpenRCT2::Ui::Windows
                     // Drops
                     ft = Formatter();
                     ft.Add<uint16_t>(_loadedTrackDesign->statistics.drops);
-                    drawText(rt, screenPos, STR_DROPS, ft);
+                    DrawTextBasic(rt, screenPos, STR_DROPS, ft);
                     screenPos.y += kListRowHeight;
 
                     // Drop height is multiplied by 0.75
                     ft = Formatter();
                     ft.Add<uint16_t>((_loadedTrackDesign->statistics.highestDropHeight * 3) / 4);
-                    drawText(rt, screenPos, STR_HIGHEST_DROP_HEIGHT, ft);
+                    DrawTextBasic(rt, screenPos, STR_HIGHEST_DROP_HEIGHT, ft);
                     screenPos.y += kListRowHeight;
                 }
 
@@ -654,7 +649,7 @@ namespace OpenRCT2::Ui::Windows
                 {
                     ft = Formatter();
                     ft.Add<uint16_t>(_loadedTrackDesign->statistics.inversions);
-                    drawText(rt, screenPos, STR_INVERSIONS, ft);
+                    DrawTextBasic(rt, screenPos, STR_INVERSIONS, ft);
                     screenPos.y += kListRowHeight;
                 }
 
@@ -667,7 +662,7 @@ namespace OpenRCT2::Ui::Windows
                 ft = Formatter();
                 ft.Add<uint16_t>(_loadedTrackDesign->statistics.spaceRequired.x);
                 ft.Add<uint16_t>(_loadedTrackDesign->statistics.spaceRequired.y);
-                drawText(rt, screenPos, STR_TRACK_LIST_SPACE_REQUIRED, ft);
+                DrawTextBasic(rt, screenPos, STR_TRACK_LIST_SPACE_REQUIRED, ft);
                 screenPos.y += kListRowHeight;
             }
 
@@ -675,7 +670,7 @@ namespace OpenRCT2::Ui::Windows
             {
                 ft = Formatter();
                 ft.Add<uint32_t>(_loadedTrackDesign->gameStateData.cost);
-                drawText(rt, screenPos, STR_TRACK_LIST_COST_AROUND, ft);
+                DrawTextBasic(rt, screenPos, STR_TRACK_LIST_COST_AROUND, ft);
             }
         }
 
@@ -691,7 +686,7 @@ namespace OpenRCT2::Ui::Windows
                 if (_trackDesigns.empty())
                 {
                     // No track designs
-                    drawText(rt, screenCoords - ScreenCoordsXY{ 0, 1 }, STR_NO_TRACK_DESIGNS_OF_THIS_TYPE);
+                    DrawTextBasic(rt, screenCoords - ScreenCoordsXY{ 0, 1 }, STR_NO_TRACK_DESIGNS_OF_THIS_TYPE);
                     return;
                 }
             }
@@ -714,7 +709,7 @@ namespace OpenRCT2::Ui::Windows
 
                 auto ft = Formatter();
                 ft.Add<StringId>(STR_BUILD_CUSTOM_DESIGN);
-                drawText(rt, screenCoords - ScreenCoordsXY{ 0, 1 }, stringId, ft);
+                DrawTextBasic(rt, screenCoords - ScreenCoordsXY{ 0, 1 }, stringId, ft);
                 screenCoords.y += kScrollableRowHeight;
                 listIndex++;
             }
@@ -741,7 +736,7 @@ namespace OpenRCT2::Ui::Windows
                     auto ft = Formatter();
                     ft.Add<StringId>(STR_TRACK_LIST_NAME_FORMAT);
                     ft.Add<const utf8*>(_trackDesigns[i].name.c_str());
-                    drawText(rt, screenCoords - ScreenCoordsXY{ 0, 1 }, stringId, ft);
+                    DrawTextBasic(rt, screenCoords - ScreenCoordsXY{ 0, 1 }, stringId, ft);
                 }
 
                 screenCoords.y += kScrollableRowHeight;

@@ -33,10 +33,8 @@
 #include <openrct2/core/Path.hpp>
 #include <openrct2/core/String.hpp>
 #include <openrct2/drawing/ColourMap.h>
-#include <openrct2/drawing/Drawing.String.h>
 #include <openrct2/drawing/Drawing.h>
 #include <openrct2/drawing/Rectangle.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/interface/ColourWithFlags.h>
 #include <openrct2/localisation/Formatter.h>
 #include <openrct2/localisation/Localisation.Date.h>
@@ -323,7 +321,7 @@ namespace OpenRCT2::Ui::Windows
 
             // Check how this date is represented (e.g. 2000-02-20, or 00/02/20)
             std::string date = Platform::FormatShortDate(long_time);
-            maxDateWidth = getStringWidth(date.c_str(), FontStyle::medium) + kDateTimeGap;
+            maxDateWidth = GfxGetStringWidth(date.c_str(), FontStyle::medium) + kDateTimeGap;
 
             // Some locales do not use leading zeros for months and days, so let's try October, too.
             tm.tm_mon = 10;
@@ -332,12 +330,12 @@ namespace OpenRCT2::Ui::Windows
 
             // Again, check how this date is represented (e.g. 2000-10-20, or 00/10/20)
             date = Platform::FormatShortDate(long_time);
-            maxDateWidth = std::max(maxDateWidth, getStringWidth(date.c_str(), FontStyle::medium) + kDateTimeGap);
+            maxDateWidth = std::max(maxDateWidth, GfxGetStringWidth(date.c_str(), FontStyle::medium) + kDateTimeGap);
 
             // Time appears to be universally represented with two digits for minutes, so 12:00 or 00:00 should be
             // representable.
             std::string time = Platform::FormatTime(long_time);
-            maxTimeWidth = getStringWidth(time.c_str(), FontStyle::medium) + kDateTimeGap;
+            maxTimeWidth = GfxGetStringWidth(time.c_str(), FontStyle::medium) + kDateTimeGap;
         }
 
         void LoadPreview()
@@ -433,7 +431,7 @@ namespace OpenRCT2::Ui::Windows
                 auto ft = Formatter();
                 ft.Add<StringId>(STR_STRING);
                 ft.Add<const char*>(_preview.parkName.c_str());
-                drawTextEllipsised(
+                DrawTextEllipsised(
                     rt, namePos, previewPaneSize.width - kPadding * 2, STR_WINDOW_COLOUR_2_STRINGID, ft,
                     { TextAlignment::centre });
             }
@@ -478,7 +476,7 @@ namespace OpenRCT2::Ui::Windows
                     previewText = STR_LOADING_GENERIC;
                 }
 
-                drawText(
+                DrawTextBasic(
                     rt, textPos, previewText, {},
                     { ColourWithFlags{ Drawing::Colour::white }.withFlag(ColourFlag::withOutline, true),
                       TextAlignment::centre });
@@ -495,7 +493,7 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<StringId>(DateDayNames[_preview.day]);
                 ft.Add<int16_t>(_preview.month);
                 ft.Add<int16_t>(_preview.year + 1);
-                drawText(rt, summaryCoords, STR_SUMMARY_DATE, ft);
+                DrawTextBasic(rt, summaryCoords, STR_SUMMARY_DATE, ft);
                 summaryCoords.y += kListRowHeight;
             }
 
@@ -503,7 +501,7 @@ namespace OpenRCT2::Ui::Windows
             {
                 auto ft = Formatter();
                 ft.Add<money64>(_preview.parkRating);
-                drawText(rt, summaryCoords, STR_SUMMARY_PARK_RATING, ft);
+                DrawTextBasic(rt, summaryCoords, STR_SUMMARY_PARK_RATING, ft);
                 summaryCoords.y += kListRowHeight;
             }
 
@@ -512,7 +510,7 @@ namespace OpenRCT2::Ui::Windows
             {
                 auto ft = Formatter();
                 ft.Add<money64>(_preview.cash);
-                drawText(rt, summaryCoords, STR_SUMMARY_CASH, ft);
+                DrawTextBasic(rt, summaryCoords, STR_SUMMARY_CASH, ft);
                 summaryCoords.y += kListRowHeight;
             }
 
@@ -520,7 +518,7 @@ namespace OpenRCT2::Ui::Windows
             {
                 auto ft = Formatter();
                 ft.Add<money64>(_preview.numRides);
-                drawText(rt, summaryCoords, STR_SUMMARY_NUM_RIDES, ft);
+                DrawTextBasic(rt, summaryCoords, STR_SUMMARY_NUM_RIDES, ft);
                 summaryCoords.y += kListRowHeight;
             }
 
@@ -528,7 +526,7 @@ namespace OpenRCT2::Ui::Windows
             {
                 auto ft = Formatter();
                 ft.Add<money64>(_preview.numGuests);
-                drawText(rt, summaryCoords, STR_SUMMARY_NUM_GUESTS, ft);
+                DrawTextBasic(rt, summaryCoords, STR_SUMMARY_NUM_GUESTS, ft);
                 summaryCoords.y += kListRowHeight;
             }
         }
@@ -710,7 +708,7 @@ namespace OpenRCT2::Ui::Windows
 
                 // Get 'Save' button string width
                 auto saveLabel = LanguageGetString(STR_FILEBROWSER_SAVE_BUTTON);
-                auto saveLabelWidth = getStringWidth(saveLabel, FontStyle::medium) + 12;
+                auto saveLabelWidth = GfxGetStringWidth(saveLabel, FontStyle::medium) + 12;
 
                 widgets[WIDX_SAVE].type = WidgetType::button;
                 widgets[WIDX_SAVE].top = height - paddingBottom - 15;
@@ -720,7 +718,7 @@ namespace OpenRCT2::Ui::Windows
 
                 // Get 'Filename:' string width
                 auto filenameLabel = LanguageGetString(STR_FILENAME_LABEL);
-                auto filenameLabelWidth = getStringWidth(filenameLabel, FontStyle::medium);
+                auto filenameLabelWidth = GfxGetStringWidth(filenameLabel, FontStyle::medium);
 
                 widgets[WIDX_FILENAME_TEXTBOX].type = WidgetType::textBox;
                 widgets[WIDX_FILENAME_TEXTBOX].top = height - paddingBottom - 15;
@@ -745,7 +743,7 @@ namespace OpenRCT2::Ui::Windows
             {
                 const auto& widget = widgets[WIDX_PARENT_FOLDER];
                 const auto pathWidth = widget.left - 8;
-                const auto shortPath = shortenPath(_directory, pathWidth, FontStyle::medium);
+                const auto shortPath = ShortenPath(_directory, pathWidth, FontStyle::medium);
 
                 // Format text
                 std::string buffer;
@@ -760,7 +758,7 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<const char*>(normalisedPathC);
 
                 auto pathPos = windowPos + ScreenCoordsXY{ 4, widget.top + 4 };
-                drawTextEllipsised(rt, pathPos, pathWidth, STR_STRING, ft);
+                DrawTextEllipsised(rt, pathPos, pathWidth, STR_STRING, ft);
             }
 
             const auto drawButtonCaption =
@@ -775,7 +773,7 @@ namespace OpenRCT2::Ui::Windows
                     ft.Add<StringId>(indicatorId);
 
                     auto cRT = const_cast<const RenderTarget&>(rt);
-                    drawTextEllipsised(
+                    DrawTextEllipsised(
                         cRT, windowPos + ScreenCoordsXY{ widget.left + 5, widget.top + 1 }, widget.width() - 1, strId, ft,
                         { Drawing::Colour::grey });
                 };
@@ -797,7 +795,7 @@ namespace OpenRCT2::Ui::Windows
             if (action == LoadSaveAction::save)
             {
                 auto& widget = widgets[WIDX_FILENAME_TEXTBOX];
-                drawText(
+                DrawTextBasic(
                     rt, windowPos + ScreenCoordsXY{ 5, widget.top + 2 }, STR_FILENAME_LABEL, {}, { Drawing::Colour::grey });
             }
         }
@@ -1117,7 +1115,7 @@ namespace OpenRCT2::Ui::Windows
                 {
                     auto ft = Formatter();
                     ft.Add<StringId>(STR_RIGHTGUILLEMET);
-                    drawText(rt, { 0, y }, stringId, ft);
+                    DrawTextBasic(rt, { 0, y }, stringId, ft);
                 }
 
                 // Folders get a folder icon
@@ -1131,7 +1129,7 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<StringId>(STR_STRING);
                 ft.Add<char*>(_listItems[i].name.c_str());
                 int32_t max_file_width = widgets[WIDX_SORT_NAME].width() - 16;
-                drawTextEllipsised(rt, { 15, y }, max_file_width, stringId, ft);
+                DrawTextEllipsised(rt, { 15, y }, max_file_width, stringId, ft);
 
                 // Print formatted modified date, if this is a file
                 if (_listItems[i].type != FileType::file)
@@ -1143,7 +1141,7 @@ namespace OpenRCT2::Ui::Windows
                     ft.Add<StringId>(STR_FILEBROWSER_FILE_SIZE_VALUE);
                     ft.Add<uint32_t>(_listItems[i].fileSizeFormatted);
                     ft.Add<StringId>(_listItems[i].fileSizeUnit);
-                    drawTextEllipsised(rt, { sizeColumnLeft + 2, y }, maxDateWidth + maxTimeWidth, stringId, ft);
+                    DrawTextEllipsised(rt, { sizeColumnLeft + 2, y }, maxDateWidth + maxTimeWidth, stringId, ft);
                 }
 
                 if (config.fileBrowserShowDateColumn)
@@ -1151,13 +1149,13 @@ namespace OpenRCT2::Ui::Windows
                     ft = Formatter();
                     ft.Add<StringId>(STR_STRING);
                     ft.Add<char*>(_listItems[i].dateFormatted.c_str());
-                    drawTextEllipsised(
+                    DrawTextEllipsised(
                         rt, { dateAnchor - kDateTimeGap, y }, maxDateWidth, stringId, ft, { TextAlignment::right });
 
                     ft = Formatter();
                     ft.Add<StringId>(STR_STRING);
                     ft.Add<char*>(_listItems[i].timeFormatted.c_str());
-                    drawTextEllipsised(rt, { dateAnchor + kDateTimeGap, y }, maxTimeWidth, stringId, ft);
+                    DrawTextEllipsised(rt, { dateAnchor + kDateTimeGap, y }, maxTimeWidth, stringId, ft);
                 }
             }
         }

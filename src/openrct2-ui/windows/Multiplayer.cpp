@@ -19,10 +19,8 @@
 #include <openrct2/config/Config.h>
 #include <openrct2/core/String.hpp>
 #include <openrct2/drawing/ColourMap.h>
-#include <openrct2/drawing/Drawing.String.h>
 #include <openrct2/drawing/Drawing.h>
 #include <openrct2/drawing/Rectangle.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/interface/ColourWithFlags.h>
 #include <openrct2/network/Network.h>
 #include <openrct2/ui/WindowManager.h>
@@ -199,7 +197,7 @@ namespace OpenRCT2::Ui::Windows
                 {
                     auto ft = Formatter();
                     ft.Add<const char*>(name.c_str());
-                    screenCoords.y += drawTextWrapped(clippedRT, screenCoords, newWidth, STR_STRING, ft, { colours[1] });
+                    screenCoords.y += DrawTextWrapped(clippedRT, screenCoords, newWidth, STR_STRING, ft, { colours[1] });
                     screenCoords.y += kListRowHeight / 2;
                 }
 
@@ -208,7 +206,7 @@ namespace OpenRCT2::Ui::Windows
                 {
                     auto ft = Formatter();
                     ft.Add<const char*>(description.c_str());
-                    screenCoords.y += drawTextWrapped(clippedRT, screenCoords, newWidth, STR_STRING, ft, { colours[1] });
+                    screenCoords.y += DrawTextWrapped(clippedRT, screenCoords, newWidth, STR_STRING, ft, { colours[1] });
                     screenCoords.y += kListRowHeight / 2;
                 }
 
@@ -217,7 +215,7 @@ namespace OpenRCT2::Ui::Windows
                 {
                     auto ft = Formatter();
                     ft.Add<const char*>(providerName.c_str());
-                    drawText(clippedRT, screenCoords, STR_PROVIDER_NAME, ft);
+                    DrawTextBasic(clippedRT, screenCoords, STR_PROVIDER_NAME, ft);
                     screenCoords.y += kListRowHeight;
                 }
 
@@ -226,7 +224,7 @@ namespace OpenRCT2::Ui::Windows
                 {
                     auto ft = Formatter();
                     ft.Add<const char*>(providerEmail.c_str());
-                    drawText(clippedRT, screenCoords, STR_PROVIDER_EMAIL, ft);
+                    DrawTextBasic(clippedRT, screenCoords, STR_PROVIDER_EMAIL, ft);
                     screenCoords.y += kListRowHeight;
                 }
 
@@ -235,7 +233,7 @@ namespace OpenRCT2::Ui::Windows
                 {
                     auto ft = Formatter();
                     ft.Add<const char*>(providerWebsite.c_str());
-                    drawText(clippedRT, screenCoords, STR_PROVIDER_WEBSITE, ft);
+                    DrawTextBasic(clippedRT, screenCoords, STR_PROVIDER_WEBSITE, ft);
                 }
             }
         }
@@ -247,7 +245,7 @@ namespace OpenRCT2::Ui::Windows
             auto screenCoords = windowPos + ScreenCoordsXY{ 4, widgets[WIDX_LIST].bottom + 2 };
             auto ft = Formatter();
             ft.Add<uint16_t>(numListItems);
-            drawText(rt, screenCoords, stringId, ft, { colours[2] });
+            DrawTextBasic(rt, screenCoords, stringId, ft, { colours[2] });
         }
 
         void playersScrollPaint(int32_t scrollIndex, RenderTarget& rt) const
@@ -294,7 +292,8 @@ namespace OpenRCT2::Ui::Windows
                         _buffer += Network::GetPlayerName(player);
                     }
                     screenCoords.x = 0;
-                    drawTextEllipsised(rt, screenCoords, 230, _buffer, { colour });
+                    GfxClipString(_buffer.data(), 230, FontStyle::medium);
+                    DrawText(rt, screenCoords, { colour }, _buffer.c_str());
 
                     // Draw group name
                     _buffer.resize(0);
@@ -304,7 +303,8 @@ namespace OpenRCT2::Ui::Windows
                         _buffer += "{BLACK}";
                         screenCoords.x = 173;
                         _buffer += Network::GetGroupName(group);
-                        drawTextEllipsised(rt, screenCoords, 80, _buffer, { colour });
+                        GfxClipString(_buffer.data(), 80, FontStyle::medium);
+                        DrawText(rt, screenCoords, { colour }, _buffer.c_str());
                     }
 
                     // Draw last action
@@ -318,7 +318,7 @@ namespace OpenRCT2::Ui::Windows
                     {
                         ft.Add<StringId>(STR_ACTION_NA);
                     }
-                    drawTextEllipsised(rt, { 256, screenCoords.y }, 100, STR_BLACK_STRING, ft);
+                    DrawTextEllipsised(rt, { 256, screenCoords.y }, 100, STR_BLACK_STRING, ft);
 
                     // Draw ping
                     _buffer.resize(0);
@@ -341,7 +341,7 @@ namespace OpenRCT2::Ui::Windows
                     _buffer += pingBuffer;
 
                     screenCoords.x = 356;
-                    drawText(rt, screenCoords, _buffer, { colour });
+                    DrawText(rt, screenCoords, { colour }, _buffer.c_str());
                 }
                 screenCoords.y += kScrollableRowHeight;
                 listPosition++;
@@ -361,7 +361,7 @@ namespace OpenRCT2::Ui::Windows
 
                 auto ft = Formatter();
                 ft.Add<const char*>(_buffer.c_str());
-                drawTextEllipsised(
+                DrawTextEllipsised(
                     rt, windowPos + ScreenCoordsXY{ widget->midX() - 5, widget->top }, widget->width() - 9, STR_STRING, ft,
                     { TextAlignment::centre });
             }
@@ -369,7 +369,7 @@ namespace OpenRCT2::Ui::Windows
             auto screenPos = windowPos
                 + ScreenCoordsXY{ widgets[WIDX_CONTENT_PANEL].left + 4, widgets[WIDX_CONTENT_PANEL].top + 4 };
 
-            drawText(rt, screenPos, STR_DEFAULT_GROUP, {}, { colours[2] });
+            DrawTextBasic(rt, screenPos, STR_DEFAULT_GROUP, {}, { colours[2] });
 
             screenPos.y += 20;
 
@@ -385,7 +385,7 @@ namespace OpenRCT2::Ui::Windows
                 _buffer += Network::GetGroupName(group);
                 auto ft = Formatter();
                 ft.Add<const char*>(_buffer.c_str());
-                drawTextEllipsised(
+                DrawTextEllipsised(
                     rt, windowPos + ScreenCoordsXY{ widget->midX() - 5, widget->top }, widget->width() - 9, STR_STRING, ft,
                     { TextAlignment::centre });
             }
@@ -421,14 +421,14 @@ namespace OpenRCT2::Ui::Windows
                         if (Network::CanPerformAction(groupindex, static_cast<Network::Permission>(i)))
                         {
                             screenCoords.x = 0;
-                            drawText(rt, screenCoords, u8"{WINDOW_COLOUR_2}✓");
+                            DrawText(rt, screenCoords, {}, u8"{WINDOW_COLOUR_2}✓");
                         }
                     }
 
                     // Draw action name
                     auto ft = Formatter();
                     ft.Add<uint16_t>(Network::GetActionNameStringID(i));
-                    drawText(rt, { 10, screenCoords.y }, STR_WINDOW_COLOUR_2_STRINGID, ft);
+                    DrawTextBasic(rt, { 10, screenCoords.y }, STR_WINDOW_COLOUR_2_STRINGID, ft);
                 }
                 screenCoords.y += kScrollableRowHeight;
             }
@@ -477,7 +477,7 @@ namespace OpenRCT2::Ui::Windows
             // Server name is displayed word-wrapped, so figure out how high it will be.
             {
                 int32_t numLines;
-                wrapString(Network::GetServerName(), baseWidth, FontStyle::medium, nullptr, &numLines);
+                GfxWrapString(Network::GetServerName(), baseWidth, FontStyle::medium, nullptr, &numLines);
                 baseHeight += (numLines + 1) * lineHeight + (kListRowHeight / 2);
             }
 
@@ -486,7 +486,7 @@ namespace OpenRCT2::Ui::Windows
             if (!descString.empty())
             {
                 int32_t numLines;
-                wrapString(descString, baseWidth, FontStyle::medium, nullptr, &numLines);
+                GfxWrapString(descString, baseWidth, FontStyle::medium, nullptr, &numLines);
                 baseHeight += (numLines + 1) * lineHeight + (kListRowHeight / 2);
             }
 

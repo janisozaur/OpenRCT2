@@ -233,7 +233,6 @@ namespace OpenRCT2::TrackMetadata
         int8_t extraSupportRotation = 0;
         bool invertSegmentBlocking = false;
         BlockedSegmentsPerType blockedSegments{ kSegmentsNone, kSegmentsNone, kSegmentsNone };
-        uint8_t reversedTrackSequence = 0;
 
         constexpr uint8_t getEntranceConnectionSides() const
         {
@@ -279,8 +278,6 @@ namespace OpenRCT2::TrackMetadata
 
         TrackComputeFunction verticalFactor = EvaluatorConst<0>;
         TrackComputeFunction lateralFactor = EvaluatorConst<0>;
-
-        int8_t reversedRotationOffset = 0;
 
         SequenceTable sequenceData;
     };

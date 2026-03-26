@@ -22,7 +22,6 @@
 #include <openrct2/actions/peep/StaffSetPatrolAreaAction.h>
 #include <openrct2/core/String.hpp>
 #include <openrct2/drawing/Drawing.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/entity/EntityRegistry.h>
 #include <openrct2/entity/PatrolArea.h>
 #include <openrct2/entity/Staff.h>
@@ -149,7 +148,8 @@ namespace OpenRCT2::Ui::Windows
                                                     windowPos.y + widgets[WIDX_PREVIEW].midY() };
                 auto ft = Formatter();
                 ft.Add<uint16_t>(gLandToolSize);
-                drawText(rt, screenCoords - ScreenCoordsXY{ 0, 2 }, STR_LAND_TOOL_SIZE_VALUE, ft, { TextAlignment::centre });
+                DrawTextBasic(
+                    rt, screenCoords - ScreenCoordsXY{ 0, 2 }, STR_LAND_TOOL_SIZE_VALUE, ft, { TextAlignment::centre });
             }
         }
 

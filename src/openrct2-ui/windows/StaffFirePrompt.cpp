@@ -14,7 +14,6 @@
 #include <openrct2/actions/GameActionRunner.h>
 #include <openrct2/actions/peep/StaffFireAction.h>
 #include <openrct2/drawing/Drawing.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/entity/EntityRegistry.h>
 #include <openrct2/entity/Staff.h>
 #include <openrct2/localisation/Formatter.h>
@@ -88,7 +87,7 @@ namespace OpenRCT2::Ui::Windows
             peep->FormatNameTo(ft);
 
             ScreenCoordsXY textCoords(windowPos + ScreenCoordsXY{ kWindowSize.width / 2, (kWindowSize.height / 2) - 3 });
-            drawTextWrapped(rt, textCoords, kWindowSize.width - 4, STR_FIRE_STAFF_ID, ft, { TextAlignment::centre });
+            DrawTextWrapped(rt, textCoords, kWindowSize.width - 4, STR_FIRE_STAFF_ID, ft, { TextAlignment::centre });
         }
     };
 

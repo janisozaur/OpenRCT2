@@ -14,7 +14,6 @@
 #include "../OpenRCT2.h"
 #include "../config/Config.h"
 #include "../core/DataSerialiser.h"
-#include "../drawing/Drawing.String.h"
 #include "../drawing/Drawing.h"
 #include "../interface/Viewport.h"
 #include "../interface/Window.h"
@@ -109,7 +108,7 @@ namespace OpenRCT2
             auto [stringId, newValue] = GetStringId();
             char buffer[128];
             FormatStringLegacy(buffer, 128, stringId, &newValue);
-            offsetX = -(Drawing::getStringWidth(buffer, FontStyle::medium) / 2);
+            offsetX = -(GfxGetStringWidth(buffer, FontStyle::medium) / 2);
         }
         OffsetX = offsetX;
         Wiggle = 0;

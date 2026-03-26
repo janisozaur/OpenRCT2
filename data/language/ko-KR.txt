@@ -242,6 +242,7 @@ STR_0832    :게임 화면을 시계방향으로 90° 회전하기
 STR_0833    :게임 일시정지
 STR_0834    :디스크 및 게임 설정
 STR_0839    :{UINT16} × {UINT16}
+STR_0840    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{UINT16} × {UINT16}
 # The following six strings were used for display resolutions, but have been replaced.
 STR_0847    :‘OpenRCT2’에 대해서
 STR_0850    :{WINDOW_COLOUR_2}Copyright © 2002 Chris Sawyer, all rights reserved
@@ -253,6 +254,15 @@ STR_0855    :{WINDOW_COLOUR_2}리프리젠테이션: Marjacq Ltd사의 Jacqui Ly
 STR_0856    :{WINDOW_COLOUR_2}감사드릴 분들:
 STR_0857    :{WINDOW_COLOUR_2}Peter James Adcock, Joe Booth 그리고 John Wardley
 STR_0865    :{STRINGID}
+STR_0866    :{POP16}{STRINGID}
+STR_0867    :{POP16}{POP16}{STRINGID}
+STR_0868    :{POP16}{POP16}{POP16}{STRINGID}
+STR_0869    :{POP16}{POP16}{POP16}{POP16}{STRINGID}
+STR_0870    :{POP16}{POP16}{POP16}{POP16}{POP16}{STRINGID}
+STR_0871    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{STRINGID}
+STR_0872    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{STRINGID}
+STR_0874    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{STRINGID}
+STR_0875    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{STRINGID}
 STR_0876    :{BLACK}▼
 STR_0877    :너무 낮습니다!
 STR_0878    :너무 높습니다!
@@ -396,6 +406,8 @@ STR_1018    :변경할 수 없습니다…
 STR_1019    :변경할 수 없습니다…
 STR_1020    :변경할 수 없습니다…
 STR_1021    :{POP16}{POP16}{POP16}{POP16}{STRINGID}
+STR_1022    :1대당 차량 {POP16}{POP16}{POP16}{COMMA16}개
+STR_1023    :1대당 차량 {POP16}{POP16}{POP16}{COMMA16}개
 STR_1024    :1대당 차량 {COMMA16}개
 STR_1025    :1대당 차량 {COMMA16}개
 STR_1026    :탑승장이 너무 깁니다!
@@ -504,7 +516,9 @@ STR_1128    :블록 브레이크에 의해 정지함
 STR_1129    :모든 차량이 같은 색
 STR_1130    :{STRINGID}마다 다른 색
 STR_1131    :차량마다 다른 색
-STR_1133    :차량 {COMMA16}
+STR_1132    :차량 {POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{COMMA16}
+STR_1133    :차량 {POP16}{COMMA16}
+STR_1134    :{POP16}{POP16}{POP16}{POP16}{POP16}{STRINGID} {COMMA16}
 STR_1135    :{STRINGID} {COMMA16}
 STR_1136    :주요 색상을 선택하세요
 STR_1137    :1번 추가 색상을 선택하세요
@@ -700,6 +714,7 @@ STR_1327    :오브젝트를 90° 회전시킵니다
 STR_1328    :평지가 필요합니다
 STR_1329    :{WINDOW_COLOUR_2}발진 속력:
 STR_1330    :탑승장 출발 최대 속력
+STR_1331    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{VELOCITY}
 STR_1332    :{VELOCITY}
 STR_1333    :{STRINGID} - {STRINGID}{POP16}
 STR_1334    :{STRINGID} - {STRINGID} {COMMA16}
@@ -797,6 +812,7 @@ STR_1425    :보도
 STR_1426    :대기 줄
 STR_1427    :{WINDOW_COLOUR_2}손님: {BLACK}{COMMA32}명/시간
 STR_1428    :{WINDOW_COLOUR_2}탑승료:
+STR_1429    :{POP16}{POP16}{POP16}{CURRENCY2DP}
 STR_1430    :무료
 STR_1431    :걷는 중
 STR_1432    :목적지 : {STRINGID}
@@ -831,10 +847,10 @@ STR_1460    :‘U’ 모양의 천장이 없는 트랙
 STR_1461    :‘O’ 모양의 천장이 있는 트랙
 STR_1462    :리프트 힐을 쓰기엔 너무 경사가 급합니다
 STR_1463    :손님
-STR_1464    :1/2 나선 상승 (작음)
-STR_1465    :1/2 나선 상승 (큼)
-STR_1466    :1/2 나선 하강 (작음)
-STR_1467    :1/2 나선 하강 (큼)
+STR_1464    :나선 상승 (작음)
+STR_1465    :나선 상승 (큼)
+STR_1466    :나선 하강 (작음)
+STR_1467    :나선 하강 (큼)
 STR_1468    :직원
 STR_1469    :놀이기구는 탑승장에서 시작하고 끝나야 합니다
 STR_1470    :탑승장이 충분히 길지 않습니다
@@ -1041,13 +1057,14 @@ STR_1671    :{WINDOW_COLOUR_2}총 수익: {BLACK}{CURRENCY2DP}
 STR_1672    :브레이크
 STR_1673    :회전 컨트롤 전환 트랙
 STR_1674    :브레이크 속력
+    :{POP16}{VELOCITY}
 STR_1676    :브레이크의 제한 속력을 설정하세요
 STR_1677    :{WINDOW_COLOUR_2}인기도: {BLACK}알 수 없음
 STR_1678    :{WINDOW_COLOUR_2}인기도: {BLACK}{COMMA16}%
-STR_1679    :1/4 나선 상승 (왼쪽)
-STR_1680    :1/4 나선 상승 (오른쪽)
-STR_1681    :1/4 나선 하강 (왼쪽)
-STR_1682    :1/4 나선 하강 (오른쪽)
+STR_1679    :나선 상승 (왼쪽)
+STR_1680    :나선 상승 (오른쪽)
+STR_1681    :나선 하강 (왼쪽)
+STR_1682    :나선 하강 (오른쪽)
 STR_1683    :기본 크기 2 × 2
 STR_1684    :기본 크기 4 × 4
 STR_1685    :기본 크기 2 × 4
@@ -1100,15 +1117,18 @@ STR_1732    :건설
 STR_1733    :모드
 STR_1734    :{WINDOW_COLOUR_2}바퀴 수:
 STR_1735    :서킷을 돌 바퀴 수를 설정합니다
+STR_1736    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{COMMA16}
 STR_1738    :바퀴 수를 변경할 수 없습니다…
 STR_1739    :레이스 우승자 : 손님 {INT32}
 STR_1740    :레이스 우승자 : {STRINGID}
 STR_1741    :아직 건설되지 않았습니다!
 STR_1742    :{WINDOW_COLOUR_2}최대 탑승 인원:
 STR_1743    :이 놀이기구에 한 번에 탑승할 수 있는 최대 인원 수를 설정합니다
+STR_1744    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{COMMA16}
 STR_1746    :변경할 수 없습니다…
 STR_1747    :{WINDOW_COLOUR_2}탑승 시간 제한:
 STR_1748    :놀이기구 탑승 시간 제한
+STR_1749    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{DURATION}
 STR_1751    :놀이기구의 탑승 시간을 변경할 수 없습니다…
 STR_1752    :공원에 있는 손님의 모든 명단을 보여줍니다
 STR_1753    :공원에 있는 손님을 항목별로 묶어서 보여줍니다
@@ -1129,6 +1149,7 @@ STR_1767    :회전 터널
 STR_1768    :스윙 횟수를 변경할 수 없습니다…
 STR_1769    :{WINDOW_COLOUR_2}스윙 횟수:
 STR_1770    :가장 높은 스윙의 횟수를 지정합니다
+STR_1771    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{COMMA16}
 STR_1773    :한 놀이기구에는 하나의 탑승 사진 섹션만 만들 수 있습니다
 STR_1774    :한 놀이기구에는 하나의 케이블 리프트만 만들 수 있습니다
 STR_1777    :놀이기구 음악
@@ -1140,6 +1161,7 @@ STR_1794    :{STRINGID} 수리 중
 STR_1795    :무전기 연락에 응답 중
 STR_1796    :고장이 나서 수리가 필요함
 STR_1798    :소용돌이
+STR_1799    :{POP16}{POP16}{POP16}{POP16}{POP16}{CURRENCY2DP}
 STR_1800    :안전 차단
 STR_1801    :안전 벨트가 닫힌 채로 안 열림
 STR_1802    :안전 벨트가 열린 채로 안 닫힘
@@ -1211,6 +1233,7 @@ STR_1867    :{BLACK}{COMMA32} {STRINGID}
 STR_1868    :회전 수를 변경할 수 없습니다…
 STR_1869    :{WINDOW_COLOUR_2}회전 수:
 STR_1870    :회전 수를 설정합니다
+STR_1871    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{COMMA16}
 STR_1873    :{WINDOW_COLOUR_2}수익: {BLACK}시간당 {CURRENCY2DP}
 STR_1874    :{WINDOW_COLOUR_2}순익: {BLACK}시간당 {CURRENCY2DP}
 STR_1876    :{WINDOW_COLOUR_2}{INLINE_SPRITE}{251}{19}{00}{00}놀이기구 점검
@@ -1291,6 +1314,7 @@ STR_1953    :광고
 STR_1954    :연구 자금
 STR_1955    :{WINDOW_COLOUR_2}바퀴 수:
 STR_1956    :탑승 당 바퀴 수
+STR_1957    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{COMMA16}
 STR_1958    :{COMMA16}
 STR_1959    :바퀴 수를 변경할 수 없습니다…
 STR_1960    :{WINDOW_COLOUR_2}풍선 가격:
@@ -2088,6 +2112,7 @@ STR_3092    :이 놀이기구의 탑승장을 옮기거나 편집할 수 없습�
 STR_3093    :{WINDOW_COLOUR_2}가장 좋아하는 것: {BLACK}{STRINGID}
 STR_3094    :없음
 STR_3095    :{WINDOW_COLOUR_2}리프트 힐 체인 속력:
+STR_3096    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{VELOCITY}
 STR_3097    :리프트 힐 체인 속력을 선택하세요
 STR_3099    :색을 선택하세요
 STR_3100    :두 번째 색을 선택하세요
@@ -2180,6 +2205,7 @@ STR_3208    :트랙 디자인 관리자
 STR_3209    :이전 단계로:
 STR_3210    :다음 단계로:
 STR_3211    :지도 크기:
+STR_3212    :{POP16}{COMMA16}
 STR_3213    :맵 크기를 더 줄일 수 없습니다
 STR_3214    :맵 크기를 더 늘릴 수 없습니다
 STR_3215    :지도 가장자리와 너무 가깝습니다
@@ -2969,11 +2995,12 @@ STR_5914    :알 수 없는 놀이기구
 STR_5915    :플레이어
 STR_5916    :{COMMA16}명 접속 중
 STR_5917    :{COMMA16}명 접속 중
+STR_5918    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{COMMA16}
 STR_5919    :{COMMA16}
 STR_5920    :날씨 효과 표현
 STR_5921    :이 설정을 켜면, 폭풍우가 치는 동안 비와 흐린 색상을 표현합니다.
-STR_5922    :최대 {STRINGID}까지 사용 가능
-STR_5923    :{POP16}{BLACK}1대당 {STRINGID} {PUSH16}{PUSH16}{COMMA16}개까지 사용 가능
+STR_5922    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}최대 {STRINGID}까지 사용 가능
+STR_5923    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{BLACK}1대당 {STRINGID} {PUSH16}{PUSH16}{COMMA16}개까지 사용 가능
 STR_5924    :지면 상세정보
 STR_5925    :보도 상세정보
 STR_5926    :트랙 상세정보
@@ -3358,6 +3385,7 @@ STR_6355    :빽빽하게
 STR_6356    :공원에 물이 있을 경우 오리를 생성합니다
 STR_6357    :공원에 있는 모든 오리를 제거합니다
 STR_6358    :{UINT16}쪽
+STR_6359    :{POP16}{POP16}{UINT16}쪽
 STR_6361    :차량 조명 효과 (실험적 기능)
 STR_6362    :이 설정을 켜면, 밤에 트랙형 놀이기구의 차량에 조명이 들어옵니다.
 STR_6363    :텍스트를 클립보드에 복사하였습니다
@@ -3814,9 +3842,3 @@ STR_7014    :Steam에 게임을 보유하고 있지만, 아직 설치하지 않�
 STR_7015    :Steam이 실행 중이라면 Steam을 종료한 후 ‘확인’을 클릭하세요.
 STR_7016    :OpenRCT2가 Steam에서 다운로드를 시도했습니다. Steam을 열고 다운로드가 완료될 때까지 기다린 후 ‘확인’을 클릭하세요.
 STR_7017    :종료
-STR_7023    :놀이기구 투명화
-STR_7024    :놀이기구 전체를 투명하게 만듭니다
-STR_7025    :놀이기구 투명화 해제
-STR_7026    :놀이기구 전체를 다시 보이게 만듭니다
-STR_7028    :1/4 나선 상승
-STR_7029    :1/4 나선 하강

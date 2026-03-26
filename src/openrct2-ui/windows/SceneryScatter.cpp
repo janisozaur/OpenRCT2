@@ -14,7 +14,6 @@
 #include <openrct2/SpriteIds.h>
 #include <openrct2/core/String.hpp>
 #include <openrct2/drawing/Drawing.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/localisation/Formatter.h>
 #include <openrct2/ui/WindowManager.h>
 #include <openrct2/world/Scenery.h>
@@ -194,7 +193,8 @@ namespace OpenRCT2::Ui::Windows
                 const auto screenCoords = ScreenCoordsXY{ windowPos.x + preview.midX(), windowPos.y + preview.midY() };
                 auto ft = Formatter();
                 ft.Add<uint16_t>(gWindowSceneryScatterSize);
-                drawText(rt, screenCoords - ScreenCoordsXY{ 0, 2 }, STR_LAND_TOOL_SIZE_VALUE, ft, { TextAlignment::centre });
+                DrawTextBasic(
+                    rt, screenCoords - ScreenCoordsXY{ 0, 2 }, STR_LAND_TOOL_SIZE_VALUE, ft, { TextAlignment::centre });
             }
         }
     };

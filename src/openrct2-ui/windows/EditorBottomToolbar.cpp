@@ -23,7 +23,6 @@
 #include <openrct2/audio/Audio.h>
 #include <openrct2/drawing/Drawing.h>
 #include <openrct2/drawing/Rectangle.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/management/Research.h>
 #include <openrct2/scenario/Scenario.h>
 #include <openrct2/scripting/ScriptEngine.h>
@@ -372,8 +371,8 @@ namespace OpenRCT2::Ui::Windows
             if (gLegacyScene == LegacyScene::trackDesigner)
                 stringId = STR_EDITOR_STEP_OBJECT_SELECTION;
 
-            drawText(rt, { textX, textY }, STR_BACK_TO_PREVIOUS_STEP, {}, { textColour, TextAlignment::centre });
-            drawText(rt, { textX, textY + 10 }, stringId, {}, { textColour, TextAlignment::centre });
+            DrawTextBasic(rt, { textX, textY }, STR_BACK_TO_PREVIOUS_STEP, {}, { textColour, TextAlignment::centre });
+            DrawTextBasic(rt, { textX, textY + 10 }, stringId, {}, { textColour, TextAlignment::centre });
         }
 
         void DrawRightButtonBack(RenderTarget& rt)
@@ -413,8 +412,8 @@ namespace OpenRCT2::Ui::Windows
             if (gLegacyScene == LegacyScene::trackDesigner)
                 stringId = STR_EDITOR_STEP_ROLLERCOASTER_DESIGNER;
 
-            drawText(rt, { textX, textY }, STR_FORWARD_TO_NEXT_STEP, {}, { textColour, TextAlignment::centre });
-            drawText(rt, { textX, textY + 10 }, stringId, {}, { textColour, TextAlignment::centre });
+            DrawTextBasic(rt, { textX, textY }, STR_FORWARD_TO_NEXT_STEP, {}, { textColour, TextAlignment::centre });
+            DrawTextBasic(rt, { textX, textY + 10 }, stringId, {}, { textColour, TextAlignment::centre });
         }
 
         void DrawStepText(RenderTarget& rt)
@@ -422,7 +421,7 @@ namespace OpenRCT2::Ui::Windows
             int16_t stateX = (widgets[WIDX_PREVIOUS_IMAGE].right + widgets[WIDX_NEXT_IMAGE].left) / 2 + windowPos.x;
             int16_t stateY = height - 0x0C + windowPos.y;
             auto colour = colours[2].withFlag(ColourFlag::translucent, false).withFlag(ColourFlag::withOutline, true);
-            drawText(
+            DrawTextBasic(
                 rt, { stateX, stateY }, kEditorStepNames[EnumValue(getGameState().editorStep)], {},
                 { colour, TextAlignment::centre });
         }

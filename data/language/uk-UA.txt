@@ -236,6 +236,7 @@ STR_0832    :Повернути на 90° за годинниковою стрі
 STR_0833    :Поставити гру на павзу
 STR_0834    :Вибір дисків та ігор
 STR_0839    :{UINT16} × {UINT16}
+STR_0840    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{UINT16} × {UINT16}
 STR_0847    :Про ‘OpenRCT2’
 STR_0850    :{WINDOW_COLOUR_2}Авторське право © 2002 Кріс Соєр, усі права захищені
 STR_0851    :{WINDOW_COLOUR_2}Дизайн та програмування — Кріс Соєр
@@ -246,6 +247,15 @@ STR_0855    :{WINDOW_COLOUR_2}Представництво Жаккі Лайон
 STR_0856    :{WINDOW_COLOUR_2}Подяка:
 STR_0857    :{WINDOW_COLOUR_2}Пітер Джеймс Адкок, Джо Бут і Джон Уордлі
 STR_0865    :{STRINGID}
+STR_0866    :{POP16}{STRINGID}
+STR_0867    :{POP16}{POP16}{STRINGID}
+STR_0868    :{POP16}{POP16}{POP16}{STRINGID}
+STR_0869    :{POP16}{POP16}{POP16}{POP16}{STRINGID}
+STR_0870    :{POP16}{POP16}{POP16}{POP16}{POP16}{STRINGID}
+STR_0871    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{STRINGID}
+STR_0872    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{STRINGID}
+STR_0874    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{STRINGID}
+STR_0875    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{STRINGID}
 STR_0876    :{BLACK}▼
 STR_0877    :Занизько!
 STR_0878    :Зависоко!
@@ -389,6 +399,8 @@ STR_1018    :Не вдається внести зміни…
 STR_1019    :Не вдається внести зміни…
 STR_1020    :Не вдається внести зміни…
 STR_1021    :{POP16}{POP16}{POP16}{POP16}{STRINGID}
+STR_1022    :{POP16}{POP16}{POP16}{COMMA16} вагон на потяг
+STR_1023    :{POP16}{POP16}{POP16}{COMMA16} вагонів на потяг
 STR_1024    :{COMMA16} вагон на потяг
 STR_1025    :{COMMA16} вагонів на потяг
 STR_1026    :Платформа станції задовга!
@@ -497,7 +509,9 @@ STR_1128    :Зупинка через блокування гальм
 STR_1129    :Всі транспортні засоби в однакових кольорах
 STR_1130    :Різні кольори для {STRINGID}
 STR_1131    :Різні кольори для кожного транспортного засобу
-STR_1133    :Транспортний засіб {COMMA16}
+STR_1132    :Транспортний засіб {POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{COMMA16}
+STR_1133    :Транспортний засіб {POP16}{COMMA16}
+STR_1134    :{POP16}{POP16}{POP16}{POP16}{POP16}{STRINGID} {COMMA16}
 STR_1135    :{STRINGID} {COMMA16}
 STR_1136    :Виберіть основний колір
 STR_1137    :Виберіть додатковий колір 1
@@ -693,6 +707,7 @@ STR_1327    :Повернено обєкт на 90°
 STR_1328    :Потрібна рівна ділянка
 STR_1329    :{WINDOW_COLOUR_2}Швидкість запуску:
 STR_1330    :Максимальна швидкість при відправлені зі станції
+STR_1331    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{VELOCITY}
 STR_1332    :{VELOCITY}
 STR_1333    :{STRINGID} — {STRINGID}{POP16}
 STR_1334    :{STRINGID} — {STRINGID} {COMMA16}
@@ -790,6 +805,7 @@ STR_1425    :Стежка
 STR_1426    :Лінія черги
 STR_1427    :{WINDOW_COLOUR_2}Відвідувачі: {BLACK}{COMMA32} у годину
 STR_1428    :{WINDOW_COLOUR_2}Ціна за вхід:
+STR_1429    :{POP16}{POP16}{POP16}{CURRENCY2DP}
 STR_1430    :Безплат.
 STR_1431    :Гуляє
 STR_1432    :Прямує до {STRINGID}
@@ -1033,6 +1049,7 @@ STR_1671    :{WINDOW_COLOUR_2}Загальний дохід: {BLACK}{CURRENCY2DP
 STR_1672    :Гальма
 STR_1673    :Spinning Control Toggle Track
 STR_1674    :Швидкість гальмування
+    :{POP16}{VELOCITY}
 STR_1676    :Задати обмеження швидкості для гальм
 STR_1677    :{WINDOW_COLOUR_2}Популярність: {BLACK}Невідомо
 STR_1678    :{WINDOW_COLOUR_2}Популярність: {BLACK}{COMMA16}%
@@ -1092,15 +1109,18 @@ STR_1732    :Build
 STR_1733    :Режим
 STR_1734    :{WINDOW_COLOUR_2}Кількість кіл:
 STR_1735    :Кількість кіл доріжки
+STR_1736    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{COMMA16}
 STR_1738    :Не вдається змінити кількість кіл…
 STR_1739    :Перегони виграє гість {INT32}
 STR_1740    :Перегони виграє {STRINGID}
 STR_1741    :Ще не збудовано!
 STR_1742    :{WINDOW_COLOUR_2}Макс. людей на атракціоні:
 STR_1743    :Макс. к-сть людей, які можуть одночасно перебувати на атракціоні
+STR_1744    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{COMMA16}
 STR_1746    :Не вдалося змінити…
 STR_1747    :{WINDOW_COLOUR_2}Обмеження часу:
 STR_1748    :Обмеження по часу для атракціону
+STR_1749    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{DURATION}
 STR_1751    :Не вдалося змінити обмеження часу атракціону…
 STR_1752    :Показати список окремих гостей у парку
 STR_1753    :Показати загальний список гостей у парку
@@ -1121,6 +1141,7 @@ STR_1767    :Обертові тунелі
 STR_1768    :Не вдається змінити кількість гойдалок…
 STR_1769    :{WINDOW_COLOUR_2}Кількість гойдалок:
 STR_1770    :Кількість повних гойдалок
+STR_1771    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{COMMA16}
 STR_1773    :Only one on-ride photo section allowed per ride
 STR_1774    :Only one cable lift hill allowed per ride
 STR_1777    :Музика в атракціонах
@@ -1132,6 +1153,7 @@ STR_1794    :Лагодить {STRINGID}
 STR_1795    :Відповідає на радіовиклик.
 STR_1796    :Вийшло з ладу і потребує ремонту
 STR_1798    :Круговерть
+STR_1799    :{POP16}{POP16}{POP16}{POP16}{POP16}{CURRENCY2DP}
 STR_1800    :Safety cut-out
 STR_1801    :Restraints stuck closed
 STR_1802    :Restraints stuck open
@@ -1203,6 +1225,7 @@ STR_1867    :{BLACK}{COMMA32} {STRINGID}
 STR_1868    :Не вдається змінити кількість обертів…
 STR_1869    :{WINDOW_COLOUR_2}Кількість обертів:
 STR_1870    :Кількість повних обертів
+STR_1871    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{COMMA16}
 STR_1873    :{WINDOW_COLOUR_2}Дохід: {BLACK}{CURRENCY2DP} за годину
 STR_1874    :{WINDOW_COLOUR_2}Прибуток: {BLACK}{CURRENCY2DP} за годину
 STR_1876    :{WINDOW_COLOUR_2}{INLINE_SPRITE}{251}{19}{00}{00}Перевірити атракціони
@@ -1281,6 +1304,7 @@ STR_1953    :Маркетинг
 STR_1954    :Фінансування досліджень
 STR_1955    :{WINDOW_COLOUR_2}Кількість кіл:
 STR_1956    :Кількість кіл доріжки за поїздку
+STR_1957    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{COMMA16}
 STR_1958    :{COMMA16}
 STR_1959    :Can’t change number of circuits…
 STR_1960    :{WINDOW_COLOUR_2}Ціна кульки:
@@ -2078,6 +2102,7 @@ STR_3092    :Вам заборонено переміщати або зміню�
 STR_3093    :{WINDOW_COLOUR_2}Favourite: {BLACK}{STRINGID}
 STR_3094    :Н/Д
 STR_3095    :{WINDOW_COLOUR_2}Lift hill chain speed:
+STR_3096    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{VELOCITY}
 STR_3097    :Select lift hill chain speed
 STR_3099    :Оберіть колір
 STR_3100    :Оберіть другий колір
@@ -2170,6 +2195,7 @@ STR_3208    :Менеджер дизайнів доріжок
 STR_3209    :Перейти до попереднього:
 STR_3210    :Перейти до наступного:
 STR_3211    :Розмір мапи:
+STR_3212    :{POP16}{COMMA16}
 STR_3213    :Не вдається зменшити розмір мапи
 STR_3214    :Не вдається збільшити розмір мапи
 STR_3215    :Занадто близько до краю мапи
@@ -2960,11 +2986,12 @@ STR_5914    :Невідомий атракціон
 STR_5915    :Гравець
 STR_5916    :{COMMA16} гравець
 STR_5917    :{COMMA16} гравців
+STR_5918    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{COMMA16}
 STR_5919    :{COMMA16}
 STR_5920    :Відображати погодні ефекти
 STR_5921    :Якщо ввімкнено, дощ і похмурі кольори відображатимуться під час зливи.
-STR_5922    :Макс. {STRINGID}
-STR_5923    :Макс. {COMMA16} {STRINGID} на потяг
+STR_5922    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}Макс. {STRINGID}
+STR_5923    :{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}{POP16}Макс. {COMMA16} {STRINGID} на потяг
 STR_5924    :Подробиці поверхні
 STR_5925    :Подробиці стежки
 STR_5926    :Подробиці доріжки
@@ -3349,6 +3376,7 @@ STR_6355    :High density
 STR_6356    :Spawns ducks if park contains water
 STR_6357    :Removes all ducks from the map
 STR_6358    :Сторінка {UINT16}
+STR_6359    :{POP16}{POP16}Сторінка {UINT16}
 STR_6361    :Світло на атракціонах (експериментальне)
 STR_6362    :Якщо увімкнено, транспорт на атракціонах буде світити вночі.
 STR_6363    :Скопійовано текст до буфера обміну

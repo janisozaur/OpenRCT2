@@ -24,7 +24,6 @@
 #include <openrct2/audio/Audio.h>
 #include <openrct2/config/Config.h>
 #include <openrct2/drawing/Drawing.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/localisation/Formatter.h>
 #include <openrct2/paint/VirtualFloor.h>
 #include <openrct2/ride/RideConstruction.h>
@@ -391,7 +390,7 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<money64>(_placementCost);
                 const auto& priceWidget = widgets[WIDX_PRICE];
                 const auto priceCoords = windowPos + ScreenCoordsXY{ priceWidget.left, priceWidget.top };
-                drawText(rt, priceCoords, STR_COST_LABEL, ft, { TextAlignment::centre });
+                DrawTextBasic(rt, priceCoords, STR_COST_LABEL, ft, { TextAlignment::centre });
             }
         }
 

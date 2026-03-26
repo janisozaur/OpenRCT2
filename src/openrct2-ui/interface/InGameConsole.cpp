@@ -20,10 +20,8 @@
 #include <openrct2/config/Config.h>
 #include <openrct2/core/UTF8.h>
 #include <openrct2/drawing/ColourMap.h>
-#include <openrct2/drawing/Drawing.String.h>
 #include <openrct2/drawing/Drawing.h>
 #include <openrct2/drawing/Rectangle.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/interface/ColourWithFlags.h>
 #include <openrct2/interface/Viewport.h>
 #include <openrct2/interface/Window.h>
@@ -171,7 +169,7 @@ void InGameConsole::RefreshCaret(size_t position)
     _selectionStart = position;
 
     auto text = u8string_view{ _consoleCurrentLine }.substr(0, _selectionStart);
-    _caretScreenPosX = getStringWidth(text, InGameConsoleGetFontStyle(), true);
+    _caretScreenPosX = GfxGetStringWidthNoFormatting(text, InGameConsoleGetFontStyle());
 }
 
 void InGameConsole::Scroll(int32_t linesToScroll)
@@ -344,19 +342,19 @@ void InGameConsole::Draw(RenderTarget& rt) const
             // as opposed to a desaturated grey
             if (textColour.colour == OpenRCT2::Drawing::Colour::black)
             {
-                drawText(rt, screenCoords, "{BLACK}", { textColour, style });
-                drawText(rt, screenCoords, _consoleLines[index].first, { kColourNull, style, { TextPaintFlag::noFormatting } });
+                DrawText(rt, screenCoords, { textColour, style }, "{BLACK}");
+                DrawText(rt, screenCoords, { OpenRCT2::Drawing::kColourNull, style }, _consoleLines[index].first.c_str(), true);
             }
             else
             {
-                drawText(rt, screenCoords, _consoleLines[index].first, { textColour, style, { TextPaintFlag::noFormatting } });
+                DrawText(rt, screenCoords, { textColour, style }, _consoleLines[index].first.c_str(), true);
             }
         }
         else
         {
             std::string lineColour = FormatTokenToStringWithBraces(_consoleLines[index].second);
-            drawText(rt, screenCoords, lineColour, { textColour, style });
-            drawText(rt, screenCoords, _consoleLines[index].first, { kColourNull, style, { TextPaintFlag::noFormatting } });
+            DrawText(rt, screenCoords, { textColour, style }, lineColour.c_str());
+            DrawText(rt, screenCoords, { OpenRCT2::Drawing::kColourNull, style }, _consoleLines[index].first.c_str(), true);
         }
 
         screenCoords.y += lineHeight;
@@ -367,12 +365,12 @@ void InGameConsole::Draw(RenderTarget& rt) const
     // Draw current line
     if (textColour.colour == OpenRCT2::Drawing::Colour::black)
     {
-        drawText(rt, screenCoords, "{BLACK}", { textColour, style });
-        drawText(rt, screenCoords, _consoleCurrentLine, { kColourNull, style, { TextPaintFlag::noFormatting } });
+        DrawText(rt, screenCoords, { textColour, style }, "{BLACK}");
+        DrawText(rt, screenCoords, { OpenRCT2::Drawing::kColourNull, style }, _consoleCurrentLine.c_str(), true);
     }
     else
     {
-        drawText(rt, screenCoords, _consoleCurrentLine, { textColour, style, { TextPaintFlag::noFormatting } });
+        DrawText(rt, screenCoords, { textColour, style }, _consoleCurrentLine.c_str(), true);
     }
 
     // Draw caret

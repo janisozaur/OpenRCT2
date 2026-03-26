@@ -32,14 +32,11 @@
 #include <openrct2/core/File.h>
 #include <openrct2/core/String.hpp>
 #include <openrct2/drawing/ColourMap.h>
-#include <openrct2/drawing/Drawing.String.h>
 #include <openrct2/drawing/Drawing.h>
 #include <openrct2/drawing/IDrawingEngine.h>
 #include <openrct2/drawing/ScrollingText.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/localisation/Currency.h>
 #include <openrct2/localisation/Formatter.h>
-#include <openrct2/localisation/Formatting.h>
 #include <openrct2/localisation/Language.h>
 #include <openrct2/localisation/Localisation.Date.h>
 #include <openrct2/localisation/LocalisationService.h>
@@ -286,7 +283,7 @@ namespace OpenRCT2::Ui::Windows
         makeWidget        ({155,  68}, {145,  14}, WidgetType::dropdownMenu, WindowColour::secondary                                                                                  ),
         makeWidget        ({288,  69}, { 11,  12}, WidgetType::button,       WindowColour::secondary, STR_DROPDOWN_GLYPH,                    STR_FULLSCREEN_MODE_TIP                  ),
         makeWidget        ({ 24,  86}, {145,  12}, WidgetType::label,        WindowColour::secondary, STR_DISPLAY_RESOLUTION,                STR_DISPLAY_RESOLUTION_TIP               ), // Resolution
-        makeWidget        ({155,  85}, {145,  14}, WidgetType::dropdownMenu, WindowColour::secondary, kStringIdEmpty                                                    ),
+        makeWidget        ({155,  85}, {145,  14}, WidgetType::dropdownMenu, WindowColour::secondary, STR_ARG_16_RESOLUTION_X_BY_Y                                                    ),
         makeWidget        ({288,  86}, { 11,  12}, WidgetType::button,       WindowColour::secondary, STR_DROPDOWN_GLYPH,                    STR_DISPLAY_RESOLUTION_TIP               ),
         makeWidget        ({ 10, 102}, {145,  12}, WidgetType::label,        WindowColour::secondary, STR_UI_SCALING_DESC,                   STR_WINDOW_SCALE_TIP                     ), // Scale
         makeSpinnerWidgets({155, 102}, {145,  14}, WidgetType::spinner,      WindowColour::secondary, kStringIdNone,                         STR_WINDOW_SCALE_TIP                     ), // Scale spinner (3 widgets)
@@ -332,7 +329,7 @@ namespace OpenRCT2::Ui::Windows
     static constexpr auto window_options_culture_widgets = makeWidgets(
         kMainOptionsWidgets,
         makeWidget({ 10,  54}, {145, 12}, WidgetType::label,        WindowColour::secondary, STR_OPTIONS_LANGUAGE,   STR_LANGUAGE_TIP           ), // language
-        makeWidget({155,  53}, {145, 14}, WidgetType::dropdownMenu, WindowColour::secondary, kStringIdEmpty                                         ),
+        makeWidget({155,  53}, {145, 14}, WidgetType::dropdownMenu, WindowColour::secondary, STR_STRING                                         ),
         makeWidget({288,  54}, { 11, 12}, WidgetType::button,       WindowColour::secondary, STR_DROPDOWN_GLYPH,     STR_LANGUAGE_TIP           ),
         makeWidget({ 10,  71}, {145, 12}, WidgetType::label,        WindowColour::secondary, STR_CURRENCY,           STR_CURRENCY_TIP           ), // Currency
         makeWidget({155,  70}, {145, 14}, WidgetType::dropdownMenu, WindowColour::secondary                                                     ),
@@ -397,7 +394,7 @@ namespace OpenRCT2::Ui::Windows
         kMainOptionsWidgets,
         makeWidget({  5, kThemesGroupStart +  0}, {300, 50}, WidgetType::groupbox,     WindowColour::secondary, STR_THEMES_GROUP                                          ), // Themes group
         makeWidget({ 10, kThemesGroupStart + 14}, {145, 12}, WidgetType::label,        WindowColour::secondary, STR_THEMES_LABEL_CURRENT_THEME, STR_CURRENT_THEME_TIP     ), // Themes
-        makeWidget({155, kThemesGroupStart + 14}, {145, 14}, WidgetType::dropdownMenu, WindowColour::secondary, kStringIdEmpty                                                ),
+        makeWidget({155, kThemesGroupStart + 14}, {145, 14}, WidgetType::dropdownMenu, WindowColour::secondary, STR_STRING                                                ),
         makeWidget({288, kThemesGroupStart + 15}, { 11, 12}, WidgetType::button,       WindowColour::secondary, STR_DROPDOWN_GLYPH,             STR_CURRENT_THEME_TIP     ),
         makeWidget({155, kThemesGroupStart + 30}, {145, 14}, WidgetType::button,       WindowColour::secondary, STR_EDIT_THEMES_BUTTON,         STR_EDIT_THEMES_BUTTON_TIP), // Themes button
 
@@ -421,7 +418,7 @@ namespace OpenRCT2::Ui::Windows
     static constexpr auto window_options_misc_widgets = makeWidgets(
         kMainOptionsWidgets,
         makeWidget(         {  5, kTitleSequenceStart +  0}, {300, 35}, WidgetType::groupbox,     WindowColour::secondary, STR_OPTIONS_TITLE_SEQUENCE                              ),
-        makeDropdownWidgets({ 10, kTitleSequenceStart + 15}, {290, 14}, WidgetType::dropdownMenu, WindowColour::secondary, kStringIdEmpty,               STR_TITLE_SEQUENCE_TIP    ), // Title sequence dropdown
+        makeDropdownWidgets({ 10, kTitleSequenceStart + 15}, {290, 14}, WidgetType::dropdownMenu, WindowColour::secondary, STR_STRINGID,                 STR_TITLE_SEQUENCE_TIP    ), // Title sequence dropdown
 
         makeWidget({ 5,  kScenarioOptionsGroupStart +  0}, {300, 66}, WidgetType::groupbox,     WindowColour::secondary, STR_SCENARIO_OPTIONS                                      ),
         makeWidget({ 10, kScenarioOptionsGroupStart + 16}, {165, 12}, WidgetType::label,        WindowColour::secondary, STR_SCENARIO_PREVIEWS_LABEL,    STR_SCENARIO_PREVIEWS_TIP ),
@@ -494,8 +491,6 @@ namespace OpenRCT2::Ui::Windows
 
     class OptionsWindow final : public Window
     {
-        u8string _dropdownCaption{};
-
     public:
         void onOpen() override
         {
@@ -984,10 +979,11 @@ namespace OpenRCT2::Ui::Windows
 
         void DisplayPrepareDraw()
         {
-            auto& generalConfig = Config::Get().general;
-            _dropdownCaption = FormatStringID(
-                STR_RESOLUTION_X_BY_Y, generalConfig.fullscreenWidth, generalConfig.fullscreenHeight);
-            widgets[WIDX_RESOLUTION].setString(_dropdownCaption.c_str());
+            // Resolution dropdown caption.
+            auto ft = Formatter::Common();
+            ft.Increment(16);
+            ft.Add<uint16_t>(static_cast<uint16_t>(Config::Get().general.fullscreenWidth));
+            ft.Add<uint16_t>(static_cast<uint16_t>(Config::Get().general.fullscreenHeight));
 
             // Disable resolution dropdown on "Windowed" and "Fullscreen (desktop)"
             if (Config::Get().general.fullscreenMode != static_cast<int32_t>(FullscreenMode::fullscreen))
@@ -1031,7 +1027,7 @@ namespace OpenRCT2::Ui::Windows
         {
             auto ft = Formatter();
             ft.Add<int32_t>(static_cast<int32_t>(Config::Get().general.windowScale * 100));
-            drawText(
+            DrawTextBasic(
                 rt, windowPos + ScreenCoordsXY{ widgets[WIDX_SCALE].left + 1, widgets[WIDX_SCALE].top + 1 },
                 STR_WINDOW_COLOUR_2_COMMA2DP32, ft, { colours[1] });
         }
@@ -1357,8 +1353,8 @@ namespace OpenRCT2::Ui::Windows
         void CulturePrepareDraw()
         {
             // Language
-            _dropdownCaption = LanguagesDescriptors[LocalisationService_GetCurrentLanguage()].native_name;
-            widgets[WIDX_LANGUAGE].setString(_dropdownCaption.c_str());
+            auto ft = Formatter::Common();
+            ft.Add<char*>(LanguagesDescriptors[LocalisationService_GetCurrentLanguage()].native_name);
 
             // Currency: pounds, dollars, etc. (10 total)
             widgets[WIDX_CURRENCY].text = CurrencyDescriptors[EnumValue(Config::Get().general.currencyFormat)].stringId;
@@ -1614,22 +1610,34 @@ namespace OpenRCT2::Ui::Windows
             return STR_OPENRCT2_DROPDOWN;
         }
 
-        static u8string getCurrentAudioDeviceName()
-        {
-            const int32_t currentDeviceIndex = GetCurrentDeviceIndex();
-            if (currentDeviceIndex == -1 || GetDeviceCount() == 0)
-            {
-                return LanguageGetString(STR_SOUND_NONE);
-            }
-
-            return GetDeviceName(currentDeviceIndex).c_str();
-        }
-
         void AudioPrepareDraw()
         {
             // Sound device
-            _dropdownCaption = getCurrentAudioDeviceName();
-            widgets[WIDX_SOUND].setString(_dropdownCaption.c_str());
+            StringId audioDeviceStringId = STR_OPTIONS_SOUND_VALUE_DEFAULT;
+            const char* audioDeviceName = nullptr;
+            const int32_t currentDeviceIndex = GetCurrentDeviceIndex();
+            if (currentDeviceIndex == -1 || GetDeviceCount() == 0)
+            {
+                audioDeviceStringId = STR_SOUND_NONE;
+            }
+            else
+            {
+                audioDeviceStringId = STR_STRING;
+#ifndef __linux__
+                if (currentDeviceIndex == 0)
+                {
+                    audioDeviceStringId = STR_OPTIONS_SOUND_VALUE_DEFAULT;
+                }
+#endif // __linux__
+                if (audioDeviceStringId == STR_STRING)
+                {
+                    audioDeviceName = GetDeviceName(currentDeviceIndex).c_str();
+                }
+            }
+
+            widgets[WIDX_SOUND].text = audioDeviceStringId;
+            auto ft = Formatter::Common();
+            ft.Add<char*>(audioDeviceName);
 
             widgets[WIDX_TITLE_MUSIC].text = GetTitleMusicName();
 
@@ -1835,8 +1843,9 @@ namespace OpenRCT2::Ui::Windows
             setCheckboxValue(WIDX_TOOLBAR_SHOW_ROTATE_ANTI_CLOCKWISE, Config::Get().interface.toolbarShowRotateAnticlockwise);
 
             size_t activeAvailableThemeIndex = ThemeManagerGetAvailableThemeIndex();
-            _dropdownCaption = ThemeManagerGetAvailableThemeName(activeAvailableThemeIndex);
-            widgets[WIDX_THEMES].setString(_dropdownCaption.c_str());
+            const utf8* activeThemeName = ThemeManagerGetAvailableThemeName(activeAvailableThemeIndex);
+            auto ft = Formatter::Common();
+            ft.Add<utf8*>(activeThemeName);
         }
 
 #pragma endregion
@@ -1993,15 +2002,17 @@ namespace OpenRCT2::Ui::Windows
 
         void MiscPrepareDraw()
         {
+            auto ft = Formatter::Common();
             if (Config::Get().interface.randomTitleSequence)
             {
-                _dropdownCaption = LanguageGetString(STR_TITLE_SEQUENCE_RANDOM);
+                ft.Add<StringId>(STR_TITLE_SEQUENCE_RANDOM);
             }
             else
             {
-                _dropdownCaption = TitleSequenceManager::GetName(TitleGetConfigSequence());
+                auto name = TitleSequenceManager::GetName(TitleGetConfigSequence());
+                ft.Add<StringId>(STR_STRING);
+                ft.Add<utf8*>(name);
             }
-            widgets[WIDX_TITLE_SEQUENCE].setString(_dropdownCaption.c_str());
 
             // The real name setting of clients is fixed to that of the server
             // and the server cannot change the setting during gameplay to prevent desyncs
@@ -2182,7 +2193,7 @@ namespace OpenRCT2::Ui::Windows
 
                 // Get 'Clear' button string width
                 auto clearLabel = LanguageGetString(STR_CLEAR_BUTTON);
-                auto clearLabelWidth = getStringWidth(clearLabel, FontStyle::medium) + 12;
+                auto clearLabelWidth = GfxGetStringWidth(clearLabel, FontStyle::medium) + 12;
 
                 widgets[WIDX_PATH_TO_RCT1_CLEAR].right = widgets[WIDX_PAGE_BACKGROUND].right - 12;
                 widgets[WIDX_PATH_TO_RCT1_CLEAR].left = widgets[WIDX_PATH_TO_RCT1_BROWSE].right - clearLabelWidth;
@@ -2195,7 +2206,7 @@ namespace OpenRCT2::Ui::Windows
 
                 // Get 'Browse' button string width
                 auto browseLabel = LanguageGetString(STR_BROWSE);
-                auto browseLabelWidth = getStringWidth(browseLabel, FontStyle::medium) + 12;
+                auto browseLabelWidth = GfxGetStringWidth(browseLabel, FontStyle::medium) + 12;
 
                 widgets[WIDX_PATH_TO_RCT1_BROWSE].right = widgets[WIDX_PAGE_BACKGROUND].right - 12;
                 widgets[WIDX_PATH_TO_RCT1_BROWSE].left = widgets[WIDX_PATH_TO_RCT1_BROWSE].right - browseLabelWidth;
@@ -2222,7 +2233,7 @@ namespace OpenRCT2::Ui::Windows
         {
             auto ft = Formatter();
             ft.Add<int32_t>(Config::Get().general.autosaveAmount);
-            drawText(
+            DrawTextBasic(
                 rt, windowPos + ScreenCoordsXY{ widgets[WIDX_AUTOSAVE_AMOUNT].left + 1, widgets[WIDX_AUTOSAVE_AMOUNT].top + 1 },
                 STR_WINDOW_COLOUR_2_COMMA32, ft, { colours[1] });
 
@@ -2240,7 +2251,7 @@ namespace OpenRCT2::Ui::Windows
             int32_t padding = widgetHeight > lineHeight ? (widgetHeight - lineHeight) / 2 : 0;
 
             auto screenCoords = windowPos + ScreenCoordsXY{ pathWidget.left + 1, pathWidget.top + padding };
-            drawTextEllipsised(rt, screenCoords, pathWidget.width() - 1, STR_BLACK_STRING, ft);
+            DrawTextEllipsised(rt, screenCoords, pathWidget.width() - 1, STR_BLACK_STRING, ft);
         }
 
         StringWithArgs AdvancedTooltip(WidgetIndex widgetIndex, StringId fallback)

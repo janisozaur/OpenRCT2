@@ -33,9 +33,6 @@ namespace OpenRCT2::Profiling
     // Clang 5 crashes using the profiler, we need to disable it.
     #define PROFILED_FUNCTION()
     #define PROFILED_FUNCTION_DATA(data)
-#elif !defined(PROFILING)
-    #define PROFILED_FUNCTION()
-    #define PROFILED_FUNCTION_DATA(data)
 #else
 
     // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
