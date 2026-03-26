@@ -253,7 +253,7 @@ namespace OpenRCT2::Ui::Windows
                 Rectangle::fill(rt, fillRectangle, getColourMap(colours[1].colour).midDark);
             }
 
-            drawTextEllipsised(rt, { 16, y + 1 }, listWidth, stringId, ft);
+            DrawTextEllipsised(rt, { 16, y + 1 }, listWidth, stringId, ft);
 
             auto checkboxSize = ItemHeight - 3;
             PaintCheckbox(rt, { { 2, y + 1 }, { 2 + checkboxSize + 1, y + 1 + checkboxSize } }, isChecked);
@@ -269,7 +269,7 @@ namespace OpenRCT2::Ui::Windows
                 auto checkmark = Formatter();
                 checkmark.Add<StringId>(STR_STRING);
                 checkmark.Add<char*>(kCheckMarkString);
-                drawText(rt, ScreenCoordsXY{ rect.GetLeft() + 1, rect.GetTop() }, STR_WINDOW_COLOUR_2_STRINGID, checkmark);
+                DrawTextBasic(rt, ScreenCoordsXY{ rect.GetLeft() + 1, rect.GetTop() }, STR_WINDOW_COLOUR_2_STRINGID, checkmark);
             }
         }
 

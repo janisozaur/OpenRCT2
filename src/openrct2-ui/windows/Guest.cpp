@@ -29,7 +29,6 @@
 #include <openrct2/drawing/ColourMap.h>
 #include <openrct2/drawing/Drawing.h>
 #include <openrct2/drawing/Rectangle.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/entity/Guest.h>
 #include <openrct2/entity/Staff.h>
 #include <openrct2/localisation/Formatter.h>
@@ -821,7 +820,7 @@ namespace OpenRCT2::Ui::Windows
                 auto ft = Formatter();
                 peep->FormatActionTo(ft);
                 int32_t textWidth = actionLabelWidget.width() - 1;
-                drawTextEllipsised(rt, screenPos, textWidth, STR_BLACK_STRING, ft, { TextAlignment::centre });
+                DrawTextEllipsised(rt, screenPos, textWidth, STR_BLACK_STRING, ft, { TextAlignment::centre });
             }
 
             // Draw the marquee thought
@@ -859,7 +858,7 @@ namespace OpenRCT2::Ui::Windows
             {
                 auto ft = Formatter();
                 PeepThoughtSetFormatArgs(&peep->Thoughts[i], ft);
-                drawText(rtMarquee, { screenPos.x, 0 }, STR_WINDOW_COLOUR_2_STRINGID, ft, { FontStyle::small });
+                DrawTextBasic(rtMarquee, { screenPos.x, 0 }, STR_WINDOW_COLOUR_2_STRINGID, ft, { FontStyle::small });
             }
         }
 
@@ -1172,13 +1171,13 @@ namespace OpenRCT2::Ui::Windows
                 int32_t timeInPark = (getGameState().currentTicks - guestEntryTime) >> 11;
                 auto ft = Formatter();
                 ft.Add<uint16_t>(timeInPark & 0xFFFF);
-                drawText(rt, screenCoords, STR_GUEST_STAT_TIME_IN_PARK, ft);
+                DrawTextBasic(rt, screenCoords, STR_GUEST_STAT_TIME_IN_PARK, ft);
             }
 
             screenCoords.y += kListRowHeight + 9;
 
             // Preferred Ride
-            drawText(rt, screenCoords, STR_GUEST_STAT_PREFERRED_RIDE);
+            DrawTextBasic(rt, screenCoords, STR_GUEST_STAT_PREFERRED_RIDE);
             screenCoords.y += kListRowHeight;
 
             // Intensity
@@ -1199,7 +1198,7 @@ namespace OpenRCT2::Ui::Windows
                     ft.Add<uint16_t>(maxIntensity);
                 }
 
-                drawText(rt, screenCoords + ScreenCoordsXY{ 4, 0 }, string_id, ft);
+                DrawTextBasic(rt, screenCoords + ScreenCoordsXY{ 4, 0 }, string_id, ft);
             }
 
             // Nausea tolerance
@@ -1214,7 +1213,7 @@ namespace OpenRCT2::Ui::Windows
                 auto nausea_tolerance = EnumValue(peep->NauseaTolerance) & 0x3;
                 auto ft = Formatter();
                 ft.Add<StringId>(_nauseaTolerances[nausea_tolerance]);
-                drawText(rt, screenCoords, STR_GUEST_STAT_NAUSEA_TOLERANCE, ft);
+                DrawTextBasic(rt, screenCoords, STR_GUEST_STAT_NAUSEA_TOLERANCE, ft);
             }
         }
 
@@ -1364,7 +1363,7 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<StringId>(STR_PEEP_FAVOURITE_RIDE_NOT_AVAILABLE);
             }
 
-            drawTextEllipsised(rt, screenCoords, width - 14, STR_FAVOURITE_RIDE, ft);
+            DrawTextEllipsised(rt, screenCoords, width - 14, STR_FAVOURITE_RIDE, ft);
         }
 
         void onScrollDrawRides(int32_t scrollIndex, RenderTarget& rt)
@@ -1387,7 +1386,7 @@ namespace OpenRCT2::Ui::Windows
                 {
                     auto ft = Formatter();
                     r->formatNameTo(ft);
-                    drawText(rt, { 0, y - 1 }, stringId, ft);
+                    DrawTextBasic(rt, { 0, y - 1 }, stringId, ft);
                 }
             }
         }
@@ -1445,7 +1444,7 @@ namespace OpenRCT2::Ui::Windows
             {
                 auto ft = Formatter();
                 ft.Add<money64>(peep->CashInPocket);
-                drawText(rt, screenCoords, STR_GUEST_STAT_CASH_IN_POCKET, ft);
+                DrawTextBasic(rt, screenCoords, STR_GUEST_STAT_CASH_IN_POCKET, ft);
                 screenCoords.y += kListRowHeight;
             }
 
@@ -1453,7 +1452,7 @@ namespace OpenRCT2::Ui::Windows
             {
                 auto ft = Formatter();
                 ft.Add<money64>(peep->CashSpent);
-                drawText(rt, screenCoords, STR_GUEST_STAT_CASH_SPENT, ft);
+                DrawTextBasic(rt, screenCoords, STR_GUEST_STAT_CASH_SPENT, ft);
                 screenCoords.y += kListRowHeight * 2;
             }
 
@@ -1465,7 +1464,7 @@ namespace OpenRCT2::Ui::Windows
             {
                 auto ft = Formatter();
                 ft.Add<money64>(peep->PaidToEnter);
-                drawText(rt, screenCoords, STR_GUEST_EXPENSES_ENTRANCE_FEE, ft);
+                DrawTextBasic(rt, screenCoords, STR_GUEST_EXPENSES_ENTRANCE_FEE, ft);
                 screenCoords.y += kListRowHeight;
             }
             // Paid on rides
@@ -1475,11 +1474,11 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<uint16_t>(peep->GuestNumRides);
                 if (peep->GuestNumRides != 1)
                 {
-                    drawText(rt, screenCoords, STR_GUEST_EXPENSES_RIDE_PLURAL, ft);
+                    DrawTextBasic(rt, screenCoords, STR_GUEST_EXPENSES_RIDE_PLURAL, ft);
                 }
                 else
                 {
-                    drawText(rt, screenCoords, STR_GUEST_EXPENSES_RIDE, ft);
+                    DrawTextBasic(rt, screenCoords, STR_GUEST_EXPENSES_RIDE, ft);
                 }
                 screenCoords.y += kListRowHeight;
             }
@@ -1490,11 +1489,11 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<uint16_t>(peep->AmountOfFood);
                 if (peep->AmountOfFood != 1)
                 {
-                    drawText(rt, screenCoords, STR_GUEST_EXPENSES_FOOD_PLURAL, ft);
+                    DrawTextBasic(rt, screenCoords, STR_GUEST_EXPENSES_FOOD_PLURAL, ft);
                 }
                 else
                 {
-                    drawText(rt, screenCoords, STR_GUEST_EXPENSES_FOOD, ft);
+                    DrawTextBasic(rt, screenCoords, STR_GUEST_EXPENSES_FOOD, ft);
                 }
                 screenCoords.y += kListRowHeight;
             }
@@ -1506,11 +1505,11 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<uint16_t>(peep->AmountOfDrinks);
                 if (peep->AmountOfDrinks != 1)
                 {
-                    drawText(rt, screenCoords, STR_GUEST_EXPENSES_DRINK_PLURAL, ft);
+                    DrawTextBasic(rt, screenCoords, STR_GUEST_EXPENSES_DRINK_PLURAL, ft);
                 }
                 else
                 {
-                    drawText(rt, screenCoords, STR_GUEST_EXPENSES_DRINK, ft);
+                    DrawTextBasic(rt, screenCoords, STR_GUEST_EXPENSES_DRINK, ft);
                 }
                 screenCoords.y += kListRowHeight;
             }
@@ -1521,11 +1520,11 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<uint16_t>(peep->AmountOfSouvenirs);
                 if (peep->AmountOfSouvenirs != 1)
                 {
-                    drawText(rt, screenCoords, STR_GUEST_EXPENSES_SOUVENIR_PLURAL, ft);
+                    DrawTextBasic(rt, screenCoords, STR_GUEST_EXPENSES_SOUVENIR_PLURAL, ft);
                 }
                 else
                 {
-                    drawText(rt, screenCoords, STR_GUEST_EXPENSES_SOUVENIR, ft);
+                    DrawTextBasic(rt, screenCoords, STR_GUEST_EXPENSES_SOUVENIR, ft);
                 }
             }
         }
@@ -1600,7 +1599,7 @@ namespace OpenRCT2::Ui::Windows
 
                 auto ft = Formatter();
                 PeepThoughtSetFormatArgs(&thought, ft);
-                screenCoords.y += drawTextWrapped(rt, screenCoords, widgWidth, STR_BLACK_STRING, ft, { FontStyle::small });
+                screenCoords.y += DrawTextWrapped(rt, screenCoords, widgWidth, STR_BLACK_STRING, ft, { FontStyle::small });
 
                 // If this is the last visible line end drawing.
                 if (screenCoords.y > windowPos.y + widgets[WIDX_PAGE_BACKGROUND].bottom - 32)
@@ -1786,7 +1785,7 @@ namespace OpenRCT2::Ui::Windows
 
                 screenCoords.x += 16;
                 screenCoords.y += 1;
-                screenCoords.y += drawTextWrapped(rt, screenCoords, itemNameWidth, STR_BLACK_STRING, ft);
+                screenCoords.y += DrawTextWrapped(rt, screenCoords, itemNameWidth, STR_BLACK_STRING, ft);
 
                 screenCoords.x -= 16;
                 numItems++;
@@ -1794,7 +1793,7 @@ namespace OpenRCT2::Ui::Windows
 
             if (numItems == 0)
             {
-                drawText(rt, screenCoords, STR_NOTHING);
+                DrawTextBasic(rt, screenCoords, STR_NOTHING);
             }
         }
 #pragma endregion
@@ -1847,7 +1846,7 @@ namespace OpenRCT2::Ui::Windows
             {
                 auto ft = Formatter();
                 ft.Add<uint32_t>(peep->Id);
-                drawText(rt, screenCoords, STR_PEEP_DEBUG_SPRITE_INDEX, ft);
+                DrawTextBasic(rt, screenCoords, STR_PEEP_DEBUG_SPRITE_INDEX, ft);
             }
             screenCoords.y += kListRowHeight;
             {
@@ -1855,7 +1854,7 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<int32_t>(peep->x);
                 ft.Add<int32_t>(peep->y);
                 ft.Add<int32_t>(peep->z);
-                drawText(rt, screenCoords, STR_PEEP_DEBUG_POSITION, ft);
+                DrawTextBasic(rt, screenCoords, STR_PEEP_DEBUG_POSITION, ft);
             }
             screenCoords.y += kListRowHeight;
             {
@@ -1876,7 +1875,7 @@ namespace OpenRCT2::Ui::Windows
                     FormatStringLegacy(buffer2, sizeof(buffer2), STR_PEEP_DEBUG_NEXT_SLOPE, ft2.Data());
                     String::safeConcat(buffer, buffer2, sizeof(buffer));
                 }
-                drawText(rt, screenCoords, buffer);
+                DrawText(rt, screenCoords, {}, buffer);
             }
             screenCoords.y += kListRowHeight;
             {
@@ -1884,7 +1883,7 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<int32_t>(peep->DestinationX);
                 ft.Add<int32_t>(peep->DestinationY);
                 ft.Add<int32_t>(peep->DestinationTolerance);
-                drawText(rt, screenCoords, STR_PEEP_DEBUG_DEST, ft);
+                DrawTextBasic(rt, screenCoords, STR_PEEP_DEBUG_DEST, ft);
             }
             screenCoords.y += kListRowHeight;
             {
@@ -1893,10 +1892,10 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<int32_t>(peep->PathfindGoal.y);
                 ft.Add<int32_t>(peep->PathfindGoal.z);
                 ft.Add<int32_t>(peep->PathfindGoal.direction);
-                drawText(rt, screenCoords, STR_PEEP_DEBUG_PATHFIND_GOAL, ft);
+                DrawTextBasic(rt, screenCoords, STR_PEEP_DEBUG_PATHFIND_GOAL, ft);
             }
             screenCoords.y += kListRowHeight;
-            drawText(rt, screenCoords, STR_PEEP_DEBUG_PATHFIND_HISTORY);
+            DrawTextBasic(rt, screenCoords, STR_PEEP_DEBUG_PATHFIND_HISTORY);
             screenCoords.y += kListRowHeight;
 
             screenCoords.x += 10;
@@ -1907,7 +1906,7 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<int32_t>(point.y);
                 ft.Add<int32_t>(point.z);
                 ft.Add<int32_t>(point.direction);
-                drawText(rt, screenCoords, STR_PEEP_DEBUG_PATHFIND_HISTORY_ITEM, ft);
+                DrawTextBasic(rt, screenCoords, STR_PEEP_DEBUG_PATHFIND_HISTORY_ITEM, ft);
                 screenCoords.y += kListRowHeight;
             }
             screenCoords.x -= 10;

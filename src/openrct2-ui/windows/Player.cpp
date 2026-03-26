@@ -19,7 +19,6 @@
 #include <openrct2/actions/network/PlayerKickAction.h>
 #include <openrct2/actions/network/PlayerSetGroupAction.h>
 #include <openrct2/drawing/Drawing.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/localisation/Formatter.h>
 #include <openrct2/network/Network.h>
 #include <openrct2/network/NetworkAction.h>
@@ -439,7 +438,7 @@ namespace OpenRCT2::Ui::Windows
                 auto ft = Formatter();
                 ft.Add<const char*>(_buffer.c_str());
 
-                drawTextEllipsised(
+                DrawTextEllipsised(
                     rt, windowPos + ScreenCoordsXY{ widget->midX() - 5, widget->top }, widget->width() - 9, STR_STRING, ft,
                     { TextAlignment::centre });
             }
@@ -449,10 +448,10 @@ namespace OpenRCT2::Ui::Windows
 
             auto ft = Formatter();
             ft.Add<StringId>(STR_PING);
-            drawText(rt, screenCoords, STR_WINDOW_COLOUR_2_STRINGID, ft);
+            DrawTextBasic(rt, screenCoords, STR_WINDOW_COLOUR_2_STRINGID, ft);
             char ping[64];
             snprintf(ping, 64, "%d ms", Network::GetPlayerPing(player));
-            drawText(rt, screenCoords + ScreenCoordsXY(30, 0), ping, { colours[2] });
+            DrawText(rt, screenCoords + ScreenCoordsXY(30, 0), { colours[2] }, ping);
 
             // Draw last action
             screenCoords = windowPos + ScreenCoordsXY{ width / 2, height - 13 };
@@ -467,7 +466,7 @@ namespace OpenRCT2::Ui::Windows
             {
                 ft.Add<StringId>(STR_ACTION_NA);
             }
-            drawTextEllipsised(rt, screenCoords, updatedWidth, STR_LAST_ACTION_RAN, ft, { TextAlignment::centre });
+            DrawTextEllipsised(rt, screenCoords, updatedWidth, STR_LAST_ACTION_RAN, ft, { TextAlignment::centre });
 
             if (viewport != nullptr && _drawViewport)
             {
@@ -616,13 +615,13 @@ namespace OpenRCT2::Ui::Windows
 
             auto ft = Formatter();
             ft.Add<uint32_t>(Network::GetPlayerCommandsRan(player));
-            drawText(rt, screenCoords, STR_COMMANDS_RAN, ft);
+            DrawTextBasic(rt, screenCoords, STR_COMMANDS_RAN, ft);
 
             screenCoords.y += kListRowHeight;
 
             ft = Formatter();
             ft.Add<uint32_t>(Network::GetPlayerMoneySpent(player));
-            drawText(rt, screenCoords, STR_MONEY_SPENT, ft);
+            DrawTextBasic(rt, screenCoords, STR_MONEY_SPENT, ft);
         }
 
 #pragma endregion

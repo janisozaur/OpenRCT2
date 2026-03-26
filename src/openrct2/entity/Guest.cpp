@@ -4733,19 +4733,14 @@ namespace OpenRCT2
         if (waypoint == 2)
         {
             bool lastRide = false;
-            // If the player has closed the ride, leave ASAP, even if the guest hasn't entered the structure yet
             if (ride->status != RideStatus::open)
                 lastRide = true;
-            else
+            else if (timesSlidDown++ != 0)
             {
-                if (timesSlidDown != 0)
-                {
-                    if (ride->mode == RideMode::singleRidePerAdmission)
-                        lastRide = true;
-                    if (timesSlidDown > static_cast<uint8_t>(ScenarioRand() & 0xF))
-                        lastRide = true;
-                }
-                timesSlidDown++;
+                if (ride->mode == RideMode::singleRidePerAdmission)
+                    lastRide = true;
+                if (static_cast<uint8_t>(timesSlidDown - 1) > (ScenarioRand() & 0xF))
+                    lastRide = true;
             }
 
             if (lastRide)
@@ -4768,7 +4763,6 @@ namespace OpenRCT2
                 return;
             }
         }
-
         waypoint++;
         // Actually increment the real peep waypoint
         Var37++;

@@ -25,7 +25,6 @@
 #include <openrct2/drawing/ColourMap.h>
 #include <openrct2/drawing/Drawing.h>
 #include <openrct2/drawing/Rectangle.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/localisation/Formatter.h>
 #include <openrct2/object/FootpathObject.h>
 #include <openrct2/object/FootpathRailingsObject.h>
@@ -1060,19 +1059,19 @@ static uint64_t PageDisabledWidgets[] = {
                 auto tileCoords = TileCoordsXY{ _toolMap };
                 auto ft = Formatter();
                 ft.Add<int32_t>(tileCoords.x);
-                drawText(
+                DrawTextBasic(
                     rt, screenCoords + ScreenCoordsXY{ 43, yOffset }, STR_FORMAT_INTEGER, ft,
                     { colours[1], TextAlignment::right });
                 ft = Formatter();
                 ft.Add<int32_t>(tileCoords.y);
-                drawText(
+                DrawTextBasic(
                     rt, screenCoords + ScreenCoordsXY{ 113, yOffset }, STR_FORMAT_INTEGER, ft,
                     { colours[1], TextAlignment::right });
             }
             else
             {
-                drawText(rt, screenCoords + ScreenCoordsXY(43 - 7, yOffset), "-", { colours[1] });
-                drawText(rt, screenCoords + ScreenCoordsXY(113 - 7, yOffset), "-", { colours[1] });
+                DrawText(rt, screenCoords + ScreenCoordsXY(43 - 7, yOffset), { colours[1] }, "-");
+                DrawText(rt, screenCoords + ScreenCoordsXY(113 - 7, yOffset), { colours[1] }, "-");
             }
 
             if (windowTileInspectorSelectedIndex != -1)
@@ -1098,7 +1097,7 @@ static uint64_t PageDisabledWidgets[] = {
                             terrainNameId = surfaceStyle->NameStringId;
                         auto ft = Formatter();
                         ft.Add<StringId>(terrainNameId);
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_SURFACE_TERAIN, ft, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_SURFACE_TERAIN, ft, { colours[1] });
 
                         // Edge texture name
                         StringId terrainEdgeNameId = kStringIdEmpty;
@@ -1107,7 +1106,7 @@ static uint64_t PageDisabledWidgets[] = {
                             terrainEdgeNameId = edgeStyle->NameStringId;
                         ft = Formatter();
                         ft.Add<StringId>(terrainEdgeNameId);
-                        drawText(
+                        DrawTextBasic(
                             rt, screenCoords + ScreenCoordsXY{ 0, 11 }, STR_TILE_INSPECTOR_SURFACE_EDGE, ft, { colours[1] });
 
                         // Land ownership
@@ -1125,14 +1124,14 @@ static uint64_t PageDisabledWidgets[] = {
 
                         ft = Formatter();
                         ft.Add<StringId>(landOwnership);
-                        drawText(
+                        DrawTextBasic(
                             rt, screenCoords + ScreenCoordsXY{ 0, 22 }, STR_TILE_INSPECTOR_SURFACE_OWNERSHIP, ft,
                             { colours[1] });
 
                         // Water level
                         ft = Formatter();
                         ft.Add<uint32_t>(tileElement->AsSurface()->GetWaterHeight());
-                        drawText(
+                        DrawTextBasic(
                             rt, screenCoords + ScreenCoordsXY{ 0, 33 }, STR_TILE_INSPECTOR_SURFACE_WATER_LEVEL, ft,
                             { colours[1] });
 
@@ -1141,19 +1140,19 @@ static uint64_t PageDisabledWidgets[] = {
                         screenCoords = windowPos
                             + ScreenCoordsXY{ widgets[WIDX_GROUPBOX_DETAILS].left + 7,
                                               widgets[WIDX_SURFACE_SPINNER_HEIGHT].top };
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
 
                         // Current base height
                         screenCoords.x = windowPos.x + widgets[WIDX_SURFACE_SPINNER_HEIGHT].left + 3;
                         ft = Formatter();
                         ft.Add<int32_t>(tileElement->BaseHeight);
-                        drawText(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
 
                         // Raised corners
                         screenCoords = windowPos
                             + ScreenCoordsXY{ widgets[WIDX_GROUPBOX_DETAILS].left + 7,
                                               widgets[WIDX_SURFACE_CHECK_CORNER_E].top };
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_SURFACE_CORNERS, {}, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_SURFACE_CORNERS, {}, { colours[1] });
                         break;
                     }
                     case TileElementType::Path:
@@ -1169,7 +1168,7 @@ static uint64_t PageDisabledWidgets[] = {
                             {
                                 auto ft = Formatter();
                                 ft.Add<StringId>(surfaceObj->NameStringId);
-                                drawText(
+                                DrawTextBasic(
                                     rt, screenCoords, STR_TILE_INSPECTOR_FOOTPATH_SURFACE_NAME, ft, { Drawing::Colour::white });
                             }
 
@@ -1179,7 +1178,7 @@ static uint64_t PageDisabledWidgets[] = {
                             {
                                 auto ft = Formatter();
                                 ft.Add<StringId>(railingsObj->NameStringId);
-                                drawText(
+                                DrawTextBasic(
                                     rt, screenCoords + ScreenCoordsXY{ 0, 11 }, STR_TILE_INSPECTOR_FOOTPATH_RAILINGS_NAME, ft,
                                     { Drawing::Colour::white });
                             }
@@ -1190,7 +1189,7 @@ static uint64_t PageDisabledWidgets[] = {
                             auto footpathEntry = reinterpret_cast<const FootpathEntry*>(footpathObj->GetLegacyData());
                             auto ft = Formatter();
                             ft.Add<StringId>(footpathEntry->string_idx);
-                            drawText(rt, screenCoords, STR_TILE_INSPECTOR_PATH_NAME, ft, { Drawing::Colour::white });
+                            DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_PATH_NAME, ft, { Drawing::Colour::white });
                         }
 
                         // Path addition
@@ -1202,13 +1201,13 @@ static uint64_t PageDisabledWidgets[] = {
                                 : static_cast<StringId>(STR_UNKNOWN_OBJECT_TYPE);
                             auto ft = Formatter();
                             ft.Add<StringId>(additionNameId);
-                            drawText(
+                            DrawTextBasic(
                                 rt, screenCoords + ScreenCoordsXY{ 0, 2 * 11 }, STR_TILE_INSPECTOR_PATH_ADDITIONS, ft,
                                 { Drawing::Colour::white });
                         }
                         else
                         {
-                            drawText(
+                            DrawTextBasic(
                                 rt, screenCoords + ScreenCoordsXY{ 0, 2 * 11 }, STR_TILE_INSPECTOR_PATH_ADDITIONS_NONE, {},
                                 { Drawing::Colour::white });
                         }
@@ -1217,18 +1216,18 @@ static uint64_t PageDisabledWidgets[] = {
                         // Raise / lower label
                         screenCoords = windowPos
                             + ScreenCoordsXY{ widgets[WIDX_GROUPBOX_DETAILS].left + 7, widgets[WIDX_PATH_SPINNER_HEIGHT].top };
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
 
                         // Current base height
                         screenCoords.x = windowPos.x + widgets[WIDX_PATH_SPINNER_HEIGHT].left + 3;
                         auto ft = Formatter();
                         ft.Add<int32_t>(tileElement->BaseHeight);
-                        drawText(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
 
                         // Path connections
                         screenCoords = windowPos
                             + ScreenCoordsXY{ widgets[WIDX_GROUPBOX_DETAILS].left + 7, widgets[WIDX_PATH_CHECK_EDGE_W].top };
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_PATH_CONNECTED_EDGES, {}, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_PATH_CONNECTED_EDGES, {}, { colours[1] });
                         break;
                     }
 
@@ -1241,14 +1240,14 @@ static uint64_t PageDisabledWidgets[] = {
                         // Ride ID
                         auto ft = Formatter();
                         ft.Add<int16_t>(id);
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_TRACK_RIDE_ID, ft, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_TRACK_RIDE_ID, ft, { colours[1] });
 
                         // Ride name
                         if (rideTile != nullptr)
                         {
                             ft = Formatter();
                             rideTile->formatNameTo(ft);
-                            drawText(
+                            DrawTextBasic(
                                 rt, screenCoords + ScreenCoordsXY{ 0, 11 }, STR_TILE_INSPECTOR_TRACK_RIDE_NAME, ft,
                                 { colours[1] });
                         }
@@ -1257,18 +1256,18 @@ static uint64_t PageDisabledWidgets[] = {
                         const auto& rtd = GetRideTypeDescriptor(trackElement->GetRideType());
                         ft = Formatter();
                         ft.Add<StringId>(rtd.Naming.Name);
-                        drawText(
+                        DrawTextBasic(
                             rt, screenCoords + ScreenCoordsXY{ 0, 22 }, STR_TILE_INSPECTOR_TRACK_RIDE_TYPE, ft, { colours[1] });
 
                         // Track
                         ft = Formatter();
                         ft.Add<uint16_t>(trackElement->GetTrackType());
-                        drawText(
+                        DrawTextBasic(
                             rt, screenCoords + ScreenCoordsXY{ 0, 33 }, STR_TILE_INSPECTOR_TRACK_PIECE_ID, ft, { colours[1] });
 
                         ft = Formatter();
                         ft.Add<uint16_t>(trackElement->GetSequenceIndex());
-                        drawText(
+                        DrawTextBasic(
                             rt, screenCoords + ScreenCoordsXY{ 0, 44 }, STR_TILE_INSPECTOR_TRACK_SEQUENCE, ft, { colours[1] });
                         if (trackElement->IsStation())
                         {
@@ -1276,7 +1275,7 @@ static uint64_t PageDisabledWidgets[] = {
                             ft = Formatter();
                             ft.Add<StringId>(STR_COMMA16);
                             ft.Add<int16_t>(stationIndex.ToUnderlying());
-                            drawText(
+                            DrawTextBasic(
                                 rt, screenCoords + ScreenCoordsXY{ 0, 55 }, STR_TILE_INSPECTOR_STATION_INDEX, ft,
                                 { colours[1] });
                         }
@@ -1286,26 +1285,26 @@ static uint64_t PageDisabledWidgets[] = {
                             ft = Formatter();
                             ft.Add<StringId>(STR_STRING);
                             ft.Add<char*>(stationNone);
-                            drawText(
+                            DrawTextBasic(
                                 rt, screenCoords + ScreenCoordsXY{ 0, 55 }, STR_TILE_INSPECTOR_STATION_INDEX, ft,
                                 { colours[1] });
                         }
 
                         ft = Formatter();
                         ft.Add<StringId>(ColourSchemeNames[trackElement->GetColourScheme()]);
-                        drawText(
+                        DrawTextBasic(
                             rt, screenCoords + ScreenCoordsXY{ 0, 66 }, STR_TILE_INSPECTOR_COLOUR_SCHEME, ft, { colours[1] });
 
                         // Properties
                         // Raise / lower label
                         screenCoords.y = windowPos.y + widgets[WIDX_TRACK_SPINNER_HEIGHT].top;
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
 
                         // Current base height
                         screenCoords.x = windowPos.x + widgets[WIDX_TRACK_SPINNER_HEIGHT].left + 3;
                         ft = Formatter();
                         ft.Add<int32_t>(tileElement->BaseHeight);
-                        drawText(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
                         break;
                     }
 
@@ -1315,7 +1314,7 @@ static uint64_t PageDisabledWidgets[] = {
                         // Age
                         auto ft = Formatter();
                         ft.Add<int16_t>(tileElement->AsSmallScenery()->GetAge());
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_SCENERY_AGE, ft, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_SCENERY_AGE, ft, { colours[1] });
 
                         // Quadrant value
                         const auto* sceneryEntry = tileElement->AsSmallScenery()->GetEntry();
@@ -1330,7 +1329,7 @@ static uint64_t PageDisabledWidgets[] = {
                             };
                             ft = Formatter();
                             ft.Add<StringId>(_quadrantStringIdx[quadrant]);
-                            drawText(
+                            DrawTextBasic(
                                 rt, screenCoords + ScreenCoordsXY{ 0, 11 }, STR_TILE_INSPECTOR_SCENERY_QUADRANT, ft,
                                 { colours[1] });
                         }
@@ -1338,30 +1337,30 @@ static uint64_t PageDisabledWidgets[] = {
                         // Scenery ID
                         ft = Formatter();
                         ft.Add<ObjectEntryIndex>(tileElement->AsSmallScenery()->GetEntryIndex());
-                        drawText(
+                        DrawTextBasic(
                             rt, screenCoords + ScreenCoordsXY{ 0, 22 }, STR_TILE_INSPECTOR_SCENERY_ENTRY_IDX, ft,
                             { colours[1] });
 
                         // Properties
                         // Raise / Lower
                         screenCoords.y = windowPos.y + widgets[WIDX_SCENERY_SPINNER_HEIGHT].top;
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
 
                         // Current base height
                         screenCoords.x = windowPos.x + widgets[WIDX_SCENERY_SPINNER_HEIGHT].left + 3;
                         ft = Formatter();
                         ft.Add<int32_t>(tileElement->BaseHeight);
-                        drawText(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
 
                         // Quarter tile
                         screenCoords = windowPos
                             + ScreenCoordsXY{ widgets[WIDX_GROUPBOX_DETAILS].left + 7,
                                               widgets[WIDX_SCENERY_CHECK_QUARTER_E].top };
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_SCENERY_QUADRANT_LABEL, {}, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_SCENERY_QUADRANT_LABEL, {}, { colours[1] });
 
                         // Collision
                         screenCoords.y = windowPos.y + widgets[WIDX_SCENERY_CHECK_COLLISION_E].top;
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_COLLISSION, {}, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_COLLISSION, {}, { colours[1] });
                         break;
                     }
 
@@ -1371,14 +1370,14 @@ static uint64_t PageDisabledWidgets[] = {
                         // Entrance type
                         auto ft = Formatter();
                         ft.Add<StringId>(EntranceTypeStringIds[tileElement->AsEntrance()->GetEntranceType()]);
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_ENTRANCE_TYPE, ft, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_ENTRANCE_TYPE, ft, { colours[1] });
 
                         if (tileElement->AsEntrance()->GetEntranceType() == ENTRANCE_TYPE_PARK_ENTRANCE)
                         {
                             // TODO: Make this work with Left/Right park entrance parts
                             ft = Formatter();
                             ft.Add<StringId>(ParkEntranceGetIndex({ _toolMap, tileElement->GetBaseZ() }));
-                            drawText(
+                            DrawTextBasic(
                                 rt, screenCoords + ScreenCoordsXY{ 0, 11 }, STR_TILE_INSPECTOR_ENTRANCE_ENTRANCE_ID, ft,
                                 { colours[1] });
                         }
@@ -1389,14 +1388,14 @@ static uint64_t PageDisabledWidgets[] = {
                             if (tileElement->AsEntrance()->GetEntranceType() == ENTRANCE_TYPE_RIDE_ENTRANCE)
                             {
                                 // Ride entrance ID
-                                drawText(
+                                DrawTextBasic(
                                     rt, screenCoords + ScreenCoordsXY{ 0, 11 }, STR_TILE_INSPECTOR_ENTRANCE_ENTRANCE_ID, ft,
                                     { colours[1] });
                             }
                             else
                             {
                                 // Ride exit ID
-                                drawText(
+                                DrawTextBasic(
                                     rt, screenCoords + ScreenCoordsXY{ 0, 11 }, STR_TILE_INSPECTOR_ENTRANCE_EXIT_ID, ft,
                                     { colours[1] });
                             }
@@ -1407,7 +1406,7 @@ static uint64_t PageDisabledWidgets[] = {
                             // Entrance part
                             ft = Formatter();
                             ft.Add<StringId>(ParkEntrancePartStringIds[tileElement->AsEntrance()->GetSequenceIndex()]);
-                            drawText(
+                            DrawTextBasic(
                                 rt, screenCoords + ScreenCoordsXY{ 0, 22 }, STR_TILE_INSPECTOR_ENTRANCE_PART, ft,
                                 { colours[1] });
                         }
@@ -1416,7 +1415,7 @@ static uint64_t PageDisabledWidgets[] = {
                             // Ride ID
                             ft = Formatter();
                             ft.Add<RideId>(tileElement->AsEntrance()->GetRideIndex());
-                            drawText(
+                            DrawTextBasic(
                                 rt, screenCoords + ScreenCoordsXY{ 0, 22 }, STR_TILE_INSPECTOR_ENTRANCE_RIDE_ID, ft,
                                 { colours[1] });
                             // Station index
@@ -1424,7 +1423,7 @@ static uint64_t PageDisabledWidgets[] = {
                             ft = Formatter();
                             ft.Add<StringId>(STR_COMMA16);
                             ft.Add<int16_t>(stationIndex.ToUnderlying());
-                            drawText(
+                            DrawTextBasic(
                                 rt, screenCoords + ScreenCoordsXY{ 0, 33 }, STR_TILE_INSPECTOR_STATION_INDEX, ft,
                                 { colours[1] });
                         }
@@ -1432,13 +1431,13 @@ static uint64_t PageDisabledWidgets[] = {
                         // Properties
                         // Raise / Lower
                         screenCoords.y = windowPos.y + widgets[WIDX_ENTRANCE_SPINNER_HEIGHT].top;
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
 
                         // Current base height
                         screenCoords.x = windowPos.x + widgets[WIDX_ENTRANCE_SPINNER_HEIGHT].left + 3;
                         ft = Formatter();
                         ft.Add<int32_t>(tileElement->BaseHeight);
-                        drawText(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
                         break;
                     }
 
@@ -1448,7 +1447,7 @@ static uint64_t PageDisabledWidgets[] = {
                         // Type
                         auto ft = Formatter();
                         ft.Add<ObjectEntryIndex>(tileElement->AsWall()->GetEntryIndex());
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_WALL_TYPE, ft, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_WALL_TYPE, ft, { colours[1] });
 
                         // Banner info
                         auto banner = tileElement->AsWall()->GetBanner();
@@ -1456,13 +1455,13 @@ static uint64_t PageDisabledWidgets[] = {
                         {
                             ft = Formatter();
                             banner->formatTextTo(ft);
-                            drawText(
+                            DrawTextBasic(
                                 rt, screenCoords + ScreenCoordsXY{ 0, 11 }, STR_TILE_INSPECTOR_ENTRY_BANNER_TEXT, ft,
                                 { colours[1] });
                         }
                         else
                         {
-                            drawText(
+                            DrawTextBasic(
                                 rt, screenCoords + ScreenCoordsXY{ 0, 11 }, STR_TILE_INSPECTOR_ENTRY_BANNER_NONE, {},
                                 { colours[1] });
                         }
@@ -1470,22 +1469,22 @@ static uint64_t PageDisabledWidgets[] = {
                         // Properties
                         // Raise / lower label
                         screenCoords.y = windowPos.y + widgets[WIDX_WALL_SPINNER_HEIGHT].top;
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
 
                         // Current base height
                         screenCoords.x = windowPos.x + widgets[WIDX_WALL_SPINNER_HEIGHT].left + 3;
                         ft = Formatter();
                         ft.Add<int32_t>(tileElement->BaseHeight);
-                        drawText(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
 
                         // Slope label
                         screenCoords = windowPos
                             + ScreenCoordsXY{ widgets[WIDX_GROUPBOX_DETAILS].left + 7, widgets[WIDX_WALL_DROPDOWN_SLOPE].top };
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_WALL_SLOPE, {}, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_WALL_SLOPE, {}, { colours[1] });
 
                         // Animation frame label
                         screenCoords.y = windowPos.y + widgets[WIDX_WALL_SPINNER_ANIMATION_FRAME].top;
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_WALL_ANIMATION_FRAME, {}, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_WALL_ANIMATION_FRAME, {}, { colours[1] });
 
                         // Current animation frame
                         auto colour = colours[1];
@@ -1496,7 +1495,7 @@ static uint64_t PageDisabledWidgets[] = {
                         screenCoords.x = windowPos.x + widgets[WIDX_WALL_SPINNER_ANIMATION_FRAME].left + 3;
                         ft = Formatter();
                         ft.Add<int32_t>(tileElement->AsWall()->GetAnimationFrame());
-                        drawText(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colour });
+                        DrawTextBasic(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colour });
                         break;
                     }
 
@@ -1508,12 +1507,12 @@ static uint64_t PageDisabledWidgets[] = {
                         ObjectEntryIndex largeSceneryType = sceneryElement->GetEntryIndex();
                         auto ft = Formatter();
                         ft.Add<ObjectEntryIndex>(largeSceneryType);
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_LARGE_SCENERY_TYPE, ft, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_LARGE_SCENERY_TYPE, ft, { colours[1] });
 
                         // Part ID
                         ft = Formatter();
                         ft.Add<int16_t>(sceneryElement->GetSequenceIndex());
-                        drawText(
+                        DrawTextBasic(
                             rt, screenCoords + ScreenCoordsXY{ 0, 11 }, STR_TILE_INSPECTOR_LARGE_SCENERY_PIECE_ID, ft,
                             { colours[1] });
 
@@ -1527,14 +1526,14 @@ static uint64_t PageDisabledWidgets[] = {
                             {
                                 ft = Formatter();
                                 banner->formatTextTo(ft);
-                                drawText(
+                                DrawTextBasic(
                                     rt, screenCoords + ScreenCoordsXY{ 0, 22 }, STR_TILE_INSPECTOR_ENTRY_BANNER_TEXT, ft,
                                     { colours[1] });
                             }
                         }
                         else
                         {
-                            drawText(
+                            DrawTextBasic(
                                 rt, screenCoords + ScreenCoordsXY{ 0, 22 }, STR_TILE_INSPECTOR_ENTRY_BANNER_NONE, {},
                                 { colours[1] });
                         }
@@ -1542,13 +1541,13 @@ static uint64_t PageDisabledWidgets[] = {
                         // Properties
                         // Raise / lower label
                         screenCoords.y = windowPos.y + widgets[WIDX_LARGE_SCENERY_SPINNER_HEIGHT].top;
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
 
                         // Current base height
                         screenCoords.x = windowPos.x + widgets[WIDX_LARGE_SCENERY_SPINNER_HEIGHT].left + 3;
                         ft = Formatter();
                         ft.Add<int32_t>(tileElement->BaseHeight);
-                        drawText(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
                         break;
                     }
 
@@ -1561,24 +1560,24 @@ static uint64_t PageDisabledWidgets[] = {
                         {
                             Formatter ft;
                             banner->formatTextTo(ft);
-                            drawText(rt, screenCoords, STR_TILE_INSPECTOR_ENTRY_BANNER_TEXT, ft, { colours[1] });
+                            DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_ENTRY_BANNER_TEXT, ft, { colours[1] });
                         }
 
                         // Properties
                         // Raise / lower label
                         screenCoords.y = windowPos.y + widgets[WIDX_BANNER_SPINNER_HEIGHT].top;
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_BASE_HEIGHT_FULL, {}, { colours[1] });
 
                         // Current base height
                         screenCoords.x = windowPos.x + widgets[WIDX_BANNER_SPINNER_HEIGHT].left + 3;
                         auto ft = Formatter();
                         ft.Add<int32_t>(tileElement->BaseHeight);
-                        drawText(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_FORMAT_INTEGER, ft, { colours[1] });
 
                         // Blocked paths
                         screenCoords.y += 28;
                         screenCoords.x = windowPos.x + widgets[WIDX_GROUPBOX_DETAILS].left + 7;
-                        drawText(rt, screenCoords, STR_TILE_INSPECTOR_BANNER_BLOCKED_PATHS, {}, { colours[1] });
+                        DrawTextBasic(rt, screenCoords, STR_TILE_INSPECTOR_BANNER_BLOCKED_PATHS, {}, { colours[1] });
                         break;
                     }
 
@@ -1603,7 +1602,7 @@ static uint64_t PageDisabledWidgets[] = {
                                                  (listWidget.height() - 1 - FontGetLineHeight(FontStyle::medium)) / 2 };
                 auto ft = Formatter{};
                 auto textPaint = TextPaint{ colours[1], TextAlignment::centre };
-                drawTextWrapped(rt, centrePos, listWidth, STR_TILE_INSPECTOR_SELECT_TILE_HINT, ft, textPaint);
+                DrawTextWrapped(rt, centrePos, listWidth, STR_TILE_INSPECTOR_SELECT_TILE_HINT, ft, textPaint);
                 return;
             }
 
@@ -1651,7 +1650,7 @@ static uint64_t PageDisabledWidgets[] = {
                     auto eyeFormatter = Formatter();
                     eyeFormatter.Add<StringId>(STR_STRING);
                     eyeFormatter.Add<char*>(kEyeString);
-                    drawText(rt, screenCoords + ScreenCoordsXY{ 2, 1 }, stringFormat, eyeFormatter);
+                    DrawTextBasic(rt, screenCoords + ScreenCoordsXY{ 2, 1 }, stringFormat, eyeFormatter);
                 }
 
                 const auto type = tileElement->GetType();
@@ -1719,32 +1718,33 @@ static uint64_t PageDisabledWidgets[] = {
                 auto ft = Formatter();
                 ft.Add<StringId>(STR_STRING);
                 ft.Add<char*>(typeName);
-                drawTextEllipsised(
+                DrawTextEllipsised(
                     rt, screenCoords + ScreenCoordsXY{ kTypeColumnXY.x, 0 }, kTypeColumnSize.width, stringFormat, ft);
 
                 // Base height
                 ft = Formatter();
                 ft.Add<StringId>(STR_FORMAT_INTEGER);
                 ft.Add<int32_t>(tileElement->BaseHeight);
-                drawText(rt, screenCoords + ScreenCoordsXY{ kBaseHeightColumnXY.x, 0 }, stringFormat, ft);
+                DrawTextBasic(rt, screenCoords + ScreenCoordsXY{ kBaseHeightColumnXY.x, 0 }, stringFormat, ft);
 
                 // Clearance height
                 ft = Formatter();
                 ft.Add<StringId>(STR_FORMAT_INTEGER);
                 ft.Add<int32_t>(clearanceHeight);
-                drawText(rt, screenCoords + ScreenCoordsXY{ kClearanceHeightColumnXY.x, 0 }, stringFormat, ft);
+                DrawTextBasic(rt, screenCoords + ScreenCoordsXY{ kClearanceHeightColumnXY.x, 0 }, stringFormat, ft);
 
                 // Direction
                 ft = Formatter();
                 ft.Add<StringId>(STR_FORMAT_INTEGER);
                 ft.Add<int32_t>(tileElement->GetDirection());
-                drawText(rt, screenCoords + ScreenCoordsXY{ kDirectionColumnXY.x, 0 }, stringFormat, ft);
+                DrawTextBasic(rt, screenCoords + ScreenCoordsXY{ kDirectionColumnXY.x, 0 }, stringFormat, ft);
 
                 // Checkmarks for ghost and last for tile
                 if (ghost)
-                    drawText(rt, screenCoords + ScreenCoordsXY{ kGhostFlagColumnXY.x, 0 }, stringFormat, checkboxFormatter);
+                    DrawTextBasic(
+                        rt, screenCoords + ScreenCoordsXY{ kGhostFlagColumnXY.x, 0 }, stringFormat, checkboxFormatter);
                 if (last)
-                    drawText(rt, screenCoords + ScreenCoordsXY{ kLastFlagColumnXY.x, 0 }, stringFormat, checkboxFormatter);
+                    DrawTextBasic(rt, screenCoords + ScreenCoordsXY{ kLastFlagColumnXY.x, 0 }, stringFormat, checkboxFormatter);
 
                 screenCoords.y -= kScrollableRowHeight;
                 i++;

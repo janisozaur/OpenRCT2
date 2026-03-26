@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include "../core/StringTypes.h"
 #include "../localisation/StringIdType.h"
 
 struct ResultWithMessage
@@ -20,16 +19,5 @@ struct ResultWithMessage
     bool HasMessage() const
     {
         return Message != kStringIdNone;
-    }
-};
-
-struct ResultWithMessageString
-{
-    bool successful{};
-    u8string message{};
-
-    bool hasMessage() const
-    {
-        return !message.empty();
     }
 };

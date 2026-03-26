@@ -24,6 +24,7 @@
 #include "../park/ParkFile.h"
 #include "../platform/Crash.h"
 #include "../platform/Platform.h"
+#include "../profiling/Profiling.h"
 #include "../scripting/ScriptEngine.h"
 #include "CommandLine.hpp"
 
@@ -56,6 +57,7 @@ namespace OpenRCT2
     static bool _about = false;
     static bool _verbose = false;
     static bool _headless = false;
+    static bool _profile = false;
     static bool _silentReplays = false;
     static u8string _password = {};
     static u8string _userDataPath = {};
@@ -74,6 +76,7 @@ namespace OpenRCT2
         { CMDLINE_TYPE_SWITCH,  &_about,            kNAC, "about",              "show information about " OPENRCT2_NAME                      },
         { CMDLINE_TYPE_SWITCH,  &_verbose,          kNAC, "verbose",            "log verbose messages"                                       },
         { CMDLINE_TYPE_SWITCH,  &_headless,         kNAC, "headless",           "run " OPENRCT2_NAME " headless" IMPLIES_SILENT_BREAKPAD     },
+        { CMDLINE_TYPE_SWITCH,  &_profile,          kNAC, "profile",            "enable profiling"                                           },
         { CMDLINE_TYPE_SWITCH,  &_silentReplays,    kNAC, "silent-replays",     "use unobtrusive replays"                                    },
     #ifndef DISABLE_NETWORK
         { CMDLINE_TYPE_INTEGER, &_port,             kNAC, "port",               "port to use for hosting or joining a server"                },
@@ -230,6 +233,13 @@ namespace OpenRCT2
         if (_silentReplays)
         {
             gSilentReplays = _silentReplays;
+        }
+
+        if (_profile)
+        {
+            auto userDataPath = Platform::GetFolderPath(SpecialFolder::userData);
+            auto profilePath = Path::Combine(userDataPath, u8"profile.json");
+            Profiling::enable(profilePath);
         }
 
         return result;

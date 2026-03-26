@@ -13,8 +13,6 @@
 #include "../drawing/Rectangle.h"
 #include "../localisation/Formatter.h"
 #include "../localisation/Formatting.h"
-#include "../localisation/Language.h"
-#include "Drawing.String.h"
 #include "Drawing.h"
 
 using namespace OpenRCT2;
@@ -33,9 +31,9 @@ public:
     StaticLayout(u8string_view source, const TextPaint& paint, int32_t width)
         : Paint(paint)
     {
-        MaxWidth = wrapString(source, width, paint.fontStyle, &Buffer, &LineCount);
+        MaxWidth = GfxWrapString(source, width, paint.FontStyle, &Buffer, &LineCount);
         LineCount += 1;
-        LineHeight = FontGetLineHeight(paint.fontStyle);
+        LineHeight = FontGetLineHeight(paint.FontStyle);
     }
 
     void Draw(RenderTarget& rt, const ScreenCoordsXY& coords)
@@ -43,7 +41,7 @@ public:
         TextPaint tempPaint = Paint;
 
         auto lineCoords = coords;
-        switch (Paint.alignment)
+        switch (Paint.Alignment)
         {
             case TextAlignment::left:
                 break;
@@ -57,8 +55,8 @@ public:
         const utf8* buffer = Buffer.data();
         for (int32_t line = 0; line < LineCount; ++line)
         {
-            drawText(rt, lineCoords, buffer, tempPaint);
-            tempPaint.colour = OpenRCT2::Drawing::kColourNull;
+            DrawText(rt, lineCoords, tempPaint, buffer);
+            tempPaint.Colour = OpenRCT2::Drawing::kColourNull;
             buffer = GetStringEnd(buffer) + 1;
             lineCoords.y += LineHeight;
         }
@@ -80,38 +78,13 @@ public:
     }
 };
 
-static void drawTextUnderline(
-    RenderTarget& rt, const ScreenCoordsXY& alignedCoords, int32_t width, const TextColours& textPalette)
+void DrawText(RenderTarget& rt, const ScreenCoordsXY& coords, const TextPaint& paint, const_utf8string text, bool noFormatting)
 {
-    Rectangle::fill(
-        rt, { { alignedCoords + ScreenCoordsXY{ 0, 11 } }, { alignedCoords + ScreenCoordsXY{ width, 11 } } }, textPalette.fill);
-    if (textPalette.sunnyOutline != PaletteIndex::transparent)
-    {
-        Rectangle::fill(
-            rt, { { alignedCoords + ScreenCoordsXY{ 1, 12 } }, { alignedCoords + ScreenCoordsXY{ width + 1, 12 } } },
-            textPalette.sunnyOutline);
-    }
-}
-
-void drawText(RenderTarget& rt, const ScreenCoordsXY& coords, StringId format, TextPaint textPaint)
-{
-    drawText(rt, coords, LanguageGetString(format), textPaint);
-}
-
-void drawText(RenderTarget& rt, const ScreenCoordsXY& coords, StringId format, const Formatter& ft, TextPaint textPaint)
-{
-    utf8 buffer[512];
-    FormatStringLegacy(buffer, sizeof(buffer), format, ft.Data());
-    drawText(rt, coords, buffer, textPaint);
-}
-
-void drawText(RenderTarget& rt, const ScreenCoordsXY& coords, u8string_view string, TextPaint textPaint)
-{
-    auto noFormatting = textPaint.flags.has(TextPaintFlag::noFormatting);
-    int32_t width = getStringWidth(string, textPaint.fontStyle, noFormatting);
+    int32_t width = noFormatting ? GfxGetStringWidthNoFormatting(text, paint.FontStyle)
+                                 : GfxGetStringWidth(text, paint.FontStyle);
 
     auto alignedCoords = coords;
-    switch (textPaint.alignment)
+    switch (paint.Alignment)
     {
         case TextAlignment::left:
             break;
@@ -123,56 +96,68 @@ void drawText(RenderTarget& rt, const ScreenCoordsXY& coords, u8string_view stri
             break;
     }
 
-    auto textPalette = ttfDrawString(
-        rt, string, textPaint.colour, alignedCoords, noFormatting, textPaint.fontStyle, textPaint.darkness);
+    TTFDrawString(rt, text, paint.Colour, alignedCoords, noFormatting, paint.FontStyle, paint.Darkness);
 
-    if (textPaint.flags.has(TextPaintFlag::underline))
+    if (paint.UnderlineText == TextUnderline::on)
     {
-        drawTextUnderline(rt, alignedCoords, width, textPalette);
+        Rectangle::fill(
+            rt, { { alignedCoords + ScreenCoordsXY{ 0, 11 } }, { alignedCoords + ScreenCoordsXY{ width, 11 } } },
+            gTextPalette.fill);
+        if (gTextPalette.sunnyOutline != PaletteIndex::transparent)
+        {
+            Rectangle::fill(
+                rt, { { alignedCoords + ScreenCoordsXY{ 1, 12 } }, { alignedCoords + ScreenCoordsXY{ width + 1, 12 } } },
+                gTextPalette.sunnyOutline);
+        }
     }
 }
 
-void drawTextEllipsised(RenderTarget& rt, const ScreenCoordsXY& coords, int32_t width, StringId format, TextPaint textPaint)
+void DrawTextBasic(RenderTarget& rt, const ScreenCoordsXY& coords, StringId format)
 {
-    drawTextEllipsised(rt, coords, width, LanguageGetString(format), textPaint);
+    Formatter ft{};
+    TextPaint textPaint{};
+    DrawTextBasic(rt, coords, format, ft, textPaint);
 }
 
-void drawTextEllipsised(
+void DrawTextBasic(RenderTarget& rt, const ScreenCoordsXY& coords, StringId format, const Formatter& ft, TextPaint textPaint)
+{
+    utf8 buffer[512];
+    FormatStringLegacy(buffer, sizeof(buffer), format, ft.Data());
+    DrawText(rt, coords, textPaint, buffer);
+}
+
+void DrawTextEllipsised(RenderTarget& rt, const ScreenCoordsXY& coords, int32_t width, StringId format)
+{
+    Formatter ft{};
+    TextPaint textPaint{};
+    DrawTextEllipsised(rt, coords, width, format, ft, textPaint);
+}
+
+void DrawTextEllipsised(
     RenderTarget& rt, const ScreenCoordsXY& coords, int32_t width, StringId format, const Formatter& ft, TextPaint textPaint)
 {
     utf8 buffer[512];
     FormatStringLegacy(buffer, sizeof(buffer), format, ft.Data());
-    clipString(buffer, width, textPaint.fontStyle);
-    drawText(rt, coords, buffer, textPaint);
+    GfxClipString(buffer, width, textPaint.FontStyle);
+
+    DrawText(rt, coords, textPaint, buffer);
 }
 
-void drawTextEllipsised(
-    RenderTarget& rt, const ScreenCoordsXY& coords, int32_t width, u8string_view string, TextPaint textPaint)
+int32_t DrawTextWrapped(RenderTarget& rt, const ScreenCoordsXY& coords, int32_t width, StringId format)
 {
-    utf8 buffer[512]{};
-    string.copy(buffer, std::min(string.length(), sizeof(buffer) - 1));
-    clipString(buffer, width, textPaint.fontStyle);
-    drawText(rt, coords, string, textPaint);
+    Formatter ft{};
+    TextPaint textPaint{};
+    return DrawTextWrapped(rt, coords, width, format, ft, textPaint);
 }
 
-int32_t drawTextWrapped(RenderTarget& rt, const ScreenCoordsXY& coords, int32_t width, StringId format, TextPaint textPaint)
-{
-    return drawTextWrapped(rt, coords, width, LanguageGetString(format), textPaint);
-}
-
-int32_t drawTextWrapped(
+int32_t DrawTextWrapped(
     RenderTarget& rt, const ScreenCoordsXY& coords, int32_t width, StringId format, const Formatter& ft, TextPaint textPaint)
 {
-    auto formatted = FormatStringIDLegacy(format, ft.Data());
-    return drawTextWrapped(rt, coords, width, formatted, textPaint);
-}
+    const void* args = ft.Data();
 
-int32_t drawTextWrapped(
-    RenderTarget& rt, const ScreenCoordsXY& coords, int32_t width, u8string_view string, TextPaint textPaint)
-{
-    StaticLayout layout(string, textPaint, width);
+    StaticLayout layout(FormatStringIDLegacy(format, args), textPaint, width);
 
-    if (textPaint.alignment == TextAlignment::centre)
+    if (textPaint.Alignment == TextAlignment::centre)
     {
         // The original tried to vertically centre the text, but used line count - 1
         int32_t lineCount = layout.GetLineCount();

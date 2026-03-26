@@ -34,38 +34,18 @@ public:
         JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
 
         jclass jniClass = Platform::AndroidFindClass(env, "io/openrct2/ZipArchive");
-        jmethodID constructor = env->GetMethodID(jniClass, "<init>", "(Landroid/content/Context;Ljava/lang/String;)V");
+        jmethodID constructor = env->GetMethodID(jniClass, "<init>", "(Ljava/lang/String;)V");
 
-        jobject activity = (jobject)SDL_AndroidGetActivity();
-        jstring jniPath = env->NewStringUTF(std::string(path).c_str());
+        jstring jniPath = env->NewStringUTF(path.data());
 
-        jobject zip = env->NewObject(jniClass, constructor, activity, jniPath);
-        if (env->ExceptionCheck())
-        {
-            LOG_ERROR("JNI exception occurred while opening zip archive '%s':", std::string(path).c_str());
-            env->ExceptionDescribe();
-            env->ExceptionClear();
-            env->DeleteLocalRef(jniClass);
-            env->DeleteLocalRef(jniPath);
-            env->DeleteLocalRef(activity);
-            throw std::runtime_error("Failed to open zip archive: " + std::string(path));
-        }
+        // TODO: Catch exceptions. Should probably be done on Java side, and just return null from a static method
+        jobject zip = env->NewObject(jniClass, constructor, jniPath);
 
         _zip = env->NewGlobalRef(zip);
-
-        env->DeleteLocalRef(zip);
-        env->DeleteLocalRef(jniClass);
-        env->DeleteLocalRef(jniPath);
-        env->DeleteLocalRef(activity);
     }
 
     ~ZipArchive() override
     {
-        if (_zip == nullptr)
-        {
-            return;
-        }
-
         // retrieve the JNI environment.
         JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
 
@@ -73,51 +53,23 @@ public:
         jmethodID closeMethod = env->GetMethodID(zipClass, "close", "()V");
 
         env->CallVoidMethod(_zip, closeMethod);
-        if (env->ExceptionCheck())
-        {
-            LOG_ERROR("JNI exception occurred while closing zip archive:");
-            env->ExceptionDescribe();
-            env->ExceptionClear();
-        }
 
-        env->DeleteLocalRef(zipClass);
         env->DeleteGlobalRef(_zip);
     }
 
     size_t GetNumFiles() const override
     {
-        if (_zip == nullptr)
-        {
-            return 0;
-        }
-
         // retrieve the JNI environment.
         JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
 
         jclass zipClass = env->GetObjectClass(_zip);
         jmethodID fileCountMethod = env->GetMethodID(zipClass, "getNumFiles", "()I");
 
-        jint count = env->CallIntMethod(_zip, fileCountMethod);
-        if (env->ExceptionCheck())
-        {
-            LOG_ERROR("JNI exception occurred while getting file count:");
-            env->ExceptionDescribe();
-            env->ExceptionClear();
-            count = 0;
-        }
-
-        env->DeleteLocalRef(zipClass);
-
-        return static_cast<size_t>(count);
+        return static_cast<size_t>(env->CallIntMethod(_zip, fileCountMethod));
     }
 
     std::string GetFileName(size_t index) const override
     {
-        if (_zip == nullptr)
-        {
-            return std::string();
-        }
-
         // retrieve the JNI environment.
         JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
 
@@ -125,104 +77,42 @@ public:
         jmethodID fileNameMethod = env->GetMethodID(zipClass, "getFileName", "(I)Ljava/lang/String;");
 
         jstring jniString = (jstring)env->CallObjectMethod(_zip, fileNameMethod, (jint)index);
-        if (env->ExceptionCheck())
-        {
-            LOG_ERROR("JNI exception occurred while getting file name at index %zu:", index);
-            env->ExceptionDescribe();
-            env->ExceptionClear();
-            env->DeleteLocalRef(zipClass);
-            return std::string();
-        }
 
-        std::string string;
-        if (jniString != nullptr)
-        {
-            const char* jniChars = env->GetStringUTFChars(jniString, nullptr);
-            string = jniChars;
-            env->ReleaseStringUTFChars(jniString, jniChars);
-            env->DeleteLocalRef(jniString);
-        }
-
-        env->DeleteLocalRef(zipClass);
+        const char* jniChars = env->GetStringUTFChars(jniString, nullptr);
+        std::string string = jniChars;
+        env->ReleaseStringUTFChars(jniString, jniChars);
 
         return string;
     }
 
     uint64_t GetFileSize(size_t index) const override
     {
-        if (_zip == nullptr)
-        {
-            return 0;
-        }
-
         // retrieve the JNI environment.
         JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
 
         jclass zipClass = env->GetObjectClass(_zip);
         jmethodID fileSizeMethod = env->GetMethodID(zipClass, "getFileSize", "(I)J");
 
-        jlong size = env->CallLongMethod(_zip, fileSizeMethod, (jint)index);
-        if (env->ExceptionCheck())
-        {
-            LOG_ERROR("JNI exception occurred while getting file size at index %zu:", index);
-            env->ExceptionDescribe();
-            env->ExceptionClear();
-            size = 0;
-        }
-
-        env->DeleteLocalRef(zipClass);
-
-        return static_cast<uint64_t>(size);
+        return (size_t)env->CallLongMethod(_zip, fileSizeMethod, (jint)index);
     }
 
     std::vector<uint8_t> GetFileData(std::string_view path) const override
     {
-        if (_zip == nullptr)
-        {
-            return {};
-        }
-
         // retrieve the JNI environment.
         JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
 
         jclass zipClass = env->GetObjectClass(_zip);
-        jstring javaPath = env->NewStringUTF(std::string(path).c_str());
+        jstring javaPath = env->NewStringUTF(path.data());
         jmethodID indexMethod = env->GetMethodID(zipClass, "getFileIndex", "(Ljava/lang/String;)I");
         jint index = env->CallIntMethod(_zip, indexMethod, javaPath);
-        if (env->ExceptionCheck())
-        {
-            LOG_ERROR("JNI exception occurred while getting file index for path: %s", std::string(path).c_str());
-            env->ExceptionDescribe();
-            env->ExceptionClear();
-            index = -1;
-        }
 
-        std::vector<uint8_t> result;
-        if (index != -1)
-        {
-            jmethodID fileMethod = env->GetMethodID(zipClass, "getFile", "(I)[B");
-            jbyteArray array = (jbyteArray)env->CallObjectMethod(_zip, fileMethod, index);
-            if (env->ExceptionCheck())
-            {
-                LOG_ERROR("JNI exception occurred while getting file data at index %d:", index);
-                env->ExceptionDescribe();
-                env->ExceptionClear();
-                array = nullptr;
-            }
+        jmethodID fileMethod = env->GetMethodID(zipClass, "getFile", "(I)J");
+        jlong ptr = env->CallLongMethod(_zip, fileMethod, index);
 
-            if (array != nullptr)
-            {
-                jsize len = env->GetArrayLength(array);
-                result.resize(len);
-                env->GetByteArrayRegion(array, 0, len, reinterpret_cast<jbyte*>(result.data()));
-                env->DeleteLocalRef(array);
-            }
-        }
+        auto dataPtr = reinterpret_cast<uint8_t*>(ptr);
+        auto dataSize = this->GetFileSize(index);
 
-        env->DeleteLocalRef(javaPath);
-        env->DeleteLocalRef(zipClass);
-
-        return result;
+        return std::vector<uint8_t>(dataPtr, dataPtr + dataSize);
     }
 
     std::unique_ptr<IStream> GetFileStream(std::string_view path) const override
@@ -267,5 +157,21 @@ namespace OpenRCT2::Zip
         return result;
     }
 } // namespace OpenRCT2::Zip
+
+extern "C" {
+JNIEXPORT jlong JNICALL Java_io_openrct2_ZipArchive_allocBytes(JNIEnv* env, jclass, jbyteArray input, jint numBytes);
+}
+
+JNIEXPORT jlong JNICALL Java_io_openrct2_ZipArchive_allocBytes(JNIEnv* env, jclass, jbyteArray input, jint numBytes)
+{
+    jbyte* bufferPtr = env->GetByteArrayElements(input, nullptr);
+
+    void* data = Memory::Allocate<void>((size_t)numBytes);
+    std::memcpy(data, bufferPtr, numBytes);
+
+    env->ReleaseByteArrayElements(input, bufferPtr, 0);
+
+    return reinterpret_cast<uintptr_t>(data);
+}
 
 #endif // __ANDROID__

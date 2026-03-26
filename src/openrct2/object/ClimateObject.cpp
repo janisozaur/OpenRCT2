@@ -14,7 +14,6 @@
 #include "../core/IStream.hpp"
 #include "../core/Json.hpp"
 #include "../drawing/Drawing.h"
-#include "../drawing/Text.h"
 #include "../localisation/Formatter.h"
 #include "../localisation/StringIds.h"
 #include "../world/Location.hpp"
@@ -71,7 +70,7 @@ namespace OpenRCT2
 
             auto ft = Formatter();
             ft.Add<uint16_t>(dist[i] * 100 / totalSize);
-            drawTextEllipsised(
+            DrawTextEllipsised(
                 rt, coords + ScreenCoordsXY{ 12, 22 }, 35, STR_CLIMATE_WEATHER_PERCENT, ft,
                 { FontStyle::small, TextAlignment::centre });
         }

@@ -13,7 +13,6 @@
 #include <openrct2/Date.h>
 #include <openrct2/drawing/Drawing.h>
 #include <openrct2/drawing/Rectangle.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/interface/ColourWithFlags.h>
 #include <openrct2/localisation/Formatter.h>
 #include <openrct2/localisation/Formatting.h>
@@ -39,9 +38,9 @@ namespace OpenRCT2::Graph
             // Draw Y label text
             char buffer[64]{};
             FormatStringToBuffer(buffer, sizeof(buffer), fmt, curLabel);
-            drawText(
-                rt, { internalBounds.GetLeft() - kYTickMarkPadding, curScreenPos }, buffer,
-                { FontStyle::small, TextAlignment::right });
+            DrawText(
+                rt, { internalBounds.GetLeft() - kYTickMarkPadding, curScreenPos }, { FontStyle::small, TextAlignment::right },
+                buffer);
             // Draw Y label tick mark
             Rectangle::fill(
                 rt, { { internalBounds.GetLeft() - 5, curScreenPos + 5 }, { internalBounds.GetLeft(), curScreenPos + 5 } },
@@ -70,7 +69,7 @@ namespace OpenRCT2::Graph
                 // Draw month text
                 auto ft = Formatter();
                 ft.Add<StringId>(DateGameShortMonthNames[DateGetMonth((yearOver32 / 4) + MONTH_COUNT)]);
-                drawText(
+                DrawTextBasic(
                     rt, screenCoords - ScreenCoordsXY{ 0, 14 }, STR_GRAPH_LABEL, ft,
                     { FontStyle::small, TextAlignment::centre });
                 // Draw month tick mark
@@ -103,7 +102,7 @@ namespace OpenRCT2::Graph
             kDashLength, PaletteIndex::pi10);
         GfxDrawDashedLine(rt, { { bounds.GetLeft(), coords.y }, coords }, kDashLength, PaletteIndex::pi10);
 
-        drawText(rt, coords - ScreenCoordsXY{ 0, 16 }, text, { textCol, TextAlignment::centre });
+        DrawText(rt, coords - ScreenCoordsXY{ 0, 16 }, { textCol, TextAlignment::centre }, text);
 
         Rectangle::fill(rt, { { coords - ScreenCoordsXY{ 2, 2 } }, coords + ScreenCoordsXY{ 2, 2 } }, PaletteIndex::pi10);
         Rectangle::fill(rt, { { coords - ScreenCoordsXY{ 1, 1 } }, { coords + ScreenCoordsXY{ 1, 1 } } }, PaletteIndex::pi21);

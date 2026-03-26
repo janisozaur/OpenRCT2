@@ -40,8 +40,6 @@ struct BoundBoxXYZ
     }
 };
 
-constexpr BoundBoxXYZ kBoundingBoxUnimplemented{};
-
 template<size_t trackSequenceCount, size_t spriteCount>
 constexpr std::array<std::array<std::array<BoundBoxXYZ, spriteCount>, trackSequenceCount>, kNumOrthogonalDirections>
     flipTrackSequenceBoundBoxesXAxis(

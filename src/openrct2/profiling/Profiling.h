@@ -19,7 +19,7 @@
 
 namespace OpenRCT2::Profiling
 {
-    void enable();
+    void enable(const std::string& filePath = "");
     void disable();
     bool isEnabled();
 
@@ -61,7 +61,7 @@ namespace OpenRCT2::Profiling
                 registerFunction(this);
             }
 
-            virtual ~FunctionInternal() = default;
+            ~FunctionInternal() override = default;
 
             // Mutex only for call graph access, not the hot path.
             mutable std::mutex Mutex;
@@ -162,7 +162,7 @@ namespace OpenRCT2::Profiling
             static inline FunctionWrapper<TName> Data;
         };
 
-        void functionEnter(FunctionInternal& func);
+        void functionEnter(FunctionInternal& func, const char* data = nullptr);
         void functionExit(FunctionInternal& func);
 
     } // namespace Detail
@@ -175,13 +175,13 @@ namespace OpenRCT2::Profiling
         T& _func;
 
     public:
-        explicit ScopedProfiling(T& func)
+        explicit ScopedProfiling(T& func, const char* data = nullptr)
             : _enabled(isEnabled())
             , _func(func)
         {
             if (_enabled)
             {
-                Detail::functionEnter(_func);
+                Detail::functionEnter(_func, data);
             }
         }
 

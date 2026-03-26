@@ -16,10 +16,8 @@
 #include <openrct2/actions/GameActionRunner.h>
 #include <openrct2/actions/park/ParkSetLoanAction.h>
 #include <openrct2/drawing/ColourMap.h>
-#include <openrct2/drawing/Drawing.String.h>
 #include <openrct2/drawing/Drawing.h>
 #include <openrct2/drawing/Rectangle.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/localisation/Formatter.h>
 #include <openrct2/localisation/Formatting.h>
 #include <openrct2/localisation/Localisation.Date.h>
@@ -438,10 +436,10 @@ namespace OpenRCT2::Ui::Windows
                 auto ft = Formatter();
                 ft.Add<StringId>(STR_FINANCES_SUMMARY_MONTH_HEADING);
                 ft.Add<uint16_t>(monthyear);
-                drawText(
+                DrawTextBasic(
                     rt, screenCoords + ScreenCoordsXY{ kExpenditureColumnWidth, 0 },
                     monthyear == currentMonthYear ? STR_WINDOW_COLOUR_2_STRINGID : STR_BLACK_STRING, ft,
-                    { { TextPaintFlag::underline }, TextAlignment::right });
+                    { TextUnderline::on, TextAlignment::right });
                 screenCoords.y += 14;
 
                 // Month expenditures
@@ -456,7 +454,7 @@ namespace OpenRCT2::Ui::Windows
                                                                  : STR_FINANCES_SUMMARY_EXPENDITURE_VALUE;
                         ft = Formatter();
                         ft.Add<money64>(expenditure);
-                        drawText(
+                        DrawTextBasic(
                             rt, screenCoords + ScreenCoordsXY{ kExpenditureColumnWidth, 0 }, format, ft,
                             { TextAlignment::right });
                     }
@@ -468,7 +466,8 @@ namespace OpenRCT2::Ui::Windows
                 const StringId format = profit >= 0 ? STR_FINANCES_SUMMARY_INCOME_VALUE : STR_FINANCES_SUMMARY_LOSS_VALUE;
                 ft = Formatter();
                 ft.Add<money64>(profit);
-                drawText(rt, screenCoords + ScreenCoordsXY{ kExpenditureColumnWidth, 0 }, format, ft, { TextAlignment::right });
+                DrawTextBasic(
+                    rt, screenCoords + ScreenCoordsXY{ kExpenditureColumnWidth, 0 }, format, ft, { TextAlignment::right });
 
                 Rectangle::fill(
                     rt,
@@ -596,9 +595,9 @@ namespace OpenRCT2::Ui::Windows
             auto& gameState = getGameState();
 
             // Expenditure / Income heading
-            drawText(
+            DrawTextBasic(
                 rt, screenCoords, STR_FINANCES_SUMMARY_EXPENDITURE_INCOME, {},
-                { Drawing::Colour::black, { TextPaintFlag::underline }, TextAlignment::left });
+                { Drawing::Colour::black, TextUnderline::on, TextAlignment::left });
             screenCoords.y += 14;
 
             // Expenditure / Income row labels
@@ -611,7 +610,7 @@ namespace OpenRCT2::Ui::Windows
                         { screenCoords - ScreenCoordsXY{ 0, 1 }, screenCoords + ScreenCoordsXY{ 121, (kTableCellHeight - 2) } },
                         getColourMap(colours[1].colour).lighter, true);
 
-                drawText(rt, screenCoords - ScreenCoordsXY{ 0, 1 }, _windowFinancesSummaryRowLabels[i]);
+                DrawTextBasic(rt, screenCoords - ScreenCoordsXY{ 0, 1 }, _windowFinancesSummaryRowLabels[i]);
                 screenCoords.y += kTableCellHeight;
             }
 
@@ -623,19 +622,20 @@ namespace OpenRCT2::Ui::Windows
                 colours[1], Rectangle::BorderStyle::inset);
 
             // Loan and interest rate
-            drawText(rt, windowPos + ScreenCoordsXY{ 8, titleBarBottom + 265 }, STR_FINANCES_SUMMARY_LOAN);
+            DrawTextBasic(rt, windowPos + ScreenCoordsXY{ 8, titleBarBottom + 265 }, STR_FINANCES_SUMMARY_LOAN);
             if (!(gameState.park.flags & PARK_FLAGS_RCT1_INTEREST))
             {
                 auto ft = Formatter();
                 ft.Add<uint16_t>(gameState.park.bankLoanInterestRate);
-                drawText(rt, windowPos + ScreenCoordsXY{ 167, titleBarBottom + 265 }, STR_FINANCES_SUMMARY_AT_X_PER_YEAR, ft);
+                DrawTextBasic(
+                    rt, windowPos + ScreenCoordsXY{ 167, titleBarBottom + 265 }, STR_FINANCES_SUMMARY_AT_X_PER_YEAR, ft);
             }
 
             // Current cash
             auto ft = Formatter();
             ft.Add<money64>(gameState.park.cash);
             StringId stringId = gameState.park.cash >= 0 ? STR_CASH_LABEL : STR_CASH_NEGATIVE_LABEL;
-            drawText(rt, windowPos + ScreenCoordsXY{ 8, titleBarBottom + 280 }, stringId, ft);
+            DrawTextBasic(rt, windowPos + ScreenCoordsXY{ 8, titleBarBottom + 280 }, stringId, ft);
 
             // Objective related financial information
             if (gameState.scenarioOptions.objective.Type == Scenario::ObjectiveType::monthlyFoodIncome)
@@ -643,7 +643,7 @@ namespace OpenRCT2::Ui::Windows
                 auto lastMonthProfit = FinanceGetLastMonthShopProfit();
                 ft = Formatter();
                 ft.Add<money64>(lastMonthProfit);
-                drawText(
+                DrawTextBasic(
                     rt, windowPos + ScreenCoordsXY{ 280, titleBarBottom + 265 },
                     STR_LAST_MONTH_PROFIT_FROM_FOOD_DRINK_MERCHANDISE_SALES_LABEL, ft);
             }
@@ -652,10 +652,10 @@ namespace OpenRCT2::Ui::Windows
                 // Park value and company value
                 ft = Formatter();
                 ft.Add<money64>(gameState.park.value);
-                drawText(rt, windowPos + ScreenCoordsXY{ 280, titleBarBottom + 265 }, STR_PARK_VALUE_LABEL, ft);
+                DrawTextBasic(rt, windowPos + ScreenCoordsXY{ 280, titleBarBottom + 265 }, STR_PARK_VALUE_LABEL, ft);
                 ft = Formatter();
                 ft.Add<money64>(gameState.park.companyValue);
-                drawText(rt, windowPos + ScreenCoordsXY{ 280, titleBarBottom + 280 }, STR_COMPANY_VALUE_LABEL, ft);
+                DrawTextBasic(rt, windowPos + ScreenCoordsXY{ 280, titleBarBottom + 280 }, STR_COMPANY_VALUE_LABEL, ft);
             }
         }
 
@@ -747,13 +747,13 @@ namespace OpenRCT2::Ui::Windows
                     }
                 }
                 // Advertisement
-                drawTextEllipsised(rt, screenCoords + ScreenCoordsXY{ 4, 0 }, 296, kMarketingCampaignNames[i][1], ft);
+                DrawTextEllipsised(rt, screenCoords + ScreenCoordsXY{ 4, 0 }, 296, kMarketingCampaignNames[i][1], ft);
 
                 // Duration
                 uint16_t weeksRemaining = marketingCampaign->WeeksLeft;
                 ft = Formatter();
                 ft.Add<uint16_t>(weeksRemaining);
-                drawText(
+                DrawTextBasic(
                     rt, screenCoords + ScreenCoordsXY{ 304, 0 },
                     weeksRemaining == 1 ? STR_1_WEEK_REMAINING : STR_X_WEEKS_REMAINING, ft);
 
@@ -762,7 +762,7 @@ namespace OpenRCT2::Ui::Windows
 
             if (noCampaignsActive)
             {
-                drawText(rt, screenCoords + ScreenCoordsXY{ 4, 0 }, STR_MARKETING_CAMPAIGNS_NONE);
+                DrawTextBasic(rt, screenCoords + ScreenCoordsXY{ 4, 0 }, STR_MARKETING_CAMPAIGNS_NONE);
             }
 
             // Draw campaign button text
@@ -773,10 +773,10 @@ namespace OpenRCT2::Ui::Windows
                 {
                     // Draw button text
                     screenCoords = windowPos + ScreenCoordsXY{ campaignButton->left, campaignButton->textTop() };
-                    drawText(rt, screenCoords + ScreenCoordsXY{ 4, 0 }, kMarketingCampaignNames[i][0]);
+                    DrawTextBasic(rt, screenCoords + ScreenCoordsXY{ 4, 0 }, kMarketingCampaignNames[i][0]);
                     auto ft = Formatter();
                     ft.Add<money64>(AdvertisingCampaignPricePerWeek[i]);
-                    drawText(rt, screenCoords + ScreenCoordsXY{ kCostPerWeekOffset, 0 }, STR_MARKETING_PER_WEEK, ft);
+                    DrawTextBasic(rt, screenCoords + ScreenCoordsXY{ kCostPerWeekOffset, 0 }, STR_MARKETING_PER_WEEK, ft);
                 }
             }
         }
@@ -789,7 +789,7 @@ namespace OpenRCT2::Ui::Windows
         {
             Formatter ft;
             ft.Add<money64>(currentValue);
-            drawText(rt, _graphBounds.Point1 - ScreenCoordsXY{ 0, 11 }, fmt, ft);
+            DrawTextBasic(rt, _graphBounds.Point1 - ScreenCoordsXY{ 0, 11 }, fmt, ft);
 
             // Graph
             Rectangle::fillInset(
@@ -831,7 +831,7 @@ namespace OpenRCT2::Ui::Windows
             // dynamic padding for long axis labels:
             char buffer[64]{};
             FormatStringToBuffer(buffer, sizeof(buffer), "{BLACK}{CURRENCY2DP}", centredGraph ? -max : max);
-            int32_t maxGraphWidth = getStringWidth(buffer, FontStyle::small) + Graph::kYTickMarkPadding + 1;
+            int32_t maxGraphWidth = GfxGetStringWidth(buffer, FontStyle::small) + Graph::kYTickMarkPadding + 1;
             const ScreenCoordsXY dynamicPadding{ std::max(maxGraphWidth, kGraphTopLeftPadding.x), kGraphTopLeftPadding.y };
 
             _graphBounds = { windowPos + ScreenCoordsXY{ graphPageWidget->left + 4, graphPageWidget->top + 15 },

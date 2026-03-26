@@ -10,9 +10,7 @@
 #include <openrct2-ui/interface/Widget.h>
 #include <openrct2-ui/windows/Windows.h>
 #include <openrct2/Context.h>
-#include <openrct2/drawing/Drawing.String.h>
 #include <openrct2/drawing/Drawing.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/network/Network.h>
 #include <openrct2/ui/WindowManager.h>
 
@@ -95,11 +93,11 @@ namespace OpenRCT2::Ui::Windows
 
             _buffer.assign("{WHITE}");
             _buffer += _windowNetworkStatusText;
-            Drawing::clipString(_buffer.data(), widgets[WIDX_BACKGROUND].right - 50, FontStyle::medium);
+            GfxClipString(_buffer.data(), widgets[WIDX_BACKGROUND].right - 50, FontStyle::medium);
 
             ScreenCoordsXY screenCoords(windowPos.x + (width / 2), windowPos.y + (height / 2));
-            screenCoords.x -= Drawing::getStringWidth(_buffer, FontStyle::medium) / 2;
-            drawText(rt, screenCoords, _buffer, { Drawing::Colour::black });
+            screenCoords.x -= GfxGetStringWidth(_buffer, FontStyle::medium) / 2;
+            DrawText(rt, screenCoords, { Drawing::Colour::black }, _buffer.c_str());
         }
 
         void setCloseCallBack(CloseCallback callback)

@@ -749,10 +749,8 @@ static void ConsoleSetVariableAction(InteractiveConsole& console, std::string va
     auto action = TAction(std::forward<TArgs>(args)...);
     action.SetCallback([&console, var](const GameActions::GameAction*, const GameActions::Result* res) {
         if (res->error != GameActions::Status::ok)
-            console.WriteLineError(
-                String::stdFormat(
-                    "set %s command failed: %s - %s.", var.c_str(), res->getErrorTitle().c_str(),
-                    res->getErrorMessage().c_str()));
+            console.WriteLineError(String::stdFormat(
+                "set %s command failed: %s - %s.", var.c_str(), res->getErrorTitle().c_str(), res->getErrorMessage().c_str()));
         else
             console.Execute(String::stdFormat("get %s", var.c_str()));
         console.EndAsyncExecution();
@@ -1656,9 +1654,8 @@ static void ConsoleCommandAddNewsItem([[maybe_unused]] InteractiveConsole& conso
         console.WriteLine("    9 (News::ItemType::graph)");
         console.WriteLine("   10 (News::ItemType::campaign)");
         console.WriteLine("message is the message to display, wrapped in quotes for multiple words");
-        console.WriteLine(
-            "assoc is the associated id of ride/peep/tile/etc. If the selected ItemType doesn't need an assoc "
-            "(Null, Money, Award, Graph), you can leave this field blank");
+        console.WriteLine("assoc is the associated id of ride/peep/tile/etc. If the selected ItemType doesn't need an assoc "
+                          "(Null, Money, Award, Graph), you can leave this field blank");
         return;
     }
 
@@ -1722,7 +1719,12 @@ static void ConsoleCommandProfilerStart([[maybe_unused]] InteractiveConsole& con
 {
     if (!Profiling::isEnabled())
         console.WriteLine("Started profiler");
-    Profiling::enable();
+
+    std::string filePath;
+    if (!argv.empty())
+        filePath = argv[0];
+
+    Profiling::enable(filePath);
 }
 
 static void ConsoleCommandProfilerExport([[maybe_unused]] InteractiveConsole& console, [[maybe_unused]] const arguments_t& argv)
@@ -1877,7 +1879,8 @@ static constexpr ConsoleCommand console_command_table[] = {
     { "mp_desync", ConsoleCommandMpDesync, "Forces a multiplayer desync",
       "ConsoleCommandMpDesync [desync_type, 0 = Random t-shirt color on random guest, 1 = Remove random guest ]" },
     { "profiler_reset", ConsoleCommandProfilerReset, "Resets the profiler data.", "profiler_reset" },
-    { "profiler_start", ConsoleCommandProfilerStart, "Starts the profiler.", "profiler_start" },
+    { "profiler_start", ConsoleCommandProfilerStart, "Starts the profiler and optionally begins a trace stream.",
+      "profiler_start [<file.json>]" },
     { "profiler_status", ConsoleCommandProfilerStatus, "Shows profiler status and statistics.", "profiler_status" },
     { "profiler_stop", ConsoleCommandProfilerStop, "Stops the profiler and optionally exports data.",
       "profiler_stop [<file.csv|file.json>]" },

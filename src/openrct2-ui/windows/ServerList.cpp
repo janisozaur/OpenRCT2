@@ -20,10 +20,8 @@
     #include <openrct2/config/Config.h>
     #include <openrct2/core/Json.hpp>
     #include <openrct2/drawing/ColourMap.h>
-    #include <openrct2/drawing/Drawing.String.h>
     #include <openrct2/drawing/Drawing.h>
     #include <openrct2/drawing/Rectangle.h>
-    #include <openrct2/drawing/Text.h>
     #include <openrct2/localisation/Formatter.h>
     #include <openrct2/network/Network.h>
     #include <openrct2/network/ServerList.h>
@@ -311,7 +309,7 @@ namespace OpenRCT2::Ui::Windows
         {
             drawWidgets(rt);
 
-            drawText(
+            DrawTextBasic(
                 rt, windowPos + ScreenCoordsXY{ 6, widgets[WIDX_PLAYER_NAME_INPUT].top }, STR_PLAYER_NAME, {},
                 { Drawing::Colour::white });
 
@@ -319,13 +317,13 @@ namespace OpenRCT2::Ui::Windows
             std::string version = Network::GetVersion();
             auto ft = Formatter();
             ft.Add<const char*>(version.c_str());
-            drawText(
+            DrawTextBasic(
                 rt, windowPos + ScreenCoordsXY{ 324, widgets[WIDX_START_SERVER].top + 1 }, STR_NETWORK_VERSION, ft,
                 { Drawing::Colour::white });
 
             ft = Formatter();
             ft.Add<uint32_t>(_numPlayersOnline);
-            drawText(rt, windowPos + ScreenCoordsXY{ 8, height - 15 }, _statusText, ft, { Drawing::Colour::white });
+            DrawTextBasic(rt, windowPos + ScreenCoordsXY{ 8, height - 15 }, _statusText, ft, { Drawing::Colour::white });
         }
 
         void onScrollDraw(int32_t scrollIndex, RenderTarget& rt) override
@@ -373,7 +371,7 @@ namespace OpenRCT2::Ui::Windows
                 {
                     snprintf(players, sizeof(players), "%d/%d", serverDetails.Players, serverDetails.MaxPlayers);
                 }
-                const int16_t numPlayersStringWidth = getStringWidth(players, FontStyle::medium);
+                const int16_t numPlayersStringWidth = GfxGetStringWidth(players, FontStyle::medium);
 
                 // How much space we have for the server info depends on the size of everything rendered after.
                 const int16_t spaceAvailableForInfo = listWidgetWidth - numPlayersStringWidth - kScrollBarWidth - 35;
@@ -388,7 +386,7 @@ namespace OpenRCT2::Ui::Windows
                 // Finally, draw the server information.
                 auto ft = Formatter();
                 ft.Add<const char*>(serverInfoToShow);
-                drawTextEllipsised(
+                DrawTextEllipsised(
                     rt, screenCoords + ScreenCoordsXY{ 0, 3 }, spaceAvailableForInfo, STR_STRING, ft, { colour });
 
                 int32_t right = listWidgetWidth - 7 - kScrollBarWidth;
@@ -420,7 +418,7 @@ namespace OpenRCT2::Ui::Windows
 
                 // Draw number of players
                 screenCoords.x = right - numPlayersStringWidth;
-                drawText(rt, screenCoords + ScreenCoordsXY{ 0, 3 }, players, { colours[1] });
+                DrawText(rt, screenCoords + ScreenCoordsXY{ 0, 3 }, { colours[1] }, players);
 
                 screenCoords.y += kItemHeight;
             }

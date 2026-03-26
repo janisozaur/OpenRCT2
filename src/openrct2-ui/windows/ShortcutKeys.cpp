@@ -17,7 +17,6 @@
 #include <openrct2/drawing/ColourMap.h>
 #include <openrct2/drawing/Drawing.h>
 #include <openrct2/drawing/Rectangle.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/localisation/Formatter.h>
 #include <openrct2/localisation/StringIds.h>
 #include <openrct2/ui/WindowManager.h>
@@ -139,7 +138,7 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<StringId>(STR_STRING);
                 ft.Add<const char*>(_shortcutCustomName.c_str());
             }
-            drawTextWrapped(rt, stringCoords, 242, STR_SHORTCUT_CHANGE_PROMPT, ft, { TextAlignment::centre });
+            DrawTextWrapped(rt, stringCoords, 242, STR_SHORTCUT_CHANGE_PROMPT, ft, { TextAlignment::centre });
         }
 
     private:
@@ -532,14 +531,14 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<StringId>(STR_STRING);
                 ft.Add<const char*>(shortcut.CustomString.c_str());
             }
-            drawTextEllipsised(rt, { 0, y - 1 }, bindingOffset, format, ft);
+            DrawTextEllipsised(rt, { 0, y - 1 }, bindingOffset, format, ft);
 
             if (!shortcut.Binding.empty())
             {
                 ft = Formatter();
                 ft.Add<StringId>(STR_STRING);
                 ft.Add<const char*>(shortcut.Binding.c_str());
-                drawTextEllipsised(rt, { bindingOffset, y - 1 }, 150, format, ft);
+                DrawTextEllipsised(rt, { bindingOffset, y - 1 }, 150, format, ft);
             }
         }
     };

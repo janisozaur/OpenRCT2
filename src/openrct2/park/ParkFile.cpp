@@ -46,6 +46,8 @@
 #include "../object/ObjectManager.h"
 #include "../object/ObjectRepository.h"
 #include "../peep/RideUseSystem.h"
+#include "../profiling/Profiling.h"
+#include "../profiling/ProfilingMacros.hpp"
 #include "../rct2/RCT2.h"
 #include "../ride/RideManager.hpp"
 #include "../ride/ShopItem.h"
@@ -144,6 +146,7 @@ namespace OpenRCT2
 
         void Load(IStream& stream, const bool skipObjectCheck)
         {
+            PROFILED_FUNCTION();
             _os = std::make_unique<OrcaStream>(stream, OrcaStream::Mode::reading);
             ThrowIfIncompatibleVersion();
 
@@ -157,6 +160,7 @@ namespace OpenRCT2
 
         void Import(GameState_t& gameState)
         {
+            PROFILED_FUNCTION();
             auto& os = *_os;
             ReadWriteTilesChunk(gameState, os);
             ReadWriteBannersChunk(gameState, os);
@@ -294,9 +298,9 @@ namespace OpenRCT2
                     cs.write(std::string_view(gVersionInfoFull));
                     std::vector<std::string> authors;
                     cs.readWriteVector(authors, [](std::string& s) {});
-                    cs.write(std::string_view());                  // custom notes that can be attached to the save
-                    cs.write(static_cast<uint64_t>(std::time(0))); // date started
-                    cs.write(static_cast<uint64_t>(std::time(0))); // date modified
+                    cs.write(std::string_view());                        // custom notes that can be attached to the save
+                    cs.write(static_cast<uint64_t>(std::time(nullptr))); // date started
+                    cs.write(static_cast<uint64_t>(std::time(nullptr))); // date modified
                 });
             }
         }
@@ -1231,7 +1235,8 @@ namespace OpenRCT2
                                 {
                                     auto* trackElement = it.element->AsTrack();
                                     auto trackType = trackElement->GetTrackType();
-                                    if (TrackTypeMustBeMadeInvisible(*trackElement, os.getHeader().targetVersion))
+                                    if (TrackTypeMustBeMadeInvisible(
+                                            trackElement->GetRideType(), trackType, os.getHeader().targetVersion))
                                     {
                                         it.element->SetInvisible(true);
                                     }

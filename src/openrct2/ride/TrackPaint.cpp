@@ -18,7 +18,6 @@
 #include "../drawing/LightFX.h"
 #include "../interface/Viewport.h"
 #include "../object/StationObject.h"
-#include "../paint/Boundbox.h"
 #include "../paint/Paint.SessionFlags.h"
 #include "../paint/Paint.h"
 #include "../paint/support/MetalSupports.h"

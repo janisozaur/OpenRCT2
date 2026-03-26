@@ -12,7 +12,6 @@
 #include <array>
 #include <functional>
 #include <openrct2-ui/UiStringIds.h>
-#include <openrct2/Limits.h>
 #include <openrct2/core/EnumUtils.hpp>
 #include <openrct2/core/StringTypes.h>
 #include <openrct2/interface/Window.h>
@@ -32,8 +31,7 @@ namespace OpenRCT2::Dropdown
     struct Item;
 
     constexpr StringId kSeparatorString = 0;
-    constexpr int32_t kItemsMaxSize = 1024;
-    static_assert(kItemsMaxSize >= Limits::kMaxRidesInPark);
+    constexpr int32_t kItemsMaxSize = 512;
 
     struct DropdownState;
 

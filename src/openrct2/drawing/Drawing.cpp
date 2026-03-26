@@ -23,10 +23,8 @@
 #include "../util/Util.h"
 #include "../world/Location.hpp"
 #include "../world/Weather.h"
-#include "Font.h"
 #include "LightFX.h"
 #include "Rectangle.h"
-#include "Text.h"
 
 #include <array>
 #include <cassert>
@@ -71,15 +69,12 @@ PaletteIndex PaletteMap::operator[](size_t index) const
 
 PaletteIndex PaletteMap::Blend(PaletteIndex src, PaletteIndex dst) const
 {
-    const auto srcValue = EnumValue(src);
-    const auto dstValue = EnumValue(dst);
 #ifdef _DEBUG
     // src = 0 would be transparent so there is no blend palette for that, hence (src - 1)
-    assert(src != PaletteIndex::transparent);
-    assert(static_cast<size_t>(srcValue - 1) < _numMaps);
-    assert(static_cast<size_t>(dstValue) < _mapLength);
+    assert(src != PaletteIndex::transparent && (EnumValue(src) - 1) < _numMaps);
+    assert(EnumValue(dst) < _mapLength);
 #endif
-    auto idx = ((srcValue - 1) * 256) + dstValue;
+    auto idx = ((EnumValue(src) - 1) * 256) + EnumValue(dst);
     return _data[idx];
 }
 
@@ -100,6 +95,13 @@ uint32_t gPaletteEffectFrame;
 ImageId gPickupPeepImage;
 int32_t gPickupPeepX;
 int32_t gPickupPeepY;
+
+// Originally 0x9ABE04
+TextColours gTextPalette = {
+    PaletteIndex::transparent,
+    PaletteIndex::transparent,
+    PaletteIndex::transparent,
+};
 
 bool gPaintForceRedraw{ false };
 
@@ -930,8 +932,8 @@ void DebugRT(RenderTarget& rt)
     GfxDrawLine(rt, { topLeft, topLeft + ScreenCoordsXY{ 4, 0 } }, PaletteIndex::pi136);
 
     const auto str = std::to_string(rt.x);
-    drawText(rt, ScreenCoordsXY{ rt.x, rt.y }, str, { Colour::white, FontStyle::tiny });
+    DrawText(rt, ScreenCoordsXY{ rt.x, rt.y }, { Colour::white, FontStyle::tiny }, str.c_str());
 
     const auto str2 = std::to_string(rt.y);
-    drawText(rt, ScreenCoordsXY{ rt.x, rt.y + 6 }, str2, { Colour::white, FontStyle::tiny });
+    DrawText(rt, ScreenCoordsXY{ rt.x, rt.y + 6 }, { Colour::white, FontStyle::tiny }, str2.c_str());
 }

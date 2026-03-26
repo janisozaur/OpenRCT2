@@ -16,21 +16,55 @@
 #include <cctype>
 #include <chrono>
 #include <fstream>
+#include <functional>
 #include <iomanip>
+#include <mutex>
+#include <thread>
 
 namespace OpenRCT2::Profiling
 {
     // Global enable flag, atomic for thread safety
     static std::atomic<bool> _enabled{ false };
 
-    void enable()
+    static std::ofstream _traceStream;
+    static std::mutex _traceMutex;
+    static std::chrono::high_resolution_clock::time_point _traceStartTime;
+    static bool _firstEvent = true;
+
+    void enable(const std::string& filePath)
     {
+        {
+            std::scoped_lock lock(_traceMutex);
+            if (_traceStream.is_open())
+            {
+                _traceStream << "\n]}\n";
+                _traceStream.close();
+            }
+
+            if (!filePath.empty())
+            {
+                _traceStream.open(filePath);
+                if (_traceStream.is_open())
+                {
+                    _traceStream << "{\"traceEvents\":[\n";
+                    _traceStartTime = std::chrono::high_resolution_clock::now();
+                    _firstEvent = true;
+                }
+            }
+        }
         _enabled.store(true, std::memory_order_release);
     }
 
     void disable()
     {
         _enabled.store(false, std::memory_order_release);
+
+        std::scoped_lock lock(_traceMutex);
+        if (_traceStream.is_open())
+        {
+            _traceStream << "\n]}\n";
+            _traceStream.close();
+        }
     }
 
     bool isEnabled()
@@ -48,6 +82,7 @@ namespace OpenRCT2::Profiling
             FunctionInternal* Parent;
             FunctionInternal* Func;
             TimePoint EntryTime;
+            std::string Data;
         };
 
         static thread_local std::vector<StackEntry> _callStack;
@@ -70,7 +105,7 @@ namespace OpenRCT2::Profiling
             getRegistry().push_back(func);
         }
 
-        void functionEnter(FunctionInternal& func)
+        void functionEnter(FunctionInternal& func, const char* data)
         {
             const auto entryTime = Clock::now();
             func.CallCount.fetch_add(1, std::memory_order_relaxed);
@@ -81,7 +116,7 @@ namespace OpenRCT2::Profiling
                 parent = _callStack.back().Func;
             }
 
-            _callStack.push_back({ parent, &func, entryTime });
+            _callStack.push_back({ parent, &func, entryTime, data ? data : "" });
         }
 
         bool FunctionInternal::tryAddParent(FunctionInternal* parent)
@@ -133,6 +168,31 @@ namespace OpenRCT2::Profiling
 
             const auto elapsed = exitTime - entry.EntryTime;
             const auto elapsedNs = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(elapsed).count());
+
+            if (isEnabled())
+            {
+                std::scoped_lock lock(_traceMutex);
+                if (_traceStream.is_open())
+                {
+                    if (!_firstEvent)
+                    {
+                        _traceStream << ",\n";
+                    }
+                    _firstEvent = false;
+
+                    auto ts = std::chrono::duration_cast<std::chrono::microseconds>(entry.EntryTime - _traceStartTime).count();
+                    auto dur = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+                    auto tid = std::hash<std::thread::id>{}(std::this_thread::get_id());
+
+                    _traceStream << "{\"name\":" << json_t(entry.Func->getName()).dump()
+                                 << ",\"ph\":\"X\",\"pid\":1,\"tid\":" << tid << ",\"ts\":" << ts << ",\"dur\":" << dur;
+                    if (!entry.Data.empty())
+                    {
+                        _traceStream << ",\"args\":{\"data\":" << json_t(entry.Data).dump() << "}";
+                    }
+                    _traceStream << "}";
+                }
+            }
 
             // All timing updates are lock free
             func.TotalTimeNs.fetch_add(elapsedNs, std::memory_order_relaxed);
@@ -250,17 +310,16 @@ namespace OpenRCT2::Profiling
                         childIndices.push_back(std::distance(registry.begin(), it));
                 }
 
-                functions.push_back(
-                    {
-                        { "name", func->getName() },
-                        { "callCount", func->getCallCount() },
-                        { "minTime", func->getMinTime() },
-                        { "maxTime", func->getMaxTime() },
-                        { "avgTime", func->getAverageTime() },
-                        { "totalTime", func->getTotalTime() },
-                        { "parents", parentIndices },
-                        { "children", childIndices },
-                    });
+                functions.push_back({
+                    { "name", func->getName() },
+                    { "callCount", func->getCallCount() },
+                    { "minTime", func->getMinTime() },
+                    { "maxTime", func->getMaxTime() },
+                    { "avgTime", func->getAverageTime() },
+                    { "totalTime", func->getTotalTime() },
+                    { "parents", parentIndices },
+                    { "children", childIndices },
+                });
             }
 
             json_t root = { { "functions", functions } };

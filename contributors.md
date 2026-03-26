@@ -14,9 +14,6 @@ Includes all git commit authors. Aliases are GitHub usernames or community nickn
 * Joshua Jacobs (leicestersquare) - Graphic Artist
 
 ## Support team
-* Kelson Blakewood (spacek531) - QA, Programming
-* (ZeeMaji) - QA, objects
-* Bas Cantrijn (Basssiiie) - QA, plugins
 * (Kyphii) - Lead OpenScenarios
 * Kenton Boadway (Krutonium) - Discord moderation
 
@@ -32,13 +29,14 @@ Includes all git commit authors. Aliases are GitHub usernames or community nickn
 ## Long term contributors
 Appreciation for long term contributors to the project having provided substantial work.
 * Edward Calver (X7123M3-256)
+* Kelson Blakewood (spacek531)
+* (frutiemax)
 * (mixiate)
 
 ## Special Thanks
 Appreciation for contributors who have provided substantial work, but are no longer active.
 * Joe Minor Jr (wolfreak99)
 * Matte Andersson (Nubbie)
-* (frutiemax)
 
 ## Implementation (RCT2)
 * Ted John (IntelOrca)
@@ -264,8 +262,9 @@ Appreciation for contributors who have provided substantial work, but are no lon
 * (Balletie) - macOS
 * Kevin Burke (kevinburke) - macOS, Unix
 * Miso Zmiric (mzmiric5) - Initial macOS toolchain
+* Jarno Veuger (JarnoVgr) - Windows build server
 * Ted John (IntelOrca) - Windows
-* Michał Janiszewski (janisozaur) - Linux, CI
+* Michał Janiszewski (janisozaur) - Linux, Travis CI
 * Lewis Fox (LRFLEW) - macOS
 * Andrew Rimpici (Andy608) - macOS
 * Adam Bloom (adam-bloom) - macOS, CI
@@ -280,7 +279,6 @@ Appreciation for contributors who have provided substantial work, but are no lon
 * (RollingStar)
 * (That Human Being)
 * Alex Marck (ATMarcks)
-* Michael Steenbeek (Gymnasiast)
 
 ## Translation
 * Extracting from original files: Ted John (IntelOrca)
