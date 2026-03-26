@@ -18,7 +18,6 @@ namespace OpenRCT2::Profiling
     #error "Unsupported compiler"
 #endif
 
-// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define PROFILED_FUNCTION_NAME(func)                                                                                           \
     static constexpr auto _profiling_func_name = func;                                                                         \
     struct Profiler_FunctionLiteral                                                                                            \
@@ -34,13 +33,11 @@ namespace OpenRCT2::Profiling
     #define PROFILED_FUNCTION()
 #else
 
-    // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
     #define PROFILED_FUNCTION()                                                                                                \
         PROFILED_FUNCTION_NAME(PROFILING_FUNC_NAME)                                                                            \
         static auto& _profiling_func = ::OpenRCT2::Profiling::Detail::Storage<Profiler_FunctionLiteral>::Data;                 \
         ::OpenRCT2::Profiling::ScopedProfiling<decltype(_profiling_func)> _profiling_scope(_profiling_func);
 
-    // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
     #define PROFILED_FUNCTION_DATA(data)                                                                                       \
         PROFILED_FUNCTION_NAME(PROFILING_FUNC_NAME)                                                                            \
         static auto& _profiling_func = ::OpenRCT2::Profiling::Detail::Storage<Profiler_FunctionLiteral>::Data;                 \
