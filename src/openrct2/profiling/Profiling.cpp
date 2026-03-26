@@ -82,7 +82,7 @@ namespace OpenRCT2::Profiling
             FunctionInternal* Parent;
             FunctionInternal* Func;
             TimePoint EntryTime;
-            const char* Data;
+            std::string Data;
         };
 
         static thread_local std::vector<StackEntry> _callStack;
@@ -116,7 +116,7 @@ namespace OpenRCT2::Profiling
                 parent = _callStack.back().Func;
             }
 
-            _callStack.push_back({ parent, &func, entryTime, data });
+            _callStack.push_back({ parent, &func, entryTime, data ? data : "" });
         }
 
         bool FunctionInternal::tryAddParent(FunctionInternal* parent)
@@ -186,7 +186,7 @@ namespace OpenRCT2::Profiling
 
                     _traceStream << "{\"name\":" << json_t(entry.Func->getName()).dump()
                                  << ",\"ph\":\"X\",\"pid\":1,\"tid\":" << tid << ",\"ts\":" << ts << ",\"dur\":" << dur;
-                    if (entry.Data != nullptr)
+                    if (!entry.Data.empty())
                     {
                         _traceStream << ",\"args\":{\"data\":" << json_t(entry.Data).dump() << "}";
                     }

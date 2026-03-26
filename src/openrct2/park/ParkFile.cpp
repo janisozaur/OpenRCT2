@@ -297,7 +297,7 @@ namespace OpenRCT2
                     cs.write(std::string_view(gVersionInfoFull));
                     std::vector<std::string> authors;
                     cs.readWriteVector(authors, [](std::string& s) {});
-                    cs.write(std::string_view());                        // custom notes that can be attached to the save
+                    cs.write(std::string_view());                  // custom notes that can be attached to the save
                     cs.write(static_cast<uint64_t>(std::time(nullptr))); // date started
                     cs.write(static_cast<uint64_t>(std::time(nullptr))); // date modified
                 });
