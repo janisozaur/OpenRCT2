@@ -106,12 +106,23 @@ function executeAll(tiles: CoordsXY[], fun: (tile: CoordsXY) => LandSetHeightArg
     const updates = tiles.map(fun).filter(args => args !== undefined) as LandSetHeightArgs[];
     if (updates.length === 0) return true;
 
-    context.executeAction("landsetheight", { updates: updates }, result => {
+    context.queryAction("landsetheight", { updates: updates }, result => {
         if (result.error) {
             ui.showError(
                 result.errorTitle || "",
                 result.errorMessage || "",
             );
+        } else {
+            // insufficient funds
+            const cost = result.cost || 0;
+            if (cost > park.cash && !park.getFlag("noMoney")) {
+                ui.showError(
+                    context.formatString("{STRINGID}", 5637),
+                    context.formatString("{STRINGID}", 827, cost),
+                );
+            } else {
+                context.executeAction("landsetheight", { updates: updates });
+            }
         }
     });
 
@@ -177,7 +188,10 @@ export function apply(delta: number): void {
     const changedProfile = currentProfile.lazyClone();
     if (executeAll(tiles, ({ x, y }) => {
         const oldProfile = originalProfile.getZ(x, y);
-        const newProfile = cornerOffsets.map(([dx, dy], idx) => strategy(oldProfile[idx], deltaProfile(x + dx, y + dy) * delta)) as Num4;
+        const newProfile = cornerOffsets.map(([dx, dy], idx) => {
+            const z = strategy(oldProfile[idx], deltaProfile(x + dx, y + dy) * delta);
+            return Math.max(0, Math.min(127, z));
+        }) as Num4;
         changedProfile.setZ(x, y, newProfile);
         return getActionArgs(x, y, newProfile);
     }))
@@ -233,7 +247,10 @@ export function smooth(tiles: CoordsXY[], delta: number): void {
     });
     executeAll(tiles, ({ x, y }) => {
         const oldProfile = originalProfile.getZ(x, y);
-        const newProfile = cornerOffsets.map(([dx, dy], idx) => fun2(oldProfile[idx] + delta, profile.getZ(x + dx, y + dy))) as Num4;
+        const newProfile = cornerOffsets.map(([dx, dy], idx) => {
+            const z = fun2(oldProfile[idx] + delta, profile.getZ(x + dx, y + dy));
+            return Math.max(0, Math.min(127, z));
+        }) as Num4;
         return getActionArgs(x, y, newProfile, delta > 0);
     });
 }
@@ -249,6 +266,7 @@ export function flat(tiles: CoordsXY[], delta: number): void {
                 if (surface.slope & 0x10)
                     height += 2;
             }
+            height = Math.max(0, Math.min(254, height));
             return {
                 x: x << 5,
                 y: y << 5,
