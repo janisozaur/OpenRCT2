@@ -39,8 +39,7 @@ namespace OpenRCT2::GameActions
         static money64 GetSmallSceneryRemovalCost(const LandSetHeightUpdate& update);
         static void SmallSceneryRemoval(const LandSetHeightUpdate& update);
         static StringId CheckRideSupports(const LandSetHeightUpdate& update);
-        static TileElement* CheckFloatingStructures(
-            TileElement* surfaceElement, uint8_t height, uint8_t style);
+        static TileElement* CheckFloatingStructures(TileElement* surfaceElement, uint8_t height, uint8_t style);
         static money64 GetSurfaceHeightChangeCost(SurfaceElement* surfaceElement, uint8_t height, uint8_t style);
         static void SetSurfaceHeight(const LandSetHeightUpdate& update, TileElement* surfaceElement);
 

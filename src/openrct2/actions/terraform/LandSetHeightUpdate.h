@@ -19,4 +19,4 @@ namespace OpenRCT2::GameActions
         uint8_t Height{};
         uint8_t Style{};
     };
-}
+} // namespace OpenRCT2::GameActions
