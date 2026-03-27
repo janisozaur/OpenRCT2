@@ -1,0 +1,10 @@
+1.0.1 (2026-01-18)
+------------------------------------------------------------------------
+- fix broken surfaces in randomiser tool
+
+1.0.0 (2024-08-30)
+------------------------------------------------------------------------
+- create hills and valleys with a single mouse click
+- choose between several different mountain shapes
+- make the surface smooth, flat or rough
+- change the shape, size and rotation of the landscaping tool you are using
