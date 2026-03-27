@@ -32,22 +32,5 @@ namespace OpenRCT2::GameActions
         Result Query(GameState_t& gameState) const override;
         Result Execute(GameState_t& gameState) const override;
 
-    private:
-        StringId CheckParameters() const;
-        TileElement* CheckTreeObstructions() const;
-        money64 GetSmallSceneryRemovalCost() const;
-        void SmallSceneryRemoval() const;
-        StringId CheckRideSupports() const;
-        TileElement* CheckFloatingStructures(TileElement* surfaceElement, uint8_t zCorner) const;
-        money64 GetSurfaceHeightChangeCost(SurfaceElement* surfaceElement) const;
-        void SetSurfaceHeight(TileElement* surfaceElement) const;
-
-        /**
-         *
-         *  rct2: 0x00663CB9
-         */
-        static bool MapSetLandHeightClearFunc(
-            TileElement** tile_element, [[maybe_unused]] const CoordsXY& coords, [[maybe_unused]] CommandFlags flags,
-            [[maybe_unused]] money64* price);
     };
 } // namespace OpenRCT2::GameActions

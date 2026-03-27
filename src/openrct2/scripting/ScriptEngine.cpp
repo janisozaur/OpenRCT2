@@ -1583,6 +1583,49 @@ public:
             _error = true;
     }
 
+    void Visit(std::string_view name, std::vector<GameActions::LandSetHeightUpdate>& param) override
+    {
+        JSValue jsUpdates = JS_GetPropertyStr(_ctx, _jsValue, std::string(name).c_str());
+        if (JS_IsArray(jsUpdates))
+        {
+            int64_t len;
+            JS_GetLength(_ctx, jsUpdates, &len);
+            for (int64_t i = 0; i < len; i++)
+            {
+                JSValue jsUpdate = JS_GetPropertyInt64(_ctx, jsUpdates, i);
+                GameActions::LandSetHeightUpdate update;
+                update.Coords.x = AsOrDefault(_ctx, jsUpdate, "x", 0);
+                update.Coords.y = AsOrDefault(_ctx, jsUpdate, "y", 0);
+                update.Height = AsOrDefault(_ctx, jsUpdate, "height", 0);
+                update.Style = AsOrDefault(_ctx, jsUpdate, "style", 0);
+                param.push_back(update);
+                JS_FreeValue(_ctx, jsUpdate);
+            }
+        }
+        else if (JS_IsObject(jsUpdates))
+        {
+            // Singular object
+            GameActions::LandSetHeightUpdate update;
+            update.Coords.x = AsOrDefault(_ctx, jsUpdates, "x", 0);
+            update.Coords.y = AsOrDefault(_ctx, jsUpdates, "y", 0);
+            update.Height = AsOrDefault(_ctx, jsUpdates, "height", 0);
+            update.Style = AsOrDefault(_ctx, jsUpdates, "style", 0);
+            param.push_back(update);
+        }
+        else
+        {
+            // If it's not an array or object, it might be the top-level arguments itself
+            // (e.g. for backward compatibility when landsetheight was singular)
+            GameActions::LandSetHeightUpdate update;
+            update.Coords.x = AsOrDefault(_ctx, _jsValue, "x", 0);
+            update.Coords.y = AsOrDefault(_ctx, _jsValue, "y", 0);
+            update.Height = AsOrDefault(_ctx, _jsValue, "height", 0);
+            update.Style = AsOrDefault(_ctx, _jsValue, "style", 0);
+            param.push_back(update);
+        }
+        JS_FreeValue(_ctx, jsUpdates);
+    }
+
     bool GetErrorFlag() const
     {
         return _error;
@@ -1619,6 +1662,21 @@ public:
         std::string szName(name);
         JS_SetPropertyStr(_ctx, _jsObject, szName.c_str(), JSFromStdString(_ctx, param));
     }
+
+    void Visit(std::string_view name, std::vector<GameActions::LandSetHeightUpdate>& param) override
+    {
+        JSValue jsUpdates = JS_NewArray(_ctx);
+        for (size_t i = 0; i < param.size(); i++)
+        {
+            JSValue jsUpdate = JS_NewObject(_ctx);
+            JS_SetPropertyStr(_ctx, jsUpdate, "x", JS_NewInt32(_ctx, param[i].Coords.x));
+            JS_SetPropertyStr(_ctx, jsUpdate, "y", JS_NewInt32(_ctx, param[i].Coords.y));
+            JS_SetPropertyStr(_ctx, jsUpdate, "height", JS_NewInt32(_ctx, param[i].Height));
+            JS_SetPropertyStr(_ctx, jsUpdate, "style", JS_NewInt32(_ctx, param[i].Style));
+            JS_SetPropertyInt64(_ctx, jsUpdates, i, jsUpdate);
+        }
+        JS_SetPropertyStr(_ctx, _jsObject, std::string(name).c_str(), jsUpdates);
+    }
 };
 
 // clang-format off
@@ -1641,7 +1699,7 @@ const static EnumMap<GameCommand> ActionNameToType = {
     { "landbuyrights", GameCommand::BuyLandRights },
     { "landlower", GameCommand::LowerLand },
     { "landraise", GameCommand::RaiseLand },
-    { "landsetheight", GameCommand::SetLandHeight },
+    { "landsetheight", GameCommand::SetLandHeightBulk },
     { "landsetrights", GameCommand::SetLandOwnership },
     { "landsmooth", GameCommand::EditLandSmooth },
     { "largesceneryplace", GameCommand::PlaceLargeScenery },

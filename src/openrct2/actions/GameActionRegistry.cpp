@@ -85,6 +85,7 @@
 #include "terraform/LandLowerAction.h"
 #include "terraform/LandRaiseAction.h"
 #include "terraform/LandSetHeightAction.h"
+#include "terraform/LandSetHeightBulkAction.h"
 #include "terraform/LandSmoothAction.h"
 #include "terraform/SurfaceSetStyleAction.h"
 #include "terraform/WaterLowerAction.h"
@@ -193,6 +194,7 @@ namespace OpenRCT2::GameActions
         REGISTER_ACTION(LandLowerAction);
         REGISTER_ACTION(LandRaiseAction);
         REGISTER_ACTION(LandSetHeightAction);
+        REGISTER_ACTION(LandSetHeightBulkAction);
         REGISTER_ACTION(LandSetRightsAction);
         REGISTER_ACTION(LandSmoothAction);
         REGISTER_ACTION(TileModifyAction);

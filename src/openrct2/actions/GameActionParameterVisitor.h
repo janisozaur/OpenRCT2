@@ -12,9 +12,11 @@
 #include "../core/Identifier.hpp"
 #include "../network/NetworkTypes.h"
 #include "../world/Location.hpp"
+#include "terraform/LandSetHeightUpdate.h"
 
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace OpenRCT2::GameActions
 {
@@ -69,6 +71,10 @@ namespace OpenRCT2::GameActions
             Visit("y1", param.Point1.y);
             Visit("x2", param.Point2.x);
             Visit("y2", param.Point2.y);
+        }
+
+        virtual void Visit(std::string_view name, std::vector<LandSetHeightUpdate>& param)
+        {
         }
 
         template<typename T>
