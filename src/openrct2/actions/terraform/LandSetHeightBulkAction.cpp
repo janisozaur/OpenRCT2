@@ -175,6 +175,9 @@ namespace OpenRCT2::GameActions
     {
         money64 totalCost = 0.00_GBP;
 
+        CoordsXY mins = { 32767, 32767 };
+        CoordsXY maxs = { -32768, -32768 };
+
         for (const auto& update : _updates)
         {
             auto surfaceHeight = TileElementHeight(update.Coords);
@@ -193,6 +196,23 @@ namespace OpenRCT2::GameActions
 
             totalCost += GetSurfaceHeightChangeCost(surfaceElement, update.Height, update.Style);
             SetSurfaceHeight(update, reinterpret_cast<TileElement*>(surfaceElement));
+
+            if (_updates.size() > 10)
+            {
+                mins.x = std::min(mins.x, update.Coords.x);
+                mins.y = std::min(mins.y, update.Coords.y);
+                maxs.x = std::max(maxs.x, update.Coords.x);
+                maxs.y = std::max(maxs.y, update.Coords.y);
+            }
+            else
+            {
+                MapInvalidateTileFull(update.Coords);
+            }
+        }
+
+        if (_updates.size() > 10)
+        {
+            MapInvalidateRegion(mins, maxs);
         }
 
         auto res = Result();
@@ -368,8 +388,6 @@ namespace OpenRCT2::GameActions
         {
             surfaceElement->AsSurface()->SetWaterHeight(0);
         }
-
-        MapInvalidateTileFull(update.Coords);
     }
 
     bool LandSetHeightBulkAction::MapSetLandHeightClearFunc(
