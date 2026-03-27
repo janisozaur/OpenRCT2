@@ -23,6 +23,7 @@
 #include <iterator>
 #include <openrct2-ui/Ui.h>
 #include <openrct2/core/String.hpp>
+#include <shellapi.h>
 #include <string>
 #include <vector>
 
@@ -31,12 +32,20 @@ static std::vector<std::string> GetCommandLineArgs(int argc, wchar_t** argvW);
 /**
  * Windows entry point to OpenRCT2 with a console window using a traditional C main function.
  */
-int wmain(int argc, wchar_t** argvW, [[maybe_unused]] wchar_t* envp)
+int WINAPI wWinMain(
+    [[maybe_unused]] HINSTANCE hInstance, [[maybe_unused]] HINSTANCE hPrevInstance, [[maybe_unused]] LPWSTR lpCmdLine,
+    [[maybe_unused]] int nShowCmd)
 {
+    int argc;
+    wchar_t** argvW = CommandLineToArgvW(GetCommandLineW(), &argc);
+    if (argvW == nullptr)
+    {
+        return 1;
+    }
+
     auto argvStrings = GetCommandLineArgs(argc, argvW);
 
-    SetConsoleCP(OpenRCT2::CodePage::UTF8);
-    SetConsoleOutputCP(OpenRCT2::CodePage::UTF8);
+    LocalFree(argvW);
 
     std::vector<const char*> argv;
     std::transform(
@@ -44,7 +53,7 @@ int wmain(int argc, wchar_t** argvW, [[maybe_unused]] wchar_t* envp)
 
     // Ensure that argv[argc] == nullptr, as mandated by the standard
     argv.push_back(nullptr);
-    return NormalisedMain(argc, argv.data());
+    return NormalisedMain(static_cast<int>(argv.size()) - 1, argv.data());
 }
 
 static std::vector<std::string> GetCommandLineArgs(int argc, wchar_t** argvW)

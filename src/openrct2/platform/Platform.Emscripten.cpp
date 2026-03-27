@@ -67,6 +67,10 @@ namespace OpenRCT2::Platform
         return false;
     }
 
+    void TryAllocateConsole(bool forceAllocate)
+    {
+    }
+
     uint16_t GetLocaleLanguage()
     {
         auto locale = reinterpret_cast<char*>(EM_ASM_PTR({

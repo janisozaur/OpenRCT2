@@ -51,6 +51,7 @@ namespace OpenRCT2
 
     static bool _help = false;
     static bool _version = false;
+    static bool _console = false;
     static bool _noInstall = false;
     static bool _all = false;
     static bool _about = false;
@@ -69,6 +70,7 @@ namespace OpenRCT2
     {
         { CMDLINE_TYPE_SWITCH,  &_help,             'h', "help",               "show this help message and exit"                            },
         { CMDLINE_TYPE_SWITCH,  &_version,          'v', "version",            "show version information and exit"                          },
+        { CMDLINE_TYPE_SWITCH,  &_console,          kNAC, "console",            "show the console"                                           },
         { CMDLINE_TYPE_SWITCH,  &_noInstall,        'n', "no-install",         "do not install scenario if passed"                          },
         { CMDLINE_TYPE_SWITCH,  &_all,              'a', "all",                "show help for all commands"                                 },
         { CMDLINE_TYPE_SWITCH,  &_about,            kNAC, "about",              "show information about " OPENRCT2_NAME                      },

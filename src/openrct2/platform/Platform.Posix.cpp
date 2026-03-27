@@ -108,6 +108,10 @@ namespace OpenRCT2::Platform
         return isSupported;
     }
 
+    void TryAllocateConsole(bool forceAllocate)
+    {
+    }
+
     bool IsRunningInWine()
     {
         return false;
