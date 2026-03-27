@@ -161,6 +161,8 @@
     <ClInclude Include="actions\terraform\LandLowerAction.h" />
     <ClInclude Include="actions\terraform\LandRaiseAction.h" />
     <ClInclude Include="actions\terraform\LandSetHeightAction.h" />
+    <ClInclude Include="actions\terraform\LandSetHeightBulkAction.h" />
+    <ClInclude Include="actions\terraform\LandSetHeightUpdate.h" />
     <ClInclude Include="actions\terraform\LandSmoothAction.h" />
     <ClInclude Include="actions\terraform\SurfaceSetStyleAction.h" />
     <ClInclude Include="actions\terraform\WaterLowerAction.h" />
@@ -798,6 +800,7 @@
     <ClCompile Include="actions\terraform\LandLowerAction.cpp" />
     <ClCompile Include="actions\terraform\LandRaiseAction.cpp" />
     <ClCompile Include="actions\terraform\LandSetHeightAction.cpp" />
+    <ClCompile Include="actions\terraform\LandSetHeightBulkAction.cpp" />
     <ClCompile Include="actions\terraform\LandSmoothAction.cpp" />
     <ClCompile Include="actions\terraform\SurfaceSetStyleAction.cpp" />
     <ClCompile Include="actions\terraform\WaterLowerAction.cpp" />
