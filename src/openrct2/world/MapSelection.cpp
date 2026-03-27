@@ -50,9 +50,25 @@ namespace OpenRCT2::MapSelection
 {
     void clearSelectedTiles()
     {
-        for (const CoordsXY& coords : _mapSelectionTiles)
+        if (_mapSelectionTiles.size() > 10)
         {
-            MapInvalidateTileFull(coords);
+            CoordsXY mins = { 32767, 32767 };
+            CoordsXY maxs = { -32768, -32768 };
+            for (const CoordsXY& coords : _mapSelectionTiles)
+            {
+                mins.x = std::min(mins.x, coords.x);
+                mins.y = std::min(mins.y, coords.y);
+                maxs.x = std::max(maxs.x, coords.x);
+                maxs.y = std::max(maxs.y, coords.y);
+            }
+            MapInvalidateRegion(mins, maxs);
+        }
+        else
+        {
+            for (const CoordsXY& coords : _mapSelectionTiles)
+            {
+                MapInvalidateTileFull(coords);
+            }
         }
         _mapSelectionTiles.clear();
         _mapSelectionTilesInvalidate = false;
@@ -112,9 +128,25 @@ namespace OpenRCT2::MapSelection
         if (_previousMapSelectFlags.has(MapSelectFlag::enableConstruct) != gMapSelectFlags.has(MapSelectFlag::enableConstruct)
             || _mapSelectionTilesInvalidate)
         {
-            for (const CoordsXY& coords : _mapSelectionTiles)
+            if (_mapSelectionTiles.size() > 10)
             {
-                MapInvalidateTileFull(coords);
+                CoordsXY mins = { 32767, 32767 };
+                CoordsXY maxs = { -32768, -32768 };
+                for (const CoordsXY& coords : _mapSelectionTiles)
+                {
+                    mins.x = std::min(mins.x, coords.x);
+                    mins.y = std::min(mins.y, coords.y);
+                    maxs.x = std::max(maxs.x, coords.x);
+                    maxs.y = std::max(maxs.y, coords.y);
+                }
+                MapInvalidateRegion(mins, maxs);
+            }
+            else
+            {
+                for (const CoordsXY& coords : _mapSelectionTiles)
+                {
+                    MapInvalidateTileFull(coords);
+                }
             }
             _mapSelectionTilesInvalidate = false;
         }

@@ -77,17 +77,20 @@ abstract class BaseTool {
             const center = { x: (event.mapCoords.x >> 5) + (dx & 1) / 2, y: (event.mapCoords.y >> 5) + (dy & 1) / 2 };
 
             const shape = Shapes[toolShape.get()];
-            this.tiles = [];
+            const newTiles: CoordsXY[] = [];
             this.transformation = getTransformation(center.x, center.y, toolRotation.get(), dx, dy);
 
             for (let x = Math.floor(center.x - r); x < center.x + r; x++)
                 for (let y = Math.floor(center.y - r); y < center.y + r; y++) {
                     const rel = this.transformation(x + 0.5, y + 0.5); // center of tile
-                    if (shape(rel.x, rel.y) <= 1) //{
-                        this.tiles.push({ x: x, y: y });
+                    if (shape(rel.x, rel.y) <= 1)
+                        newTiles.push({ x: x, y: y });
                 }
 
-            ui.tileSelection.tiles = this.tiles.map(tile => ({ x: tile.x << 5, y: tile.y << 5 }));
+            if (newTiles.length !== this.tiles.length || newTiles.some((tile, idx) => tile.x !== this.tiles[idx].x || tile.y !== this.tiles[idx].y)) {
+                this.tiles = newTiles;
+                ui.tileSelection.tiles = this.tiles.map(tile => ({ x: tile.x << 5, y: tile.y << 5 }));
+            }
         }
     }
 
