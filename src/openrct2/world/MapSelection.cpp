@@ -9,6 +9,7 @@
 
 #include "MapSelection.h"
 
+#include "../core/BitSet.hpp"
 #include "../interface/Viewport.h"
 #include "Map.h"
 
@@ -21,6 +22,7 @@ uint8_t gMapSelectArrowDirection;
 
 static std::vector<CoordsXY> _mapSelectionTiles;
 static bool _mapSelectionTilesInvalidate = false;
+static OpenRCT2::BitSet<kMaximumMapSizeTechnical* kMaximumMapSizeTechnical> _mapSelectionBitSet;
 
 static MapSelectFlags _previousMapSelectFlags;
 static MapSelectType _previousMapSelectType;
@@ -50,6 +52,7 @@ namespace OpenRCT2::MapSelection
 {
     void clearSelectedTiles()
     {
+        _mapSelectionBitSet.reset();
         if (_mapSelectionTiles.size() > 10)
         {
             CoordsXY mins = { 32767, 32767 };
@@ -76,6 +79,12 @@ namespace OpenRCT2::MapSelection
 
     void addSelectedTile(const CoordsXY& coords)
     {
+        int32_t x = coords.x / kCoordsXYStep;
+        int32_t y = coords.y / kCoordsXYStep;
+        if (x >= 0 && x < kMaximumMapSizeTechnical && y >= 0 && y < kMaximumMapSizeTechnical)
+        {
+            _mapSelectionBitSet.set(y * kMaximumMapSizeTechnical + x, true);
+        }
         _mapSelectionTiles.push_back(coords);
         _mapSelectionTilesInvalidate = true;
     }
@@ -83,6 +92,21 @@ namespace OpenRCT2::MapSelection
     const std::vector<CoordsXY>& getSelectedTiles()
     {
         return _mapSelectionTiles;
+    }
+
+    bool isTileSelected(const CoordsXY& coords)
+    {
+        if (_mapSelectionTiles.empty())
+        {
+            return false;
+        }
+        int32_t x = coords.x / kCoordsXYStep;
+        int32_t y = coords.y / kCoordsXYStep;
+        if (x < 0 || x >= kMaximumMapSizeTechnical || y < 0 || y >= kMaximumMapSizeTechnical)
+        {
+            return false;
+        }
+        return _mapSelectionBitSet.get(y * kMaximumMapSizeTechnical + x);
     }
 
     void invalidate()

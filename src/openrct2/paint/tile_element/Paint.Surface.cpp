@@ -1168,13 +1168,8 @@ void PaintSurface(PaintSession& session, uint8_t direction, uint16_t height, con
     {
         const CoordsXY& pos = session.MapPosition;
 
-        for (const auto& tile : MapSelection::getSelectedTiles())
+        if (MapSelection::isTileSelected(pos))
         {
-            if (tile.x != pos.x || tile.y != pos.y)
-            {
-                continue;
-            }
-
             FilterPaletteID fpId = FilterPaletteID::paletteSceneryGroundMarker;
             if (gMapSelectFlags.has(MapSelectFlag::green))
             {
@@ -1193,8 +1188,6 @@ void PaintSurface(PaintSession& session, uint8_t direction, uint16_t height, con
                 PaintAddImageAsParent(session, imageId2, { 0, 0, waterHeight }, { 32, 32, 0 });
                 session.LastPS = backup;
             }
-
-            break;
         }
     }
 

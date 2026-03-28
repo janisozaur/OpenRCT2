@@ -70,6 +70,7 @@ namespace OpenRCT2::MapSelection
     void clearSelectedTiles();
     void addSelectedTile(const CoordsXY& coords);
     const std::vector<CoordsXY>& getSelectedTiles();
+    bool isTileSelected(const CoordsXY& coords);
 
     void invalidate();
 } // namespace OpenRCT2::MapSelection
