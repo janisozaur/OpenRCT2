@@ -43,6 +43,11 @@ struct IZipArchive
      */
     virtual void SetFileData(std::string_view path, std::vector<uint8_t>&& data) = 0;
 
+    /**
+     * Sets the compression method for a file in the zip archive.
+     */
+    virtual void SetFileCompression(std::string_view path, int32_t method, int32_t level = 0) = 0;
+
     virtual void DeleteFile(std::string_view path) = 0;
     virtual void RenameFile(std::string_view path, std::string_view newPath) = 0;
 

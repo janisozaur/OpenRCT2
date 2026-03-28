@@ -20,7 +20,7 @@ if [[ "$OSTYPE" == "cygwin" || "$OSTYPE" == "msys" ]]; then
         rm $destination
     fi
     7z a -r $destination \
-        openrct2.exe openrct2.com data \
+        openrct2.exe openrct2.com data.zip \
         ../contributors.md \
         ../PRIVACY.md \
         ../licence.txt \
@@ -60,7 +60,11 @@ else
         cp -R $install/lib/ $workdir/OpenRCT2
     fi
     cp -r $install/share/doc/openrct2 $workdir/OpenRCT2/doc
-    cp -r $install/share/openrct2 $workdir/OpenRCT2/data
+    if [[ -f $install/share/openrct2/data.zip ]]; then
+        cp $install/share/openrct2/data.zip $workdir/OpenRCT2/
+    else
+        cp -r $install/share/openrct2 $workdir/OpenRCT2/data
+    fi
     pushd $workdir > /dev/null
         tar -czf output.tar.gz OpenRCT2
     popd > /dev/null

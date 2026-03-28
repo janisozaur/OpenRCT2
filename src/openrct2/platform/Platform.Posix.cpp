@@ -43,6 +43,13 @@ namespace OpenRCT2::Platform
         return String::toStd(getenv(std::string(name).c_str()));
     }
 
+    std::string GetCurrentExecutableDirectory()
+    {
+        auto exePath = GetCurrentExecutablePath();
+        auto exeDirectory = Path::GetDirectory(exePath);
+        return exeDirectory;
+    }
+
     std::string GetEnvironmentPath(const char* name)
     {
         auto value = getenv(name);

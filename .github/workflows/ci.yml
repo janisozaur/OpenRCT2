@@ -177,6 +177,11 @@ jobs:
       - name: Build graphics .dat files
         run: |
           OpenRCT2/scripts/build-graphics-dat "$PWD"
+      - name: Build bundled assets
+        run: |
+          # We need to build openrct2-cli first to use it for bundling
+          # Or we can just use the zip tool if available
+          zip -r0 data.zip g2.dat palettes.dat fonts.dat tracks.dat OpenRCT2/data/
       - name: Upload graphics .dat files
         uses: actions/upload-artifact@v6
         with:
@@ -186,6 +191,7 @@ jobs:
             palettes.dat
             fonts.dat
             tracks.dat
+            data.zip
   windows:
     name: Windows
     runs-on: ${{ matrix.runs_on }}

@@ -29,9 +29,12 @@
 #include "../core/CallingConventions.h"
 #include "../core/File.h"
 #include "../core/Path.hpp"
+#include "../core/FileSystem.hpp"
 #include "../core/String.hpp"
 #include "../localisation/Currency.h"
 #include "Platform.h"
+#include "IAssetProvider.h"
+#include "ZipAssetProvider.h"
 
 #include <algorithm>
 #include <array>
@@ -92,47 +95,162 @@ namespace OpenRCT2::Platform
     }
 
 #ifndef __ANDROID__
-    AssetCheckResult CheckAssetDirectoryExists([[maybe_unused]] u8string_view path)
+    static std::unique_ptr<IAssetProvider> _assetProvider;
+
+    static void EnsureAssetProvider()
     {
+        if (_assetProvider == nullptr)
+        {
+            auto exeDir = GetCurrentExecutableDirectory();
+            auto zipPath = Path::Combine(exeDir, u8"data.zip");
+
+            std::error_code ec;
+            if (fs::exists(fs::u8path(zipPath), ec))
+            {
+                _assetProvider = CreateZipAssetProvider(zipPath);
+            }
+        }
+    }
+
+    static u8string_view GetBundledAssetPath(u8string_view path)
+    {
+        auto installPath = GetInstallPath();
+        // If installPath is the ZIP file itself, it won't be a directory.
+        // We only want to handle paths that are relative to the install path.
+        if (String::startsWith(path, installPath))
+        {
+            auto relative = path.substr(installPath.length());
+            if (!relative.empty() && relative[0] == '/')
+            {
+                return relative.substr(1);
+            }
+            return relative;
+        }
+        return {};
+    }
+
+    AssetCheckResult CheckAssetDirectoryExists(u8string_view path)
+    {
+        // Precedence: directory first. Since File::Exists already handles the directory check
+        // before calling this, we just need to make sure we don't interfere if it's a real directory.
+        // Wait, File::Exists calls Platform::CheckAssetExists FIRST.
+        // So we MUST check if the physical path exists as a directory first.
+        if (Path::DirectoryExists(path))
+        {
+            return AssetCheckResult::NotApplicable;
+        }
+
+        EnsureAssetProvider();
+        if (_assetProvider != nullptr)
+        {
+            auto bundledPath = GetBundledAssetPath(path);
+            if (!bundledPath.empty())
+            {
+                return _assetProvider->CheckAssetDirectoryExists(bundledPath);
+            }
+        }
         return AssetCheckResult::NotApplicable;
     }
 
-    AssetCheckResult CheckAssetExists([[maybe_unused]] u8string_view path)
+    AssetCheckResult CheckAssetExists(u8string_view path)
     {
+        // Precedence: directory first. Check physical file system.
+        std::error_code ec;
+        if (fs::exists(fs::u8path(path), ec))
+        {
+            return AssetCheckResult::NotApplicable;
+        }
+
+        EnsureAssetProvider();
+        if (_assetProvider != nullptr)
+        {
+            auto bundledPath = GetBundledAssetPath(path);
+            if (!bundledPath.empty())
+            {
+                return _assetProvider->CheckAssetExists(bundledPath);
+            }
+        }
         return AssetCheckResult::NotApplicable;
     }
 
-    AssetFileOpenResult OpenAssetFile([[maybe_unused]] u8string_view path)
+    AssetFileOpenResult OpenAssetFile(u8string_view path)
     {
+        // Precedence: directory first. Check physical file system.
+        std::error_code ec;
+        if (fs::exists(fs::u8path(path), ec))
+        {
+            return AssetFileOpenResult{ AssetCheckResult::NotApplicable, nullptr, 0 };
+        }
+
+        EnsureAssetProvider();
+        if (_assetProvider != nullptr)
+        {
+            auto bundledPath = GetBundledAssetPath(path);
+            if (!bundledPath.empty())
+            {
+                return _assetProvider->OpenAssetFile(bundledPath);
+            }
+        }
         return AssetFileOpenResult{ AssetCheckResult::NotApplicable, nullptr, 0 };
     }
 
-    void CloseAssetFile([[maybe_unused]] void* handle)
+    void CloseAssetFile(AssetHandle handle)
     {
+        if (_assetProvider != nullptr)
+        {
+            _assetProvider->CloseAssetFile(handle);
+        }
     }
 
-    uint64_t GetAssetPosition([[maybe_unused]] void* handle)
+    uint64_t GetAssetPosition(AssetHandle handle)
     {
+        if (_assetProvider != nullptr)
+        {
+            return _assetProvider->GetAssetPosition(handle);
+        }
         return 0;
     }
 
-    void SeekAsset([[maybe_unused]] void* handle, [[maybe_unused]] int64_t offset, [[maybe_unused]] int32_t origin)
+    void SeekAsset(AssetHandle handle, int64_t offset, int32_t origin)
     {
+        if (_assetProvider != nullptr)
+        {
+            _assetProvider->SeekAsset(handle, offset, origin);
+        }
     }
 
-    uint64_t ReadAsset([[maybe_unused]] void* handle, [[maybe_unused]] void* buffer, [[maybe_unused]] uint64_t length)
+    uint64_t ReadAsset(AssetHandle handle, void* buffer, uint64_t length)
     {
+        if (_assetProvider != nullptr)
+        {
+            return _assetProvider->ReadAsset(handle, buffer, length);
+        }
         return 0;
     }
 
-    uint64_t TryReadAsset([[maybe_unused]] void* handle, [[maybe_unused]] void* buffer, [[maybe_unused]] uint64_t length)
+    uint64_t TryReadAsset(AssetHandle handle, void* buffer, uint64_t length)
     {
+        if (_assetProvider != nullptr)
+        {
+            return _assetProvider->TryReadAsset(handle, buffer, length);
+        }
         return 0;
     }
 
     u8string GetAssetPath()
     {
         return {};
+    }
+
+    const std::vector<AssetInfo>& GetAssetList()
+    {
+        static const std::vector<AssetInfo> empty;
+        EnsureAssetProvider();
+        if (_assetProvider != nullptr)
+        {
+            return _assetProvider->GetAssetList();
+        }
+        return empty;
     }
 #endif
 
