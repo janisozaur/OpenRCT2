@@ -405,6 +405,41 @@ namespace OpenRCT2::Scripting
         return result;
     }
 
+    inline uint8_t* JSToTypedArrayData(JSContext* ctx, size_t* psize, JSValue obj)
+    {
+        if (JS_GetTypedArrayType(obj) == -1)
+        {
+            return nullptr;
+        }
+
+        size_t byte_offset, byte_length, bytes_per_element;
+        JSValue buffer = JS_GetTypedArrayBuffer(ctx, obj, &byte_offset, &byte_length, &bytes_per_element);
+        if (JS_IsException(buffer))
+        {
+            return nullptr;
+        }
+        if (JS_IsUndefined(buffer))
+        {
+            return nullptr;
+        }
+
+        size_t ab_size;
+        uint8_t* ab_ptr = JS_GetArrayBuffer(ctx, &ab_size, buffer);
+        JS_FreeValue(ctx, buffer);
+
+        if (ab_ptr == nullptr)
+        {
+            return nullptr;
+        }
+
+        if (psize != nullptr)
+        {
+            *psize = byte_length;
+        }
+
+        return ab_ptr + byte_offset;
+    }
+
     inline JSValue ToJSValue(JSContext* ctx, uint8_t val)
     {
         return JS_NewInt32(ctx, val);

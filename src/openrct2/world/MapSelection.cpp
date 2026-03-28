@@ -52,9 +52,10 @@ namespace OpenRCT2::MapSelection
 {
     void clearSelectedTiles()
     {
-        _mapSelectionBitSet.reset();
-        if (_mapSelectionTiles.size() > 10)
+        if (!_mapSelectionTiles.empty())
         {
+            _mapSelectionTilesInvalidate = true;
+
             CoordsXY mins = { 32767, 32767 };
             CoordsXY maxs = { -32768, -32768 };
             for (const CoordsXY& coords : _mapSelectionTiles)
@@ -66,15 +67,8 @@ namespace OpenRCT2::MapSelection
             }
             MapInvalidateRegion(mins, maxs);
         }
-        else
-        {
-            for (const CoordsXY& coords : _mapSelectionTiles)
-            {
-                MapInvalidateTileFull(coords);
-            }
-        }
+        _mapSelectionBitSet.reset();
         _mapSelectionTiles.clear();
-        _mapSelectionTilesInvalidate = false;
     }
 
     void addSelectedTile(const CoordsXY& coords)
@@ -83,10 +77,13 @@ namespace OpenRCT2::MapSelection
         int32_t y = coords.y / kCoordsXYStep;
         if (x >= 0 && x < kMaximumMapSizeTechnical && y >= 0 && y < kMaximumMapSizeTechnical)
         {
-            _mapSelectionBitSet.set(y * kMaximumMapSizeTechnical + x, true);
+            if (!_mapSelectionBitSet.get(y * kMaximumMapSizeTechnical + x))
+            {
+                _mapSelectionBitSet.set(y * kMaximumMapSizeTechnical + x, true);
+                _mapSelectionTiles.push_back(coords);
+                _mapSelectionTilesInvalidate = true;
+            }
         }
-        _mapSelectionTiles.push_back(coords);
-        _mapSelectionTilesInvalidate = true;
     }
 
     const std::vector<CoordsXY>& getSelectedTiles()
@@ -149,8 +146,7 @@ namespace OpenRCT2::MapSelection
             MapInvalidateTile({ gMapSelectArrowPosition, gMapSelectArrowPosition.z });
         }
 
-        if (_previousMapSelectFlags.has(MapSelectFlag::enableConstruct) != gMapSelectFlags.has(MapSelectFlag::enableConstruct)
-            || _mapSelectionTilesInvalidate)
+        if (_mapSelectionTilesInvalidate)
         {
             if (_mapSelectionTiles.size() > 10)
             {
@@ -172,8 +168,15 @@ namespace OpenRCT2::MapSelection
                     MapInvalidateTileFull(coords);
                 }
             }
-            _mapSelectionTilesInvalidate = false;
         }
+
+        if (_previousMapSelectFlags.has(MapSelectFlag::enableConstruct) && !gMapSelectFlags.has(MapSelectFlag::enableConstruct))
+        {
+            // If we just disabled construct selection, we might have cleared the list already, but we still need to invalidate.
+            // But clearSelectedTiles now sets _mapSelectionTilesInvalidate, so it should be handled above if it happened this tick.
+        }
+
+        _mapSelectionTilesInvalidate = false;
 
         _previousMapSelectFlags = gMapSelectFlags;
         _previousMapSelectType = gMapSelectType;

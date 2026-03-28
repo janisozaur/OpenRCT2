@@ -35,11 +35,7 @@ function getSurfaceZFromBuffer(idx: number): Num4 {
     if (!surfaceBuffer || idx * 16 >= surfaceBuffer.length) return [0, 0, 0, 0];
 
     // SurfaceElement layout:
-    // 0: Type
-    // 1: Flags
-    // 2: BaseHeight
-    // 3: ClearanceHeight
-    // 4: Owner
+    // 0-4: TileElementBase (Type, Flags, BaseHeight, ClearanceHeight, Owner)
     // 5: Slope
     // 6: WaterHeight
     const baseHeight = surfaceBuffer[idx * 16 + 2];

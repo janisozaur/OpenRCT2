@@ -62,7 +62,7 @@ abstract class BaseTool {
     }
 
     protected setTileSelection(event: ToolEventArgs): void {
-        if (!event.mapCoords || !event.mapCoords.x || !event.mapCoords.y) {
+        if (!event.mapCoords) {
             this.tiles = [];
             this.binaryTiles = new Int32Array(0);
             ui.tileSelection.tiles = [];
@@ -102,7 +102,7 @@ abstract class BaseTool {
                     this.binaryTiles[i * 2] = this.tiles[i].x << 5;
                     this.binaryTiles[i * 2 + 1] = this.tiles[i].y << 5;
                 }
-                ui.tileSelection.tiles = this.binaryTiles;
+                ui.tileSelection.tiles = this.binaryTiles as any;
             }
         }
     }

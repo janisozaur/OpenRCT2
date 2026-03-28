@@ -83,14 +83,12 @@ namespace OpenRCT2::Scripting
     JSValue ScTile::data_set(JSContext* ctx, JSValue thisValue, JSValue jsValue)
     {
         JS_THROW_IF_GAME_STATE_NOT_MUTABLE();
-        if (JS_GetTypedArrayType(jsValue) == JSTypedArrayEnum::JS_TYPED_ARRAY_UINT8)
+        size_t dataSize;
+        auto* array = JSToTypedArrayData(ctx, &dataSize, jsValue);
+        if (array != nullptr)
         {
             auto coords = GetCoordinates(thisValue);
-            int64_t dataLength{};
-            JS_GetLength(ctx, jsValue, &dataLength);
-            auto dataSize = static_cast<size_t>(dataLength);
-            auto* array = JS_GetUint8Array(ctx, &dataSize, jsValue);
-            auto numElements = dataLength / sizeof(TileElement);
+            auto numElements = dataSize / sizeof(TileElement);
             if (numElements == 0)
             {
                 MapSetTileElement(TileCoordsXY(coords), nullptr);

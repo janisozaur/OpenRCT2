@@ -11,7 +11,10 @@
 
 #ifdef ENABLE_SCRIPTING
 
+    #include <openrct2/drawing/Drawing.h>
     #include <openrct2/world/MapSelection.h>
+    #include "ScBase.hpp"
+    #include "../ScriptUtil.hpp"
 
 namespace OpenRCT2::Scripting
 {
@@ -100,14 +103,11 @@ namespace OpenRCT2::Scripting
         static JSValue tiles_set(JSContext* ctx, JSValue thisVal, JSValue value)
         {
             MapSelection::clearSelectedTiles();
-            if (JS_GetTypedArrayType(value) != -1)
+
+            size_t bytes;
+            uint8_t* rawData = JSToTypedArrayData(ctx, &bytes, value);
+            if (rawData != nullptr)
             {
-                size_t bytes;
-                uint8_t* rawData = JS_GetUint8Array(ctx, &bytes, value);
-                if (rawData == nullptr)
-                {
-                    return JS_EXCEPTION;
-                }
                 int32_t* coordsData = reinterpret_cast<int32_t*>(rawData);
                 size_t numTiles = bytes / (sizeof(int32_t) * 2);
                 for (size_t i = 0; i < numTiles; i++)
@@ -135,6 +135,10 @@ namespace OpenRCT2::Scripting
             {
                 gMapSelectFlags.set(MapSelectFlag::enableConstruct);
             }
+
+            // Trigger invalidation immediately if we are setting new tiles
+            MapSelection::invalidate();
+            GfxInvalidateScreen();
 
             return JS_UNDEFINED;
         }

@@ -221,11 +221,10 @@ namespace OpenRCT2::Scripting
             std::string str = JSToStdString(ctx, data);
             result = base64::decode_into<std::vector<uint8_t>>(str);
         }
-        else if (JS_IsArrayBuffer(data))
+        else if (JS_IsArrayBuffer(data) || JS_GetTypedArrayType(data) != -1)
         {
-            // From Uint8Array
             size_t sz = 0;
-            uint8_t* arr = JS_GetUint8Array(ctx, &sz, data);
+            uint8_t* arr = JSToTypedArrayData(ctx, &sz, data);
             if (arr)
             {
                 result = std::vector<uint8_t>(arr, arr + sz);
