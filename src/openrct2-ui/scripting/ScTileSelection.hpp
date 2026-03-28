@@ -100,7 +100,17 @@ namespace OpenRCT2::Scripting
         static JSValue tiles_set(JSContext* ctx, JSValue thisVal, JSValue value)
         {
             MapSelection::clearSelectedTiles();
-            if (JS_IsArray(value))
+            if (JS_GetTypedArrayType(value) == JSTypedArrayEnum::JS_TYPED_ARRAY_INT32)
+            {
+                size_t bytes;
+                int32_t* coordsData = reinterpret_cast<int32_t*>(JS_GetUint8Array(ctx, &bytes, value));
+                size_t numTiles = bytes / (sizeof(int32_t) * 2);
+                for (size_t i = 0; i < numTiles; i++)
+                {
+                    MapSelection::addSelectedTile(CoordsXY(coordsData[i * 2], coordsData[i * 2 + 1]));
+                }
+            }
+            else if (JS_IsArray(value))
             {
                 JSIterateArray(ctx, value, [](JSContext* ctx2, JSValue v) {
                     auto coords = GetCoordsXY(ctx2, v);

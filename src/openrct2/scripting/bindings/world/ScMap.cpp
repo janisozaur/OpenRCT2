@@ -13,7 +13,6 @@
 
     #include "../../../GameState.h"
     #include "../../../entity/Balloon.h"
-    #include "../../../world/Map.h"
     #include "../../../entity/Duck.h"
     #include "../../../entity/EntityList.h"
     #include "../../../entity/Fountain.h"
@@ -26,6 +25,7 @@
     #include "../../../ride/RideManager.hpp"
     #include "../../../ride/TrainManager.h"
     #include "../../../ride/Vehicle.h"
+    #include "../../../world/Map.h"
     #include "../entity/ScBalloon.hpp"
     #include "../entity/ScEntity.hpp"
     #include "../entity/ScGuest.hpp"
@@ -452,34 +452,75 @@ namespace OpenRCT2::Scripting
 
     JSValue ScMap::getSurfaces(JSContext* ctx, JSValue thisVal, int argc, JSValue* argv)
     {
-        JS_UNPACK_ARRAY(coordsArray, ctx, argv[0]);
+        JSValue coordsInput = argv[0];
+        size_t numTiles = 0;
 
-        int64_t len;
-        JS_GetLength(ctx, coordsArray, &len);
-        auto numTiles = static_cast<size_t>(len);
+        auto dataSize = 0;
+        uint8_t* data = nullptr;
 
-        auto dataSize = numTiles * sizeof(TileElement);
-        auto* data = static_cast<uint8_t*>(std::malloc(dataSize));
-        if (data == nullptr)
+        if (JS_GetTypedArrayType(coordsInput) == JSTypedArrayEnum::JS_TYPED_ARRAY_INT32)
         {
-            return JS_EXCEPTION;
+            size_t bytes;
+            int32_t* coordsData = reinterpret_cast<int32_t*>(JS_GetUint8Array(ctx, &bytes, coordsInput));
+            numTiles = bytes / (sizeof(int32_t) * 2);
+
+            dataSize = static_cast<int32_t>(numTiles * sizeof(TileElement));
+            data = static_cast<uint8_t*>(std::malloc(dataSize));
+            if (data == nullptr)
+            {
+                return JS_EXCEPTION;
+            }
+
+            for (size_t i = 0; i < numTiles; i++)
+            {
+                CoordsXY coords;
+                coords.x = coordsData[i * 2];
+                coords.y = coordsData[i * 2 + 1];
+
+                auto surface = MapGetSurfaceElementAt(coords);
+                if (surface != nullptr)
+                {
+                    std::memcpy(data + (i * sizeof(TileElement)), surface, sizeof(TileElement));
+                }
+                else
+                {
+                    std::memset(data + (i * sizeof(TileElement)), 0, sizeof(TileElement));
+                }
+            }
         }
-
-        for (int64_t i = 0; i < len; i++)
+        else if (JS_IsArray(coordsInput))
         {
-            JSValue jsCoords = JS_GetPropertyInt64(ctx, coordsArray, i);
-            auto coords = JSToCoordsXY(ctx, jsCoords);
-            JS_FreeValue(ctx, jsCoords);
+            int64_t len;
+            JS_GetLength(ctx, coordsInput, &len);
+            numTiles = static_cast<size_t>(len);
 
-            auto surface = MapGetSurfaceElementAt(coords);
-            if (surface != nullptr)
+            dataSize = static_cast<int32_t>(numTiles * sizeof(TileElement));
+            data = static_cast<uint8_t*>(std::malloc(dataSize));
+            if (data == nullptr)
             {
-                std::memcpy(data + (i * sizeof(TileElement)), surface, sizeof(TileElement));
+                return JS_EXCEPTION;
             }
-            else
+
+            for (int64_t i = 0; i < len; i++)
             {
-                std::memset(data + (i * sizeof(TileElement)), 0, sizeof(TileElement));
+                JSValue jsCoords = JS_GetPropertyInt64(ctx, coordsInput, i);
+                auto coords = JSToCoordsXY(ctx, jsCoords);
+                JS_FreeValue(ctx, jsCoords);
+
+                auto surface = MapGetSurfaceElementAt(coords);
+                if (surface != nullptr)
+                {
+                    std::memcpy(data + (i * sizeof(TileElement)), surface, sizeof(TileElement));
+                }
+                else
+                {
+                    std::memset(data + (i * sizeof(TileElement)), 0, sizeof(TileElement));
+                }
             }
+        }
+        else
+        {
+            return JS_ThrowTypeError(ctx, "Expected Int32Array or array");
         }
 
         JSValue result = JS_NewUint8ArrayCopy(ctx, data, dataSize);

@@ -54,6 +54,7 @@ abstract class BaseTool {
     // helper methods
     protected cursor: CoordsXY = undefined as never;
     protected tiles: CoordsXY[] = [];
+    protected binaryTiles: Int32Array = new Int32Array(0);
     protected transformation: Fun2Num<CoordsXY> = (x, y) => ({ x, y });
 
     protected apply(delta: number): void {
@@ -63,6 +64,7 @@ abstract class BaseTool {
     protected setTileSelection(event: ToolEventArgs): void {
         if (!event.mapCoords || !event.mapCoords.x || !event.mapCoords.y) {
             this.tiles = [];
+            this.binaryTiles = new Int32Array(0);
             ui.tileSelection.tiles = [];
             return;
         }
@@ -95,7 +97,12 @@ abstract class BaseTool {
 
             if (newTiles.length !== this.tiles.length || newTiles.some((tile, idx) => tile.x !== this.tiles[idx].x || tile.y !== this.tiles[idx].y)) {
                 this.tiles = newTiles;
-                ui.tileSelection.tiles = this.tiles.map(tile => ({ x: tile.x << 5, y: tile.y << 5 }));
+                this.binaryTiles = new Int32Array(this.tiles.length * 2);
+                for (let i = 0; i < this.tiles.length; i++) {
+                    this.binaryTiles[i * 2] = this.tiles[i].x << 5;
+                    this.binaryTiles[i * 2 + 1] = this.tiles[i].y << 5;
+                }
+                ui.tileSelection.tiles = this.binaryTiles;
             }
         }
     }
@@ -104,6 +111,7 @@ abstract class BaseTool {
         return {
             center: { x: this.cursor.x >> 5, y: this.cursor.y >> 5 },
             tiles: this.tiles,
+            binaryTiles: this.binaryTiles,
             transformation: this.transformation,
         };
     }
@@ -177,7 +185,7 @@ class Special extends BaseTool {
     }
 
     protected apply(): void {
-        TerrainManager[specialMode.get()](this.tiles, brushDelta.get());
+        TerrainManager[specialMode.get()](this.getTileSelection(), brushDelta.get());
     }
 
     protected onDown(): void {

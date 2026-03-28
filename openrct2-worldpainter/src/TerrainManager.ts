@@ -22,16 +22,13 @@ type Num4 = [number, number, number, number];
 
 // Re-using a buffer for surface retrieval
 let surfaceBuffer: Uint8Array = new Uint8Array(0);
-let surfaceCoords: CoordsXY[] = [];
 
-function getSurfaces(tiles: CoordsXY[]): void {
-    if (tiles.length === 0) {
+function getSurfaces(selection: SelectionDesc): void {
+    if (selection.tiles.length === 0) {
         surfaceBuffer = new Uint8Array(0);
-        surfaceCoords = [];
         return;
     }
-    surfaceCoords = tiles;
-    surfaceBuffer = (map as any).getSurfaces(tiles);
+    surfaceBuffer = (map as any).getSurfaces(selection.binaryTiles);
 }
 
 function getSurfaceZFromBuffer(idx: number): Num4 {
@@ -45,7 +42,6 @@ function getSurfaceZFromBuffer(idx: number): Num4 {
     // 4: Owner
     // 5: Slope
     // 6: WaterHeight
-    // ...
     const baseHeight = surfaceBuffer[idx * 16 + 2];
     const slope = surfaceBuffer[idx * 16 + 5];
 
@@ -90,7 +86,7 @@ function executeAll(tiles: CoordsXY[], fun: (tile: CoordsXY, idx: number) => Lan
         const args = fun(tiles[i], i);
         if (args) {
             const offset = validUpdates * 10;
-            const dv = new DataView(buffer.buffer, offset, 10);
+            const dv = new DataView(buffer.buffer, buffer.byteOffset + offset, 10);
             dv.setInt32(0, args.x, true);
             dv.setInt32(4, args.y, true);
             buffer[offset + 8] = args.height;
@@ -146,20 +142,22 @@ class Profile<T = Num4> {
     }
 
     public lazyClone(): Profile<T> {
-        const clone = new Profile<T>(idx => this.getZ(idx));
-        return clone;
+        return new Profile<T>(idx => this.getZ(idx));
     }
 }
 
 let currentProfile = new Profile(idx => getSurfaceZFromBuffer(idx));
 let originalProfile = currentProfile.lazyClone();
+let currentSelection: SelectionDesc | undefined;
 
 export function softReset(): void {
     originalProfile = currentProfile.lazyClone();
 }
 
 export function hardReset(): void {
-    getSurfaces(tiles);
+    if (currentSelection) {
+        getSurfaces(currentSelection);
+    }
     currentProfile = new Profile(idx => getSurfaceZFromBuffer(idx));
     softReset();
 }
@@ -169,6 +167,7 @@ let tiles: CoordsXY[] = [];
 let deltaProfile: (x: number, y: number) => number = () => 0;
 
 export function setSelection(selectionDesc: SelectionDesc): void {
+    currentSelection = selectionDesc;
     strategy = getStrategy(selectionDesc);
     tiles = selectionDesc.tiles;
     const profileFun: Fun2Num = (x, y) => Profiles[toolProfile.get()](Math.min(Shapes[toolShape.get()](x, y), 1));
@@ -176,7 +175,7 @@ export function setSelection(selectionDesc: SelectionDesc): void {
         const rel = selectionDesc.transformation(x, y);
         return profileFun(rel.x, rel.y);
     };
-    getSurfaces(tiles);
+    getSurfaces(selectionDesc);
     hardReset();
 }
 
@@ -191,11 +190,7 @@ export function apply(delta: number): void {
         }) as Num4;
         changedProfile.setZ(idx, newProfile);
 
-        // Inline getActionArgs logic for speed
         const integral = newProfile.map(corner => Math.round(corner));
-        // Simple up/down logic omitted for brevity in buffer mode if not strictly needed,
-        // but let's keep it consistent.
-
         const height = Math.max(Math.min(...integral, 0x7F), 1);
         const relativeIntegral = integral.map(corner => Math.max(Math.min(corner, 0x7f) - height, 0));
         const slope = relativeIntegral.reduce((slope, z, idx) => {
@@ -220,7 +215,6 @@ function getStrategy(selectionDesc: SelectionDesc): Fun2Num {
             return (surface, delta) => surface + delta;
         case "absolute":
             let minZ = 255, maxZ = 0;
-            // Use buffer for min/max calculation
             for (let i = 0; i < selectionDesc.tiles.length; i++) {
                 let surfaceZ = getBaseHeightFromBuffer(i);
                 if (surfaceZ) {
@@ -232,7 +226,6 @@ function getStrategy(selectionDesc: SelectionDesc): Fun2Num {
             return (surface, delta) => delta < 0 ? Math.min(surface, maxZ + delta) : Math.max(surface, minZ + delta);
         case "plateau":
             const { x, y } = selectionDesc.center;
-            // Find targetZ in buffer if possible, or fallback to individual tile
             let targetZ = 0;
             const centerIdx = selectionDesc.tiles.findIndex(t => t.x === x && t.y === y);
             if (centerIdx !== -1) {
@@ -255,13 +248,11 @@ export function init(): void {
     isActive.subscribe(value => value && hardReset());
 }
 
-export function smooth(tiles: CoordsXY[], delta: number): void {
-    getSurfaces(tiles);
-    hardReset();
+export function smooth(selection: SelectionDesc, delta: number): void {
+    setSelection(selection);
     const fun1 = delta > 0 ? Math.max : Math.min;
     const fun2 = delta > 0 ? Math.min : Math.max;
 
-    // Fast path for smoothing
     const cornerHeightsCache: LookUp<Num4> = {};
     for (let i = 0; i < tiles.length; i++) {
         cornerHeightsCache[i] = originalProfile.getZ(i);
@@ -271,13 +262,13 @@ export function smooth(tiles: CoordsXY[], delta: number): void {
         const oldProfile = cornerHeightsCache[i];
 
         const neighborHeights = cornerOffsets.map(([dx, dy], cornerIdx) => {
-            // This is still a bit complex to optimize fully without a spatial hash
-            // For now, let's just use the original logic but with the buffer
+            const nx = x + dx;
+            const ny = y + dy;
             const cornerHeights = cornerOffsets
                 .map(([ndx, ndy], nIdx) => {
-                    const nx = x + dx - ndx;
-                    const ny = y + dy - ndy;
-                    const nTileIdx = tiles.findIndex(t => t.x === nx && t.y === ny);
+                    const tx = nx - ndx;
+                    const ty = ny - ndy;
+                    const nTileIdx = tiles.findIndex(t => t.x === tx && t.y === ty);
                     return nTileIdx !== -1 ? cornerHeightsCache[nTileIdx][nIdx] : undefined;
                 })
                 .filter(z => z !== undefined) as number[];
@@ -289,7 +280,6 @@ export function smooth(tiles: CoordsXY[], delta: number): void {
             return Math.max(0, Math.min(127, z));
         }) as Num4;
 
-        // getActionArgs inline
         const integral = newProfile.map(corner => Math.round(corner));
         const height = Math.max(Math.min(...integral, 0x7F), 1);
         const relativeIntegral = integral.map(corner => Math.max(Math.min(corner, 0x7f) - height, 0));
@@ -308,8 +298,8 @@ export function smooth(tiles: CoordsXY[], delta: number): void {
     });
 }
 
-export function flat(tiles: CoordsXY[], delta: number): void {
-    getSurfaces(tiles);
+export function flat(selection: SelectionDesc, delta: number): void {
+    setSelection(selection);
     executeAll(tiles, ({ x, y }, i) => {
         let height = getBaseHeightFromBuffer(i);
         const slope = getSlopeFromBuffer(i);
@@ -329,8 +319,8 @@ export function flat(tiles: CoordsXY[], delta: number): void {
     });
 }
 
-export function rough(tiles: CoordsXY[]): void {
-    getSurfaces(tiles);
+export function rough(selection: SelectionDesc): void {
+    setSelection(selection);
     executeAll(tiles, ({ x, y }, i) => {
         return {
             x: x << 5,
