@@ -1,0 +1,35 @@
+#!/bin/bash
+# Bundles assets into data.zip for desktop platforms
+
+BIN_DIR="$1"
+if [ -z "$BIN_DIR" ]; then
+    echo "Usage: $0 <bin directory>"
+    exit 1
+fi
+
+echo "Bundling assets in $BIN_DIR"
+
+cd "$BIN_DIR" || exit 1
+
+# If we have openrct2-cli, use it. Otherwise use zip.
+if [ -f "./openrct2-cli" ]; then
+    ./openrct2-cli asset bundle data.zip data g2.dat palettes.dat fonts.dat tracks.dat
+else
+    # Fallback to standard zip tool if openrct2-cli is not yet built (e.g. in g2dat job)
+    # Note: Ensure the layout is correct (no 'data/' prefix for top level files, but 'data/' prefix for others?)
+    # Wait, the ZIP provider expects everything relative to the install path.
+    # So g2.dat should be at root, and language files should be at data/language/...
+    # My current asset bundle command puts everything relative to dataDir into data/... but wait
+
+    # Actually, my updated asset bundle command puts dataFiles->GetPathRelative() into the ZIP.
+    # So if dataDir is "data", then "language/en-GB.txt" goes to "language/en-GB.txt" in ZIP.
+
+    zip -r0 data.zip g2.dat palettes.dat fonts.dat tracks.dat
+    if [ -d "data" ]; then
+        cd data
+        zip -r0 ../data.zip .
+        cd ..
+    fi
+fi
+
+echo "Bundled assets into $BIN_DIR/data.zip"

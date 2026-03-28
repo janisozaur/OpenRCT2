@@ -28,7 +28,10 @@ set(LIBOPENRCT2_LINKAGE)
 if (APPLE)
   set(LIBOPENRCT2_LINKAGE STATIC)
 endif()
-add_library(libopenrct2 ${LIBOPENRCT2_LINKAGE} ${OPENRCT2_CORE_SOURCES} ${OPENRCT2_CORE_MM_SOURCES} ${OPENRCT2_DUKTAPE_SOURCES})
+add_library(libopenrct2 ${LIBOPENRCT2_LINKAGE} ${OPENRCT2_CORE_SOURCES} ${OPENRCT2_CORE_MM_SOURCES} ${OPENRCT2_DUKTAPE_SOURCES}
+    "${CMAKE_CURRENT_LIST_DIR}/command_line/AssetCommands.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/platform/ZipAssetProvider.cpp"
+)
 add_library(OpenRCT2::libopenrct2 ALIAS libopenrct2)
 
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "13")
@@ -296,6 +299,7 @@ endif ()
 if (UNIX)
     add_definitions(-D_FILE_OFFSET_BITS=64)
 endif ()
+
 
 # Defines
 target_compile_definitions(libopenrct2 PUBLIC

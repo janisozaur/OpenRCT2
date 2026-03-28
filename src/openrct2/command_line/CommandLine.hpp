@@ -118,6 +118,7 @@ namespace OpenRCT2
         }
         extern const CommandLineCommand kSimulateCommands[];
         extern const CommandLineCommand kParkInfoCommands[];
+        extern const CommandLineCommand kAssetCommands[];
 
         extern const CommandLineExample kRootExamples[];
 
@@ -127,4 +128,6 @@ namespace OpenRCT2
         exitcode_t HandleCommandUri(CommandLineArgEnumerator* enumerator);
         exitcode_t HandleCommandTriggerSteamDownload(CommandLineArgEnumerator* enumerator);
     } // namespace CommandLine
+
+    exitcode_t HandleAssetBundle(CommandLineArgEnumerator* enumerator);
 } // namespace OpenRCT2

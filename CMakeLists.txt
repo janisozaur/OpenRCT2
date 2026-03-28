@@ -117,6 +117,7 @@ option(ENABLE_ASAN "Enable the AddressSanitizer.")
 option(ENABLE_UBSAN "Enable the UndefinedBehaviourSanitizer.")
 option(ENABLE_HEADERS_CHECK "Check if include directives in header files are correct. Only works with clang" OFF)
 option(DISABLE_GUI "Don't build GUI. (Headless only.)")
+option(BUNDLE_ASSETS "Bundle assets into data.zip for desktop platforms" ON)
 
 
 if (FORCE32)
@@ -414,6 +415,21 @@ if (NOT CMAKE_CROSSCOMPILING)
     if(NOT DISABLE_GUI)
         add_dependencies(openrct2 graphics)
     endif()
+
+    if (BUNDLE_ASSETS AND NOT ANDROID)
+        set(asset_zip "${CMAKE_CURRENT_BINARY_DIR}/data.zip")
+        file(GLOB_RECURSE data_files CONFIGURE_DEPENDS "${ROOT_DIR}/data/*")
+        add_custom_command(
+            OUTPUT ${asset_zip}
+            COMMAND ./openrct2-cli asset bundle "${asset_zip}" "${ROOT_DIR}/data" ${output_files}
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+            DEPENDS openrct2-cli graphics ${data_files}
+        )
+        add_custom_target(bundled_assets ALL DEPENDS ${asset_zip})
+        if(NOT DISABLE_GUI)
+            add_dependencies(openrct2 bundled_assets)
+        endif()
+    endif ()
     
 else ()
     message("Skipping graphics generation in cross-compile")
@@ -494,11 +510,15 @@ if (NOT MACOS_BUNDLE OR (MACOS_BUNDLE AND WITH_TESTS))
                 SHA256 ${REPLAYS_SHA256}
             )")
     endif ()
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/g2.dat" DESTINATION "${CMAKE_INSTALL_DATADIR}/openrct2")
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/fonts.dat" DESTINATION "${CMAKE_INSTALL_DATADIR}/openrct2")
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/palettes.dat" DESTINATION "${CMAKE_INSTALL_DATADIR}/openrct2")
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/tracks.dat" DESTINATION "${CMAKE_INSTALL_DATADIR}/openrct2")
-    install(DIRECTORY "data/" DESTINATION "${CMAKE_INSTALL_DATADIR}/openrct2")
+    if (BUNDLE_ASSETS AND NOT ANDROID)
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/data.zip" DESTINATION "${CMAKE_INSTALL_DATADIR}/openrct2")
+    else ()
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/g2.dat" DESTINATION "${CMAKE_INSTALL_DATADIR}/openrct2")
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/fonts.dat" DESTINATION "${CMAKE_INSTALL_DATADIR}/openrct2")
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/palettes.dat" DESTINATION "${CMAKE_INSTALL_DATADIR}/openrct2")
+        install(FILES "${CMAKE_CURRENT_BINARY_DIR}/tracks.dat" DESTINATION "${CMAKE_INSTALL_DATADIR}/openrct2")
+        install(DIRECTORY "data/" DESTINATION "${CMAKE_INSTALL_DATADIR}/openrct2")
+    endif ()
 
     # even when building WITH_TESTS, none of the below install steps are required for OpenRCT2.app
     if (NOT MACOS_BUNDLE)

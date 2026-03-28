@@ -12,6 +12,7 @@
 #include "../config/ConfigTypes.h"
 #include "../core/DateTime.h"
 #include "../core/StringTypes.h"
+#include "AssetTypes.h"
 
 #include <bit>
 #include <ctime>
@@ -61,15 +62,6 @@ struct TTFFontDescriptor;
 
 namespace OpenRCT2::Platform
 {
-    enum class AssetCheckResult
-    {
-        NotApplicable,
-        Found,
-        NotFound,
-    };
-
-    using AssetHandle = void*;
-
     struct SteamGameData
     {
         u8string nativeFolder;
@@ -128,19 +120,12 @@ namespace OpenRCT2::Platform
     static_assert(kAndroidAssetPathPrefix.back() == '/', "kAndroidAssetPathPrefix must end with a slash");
 #endif // __ANDROID__
 
-    struct AssetFileOpenResult
-    {
-        AssetCheckResult result;
-        AssetHandle handle;
-        uint64_t size;
-    };
-
     std::string GetEnvironmentVariable(std::string_view name);
     std::string GetFolderPath(SpecialFolder folder);
     std::string GetInstallPath();
     std::string GetDocsPath();
     std::string GetCurrentExecutablePath();
-    std::string GetCurrentExecutableDirectory();
+    [[nodiscard]] std::string GetCurrentExecutableDirectory();
     bool ShouldIgnoreCase();
     bool IsPathSeparator(char c);
     uint64_t GetLastModified(std::string_view path);
@@ -201,15 +186,10 @@ namespace OpenRCT2::Platform
     bool SetupUriProtocol();
 #endif
 #ifdef __ANDROID__
-    struct AssetInfo
-    {
-        std::string Path;
-        uint64_t Size;
-    };
     jclass AndroidFindClass(JNIEnv* env, std::string_view name);
     void* GetAssetManager();
-    const std::vector<AssetInfo>& GetAssetList();
 #endif
+    const std::vector<OpenRCT2::AssetInfo>& GetAssetList();
 
     bool IsRunningInWine();
     bool IsColourTerminalSupported();

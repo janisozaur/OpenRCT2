@@ -184,4 +184,11 @@
            AlwaysCreate="true" />
   </Target>
   <Target Name="palettes" DependsOnTargets="BuildPalettes" />
+
+  <Target Name="BundleAssets"
+          AfterTargets="CopyLanguageFiles;CopyShaders;CopyScenarioPatches;BuildG2;BuildFonts;BuildTracks;BuildPalettes"
+          Condition="'$(BUNDLE_ASSETS)' != 'false'">
+    <Exec Command="&quot;$(GraphicsCLIPath)&quot; asset bundle &quot;$(OutDir)data.zip&quot; &quot;$(DataOutputPath)&quot; &quot;$(DataOutputPath)g2.dat&quot; &quot;$(DataOutputPath)fonts.dat&quot; &quot;$(DataOutputPath)tracks.dat&quot; &quot;$(DataOutputPath)palettes.dat&quot;"
+          IgnoreExitCode="false" />
+  </Target>
 </Project>

@@ -117,6 +117,11 @@ namespace OpenRCT2
     static void PrintVersion();
     static void PrintLaunchInformation();
 
+    const CommandLineCommand CommandLine::kAssetCommands[] = {
+        DefineCommand("bundle", "<zip path> <data dir> [extra files...]", nullptr, HandleAssetBundle),
+        kCommandTableEnd
+    };
+
     const CommandLineCommand CommandLine::kRootCommands[]
     {
         // Main commands
@@ -147,6 +152,7 @@ namespace OpenRCT2
         DefineSubCommand("sprite",          Sprite::kSpriteCommands   ),
         DefineSubCommand("simulate",        kSimulateCommands         ),
         DefineSubCommand("parkinfo",        kParkInfoCommands         ),
+        DefineSubCommand("asset",           kAssetCommands            ),
         kCommandTableEnd
     };
 

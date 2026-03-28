@@ -253,20 +253,19 @@ private:
 
 #endif // _WIN32
 
-#ifdef __ANDROID__
-
-class FileScannerAndroidAssets final : public FileScannerBase
+class FileScannerAssets final : public FileScannerBase
 {
 public:
-    FileScannerAndroidAssets(u8string_view pattern, bool recurse)
+    FileScannerAssets(u8string_view pattern, bool recurse, u8string_view root)
         : FileScannerBase(pattern, recurse)
+        , _root(root)
     {
     }
 
     void GetDirectoryChildren(std::vector<DirectoryChild>& children, const std::string& path) override
     {
         const auto& assetList = Platform::GetAssetList();
-        std::string prefix = path.substr(Platform::kAndroidAssetPathPrefix.length());
+        std::string prefix = path.substr(_root.length());
         if (!prefix.empty() && prefix.back() != '/')
         {
             prefix += '/';
@@ -307,8 +306,10 @@ public:
             }
         }
     }
+
+private:
+    u8string _root;
 };
-#endif // __ANDROID__
 
 #if defined(__unix__) || defined(__HAIKU__) || (defined(__APPLE__) && defined(__MACH__))
 
@@ -390,9 +391,15 @@ std::unique_ptr<IFileScanner> Path::ScanDirectory(const std::string& pattern, bo
 #ifdef __ANDROID__
     if (String::startsWith(pattern, Platform::kAndroidAssetPathPrefix))
     {
-        return std::make_unique<FileScannerAndroidAssets>(pattern, recurse);
+        return std::make_unique<FileScannerAssets>(pattern, recurse, Platform::kAndroidAssetPathPrefix);
     }
 #endif
+
+    auto installPath = Platform::GetInstallPath();
+    if (String::startsWith(pattern, installPath) && !Path::DirectoryExists(installPath))
+    {
+        return std::make_unique<FileScannerAssets>(pattern, recurse, installPath);
+    }
 #ifdef _WIN32
     return std::make_unique<FileScannerWindows>(pattern, recurse);
 #elif defined(__unix__) || defined(__HAIKU__) || (defined(__APPLE__) && defined(__MACH__))

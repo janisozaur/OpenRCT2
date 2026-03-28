@@ -9,6 +9,7 @@
 
 #include "Zip.h"
 
+#include "../Diagnostic.h"
 #include "IStream.hpp"
 
 #ifndef __ANDROID__
@@ -79,7 +80,7 @@ public:
         auto zipOpenMode = ZIP_RDONLY;
         if (access == ZipAccess::write)
         {
-            zipOpenMode = ZIP_CREATE;
+            zipOpenMode = ZIP_CREATE | ZIP_TRUNCATE;
         }
 
         int32_t error;
@@ -94,7 +95,10 @@ public:
 
     ~ZipArchive() override
     {
-        zip_close(_zip);
+        if (zip_close(_zip) == -1)
+        {
+            LOG_ERROR("Failed to close zip archive: %s", zip_strerror(_zip));
+        }
     }
 
     size_t GetNumFiles() const override
@@ -181,6 +185,18 @@ public:
         {
             zip_source_free(source);
             throw std::runtime_error(std::string(zip_strerror(_zip)));
+        }
+    }
+
+    void SetFileCompression(std::string_view path, int32_t method, int32_t level) override
+    {
+        auto index = GetIndexFromPath(path);
+        if (index.has_value())
+        {
+            if (zip_set_file_compression(_zip, index.value(), method, static_cast<zip_uint32_t>(level)) == -1)
+            {
+                throw std::runtime_error(std::string(zip_strerror(_zip)));
+            }
         }
     }
 

@@ -193,8 +193,9 @@ Section "!OpenRCT2" Section1
 
     ; Copy data files. Clear out the old dir first, to ensure upgrades do not result in old objects sticking around.
     RMDir /r "$INSTDIR\data"
-    SetOutPath "$INSTDIR\data\"
-    File /r ${PATH_ROOT}bin\data\*
+    Delete "$INSTDIR\data.zip"
+    SetOutPath "$INSTDIR\"
+    File ${PATH_ROOT}bin\data.zip
 
     ; Copy the rest of the stuff
     SetOutPath "$INSTDIR\"
@@ -302,6 +303,7 @@ Section "Uninstall"
 
     ; Data files
     RMDir /r "$INSTDIR\data"
+    Delete "$INSTDIR\data.zip"
 
     ; Remove remaining directories
     RMDir "$SMPROGRAMS\$SHORTCUTS"
