@@ -1590,19 +1590,22 @@ public:
         {
             size_t dataSize;
             uint8_t* data = JS_GetUint8Array(_ctx, &dataSize, jsUpdates);
-            auto numUpdates = dataSize / (sizeof(int32_t) * 2 + sizeof(uint8_t) * 2);
-            param.reserve(numUpdates);
-            uint8_t* ptr = data;
-            for (size_t i = 0; i < numUpdates; i++)
+            if (data != nullptr)
             {
-                GameActions::LandSetHeightUpdate update;
-                std::memcpy(&update.Coords.x, ptr, sizeof(int32_t));
-                ptr += sizeof(int32_t);
-                std::memcpy(&update.Coords.y, ptr, sizeof(int32_t));
-                ptr += sizeof(int32_t);
-                update.Height = *ptr++;
-                update.Style = *ptr++;
-                param.push_back(update);
+                auto numUpdates = dataSize / (sizeof(int32_t) * 2 + sizeof(uint8_t) * 2);
+                param.reserve(numUpdates);
+                uint8_t* ptr = data;
+                for (size_t i = 0; i < numUpdates; i++)
+                {
+                    GameActions::LandSetHeightUpdate update;
+                    std::memcpy(&update.Coords.x, ptr, sizeof(int32_t));
+                    ptr += sizeof(int32_t);
+                    std::memcpy(&update.Coords.y, ptr, sizeof(int32_t));
+                    ptr += sizeof(int32_t);
+                    update.Height = *ptr++;
+                    update.Style = *ptr++;
+                    param.push_back(update);
+                }
             }
         }
         else if (JS_IsArray(jsUpdates))
