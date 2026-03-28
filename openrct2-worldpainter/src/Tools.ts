@@ -74,14 +74,20 @@ abstract class BaseTool {
             const d = Math.max(dx, dy);
             const r = 0.75 * d; // > sqrt(2) * (d / 2)
 
-            const center = { x: (event.mapCoords.x >> 5) + (dx & 1) / 2, y: (event.mapCoords.y >> 5) + (dy & 1) / 2 };
+            const centerX = (event.mapCoords.x >> 5) + (dx & 1) / 2;
+            const centerY = (event.mapCoords.y >> 5) + (dy & 1) / 2;
 
             const shape = Shapes[toolShape.get()];
             const newTiles: CoordsXY[] = [];
-            this.transformation = getTransformation(center.x, center.y, toolRotation.get(), dx, dy);
+            this.transformation = getTransformation(centerX, centerY, toolRotation.get(), dx, dy);
 
-            for (let x = Math.floor(center.x - r); x < center.x + r; x++)
-                for (let y = Math.floor(center.y - r); y < center.y + r; y++) {
+            const startX = Math.floor(centerX - r);
+            const endX = centerX + r;
+            const startY = Math.floor(centerY - r);
+            const endY = centerY + r;
+
+            for (let x = startX; x < endX; x++)
+                for (let y = startY; y < endY; y++) {
                     const rel = this.transformation(x + 0.5, y + 0.5); // center of tile
                     if (shape(rel.x, rel.y) <= 1)
                         newTiles.push({ x: x, y: y });
@@ -198,12 +204,12 @@ function getTransformation(cx: number, cy: number, angle: number, dx: number, dy
     const cos = Math.cos(radians);
 
     return (x: number, y: number) => {
-        x -= cx;
-        y -= cy;
+        const dx_ = x - cx;
+        const dy_ = y - cy;
 
         return {
-            x: (x * cos - y * sin) / dx * 2,
-            y: (x * sin + y * cos) / dy * 2,
+            x: (dx_ * cos - dy_ * sin) / dx * 2,
+            y: (dx_ * sin + dy_ * cos) / dy * 2,
         };
     };
 }

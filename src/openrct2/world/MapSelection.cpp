@@ -22,7 +22,7 @@ uint8_t gMapSelectArrowDirection;
 
 static std::vector<CoordsXY> _mapSelectionTiles;
 static bool _mapSelectionTilesInvalidate = false;
-static OpenRCT2::BitSet<kMaximumMapSizeTechnical* kMaximumMapSizeTechnical> _mapSelectionBitSet;
+static OpenRCT2::BitSet<kMaximumMapSizeTechnical * kMaximumMapSizeTechnical> _mapSelectionBitSet;
 
 static MapSelectFlags _previousMapSelectFlags;
 static MapSelectType _previousMapSelectType;
