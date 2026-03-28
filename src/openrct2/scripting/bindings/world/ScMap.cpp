@@ -458,7 +458,7 @@ namespace OpenRCT2::Scripting
         size_t dataSize = 0;
         uint8_t* data = nullptr;
 
-        if (JS_GetTypedArrayType(coordsInput) == JSTypedArrayEnum::JS_TYPED_ARRAY_INT32)
+        if (JS_GetTypedArrayType(coordsInput) != -1)
         {
             size_t bytes;
             uint8_t* rawData = JS_GetUint8Array(ctx, &bytes, coordsInput);
@@ -530,6 +530,12 @@ namespace OpenRCT2::Scripting
 
         JSValue result = JS_NewUint8ArrayCopy(ctx, data, dataSize);
         std::free(data);
+
+        if (JS_IsException(result))
+        {
+            return JS_EXCEPTION;
+        }
+
         return result;
     }
 
