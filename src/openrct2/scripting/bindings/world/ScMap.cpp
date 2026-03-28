@@ -13,6 +13,7 @@
 
     #include "../../../GameState.h"
     #include "../../../entity/Balloon.h"
+    #include "../../../world/Map.h"
     #include "../../../entity/Duck.h"
     #include "../../../entity/EntityList.h"
     #include "../../../entity/Fountain.h"
@@ -449,9 +450,52 @@ namespace OpenRCT2::Scripting
         return ScTrackIterator::FromElement(ctx, position, elementIndex);
     }
 
+    JSValue ScMap::getSurfaces(JSContext* ctx, JSValue thisVal, int argc, JSValue* argv)
+    {
+        JS_UNPACK_ARRAY(coordsArray, ctx, argv[0]);
+
+        int64_t len;
+        JS_GetLength(ctx, coordsArray, &len);
+        auto numTiles = static_cast<size_t>(len);
+
+        auto dataSize = numTiles * sizeof(TileElement);
+        auto* data = static_cast<uint8_t*>(std::malloc(dataSize));
+        if (data == nullptr)
+        {
+            return JS_EXCEPTION;
+        }
+
+        for (int64_t i = 0; i < len; i++)
+        {
+            JSValue jsCoords = JS_GetPropertyInt64(ctx, coordsArray, i);
+            auto coords = JSToCoordsXY(ctx, jsCoords);
+            JS_FreeValue(ctx, jsCoords);
+
+            auto surface = MapGetSurfaceElementAt(coords);
+            if (surface != nullptr)
+            {
+                std::memcpy(data + (i * sizeof(TileElement)), surface, sizeof(TileElement));
+            }
+            else
+            {
+                std::memset(data + (i * sizeof(TileElement)), 0, sizeof(TileElement));
+            }
+        }
+
+        JSValue result = JS_NewUint8ArrayCopy(ctx, data, dataSize);
+        std::free(data);
+        return result;
+    }
+
     void ScMap::Register(JSContext* ctx)
     {
+        JSValue global = JS_GetGlobalObject(ctx);
+        JSValue mapObj = JS_NewObject(ctx);
+        JS_SetPropertyStr(ctx, mapObj, "elementSize", JS_NewInt32(ctx, kTileElementSize));
+        JS_FreeValue(ctx, global);
+
         static constexpr JSCFunctionListEntry funcs[] = {
+            JS_PROP_INT32_DEF("elementSize", kTileElementSize, JS_PROP_CONFIGURABLE),
             JS_CGETSET_DEF("size", ScMap::size_get, nullptr),
             JS_CGETSET_DEF("numRides", ScMap::numRides_get, nullptr),
             JS_CGETSET_DEF("numEntities", ScMap::numEntities_get, nullptr),
@@ -463,6 +507,7 @@ namespace OpenRCT2::Scripting
             JS_CFUNC_DEF("getAllEntitiesOnTile", 2, ScMap::getAllEntitiesOnTile),
             JS_CFUNC_DEF("createEntity", 2, ScMap::createEntity),
             JS_CFUNC_DEF("getTrackIterator", 2, ScMap::getTrackIterator),
+            JS_CFUNC_DEF("getSurfaces", 1, ScMap::getSurfaces),
         };
         RegisterBase(ctx, "Map", nullptr, funcs);
     }
