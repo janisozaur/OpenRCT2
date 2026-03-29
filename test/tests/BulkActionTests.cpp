@@ -31,7 +31,7 @@ protected:
         _context->Initialise();
 
         // Create a small empty map for testing
-        MapChangeSize(64, 64, 0, 0);
+        MapInit({ 64, 64 });
         GameLoadInit();
     }
 
@@ -53,14 +53,14 @@ TEST_F(BulkActionTests, LandSetHeightBulkAction)
     LandSetHeightBulkAction action(updates);
     auto result = action.Execute(getGameState());
 
-    ASSERT_EQ(result.Error, 0);
+    ASSERT_EQ(result.error, Status::ok);
 
-    auto surface1 = MapGetSurfaceElementAt({ 32 * 32, 32 * 32 });
+    auto surface1 = MapGetSurfaceElementAt(CoordsXY{ 32 * 32, 32 * 32 });
     ASSERT_NE(surface1, nullptr);
     EXPECT_EQ(surface1->GetBaseHeight(), 10);
     EXPECT_EQ(surface1->GetSlope(), 0);
 
-    auto surface2 = MapGetSurfaceElementAt({ 33 * 32, 32 * 32 });
+    auto surface2 = MapGetSurfaceElementAt(CoordsXY{ 33 * 32, 32 * 32 });
     ASSERT_NE(surface2, nullptr);
     EXPECT_EQ(surface2->GetBaseHeight(), 12);
     EXPECT_EQ(surface2->GetSlope(), 5);
