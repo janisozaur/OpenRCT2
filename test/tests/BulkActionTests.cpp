@@ -16,6 +16,7 @@
 #include <openrct2/OpenRCT2.h>
 #include <openrct2/actions/terraform/LandSetHeightBulkAction.h>
 #include <openrct2/world/Map.h>
+#include <openrct2/world/tile_element/SurfaceElement.h>
 
 using namespace OpenRCT2;
 using namespace OpenRCT2::GameActions;
