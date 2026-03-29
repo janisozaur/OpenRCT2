@@ -458,14 +458,10 @@ namespace OpenRCT2::Scripting
         size_t dataSize = 0;
         uint8_t* data = nullptr;
 
-        if (JS_GetTypedArrayType(coordsInput) != -1)
+        size_t bytes;
+        uint8_t* rawData = JSToTypedArrayData(ctx, &bytes, coordsInput);
+        if (rawData != nullptr)
         {
-            size_t bytes;
-            uint8_t* rawData = JS_GetUint8Array(ctx, &bytes, coordsInput);
-            if (rawData == nullptr)
-            {
-                return JS_EXCEPTION;
-            }
             int32_t* coordsData = reinterpret_cast<int32_t*>(rawData);
             numTiles = bytes / (sizeof(int32_t) * 2);
 

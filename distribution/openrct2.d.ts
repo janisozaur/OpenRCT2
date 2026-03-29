@@ -1751,6 +1751,18 @@ declare global {
          */
         getTrackIterator(location: CoordsXY, elementIndex: number): TrackIterator | null;
 
+        /**
+         * Gets the surface elements for the given tile coordinates.
+         * Returns a Uint8Array containing the raw SurfaceElement data.
+         * Each element is map.elementSize bytes long.
+         * @param coords The tile coordinates as an array of objects or an Int32Array of [x, y] pairs.
+         */
+        getSurfaces(coords: CoordsXY[] | Int32Array): Uint8Array;
+
+        /**
+         * The size of a tile element in bytes when using binary APIs.
+         */
+        readonly elementSize: number;
     }
 
     type TileElementType =
@@ -4845,7 +4857,7 @@ declare global {
 
     interface TileSelection {
         range: MapRange | null;
-        tiles: CoordsXY[];
+        tiles: CoordsXY[] | Int32Array;
     }
 
     interface Tool {

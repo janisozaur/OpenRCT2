@@ -1586,11 +1586,10 @@ public:
     void Visit(std::string_view name, std::vector<GameActions::LandSetHeightUpdate>& param) override
     {
         JSValue jsUpdates = JS_GetPropertyStr(_ctx, _jsValue, std::string(name).c_str());
-        if (JS_GetTypedArrayType(jsUpdates) != -1)
+        size_t dataSize;
+        uint8_t* data = JSToTypedArrayData(_ctx, &dataSize, jsUpdates);
+        if (data != nullptr)
         {
-            size_t dataSize;
-            uint8_t* data = JS_GetUint8Array(_ctx, &dataSize, jsUpdates);
-            if (data != nullptr)
             {
                 auto numUpdates = dataSize / (sizeof(int32_t) * 2 + sizeof(uint8_t) * 2);
                 param.reserve(numUpdates);

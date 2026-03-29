@@ -173,7 +173,8 @@ namespace OpenRCT2::MapSelection
         if (_previousMapSelectFlags.has(MapSelectFlag::enableConstruct) && !gMapSelectFlags.has(MapSelectFlag::enableConstruct))
         {
             // If we just disabled construct selection, we might have cleared the list already, but we still need to invalidate.
-            // But clearSelectedTiles now sets _mapSelectionTilesInvalidate, so it should be handled above if it happened this tick.
+            // But clearSelectedTiles now sets _mapSelectionTilesInvalidate, so it should be handled above if it happened this
+            // tick.
         }
 
         _mapSelectionTilesInvalidate = false;

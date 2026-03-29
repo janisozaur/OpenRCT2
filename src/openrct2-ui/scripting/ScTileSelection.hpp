@@ -12,9 +12,9 @@
 #ifdef ENABLE_SCRIPTING
 
     #include <openrct2/drawing/Drawing.h>
+    #include <openrct2/scripting/ScriptUtil.hpp>
     #include <openrct2/world/MapSelection.h>
     #include "ScBase.hpp"
-    #include "../ScriptUtil.hpp"
 
 namespace OpenRCT2::Scripting
 {
