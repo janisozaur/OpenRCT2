@@ -175,12 +175,13 @@ export function setSelection(selectionDesc: SelectionDesc): void {
     hardReset();
 }
 
-const cornerOffsets = [[1, 1], [1, 0], [0, 0], [0, 1]];
+const cornerOffsets = [[0, 0], [1, 0], [1, 1], [0, 1]]; // N, E, S, W
 export function apply(delta: number): void {
     const changedProfile = currentProfile.lazyClone();
     if (executeAll(tiles, ({ x, y }, idx) => {
         const oldProfile = originalProfile.getZ(idx);
-        const newProfile = cornerOffsets.map(([dx, dy], cornerIdx) => {
+        const newProfile = [0, 1, 2, 3].map(cornerIdx => {
+            const [dx, dy] = cornerOffsets[cornerIdx];
             const z = strategy(oldProfile[cornerIdx], deltaProfile(x + dx, y + dy) * delta);
             return Math.max(0, Math.min(127, z));
         }) as Num4;
@@ -245,36 +246,51 @@ export function init(): void {
 }
 
 export function smooth(selection: SelectionDesc, delta: number): void {
-    setSelection(selection);
+    const isNewSelection = !currentSelection || currentSelection.tiles.length !== selection.tiles.length;
+    if (isNewSelection) {
+        setSelection(selection);
+    }
+
     const fun1 = delta > 0 ? Math.max : Math.min;
     const fun2 = delta > 0 ? Math.min : Math.max;
 
-    const cornerHeightsCache: LookUp<Num4> = {};
+    const tileMap: Map<number, number> = new Map();
     for (let i = 0; i < tiles.length; i++) {
-        cornerHeightsCache[i] = originalProfile.getZ(i);
+        tileMap.set((tiles[i].x << 16) | tiles[i].y, i);
     }
 
-    executeAll(tiles, ({ x, y }, i) => {
+    const changedProfile = currentProfile.lazyClone();
+    const cornerHeightsCache: Num4[] = [];
+    for (let i = 0; i < tiles.length; i++) {
+        cornerHeightsCache[i] = currentProfile.getZ(i);
+    }
+
+    if (executeAll(tiles, ({ x, y }, i) => {
         const oldProfile = cornerHeightsCache[i];
 
-        const neighborHeights = cornerOffsets.map(([dx, dy], cornerIdx) => {
+        const neighborHeights = [0, 1, 2, 3].map(cornerIdx => {
+            const [dx, dy] = cornerOffsets[cornerIdx];
             const nx = x + dx;
             const ny = y + dy;
-            const cornerHeights = cornerOffsets
-                .map(([ndx, ndy], nIdx) => {
-                    const tx = nx - ndx;
-                    const ty = ny - ndy;
-                    const nTileIdx = tiles.findIndex(t => t.x === tx && t.y === ty);
-                    return nTileIdx !== -1 ? cornerHeightsCache[nTileIdx][nIdx] : undefined;
-                })
-                .filter(z => z !== undefined) as number[];
+            const cornerHeights: number[] = [];
+
+            for (let nIdx = 0; nIdx < 4; nIdx++) {
+                const [ndx, ndy] = cornerOffsets[nIdx];
+                const tx = nx - ndx;
+                const ty = ny - ndy;
+                const nTileIdx = tileMap.get((tx << 16) | ty);
+                if (nTileIdx !== undefined) {
+                    cornerHeights.push(cornerHeightsCache[nTileIdx][nIdx]);
+                }
+            }
             return fun1(...cornerHeights);
         });
 
-        const newProfile = cornerOffsets.map((_, cornerIdx) => {
+        const newProfile = [0, 1, 2, 3].map(cornerIdx => {
             const z = fun2(oldProfile[cornerIdx] + delta, neighborHeights[cornerIdx]);
             return Math.max(0, Math.min(127, z));
         }) as Num4;
+        changedProfile.setZ(i, newProfile);
 
         const integral = newProfile.map(corner => Math.round(corner));
         const height = Math.max(Math.min(...integral, 0x7F), 1);
@@ -291,7 +307,9 @@ export function smooth(selection: SelectionDesc, delta: number): void {
             height: height << 1,
             style: slope,
         };
-    });
+    })) {
+        currentProfile = changedProfile;
+    }
 }
 
 export function flat(selection: SelectionDesc, delta: number): void {
