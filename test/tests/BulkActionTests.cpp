@@ -58,11 +58,11 @@ TEST_F(BulkActionTests, LandSetHeightBulkAction)
 
     auto surface1 = MapGetSurfaceElementAt(CoordsXY{ 32 * 32, 32 * 32 });
     ASSERT_NE(surface1, nullptr);
-    EXPECT_EQ(surface1->GetBaseHeight(), 10);
+    EXPECT_EQ(surface1->BaseHeight, 10);
     EXPECT_EQ(surface1->GetSlope(), 0);
 
     auto surface2 = MapGetSurfaceElementAt(CoordsXY{ 33 * 32, 32 * 32 });
     ASSERT_NE(surface2, nullptr);
-    EXPECT_EQ(surface2->GetBaseHeight(), 12);
+    EXPECT_EQ(surface2->BaseHeight, 12);
     EXPECT_EQ(surface2->GetSlope(), 5);
 }
