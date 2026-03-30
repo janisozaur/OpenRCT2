@@ -385,6 +385,15 @@ void InputManager::process(const InputEvent& e)
             {
                 return;
             }
+
+        if (InputGetState() == InputState::DropdownActive)
+        {
+            if (e.state == InputEventState::release)
+            {
+                Windows::WindowDropdownHandleKeyDown(e.button);
+            }
+            return;
+        }
         }
     }
     shortcutManager.processEvent(e);

@@ -222,4 +222,5 @@ namespace OpenRCT2::String
     int32_t logicalCmp(char const* a, char const* b);
     char* safeUtf8Copy(char* destination, const char* source, size_t num);
     char* safeConcat(char* destination, const char* source, size_t size);
+    bool fuzzyContains(std::string_view haystack, std::string_view needle);
 } // namespace OpenRCT2::String

@@ -579,6 +579,10 @@ public:
                     break;
                 case SDL_TEXTINPUT:
                     _textComposition.HandleMessage(&e);
+                    if (InputGetState() == InputState::DropdownActive)
+                    {
+                        Windows::WindowDropdownHandleTextInput(e.text.text);
+                    }
                     break;
                 default:
                 {

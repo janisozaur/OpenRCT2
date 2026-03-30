@@ -16,6 +16,7 @@ namespace OpenRCT2
     enum : StringId
     {
         // General
+        STR_NO_MATCHES_FOUND = 7030,
         STR_ADJUST_LARGER_LAND_TIP = 2379,
         STR_ADJUST_SMALLER_LAND_TIP = 2378,
         STR_BROKEN = 3124,

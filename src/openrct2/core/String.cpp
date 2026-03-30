@@ -868,4 +868,27 @@ namespace OpenRCT2::String
 
         return result;
     }
+
+    bool fuzzyContains(std::string_view haystack, std::string_view needle)
+    {
+        if (needle.empty())
+            return true;
+
+        auto h = toUpper(haystack);
+        auto n = toUpper(needle);
+
+        size_t hIdx = 0;
+        size_t nIdx = 0;
+
+        while (hIdx < h.size() && nIdx < n.size())
+        {
+            if (h[hIdx] == n[nIdx])
+            {
+                nIdx++;
+            }
+            hIdx++;
+        }
+
+        return nIdx == n.size();
+    }
 } // namespace OpenRCT2::String
