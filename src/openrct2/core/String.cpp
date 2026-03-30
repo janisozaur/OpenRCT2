@@ -894,4 +894,19 @@ namespace OpenRCT2::String
 
         return nIdx == n.size();
     }
+
+    void backspace(char* str)
+    {
+        if (str == nullptr || *str == '\0')
+            return;
+
+        char* prev = str;
+        const char* curr = str;
+        while (*curr != '\0')
+        {
+            prev = const_cast<char*>(curr);
+            UTF8GetNext(curr, &curr);
+        }
+        *prev = '\0';
+    }
 } // namespace OpenRCT2::String

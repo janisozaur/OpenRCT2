@@ -223,4 +223,5 @@ namespace OpenRCT2::String
     char* safeUtf8Copy(char* destination, const char* source, size_t num);
     char* safeConcat(char* destination, const char* source, size_t size);
     bool fuzzyContains(std::string_view haystack, std::string_view needle);
+    void backspace(char* str);
 } // namespace OpenRCT2::String
