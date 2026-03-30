@@ -935,15 +935,23 @@ declare global {
         selectionType: number;
     }
 
-    interface LandSetHeightArgs extends GameActionArgs {
-        x?: number;
-        y?: number;
-        height?: number;
-        /** @see {@link https://github.com/OpenRCT2/OpenRCT2/blob/develop/src/openrct2/actions/LandSetHeightAction.h} */
-        style?: number;
-        /** Packed updates: x(4), y(4), height(1), style(1) = 10 bytes per update */
-        updates?: Uint8Array;
-    }
+    type LandSetHeightArgs = GameActionArgs & (
+        {
+            x: number;
+            y: number;
+            height: number;
+            /** @see {@link https://github.com/OpenRCT2/OpenRCT2/blob/develop/src/openrct2/actions/LandSetHeightAction.h} */
+            style: number;
+            updates?: never;
+        } | {
+            /** Packed updates: x(4), y(4), height(1), style(1) = 10 bytes per update */
+            updates: Uint8Array;
+            x?: never;
+            y?: never;
+            height?: never;
+            style?: never;
+        }
+    );
 
     interface LandSetRightsArgs extends GameActionArgs {
         x1: number;

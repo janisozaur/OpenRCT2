@@ -102,6 +102,9 @@ namespace OpenRCT2::Scripting
 
         static JSValue tiles_set(JSContext* ctx, JSValue thisVal, JSValue value)
         {
+            // Aggressively invalidate previous selection region
+            MapSelection::invalidate();
+            GfxInvalidateScreen();
             MapSelection::clearSelectedTiles();
 
             size_t bytes;

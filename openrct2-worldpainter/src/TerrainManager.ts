@@ -28,35 +28,45 @@ function getSurfaces(selection: SelectionDesc): void {
         surfaceBuffer = new Uint8Array(0);
         return;
     }
-    surfaceBuffer = (map as any).getSurfaces(selection.binaryTiles);
+    surfaceBuffer = map.getSurfaces(selection.binaryTiles);
 }
 
 function getSurfaceZFromBuffer(idx: number): Num4 {
-    if (!surfaceBuffer || idx * 16 >= surfaceBuffer.length) return [0, 0, 0, 0];
+    const elSize = map.elementSize;
+    if (!surfaceBuffer || idx * elSize >= surfaceBuffer.length) return [0, 0, 0, 0];
 
     // SurfaceElement layout:
     // 0-4: TileElementBase (Type, Flags, BaseHeight, ClearanceHeight, Owner)
     // 5: Slope
     // 6: WaterHeight
-    const baseHeight = surfaceBuffer[idx * 16 + 2];
-    const slope = surfaceBuffer[idx * 16 + 5];
+    const baseHeight = surfaceBuffer[idx * elSize + 2];
+    const slope = surfaceBuffer[idx * elSize + 5];
+    const baseZ = baseHeight / 2;
 
-    return [0, 1, 2, 3].map(corner =>
-        baseHeight / 2 // baseHeight in terrain steps
-        + (slope >> corner & 1) // add 1 if corner is raised
-        + (slope >> 4 & 1) // add 1 if slope is diagonally raised
-        * (1 - (slope >> ((corner + 2) & 3) & 1)) // but only if the opposite corner is lowered
-    ) as Num4;
+    return [0, 1, 2, 3].map(cornerIdx => {
+        let z = baseZ;
+        if (slope & (1 << cornerIdx)) {
+            z += 1;
+            // Diagonal flag (bit 4) raises one corner by an extra step
+            // It applies to the corner opposite to the only one that is NOT raised
+            if ((slope & 0x10) && (slope & 0xF) === (0xF & ~(1 << ((cornerIdx + 2) & 3)))) {
+                z += 1;
+            }
+        }
+        return z;
+    }) as Num4;
 }
 
 function getBaseHeightFromBuffer(idx: number): number {
-    if (!surfaceBuffer || idx * 16 >= surfaceBuffer.length) return 0;
-    return surfaceBuffer[idx * 16 + 2];
+    const elSize = map.elementSize;
+    if (!surfaceBuffer || idx * elSize >= surfaceBuffer.length) return 0;
+    return surfaceBuffer[idx * elSize + 2];
 }
 
 function getSlopeFromBuffer(idx: number): number {
-    if (!surfaceBuffer || idx * 16 >= surfaceBuffer.length) return 0;
-    return surfaceBuffer[idx * 16 + 5];
+    const elSize = map.elementSize;
+    if (!surfaceBuffer || idx * elSize >= surfaceBuffer.length) return 0;
+    return surfaceBuffer[idx * elSize + 5];
 }
 
 function executeAll(tiles: CoordsXY[], fun: (tile: CoordsXY, idx: number) => LandSetHeightArgs | undefined): boolean {
@@ -73,20 +83,27 @@ function executeAll(tiles: CoordsXY[], fun: (tile: CoordsXY, idx: number) => Lan
         }
     }
 
+    const mapSize = map.size;
     const updatesCount = tiles.length;
     // Each update in binary: x(4), y(4), height(1), style(1) = 10 bytes
     const buffer = new Uint8Array(updatesCount * 10);
     let validUpdates = 0;
 
     for (let i = 0; i < updatesCount; i++) {
-        const args = fun(tiles[i], i);
-        if (args) {
+        const tile = tiles[i];
+        if (tile.x <= 0 || tile.y <= 0 || tile.x >= mapSize.x - 1 || tile.y >= mapSize.y - 1) {
+            continue;
+        }
+
+        const args = fun(tile, i);
+        if (args && !("updates" in args)) {
+            const a = args as { x: number, y: number, height: number, style: number };
             const offset = validUpdates * 10;
             const dv = new DataView(buffer.buffer, buffer.byteOffset + offset, 10);
-            dv.setInt32(0, args.x, true);
-            dv.setInt32(4, args.y, true);
-            buffer[offset + 8] = args.height;
-            buffer[offset + 9] = args.style;
+            dv.setInt32(0, a.x, true);
+            dv.setInt32(4, a.y, true);
+            buffer[offset + 8] = a.height;
+            buffer[offset + 9] = a.style;
             validUpdates++;
         }
     }
@@ -94,7 +111,7 @@ function executeAll(tiles: CoordsXY[], fun: (tile: CoordsXY, idx: number) => Lan
     if (validUpdates === 0) return true;
     const finalBuffer = validUpdates === updatesCount ? buffer : buffer.slice(0, validUpdates * 10);
 
-    context.queryAction("landsetheight", { updates: finalBuffer }, result => {
+    context.queryAction("landsetheight", { updates: finalBuffer } as any, result => {
         if (result.error) {
             ui.showError(
                 result.errorTitle || "",
@@ -175,7 +192,7 @@ export function setSelection(selectionDesc: SelectionDesc): void {
     hardReset();
 }
 
-const cornerOffsets = [[0, 0], [1, 0], [1, 1], [0, 1]]; // N, E, S, W
+const cornerOffsets = [[1, 1], [1, 0], [0, 0], [0, 1]]; // N, E, S, W
 export function apply(delta: number): void {
     const changedProfile = currentProfile.lazyClone();
     if (executeAll(tiles, ({ x, y }, idx) => {
@@ -188,13 +205,18 @@ export function apply(delta: number): void {
         changedProfile.setZ(idx, newProfile);
 
         const integral = newProfile.map(corner => Math.round(corner));
-        const height = Math.max(Math.min(...integral, 0x7F), 1);
-        const relativeIntegral = integral.map(corner => Math.max(Math.min(corner, 0x7f) - height, 0));
-        const slope = relativeIntegral.reduce((slope, z, idx) => {
+        const height = Math.max(Math.min(...integral, 127), 0);
+        const relativeIntegral = integral.map(corner => Math.max(Math.min(corner, 127) - height, 0));
+        let slope = relativeIntegral.reduce((slope, z, idx) => {
             if (z) slope |= 1 << idx;
-            if (z > 1) slope |= (1 << 4);
             return slope;
         }, 0);
+
+        // Diagonal flag (bit 4) is used for double-height corner in 3-corner-up slopes
+        const raisedCount = relativeIntegral.filter(z => z > 0).length;
+        if (raisedCount === 3 && relativeIntegral.some(z => z > 1)) {
+            slope |= (1 << 4);
+        }
 
         return {
             x: x << 5,
@@ -293,13 +315,18 @@ export function smooth(selection: SelectionDesc, delta: number): void {
         changedProfile.setZ(i, newProfile);
 
         const integral = newProfile.map(corner => Math.round(corner));
-        const height = Math.max(Math.min(...integral, 0x7F), 1);
-        const relativeIntegral = integral.map(corner => Math.max(Math.min(corner, 0x7f) - height, 0));
-        const slope = relativeIntegral.reduce((slope, z, idx) => {
+        const height = Math.max(Math.min(...integral, 127), 0);
+        const relativeIntegral = integral.map(corner => Math.max(Math.min(corner, 127) - height, 0));
+        let slope = relativeIntegral.reduce((slope, z, idx) => {
             if (z) slope |= 1 << idx;
-            if (z > 1) slope |= (1 << 4);
             return slope;
         }, 0);
+
+        // Diagonal flag (bit 4) is used for double-height corner in 3-corner-up slopes
+        const raisedCount = relativeIntegral.filter(z => z > 0).length;
+        if (raisedCount === 3 && relativeIntegral.some(z => z > 1)) {
+            slope |= (1 << 4);
+        }
 
         return {
             x: x << 5,
