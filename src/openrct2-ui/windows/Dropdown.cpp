@@ -30,6 +30,7 @@
 #include <openrct2/localisation/Formatting.h>
 #include <openrct2/localisation/Language.h>
 #include <openrct2/ui/WindowManager.h>
+#include <string>
 
 using namespace OpenRCT2::Drawing;
 
@@ -69,6 +70,9 @@ namespace OpenRCT2::Ui::Windows
         int32_t ItemPadding = 0;
         bool ListVertically = true;
         bool IsSearchable = false;
+        int32_t MaxRowsPerColumn = Dropdown::kItemsMaxSize;
+        ScreenCoordsXY BaseScreenPos;
+        int32_t BaseExtraY;
 
         void FilterItems()
         {
@@ -98,12 +102,18 @@ namespace OpenRCT2::Ui::Windows
             {
                 if (!ListVertically)
                 {
+                    NumColumns = std::max(1, NumColumns);
                     NumRows = (gDropdown.numFilteredItems + NumColumns - 1) / NumColumns;
                 }
                 else
                 {
-                    NumColumns = 1;
-                    NumRows = gDropdown.numFilteredItems;
+                    int32_t availableHeight = getSpaceUntilBottom(BaseScreenPos, BaseExtraY);
+                    if (IsSearchable)
+                        availableHeight -= (ItemHeight + 2);
+
+                    int32_t numAvailableRows = std::max(1, availableHeight / ItemHeight);
+                    NumRows = std::min({ gDropdown.numFilteredItems, numAvailableRows, MaxRowsPerColumn });
+                    NumColumns = (gDropdown.numFilteredItems + NumRows - 1) / NumRows;
                 }
             }
             else
@@ -116,6 +126,11 @@ namespace OpenRCT2::Ui::Windows
             {
                 gDropdown.highlightedIndex = gDropdown.numFilteredItems - 1;
             }
+        }
+
+        void onResize() override
+        {
+            UpdateSizeAndPosition(BaseScreenPos, BaseExtraY);
         }
 
     public:
@@ -145,6 +160,7 @@ namespace OpenRCT2::Ui::Windows
 
             String::safeConcat(gDropdown.searchText, text.data(), sizeof(gDropdown.searchText));
             FilterItems();
+            UpdateSizeAndPosition(BaseScreenPos, BaseExtraY);
             invalidate();
         }
 
@@ -162,6 +178,7 @@ namespace OpenRCT2::Ui::Windows
                     {
                         gDropdown.searchText[len - 1] = '\0';
                         FilterItems();
+                        UpdateSizeAndPosition(BaseScreenPos, BaseExtraY);
                         invalidate();
                     }
                     break;
@@ -307,15 +324,15 @@ namespace OpenRCT2::Ui::Windows
                 const ScreenCoordsXY searchBoxBottomRight = searchBoxTopLeft + ScreenCoordsXY{ width - 5, ItemHeight - 1 };
                 Rectangle::fillInset(rt, { searchBoxTopLeft, searchBoxBottomRight }, colours[0], Rectangle::BorderStyle::inset);
 
-                // Draw search indicator triangle (mimic dropdown arrow)
-                const ScreenCoordsXY trianglePos = { windowPos.x + width - 11, windowPos.y + 3 };
-                drawText(rt, trianglePos, STR_DROPDOWN_GLYPH);
+                std::string searchDisplay = std::string(reinterpret_cast<const char*>(gDropdown.searchText));
+                if (TextBoxCaretIsFlashed())
+                {
+                    searchDisplay += "_";
+                }
 
                 Formatter ft;
-                ft.Add<const utf8*>(gDropdown.searchText);
-                ft.Add<const utf8*>(TextBoxCaretIsFlashed() ? u8"_" : u8"");
-                drawTextEllipsised(
-                    rt, searchBoxTopLeft + ScreenCoordsXY{ 1, 1 }, width - 15, STR_STRING_STRINGID, ft, colours[0].colour);
+                ft.Add<const char*>(searchDisplay.c_str());
+                drawTextEllipsised(rt, searchBoxTopLeft + ScreenCoordsXY{ 1, 1 }, width - 7, STR_STRING, ft, colours[0].colour);
 
                 yOffset += ItemHeight + 2;
             }
@@ -384,32 +401,16 @@ namespace OpenRCT2::Ui::Windows
             // Set and calculate num items, rows and columns
             ItemHeight = (txtFlags & Dropdown::Flag::CustomHeight) ? customItemHeight : GetDefaultRowHeight();
             ItemPadding = (txtFlags & Dropdown::Flag::CustomHeight) ? 0 : GetAdditionalRowPadding();
+            ItemWidth = itemWidth;
+            BaseScreenPos = screenPos;
+            BaseExtraY = extraY;
+            MaxRowsPerColumn = numRowsPerColumn > 0 ? numRowsPerColumn : Dropdown::kItemsMaxSize;
 
             gDropdown.numItems = static_cast<int32_t>(numItems);
             IsSearchable = (gDropdown.numItems > 10);
             ListVertically = true;
             FilterItems();
-
-            if (gDropdown.numFilteredItems > 0)
-            {
-                int32_t availableHeight = getSpaceUntilBottom(screenPos, extraY);
-                if (IsSearchable)
-                    availableHeight -= (ItemHeight + 2);
-
-                int32_t numAvailableRows = std::max(1, availableHeight / ItemHeight);
-                NumRows = std::min({ gDropdown.numFilteredItems, numAvailableRows, numRowsPerColumn });
-                NumColumns = (gDropdown.numFilteredItems + NumRows - 1) / NumRows;
-            }
-            else
-            {
-                // There must always be at least one column to prevent dividing by zero
-                NumRows = 1;
-                NumColumns = 1;
-            }
-
-            ItemWidth = itemWidth;
-
-            UpdateSizeAndPosition(screenPos, extraY);
+            UpdateSizeAndPosition(BaseScreenPos, BaseExtraY);
 
             if (colour.flags.has(ColourFlag::translucent))
                 flags |= WindowFlag::transparent;
@@ -424,24 +425,24 @@ namespace OpenRCT2::Ui::Windows
             ItemWidth = itemWidth;
             ItemHeight = itemHeight;
             gDropdown.numItems = numItems;
+            BaseScreenPos = screenPos;
+            BaseExtraY = extraY;
+            NumColumns = std::max(1, numColumns);
 
             // There must always be at least one column and row to prevent dividing by zero
             if (gDropdown.numItems == 0)
             {
-                NumColumns = 1;
                 NumRows = 1;
             }
             else
             {
-                NumColumns = std::max(1, numColumns);
-                NumRows = gDropdown.numItems / NumColumns;
-                if (gDropdown.numItems % NumColumns != 0)
-                    NumRows++;
+                NumRows = (gDropdown.numItems + NumColumns - 1) / NumColumns;
             }
 
             // image dropdowns are listed horizontally
             ListVertically = false;
-
+            IsSearchable = false;
+            FilterItems();
             UpdateSizeAndPosition(screenPos, extraY);
 
             if (colour.flags.has(ColourFlag::translucent))
