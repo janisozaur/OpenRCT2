@@ -40,7 +40,10 @@
 
 #if defined(__unix__) || defined(__HAIKU__) || (defined(__APPLE__) && defined(__MACH__))
     #include <strings.h>
-    #define _stricmp(x, y) strcasecmp((x), (y))
+static int _stricmp(const char* x, const char* y)
+{
+    return strcasecmp(x, y);
+}
 #endif
 
 namespace OpenRCT2::String

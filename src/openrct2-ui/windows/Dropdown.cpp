@@ -7,6 +7,7 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
+#include <SDL.h>
 #include <algorithm>
 #include <bitset>
 #include <iterator>
@@ -310,7 +311,7 @@ namespace OpenRCT2::Ui::Windows
                 ft.Add<const utf8*>(gDropdown.searchText);
                 ft.Add<const utf8*>(TextBoxCaretIsFlashed() ? u8"_" : u8"");
                 drawTextEllipsised(
-                    rt, searchBoxTopLeft + ScreenCoordsXY{ 1, 1 }, width - 15, STR_STRING_STRINGID, ft, { { colours[0].colour } });
+                    rt, searchBoxTopLeft + ScreenCoordsXY{ 1, 1 }, width - 15, STR_STRING_STRINGID, ft, colours[0].colour);
 
                 yOffset += ItemHeight + 2;
             }
@@ -664,8 +665,7 @@ namespace OpenRCT2::Ui::Windows
         {
             if (w->classification != WindowClass::dropdown && !w->flags.has(WindowFlag::dead))
             {
-                if (gPressedWidget.windowClassification == w->classification
-                    && gPressedWidget.windowNumber == w->number)
+                if (gPressedWidget.windowClassification == w->classification && gPressedWidget.windowNumber == w->number)
                 {
                     windowMgr->CloseByClass(WindowClass::dropdown);
                     _inputState = InputState::Normal;
