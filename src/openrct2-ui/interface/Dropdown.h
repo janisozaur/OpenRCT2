@@ -213,9 +213,9 @@ namespace OpenRCT2::Dropdown
         int32_t numItems{};
         std::array<Item, kItemsMaxSize> items{};
         bool hasTooltips{};
-        int32_t lastTooltipHover{};
-        int32_t highlightedIndex{};
-        int32_t defaultIndex{};
+        int32_t lastTooltipHover = -1;
+        int32_t highlightedIndex = -1;
+        int32_t defaultIndex = -1;
 
         std::optional<CellDrawFunction> cellDrawFunction;
 

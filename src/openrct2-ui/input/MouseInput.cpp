@@ -1389,13 +1389,6 @@ namespace OpenRCT2
                             gTooltipWidget.windowClassification = cursor_w_class;
                             gTooltipWidget.windowNumber = cursor_w_number;
 
-                            if (dropdown_index == -1)
-                            {
-                                if (gDropdown.defaultIndex != -1 && !gDropdown.items[gDropdown.defaultIndex].isDisabled())
-                                {
-                                    dropdown_index = gDropdown.defaultIndex;
-                                }
-                            }
                             cursor_w->onDropdown(cursor_widgetIndex, dropdown_index);
                         }
                     }

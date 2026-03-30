@@ -194,13 +194,13 @@ namespace OpenRCT2::Ui::Windows
                 case SDLK_KP_ENTER:
                 {
                     int32_t index = gDropdown.highlightedIndex;
-                    if (index == -1 && gDropdown.numFilteredItems > 0)
-                    {
-                        index = gDropdown.filteredItems[0];
-                    }
                     if (index != -1)
                     {
                         WindowDropdownSelectItem(index);
+                    }
+                    else
+                    {
+                        WindowDropdownClose();
                     }
                     break;
                 }
@@ -492,6 +492,8 @@ namespace OpenRCT2::Ui::Windows
             // image dropdowns are listed horizontally
             ListVertically = false;
             IsSearchable = false;
+
+            gDropdown.highlightedIndex = gDropdown.defaultIndex;
             FilterItems();
             UpdateSizeAndPosition(screenPos, extraY);
 
@@ -508,6 +510,10 @@ namespace OpenRCT2::Ui::Windows
                 yOffset += ItemHeight + 2;
             }
 
+            // If the mouse is in the padding/search box area, no item is selected
+            if (loc.y < windowPos.y + yOffset)
+                return -1;
+
             int32_t top = loc.y - windowPos.y - yOffset;
             if (top < 0)
                 return -1;
@@ -516,7 +522,7 @@ namespace OpenRCT2::Ui::Windows
             if (left >= width)
                 return -1;
             left -= 2;
-            if (left < 0)
+            if (left < 0 || left >= ItemWidth * NumColumns)
                 return -1;
 
             int32_t columnNum = left / ItemWidth;
@@ -639,6 +645,7 @@ namespace OpenRCT2::Ui::Windows
 
         gDropdown.searchText[0] = '\0';
         gDropdown.numFilteredItems = 0;
+        gDropdown.highlightedIndex = -1;
 
         // Create the window (width/height position are set later)
         auto* windowMgr = GetWindowManager();
@@ -689,6 +696,7 @@ namespace OpenRCT2::Ui::Windows
 
         gDropdown.searchText[0] = '\0';
         gDropdown.numFilteredItems = 0;
+        gDropdown.highlightedIndex = -1;
 
         // Create the window (width/height position are set later)
         auto* windowMgr = GetWindowManager();
