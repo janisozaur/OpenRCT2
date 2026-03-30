@@ -17,6 +17,7 @@
 #include <openrct2-ui/UiContext.h>
 #include <openrct2-ui/input/MouseInput.h>
 #include <openrct2-ui/input/ShortcutManager.h>
+#include <openrct2-ui/interface/Dropdown.h>
 #include <openrct2-ui/interface/InGameConsole.h>
 #include <openrct2-ui/interface/Window.h>
 #include <openrct2-ui/windows/Windows.h>
@@ -383,6 +384,15 @@ void InputManager::process(const InputEvent& e)
 
             if (Windows::IsUsingWidgetTextBox())
             {
+                return;
+            }
+
+            if (InputGetState() == InputState::DropdownActive)
+            {
+                if (e.state == InputEventState::down)
+                {
+                    Ui::Windows::WindowDropdownHandleKeyDown(e.button);
+                }
                 return;
             }
         }

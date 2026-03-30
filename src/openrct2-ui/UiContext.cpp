@@ -16,6 +16,7 @@
 #include "WindowManager.h"
 #include "drawing/engines/DrawingEngineFactory.hpp"
 #include "input/ShortcutManager.h"
+#include "interface/Dropdown.h"
 #include "interface/InGameConsole.h"
 #include "interface/Theme.h"
 #include "interface/Viewport.h"
@@ -579,6 +580,10 @@ public:
                     break;
                 case SDL_TEXTINPUT:
                     _textComposition.HandleMessage(&e);
+                    if (InputGetState() == InputState::DropdownActive)
+                    {
+                        Ui::Windows::WindowDropdownHandleTextInput(e.text.text);
+                    }
                     break;
                 default:
                 {
