@@ -62,13 +62,13 @@ namespace OpenRCT2::Ui::Windows
 
     class DropdownWindow final : public Window
     {
-        int32_t NumColumns;
-        int32_t NumRows;
-        int32_t ItemWidth;
-        int32_t ItemHeight;
-        int32_t ItemPadding;
-        bool ListVertically;
-        bool IsSearchable;
+        int32_t NumColumns = 1;
+        int32_t NumRows = 1;
+        int32_t ItemWidth = 1;
+        int32_t ItemHeight = 1;
+        int32_t ItemPadding = 0;
+        bool ListVertically = true;
+        bool IsSearchable = false;
 
         void FilterItems()
         {
@@ -124,12 +124,16 @@ namespace OpenRCT2::Ui::Windows
             setWidgets(kWindowDropdownWidgets);
 
             // Input state
+            NumColumns = 1;
+            NumRows = 1;
+            ListVertically = true;
+            IsSearchable = false;
+
             gDropdown.highlightedIndex = -1;
             gDropdown.hasTooltips = false;
             gDropdown.defaultIndex = -1;
             gDropdown.searchText[0] = '\0';
             gDropdown.numFilteredItems = 0;
-            IsSearchable = false;
 
             InputSetState(InputState::DropdownActive);
         }
@@ -383,6 +387,7 @@ namespace OpenRCT2::Ui::Windows
 
             gDropdown.numItems = static_cast<int32_t>(numItems);
             IsSearchable = (gDropdown.numItems > 10);
+            ListVertically = true;
             FilterItems();
 
             if (gDropdown.numFilteredItems > 0)
@@ -403,9 +408,6 @@ namespace OpenRCT2::Ui::Windows
             }
 
             ItemWidth = itemWidth;
-
-            // Text dropdowns are listed horizontally
-            ListVertically = true;
 
             UpdateSizeAndPosition(screenPos, extraY);
 
