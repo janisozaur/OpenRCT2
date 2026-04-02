@@ -1,0 +1,460 @@
+llvm-xray stack xray-log.openrct2.3xlaX5 --instr_map=./openrct2
+
+Unique Stacks: 11148
+Top 10 Stacks by leaf sum:
+
+Sum: 57868789292
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    void OpenRCT2::Drawing::InvalidationGrid::traverseDirtyCe...          338     113715095149
+#6    OpenRCT2::WindowDrawAll(OpenRCT2::Drawing::RenderTarget&,...          778     113713805649
+#7    OpenRCT2::WindowDrawCore(OpenRCT2::Drawing::RenderTarget&...          778     113711427420
+#8    OpenRCT2::ViewportRender(OpenRCT2::Drawing::RenderTarget&...          760     113216235326
+#9    void PaintSessionGenerateRotate<(unsigned char)2>(PaintSe...        74837      57868789292
+
+Sum: 41566096501
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    void OpenRCT2::Drawing::InvalidationGrid::traverseDirtyCe...          338     113715095149
+#6    OpenRCT2::WindowDrawAll(OpenRCT2::Drawing::RenderTarget&,...          778     113713805649
+#7    OpenRCT2::WindowDrawCore(OpenRCT2::Drawing::RenderTarget&...          778     113711427420
+#8    OpenRCT2::ViewportRender(OpenRCT2::Drawing::RenderTarget&...          760     113216235326
+#9    PaintDrawStructs(PaintSession&)                                     74594      41566096501
+
+Sum: 26431107800
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    OpenRCT2::Scripting::ScriptEngine::Tick()                              85     164346615275
+#6    OpenRCT2::Scripting::ScriptEngine::UpdateIntervals()                   84     162362258254
+#7    OpenRCT2::Scripting::ScriptEngine::ExecutePluginCall(std:...           84     162362070752
+#8    JS_CallInternal                                                        84     162361843435
+#9    JS_CallInternal                                                        84     162361561430
+#10   JS_CallInternal                                                       164     162360873528
+#11   js_call_c_function                                                     84     162342256676
+#12   JS_CallInternal                                                        84     162342138559
+#13   JS_CallInternal                                                        84     162341978185
+#14   JS_CallInternal                                                        85     162338678982
+#15   JS_CallInternal                                                       252     161920497956
+#16   js_call_c_function                                                    252     161920257154
+#17   js_array_every                                                        111     152315132788
+#18   JS_CallInternal                                                    352916     150325785113
+#19   JS_CallInternal                                                    629132     132939534308
+#20   JS_CallInternal                                                   1349630      59455692867
+#21   js_call_c_function                                                 804627      27563824611
+#22   js_array_every                                                     799954      26431107800
+
+Sum: 20284588579
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    OpenRCT2::Scripting::ScriptEngine::Tick()                              85     164346615275
+#6    OpenRCT2::Scripting::ScriptEngine::UpdateIntervals()                   84     162362258254
+#7    OpenRCT2::Scripting::ScriptEngine::ExecutePluginCall(std:...           84     162362070752
+#8    JS_CallInternal                                                        84     162361843435
+#9    JS_CallInternal                                                        84     162361561430
+#10   JS_CallInternal                                                       164     162360873528
+#11   js_call_c_function                                                     84     162342256676
+#12   JS_CallInternal                                                        84     162342138559
+#13   JS_CallInternal                                                        84     162341978185
+#14   JS_CallInternal                                                        85     162338678982
+#15   JS_CallInternal                                                       252     161920497956
+#16   js_call_c_function                                                    252     161920257154
+#17   js_array_every                                                        111     152315132788
+#18   JS_CallInternal                                                    352916     150325785113
+#19   JS_CallInternal                                                    629132     132939534308
+#20   js_call_c_function                                                 352916      39506971536
+#21   js_array_every                                                     222953      20284588579
+
+Sum: 12836304176
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    OpenRCT2::Scripting::ScriptEngine::Tick()                              85     164346615275
+#6    OpenRCT2::Scripting::ScriptEngine::UpdateIntervals()                   84     162362258254
+#7    OpenRCT2::Scripting::ScriptEngine::ExecutePluginCall(std:...           84     162362070752
+#8    JS_CallInternal                                                        84     162361843435
+#9    JS_CallInternal                                                        84     162361561430
+#10   JS_CallInternal                                                       164     162360873528
+#11   js_call_c_function                                                     84     162342256676
+#12   JS_CallInternal                                                        84     162342138559
+#13   JS_CallInternal                                                        84     162341978185
+#14   JS_CallInternal                                                        85     162338678982
+#15   JS_CallInternal                                                       252     161920497956
+#16   js_call_c_function                                                    252     161920257154
+#17   js_array_every                                                        111     152315132788
+#18   JS_CallInternal                                                    352916     150325785113
+#19   JS_CallInternal                                                    629132     132939534308
+#20   JS_CallInternal                                                   1349630      59455692867
+#21   JS_CallInternal                                                    564530      18028805073
+#22   js_call_c_function                                                 520560      14073111324
+#23   js_array_concat                                                    499837      12836304176
+
+Sum: 10145109851
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    OpenRCT2::Scripting::ScriptEngine::Tick()                              85     164346615275
+#6    OpenRCT2::Scripting::ScriptEngine::UpdateIntervals()                   84     162362258254
+#7    OpenRCT2::Scripting::ScriptEngine::ExecutePluginCall(std:...           84     162362070752
+#8    JS_CallInternal                                                        84     162361843435
+#9    JS_CallInternal                                                        84     162361561430
+#10   JS_CallInternal                                                       164     162360873528
+#11   js_call_c_function                                                     84     162342256676
+#12   JS_CallInternal                                                        84     162342138559
+#13   JS_CallInternal                                                        84     162341978185
+#14   JS_CallInternal                                                        85     162338678982
+#15   JS_CallInternal                                                       252     161920497956
+#16   js_call_c_function                                                    252     161920257154
+#17   js_array_every                                                        111     152315132788
+#18   JS_CallInternal                                                    352916     150325785113
+#19   JS_CallInternal                                                    629132     132939534308
+#20   JS_CallInternal                                                    267351      10145109851
+
+Sum: 5099091003
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    void OpenRCT2::Drawing::InvalidationGrid::traverseDirtyCe...          338     113715095149
+#6    OpenRCT2::WindowDrawAll(OpenRCT2::Drawing::RenderTarget&,...          778     113713805649
+#7    OpenRCT2::WindowDrawCore(OpenRCT2::Drawing::RenderTarget&...          778     113711427420
+#8    OpenRCT2::ViewportRender(OpenRCT2::Drawing::RenderTarget&...          760     113216235326
+#9    void PaintSessionArrangeImpl<false, 2>(PaintSessionCore&)           77274       5099091003
+
+Sum: 4703050928
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    OpenRCT2::Scripting::ScriptEngine::Tick()                              85     164346615275
+#6    OpenRCT2::Scripting::ScriptEngine::UpdateIntervals()                   84     162362258254
+#7    OpenRCT2::Scripting::ScriptEngine::ExecutePluginCall(std:...           84     162362070752
+#8    JS_CallInternal                                                        84     162361843435
+#9    JS_CallInternal                                                        84     162361561430
+#10   JS_CallInternal                                                       164     162360873528
+#11   js_call_c_function                                                     84     162342256676
+#12   JS_CallInternal                                                        84     162342138559
+#13   JS_CallInternal                                                        84     162341978185
+#14   JS_CallInternal                                                        85     162338678982
+#15   JS_CallInternal                                                       252     161920497956
+#16   js_call_c_function                                                    252     161920257154
+#17   js_array_every                                                        111     152315132788
+#18   JS_CallInternal                                                    352916     150325785113
+#19   JS_CallInternal                                                    148685       4703050928
+
+Sum: 4245648781
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    OpenRCT2::Scripting::ScriptEngine::Tick()                              85     164346615275
+#6    OpenRCT2::Scripting::ScriptEngine::UpdateIntervals()                   84     162362258254
+#7    OpenRCT2::Scripting::ScriptEngine::ExecutePluginCall(std:...           84     162362070752
+#8    JS_CallInternal                                                        84     162361843435
+#9    JS_CallInternal                                                        84     162361561430
+#10   JS_CallInternal                                                       164     162360873528
+#11   js_call_c_function                                                     84     162342256676
+#12   JS_CallInternal                                                        84     162342138559
+#13   JS_CallInternal                                                        84     162341978185
+#14   JS_CallInternal                                                        85     162338678982
+#15   JS_CallInternal                                                       252     161920497956
+#16   js_call_c_function                                                    252     161920257154
+#17   js_array_every                                                        111     152315132788
+#18   JS_CallInternal                                                    352916     150325785113
+#19   JS_CallInternal                                                    629132     132939534308
+#20   js_call_c_function                                                 352916      39506971536
+#21   js_array_every                                                     129963      18900759114
+#22   JS_CallInternal                                                    107147       7378947084
+#23   JS_CallInternal                                                    104275       6363875888
+#24   JS_CallInternal                                                    102601       6196543974
+#25   JS_CallInternal                                                     96659       4245648781
+
+Sum: 3725823869
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    OpenRCT2::Scripting::ScriptEngine::Tick()                              85     164346615275
+#6    OpenRCT2::Scripting::ScriptEngine::UpdateIntervals()                   84     162362258254
+#7    OpenRCT2::Scripting::ScriptEngine::ExecutePluginCall(std:...           84     162362070752
+#8    JS_CallInternal                                                        84     162361843435
+#9    JS_CallInternal                                                        84     162361561430
+#10   JS_CallInternal                                                       164     162360873528
+#11   js_call_c_function                                                     84     162342256676
+#12   JS_CallInternal                                                        84     162342138559
+#13   JS_CallInternal                                                        84     162341978185
+#14   JS_CallInternal                                                        85     162338678982
+#15   JS_CallInternal                                                       252     161920497956
+#16   js_call_c_function                                                    252     161920257154
+#17   js_array_every                                                        111     152315132788
+#18   JS_CallInternal                                                    352916     150325785113
+#19   JS_CallInternal                                                    629132     132939534308
+#20   js_call_c_function                                                 352916      39506971536
+#21   js_array_every                                                     129963      18900759114
+#22   JS_CallInternal                                                    146119       3725823869
+
+
+ 
+Top 10 Stacks by leaf count:
+
+Count: 799954
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    OpenRCT2::Scripting::ScriptEngine::Tick()                              85     164346615275
+#6    OpenRCT2::Scripting::ScriptEngine::UpdateIntervals()                   84     162362258254
+#7    OpenRCT2::Scripting::ScriptEngine::ExecutePluginCall(std:...           84     162362070752
+#8    JS_CallInternal                                                        84     162361843435
+#9    JS_CallInternal                                                        84     162361561430
+#10   JS_CallInternal                                                       164     162360873528
+#11   js_call_c_function                                                     84     162342256676
+#12   JS_CallInternal                                                        84     162342138559
+#13   JS_CallInternal                                                        84     162341978185
+#14   JS_CallInternal                                                        85     162338678982
+#15   JS_CallInternal                                                       252     161920497956
+#16   js_call_c_function                                                    252     161920257154
+#17   js_array_every                                                        111     152315132788
+#18   JS_CallInternal                                                    352916     150325785113
+#19   JS_CallInternal                                                    629132     132939534308
+#20   JS_CallInternal                                                   1349630      59455692867
+#21   js_call_c_function                                                 804627      27563824611
+#22   js_array_every                                                     799954      26431107800
+
+Count: 499837
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    OpenRCT2::Scripting::ScriptEngine::Tick()                              85     164346615275
+#6    OpenRCT2::Scripting::ScriptEngine::UpdateIntervals()                   84     162362258254
+#7    OpenRCT2::Scripting::ScriptEngine::ExecutePluginCall(std:...           84     162362070752
+#8    JS_CallInternal                                                        84     162361843435
+#9    JS_CallInternal                                                        84     162361561430
+#10   JS_CallInternal                                                       164     162360873528
+#11   js_call_c_function                                                     84     162342256676
+#12   JS_CallInternal                                                        84     162342138559
+#13   JS_CallInternal                                                        84     162341978185
+#14   JS_CallInternal                                                        85     162338678982
+#15   JS_CallInternal                                                       252     161920497956
+#16   js_call_c_function                                                    252     161920257154
+#17   js_array_every                                                        111     152315132788
+#18   JS_CallInternal                                                    352916     150325785113
+#19   JS_CallInternal                                                    629132     132939534308
+#20   JS_CallInternal                                                   1349630      59455692867
+#21   JS_CallInternal                                                    564530      18028805073
+#22   js_call_c_function                                                 520560      14073111324
+#23   js_array_concat                                                    499837      12836304176
+
+Count: 267351
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    OpenRCT2::Scripting::ScriptEngine::Tick()                              85     164346615275
+#6    OpenRCT2::Scripting::ScriptEngine::UpdateIntervals()                   84     162362258254
+#7    OpenRCT2::Scripting::ScriptEngine::ExecutePluginCall(std:...           84     162362070752
+#8    JS_CallInternal                                                        84     162361843435
+#9    JS_CallInternal                                                        84     162361561430
+#10   JS_CallInternal                                                       164     162360873528
+#11   js_call_c_function                                                     84     162342256676
+#12   JS_CallInternal                                                        84     162342138559
+#13   JS_CallInternal                                                        84     162341978185
+#14   JS_CallInternal                                                        85     162338678982
+#15   JS_CallInternal                                                       252     161920497956
+#16   js_call_c_function                                                    252     161920257154
+#17   js_array_every                                                        111     152315132788
+#18   JS_CallInternal                                                    352916     150325785113
+#19   JS_CallInternal                                                    629132     132939534308
+#20   JS_CallInternal                                                    267351      10145109851
+
+Count: 222953
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    OpenRCT2::Scripting::ScriptEngine::Tick()                              85     164346615275
+#6    OpenRCT2::Scripting::ScriptEngine::UpdateIntervals()                   84     162362258254
+#7    OpenRCT2::Scripting::ScriptEngine::ExecutePluginCall(std:...           84     162362070752
+#8    JS_CallInternal                                                        84     162361843435
+#9    JS_CallInternal                                                        84     162361561430
+#10   JS_CallInternal                                                       164     162360873528
+#11   js_call_c_function                                                     84     162342256676
+#12   JS_CallInternal                                                        84     162342138559
+#13   JS_CallInternal                                                        84     162341978185
+#14   JS_CallInternal                                                        85     162338678982
+#15   JS_CallInternal                                                       252     161920497956
+#16   js_call_c_function                                                    252     161920257154
+#17   js_array_every                                                        111     152315132788
+#18   JS_CallInternal                                                    352916     150325785113
+#19   JS_CallInternal                                                    629132     132939534308
+#20   js_call_c_function                                                 352916      39506971536
+#21   js_array_every                                                     222953      20284588579
+
+Count: 148685
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    OpenRCT2::Scripting::ScriptEngine::Tick()                              85     164346615275
+#6    OpenRCT2::Scripting::ScriptEngine::UpdateIntervals()                   84     162362258254
+#7    OpenRCT2::Scripting::ScriptEngine::ExecutePluginCall(std:...           84     162362070752
+#8    JS_CallInternal                                                        84     162361843435
+#9    JS_CallInternal                                                        84     162361561430
+#10   JS_CallInternal                                                       164     162360873528
+#11   js_call_c_function                                                     84     162342256676
+#12   JS_CallInternal                                                        84     162342138559
+#13   JS_CallInternal                                                        84     162341978185
+#14   JS_CallInternal                                                        85     162338678982
+#15   JS_CallInternal                                                       252     161920497956
+#16   js_call_c_function                                                    252     161920257154
+#17   js_array_every                                                        111     152315132788
+#18   JS_CallInternal                                                    352916     150325785113
+#19   JS_CallInternal                                                    148685       4703050928
+
+Count: 146119
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    OpenRCT2::Scripting::ScriptEngine::Tick()                              85     164346615275
+#6    OpenRCT2::Scripting::ScriptEngine::UpdateIntervals()                   84     162362258254
+#7    OpenRCT2::Scripting::ScriptEngine::ExecutePluginCall(std:...           84     162362070752
+#8    JS_CallInternal                                                        84     162361843435
+#9    JS_CallInternal                                                        84     162361561430
+#10   JS_CallInternal                                                       164     162360873528
+#11   js_call_c_function                                                     84     162342256676
+#12   JS_CallInternal                                                        84     162342138559
+#13   JS_CallInternal                                                        84     162341978185
+#14   JS_CallInternal                                                        85     162338678982
+#15   JS_CallInternal                                                       252     161920497956
+#16   js_call_c_function                                                    252     161920257154
+#17   js_array_every                                                        111     152315132788
+#18   JS_CallInternal                                                    352916     150325785113
+#19   JS_CallInternal                                                    629132     132939534308
+#20   js_call_c_function                                                 352916      39506971536
+#21   js_array_every                                                     129963      18900759114
+#22   JS_CallInternal                                                    146119       3725823869
+
+Count: 96659
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    OpenRCT2::Scripting::ScriptEngine::Tick()                              85     164346615275
+#6    OpenRCT2::Scripting::ScriptEngine::UpdateIntervals()                   84     162362258254
+#7    OpenRCT2::Scripting::ScriptEngine::ExecutePluginCall(std:...           84     162362070752
+#8    JS_CallInternal                                                        84     162361843435
+#9    JS_CallInternal                                                        84     162361561430
+#10   JS_CallInternal                                                       164     162360873528
+#11   js_call_c_function                                                     84     162342256676
+#12   JS_CallInternal                                                        84     162342138559
+#13   JS_CallInternal                                                        84     162341978185
+#14   JS_CallInternal                                                        85     162338678982
+#15   JS_CallInternal                                                       252     161920497956
+#16   js_call_c_function                                                    252     161920257154
+#17   js_array_every                                                        111     152315132788
+#18   JS_CallInternal                                                    352916     150325785113
+#19   JS_CallInternal                                                    629132     132939534308
+#20   js_call_c_function                                                 352916      39506971536
+#21   js_array_every                                                     129963      18900759114
+#22   JS_CallInternal                                                    107147       7378947084
+#23   JS_CallInternal                                                    104275       6363875888
+#24   JS_CallInternal                                                    102601       6196543974
+#25   JS_CallInternal                                                     96659       4245648781
+
+Count: 80348
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    OpenRCT2::GameHandleInput()                                           321      49444189213
+#6    OpenRCT2::Scripting::CustomTool::InvokeEventHandler(JSVal...          245      49327575908
+#7    OpenRCT2::Scripting::ScriptEngine::ExecutePluginCall(std:...          214      49282889453
+#8    JS_CallInternal                                                       186      49280708027
+#9    JS_CallInternal                                                       127      49278666573
+#10   JS_CallInternal                                                        80      49275884148
+#11   JS_CallInternal                                                       585      30450640947
+#12   js_call_c_function                                                     61      30354067684
+#13   JS_CallInternal                                                         4      28690766045
+#14   JS_CallInternal                                                         4      28690756028
+#15   JS_CallInternal                                                         4      28690584125
+#16   JS_CallInternal                                                        12      28649123920
+#17   js_call_c_function                                                     12      28649110798
+#18   js_array_every                                                          7      27796278617
+#19   JS_CallInternal                                                     32400      27591008533
+#20   JS_CallInternal                                                     78859      26225513821
+#21   JS_CallInternal                                                    154129      17564205956
+#22   js_call_c_function                                                  80678       2796100896
+#23   js_array_every                                                      80348       2679923678
+
+Count: 77274
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    void OpenRCT2::Drawing::InvalidationGrid::traverseDirtyCe...          338     113715095149
+#6    OpenRCT2::WindowDrawAll(OpenRCT2::Drawing::RenderTarget&,...          778     113713805649
+#7    OpenRCT2::WindowDrawCore(OpenRCT2::Drawing::RenderTarget&...          778     113711427420
+#8    OpenRCT2::ViewportRender(OpenRCT2::Drawing::RenderTarget&...          760     113216235326
+#9    void PaintSessionArrangeImpl<false, 2>(PaintSessionCore&)           77274       5099091003
+
+Count: 74837
+lvl   function                                                            count              sum
+#0    main                                                                    0                0
+#1    OpenRCT2::Context::Launch()                                             0                0
+#2    OpenRCT2::Context::RunGameLoop()                                        0                0
+#3    OpenRCT2::Context::RunFrame()                                         345     351173329513
+#4    OpenRCT2::Context::RunVariableFrame(float)                            345     351168451295
+#5    void OpenRCT2::Drawing::InvalidationGrid::traverseDirtyCe...          338     113715095149
+#6    OpenRCT2::WindowDrawAll(OpenRCT2::Drawing::RenderTarget&,...          778     113713805649
+#7    OpenRCT2::WindowDrawCore(OpenRCT2::Drawing::RenderTarget&...          778     113711427420
+#8    OpenRCT2::ViewportRender(OpenRCT2::Drawing::RenderTarget&...          760     113216235326
+#9    void PaintSessionGenerateRotate<(unsigned char)2>(PaintSe...        74837      57868789292
