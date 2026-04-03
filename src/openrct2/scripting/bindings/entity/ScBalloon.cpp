@@ -15,7 +15,7 @@
 
 namespace OpenRCT2::Scripting
 {
-    ScBase gScBalloon;
+    ScBalloon gScBalloon;
 
     JSValue ScBalloon::New(JSContext* ctx, EntityId entityId)
     {

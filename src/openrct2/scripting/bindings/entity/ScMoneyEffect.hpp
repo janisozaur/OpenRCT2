@@ -20,13 +20,14 @@ namespace OpenRCT2
 
 namespace OpenRCT2::Scripting
 {
-    extern ScBase gScMoneyEffect;
+    class ScMoneyEffect;
+    extern ScMoneyEffect gScMoneyEffect;
 
     class ScMoneyEffect final : public ScEntity
     {
     public:
         static JSValue New(JSContext* ctx, EntityId entityId);
-        static void Register(JSContext* ctx);
+        void Register(JSContext* ctx);
 
     private:
         static MoneyEffect* GetMoneyEffect(JSValue thisVal);

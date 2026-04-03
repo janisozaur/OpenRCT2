@@ -50,7 +50,7 @@ namespace OpenRCT2::Scripting
     {
     public:
         static JSValue New(JSContext* ctx, EntityId entityId);
-        static void Register(JSContext* ctx);
+        void Register(JSContext* ctx);
 
     protected:
         static Staff* GetStaff(JSValue thisVal);
@@ -82,13 +82,13 @@ namespace OpenRCT2::Scripting
         static JSValue animationLength_get(JSContext* ctx, JSValue thisVal);
     };
 
-    extern ScBase gScStaff;
+    extern ScStaff gScStaff;
 
     class ScHandyman final : public ScStaff
     {
     public:
         static JSValue New(JSContext* ctx, EntityId entityId);
-        static void Register(JSContext* ctx);
+        void Register(JSContext* ctx);
 
     private:
         static JSValue lawnsMown_get(JSContext* ctx, JSValue thisVal);
@@ -100,13 +100,14 @@ namespace OpenRCT2::Scripting
         static JSValue binsEmptied_get(JSContext* ctx, JSValue thisVal);
     };
 
-    extern ScBase gScHandyman;
+    class ScHandyman;
+    extern ScHandyman gScHandyman;
 
     class ScMechanic final : public ScStaff
     {
     public:
         static JSValue New(JSContext* ctx, EntityId entityId);
-        static void Register(JSContext* ctx);
+        void Register(JSContext* ctx);
 
     private:
         static JSValue ridesFixed_get(JSContext* ctx, JSValue thisVal);
@@ -114,19 +115,21 @@ namespace OpenRCT2::Scripting
         static JSValue ridesInspected_get(JSContext* ctx, JSValue thisVal);
     };
 
-    extern ScBase gScMechanic;
+    class ScMechanic;
+    extern ScMechanic gScMechanic;
 
     class ScSecurity final : public ScStaff
     {
     public:
         static JSValue New(JSContext* ctx, EntityId entityId);
-        static void Register(JSContext* ctx);
+        void Register(JSContext* ctx);
 
     private:
         static JSValue vandalsStopped_get(JSContext* ctx, JSValue thisVal);
     };
 
-    extern ScBase gScSecurity;
+    class ScSecurity;
+    extern ScSecurity gScSecurity;
 
 } // namespace OpenRCT2::Scripting
 

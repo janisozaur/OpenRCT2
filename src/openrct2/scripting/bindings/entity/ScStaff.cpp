@@ -21,7 +21,7 @@
 
 namespace OpenRCT2::Scripting
 {
-    ScBase gScStaff;
+    ScStaff gScStaff;
 
     JSValue ScStaff::New(JSContext* ctx, EntityId entityId)
     {
@@ -433,7 +433,7 @@ namespace OpenRCT2::Scripting
         return JS_NewUint32(ctx, length);
     }
 
-    ScBase gScHandyman;
+    ScHandyman gScHandyman;
 
     JSValue ScHandyman::New(JSContext* ctx, EntityId entityId)
     {
@@ -503,7 +503,7 @@ namespace OpenRCT2::Scripting
         }
     }
 
-    ScBase gScMechanic;
+    ScMechanic gScMechanic;
 
     JSValue ScMechanic::New(JSContext* ctx, EntityId entityId)
     {
@@ -545,7 +545,7 @@ namespace OpenRCT2::Scripting
         }
     }
 
-    ScBase gScSecurity;
+    ScSecurity gScSecurity;
 
     JSValue ScSecurity::New(JSContext* ctx, EntityId entityId)
     {

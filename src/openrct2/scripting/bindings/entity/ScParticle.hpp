@@ -19,13 +19,14 @@
 
 namespace OpenRCT2::Scripting
 {
-    extern ScBase gScCrashedVehicleParticle;
+    class ScCrashedVehicleParticle;
+    extern ScCrashedVehicleParticle gScCrashedVehicleParticle;
 
     class ScCrashedVehicleParticle final : public ScEntity
     {
     public:
         static JSValue New(JSContext* ctx, EntityId entityId);
-        static void Register(JSContext* ctx);
+        void Register(JSContext* ctx);
 
     private:
         static VehicleCrashParticle* GetCrashedVehicleParticle(JSValue thisVal);

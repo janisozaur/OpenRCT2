@@ -47,13 +47,14 @@ namespace OpenRCT2::Scripting
             { "animationFrozen", PEEP_FLAGS_ANIMATION_FROZEN },
         });
 
-    extern ScBase gScPeep;
+    class ScPeep;
+    extern ScPeep gScPeep;
 
     class ScPeep : public ScEntity
     {
     public:
         static JSValue New(JSContext* ctx, EntityId entityId);
-        static void Register(JSContext* ctx);
+        void Register(JSContext* ctx);
 
     private:
         static JSValue peepType_get(JSContext* ctx, JSValue thisVal)

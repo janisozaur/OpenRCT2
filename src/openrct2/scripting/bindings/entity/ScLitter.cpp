@@ -32,7 +32,7 @@ namespace OpenRCT2::Scripting
             { "empty_bowl_blue", Litter::Type::emptyBowlBlue },
         });
 
-    ScBase gScLitter;
+    ScLitter gScLitter;
 
     JSValue ScLitter::New(JSContext* ctx, EntityId entityId)
     {

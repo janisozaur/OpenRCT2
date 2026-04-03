@@ -25,7 +25,7 @@ namespace OpenRCT2::Scripting
             { "seat", 4 },
         });
 
-    ScBase gScCrashedVehicleParticle;
+    ScCrashedVehicleParticle gScCrashedVehicleParticle;
 
     JSValue ScCrashedVehicleParticle::New(JSContext* ctx, EntityId entityId)
     {

@@ -59,7 +59,7 @@ namespace OpenRCT2::Scripting
             { "stopped_by_block_brake", Vehicle::Status::stoppedByBlockBrakes },
         });
 
-    ScBase gScVehicle;
+    ScVehicle gScVehicle;
 
     JSValue ScVehicle::New(JSContext* ctx, EntityId entityId)
     {

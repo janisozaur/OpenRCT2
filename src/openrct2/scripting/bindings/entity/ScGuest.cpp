@@ -151,7 +151,7 @@ namespace OpenRCT2::Scripting
             { "here_we_are", PeepThoughtType::HereWeAre },
         });
 
-    ScBase gScGuest;
+    ScGuest gScGuest;
 
     JSValue ScGuest::New(JSContext* ctx, EntityId entityId)
     {
@@ -923,7 +923,7 @@ namespace OpenRCT2::Scripting
             return spriteIds;
         }
 
-        auto peep = GetPeep(thisVal);
+        auto peep = GetGuest(thisVal);
         if (peep != nullptr)
         {
             auto& objManager = GetContext()->GetObjectManager();

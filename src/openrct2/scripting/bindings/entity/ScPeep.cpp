@@ -13,7 +13,7 @@
 
 namespace OpenRCT2::Scripting
 {
-    ScBase gScPeep;
+    ScPeep gScPeep;
 
     JSValue ScPeep::New(JSContext* ctx, EntityId entityId)
     {

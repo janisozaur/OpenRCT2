@@ -20,13 +20,14 @@ namespace OpenRCT2
 
 namespace OpenRCT2::Scripting
 {
-    extern ScBase gScLitter;
+    class ScLitter;
+    extern ScLitter gScLitter;
 
     class ScLitter final : public ScEntity
     {
     public:
         static JSValue New(JSContext* ctx, EntityId entityId);
-        static void Register(JSContext* ctx);
+        void Register(JSContext* ctx);
 
     private:
         static Litter* GetLitter(JSValue thisVal);

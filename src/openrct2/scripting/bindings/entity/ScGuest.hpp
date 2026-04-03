@@ -107,13 +107,14 @@ namespace OpenRCT2::Scripting
         static JSValue toString(JSContext* ctx, JSValue thisVal, int argc, JSValue* argv);
     };
 
-    extern ScBase gScGuest;
+    class ScGuest;
+    extern ScGuest gScGuest;
 
-    class ScGuest final : public ScPeep
+    class ScGuest final : public ScEntity
     {
     public:
         static JSValue New(JSContext* ctx, EntityId entityId);
-        static void Register(JSContext* ctx);
+        void Register(JSContext* ctx);
 
     private:
         static Guest* GetGuest(JSValue thisVal);

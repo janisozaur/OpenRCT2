@@ -16,7 +16,7 @@
 
 namespace OpenRCT2::Scripting
 {
-    ScBase gScMoneyEffect;
+    ScMoneyEffect gScMoneyEffect;
 
     JSValue ScMoneyEffect::New(JSContext* ctx, EntityId entityId)
     {
