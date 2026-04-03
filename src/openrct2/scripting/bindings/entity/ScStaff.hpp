@@ -50,13 +50,12 @@ namespace OpenRCT2::Scripting
     {
     public:
         static JSValue New(JSContext* ctx, EntityId entityId);
+        static void Register(JSContext* ctx);
 
     protected:
         static Staff* GetStaff(JSValue thisVal);
 
     private:
-        static void AddFuncs(JSContext* ctx, JSValue obj);
-
         static JSValue staffType_get(JSContext* ctx, JSValue thisVal);
         static JSValue staffType_set(JSContext* ctx, JSValue thisVal, JSValue jsValue);
 
@@ -83,14 +82,15 @@ namespace OpenRCT2::Scripting
         static JSValue animationLength_get(JSContext* ctx, JSValue thisVal);
     };
 
+    extern ScBase gScStaff;
+
     class ScHandyman final : public ScStaff
     {
     public:
         static JSValue New(JSContext* ctx, EntityId entityId);
+        static void Register(JSContext* ctx);
 
     private:
-        static void AddFuncs(JSContext* ctx, JSValue obj);
-
         static JSValue lawnsMown_get(JSContext* ctx, JSValue thisVal);
 
         static JSValue gardensWatered_get(JSContext* ctx, JSValue thisVal);
@@ -100,29 +100,33 @@ namespace OpenRCT2::Scripting
         static JSValue binsEmptied_get(JSContext* ctx, JSValue thisVal);
     };
 
+    extern ScBase gScHandyman;
+
     class ScMechanic final : public ScStaff
     {
     public:
         static JSValue New(JSContext* ctx, EntityId entityId);
+        static void Register(JSContext* ctx);
 
     private:
-        static void AddFuncs(JSContext* ctx, JSValue obj);
-
         static JSValue ridesFixed_get(JSContext* ctx, JSValue thisVal);
 
         static JSValue ridesInspected_get(JSContext* ctx, JSValue thisVal);
     };
 
+    extern ScBase gScMechanic;
+
     class ScSecurity final : public ScStaff
     {
     public:
         static JSValue New(JSContext* ctx, EntityId entityId);
+        static void Register(JSContext* ctx);
 
     private:
-        static void AddFuncs(JSContext* ctx, JSValue obj);
-
         static JSValue vandalsStopped_get(JSContext* ctx, JSValue thisVal);
     };
+
+    extern ScBase gScSecurity;
 
 } // namespace OpenRCT2::Scripting
 

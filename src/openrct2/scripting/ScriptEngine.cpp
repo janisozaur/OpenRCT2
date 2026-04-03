@@ -579,6 +579,17 @@ void ScriptEngine::RegisterClasses(JSContext* ctx)
     gScTrackIterator.Register(ctx);
     gScTrackSegment.Register(ctx);
     gScEntity.Register(ctx);
+    ScPeep::Register(ctx);
+    ScGuest::Register(ctx);
+    ScStaff::Register(ctx);
+    ScHandyman::Register(ctx);
+    ScMechanic::Register(ctx);
+    ScSecurity::Register(ctx);
+    ScBalloon::Register(ctx);
+    ScLitter::Register(ctx);
+    ScMoneyEffect::Register(ctx);
+    ScCrashedVehicleParticle::Register(ctx);
+    ScVehicle::Register(ctx);
     gScThought.Register(ctx);
     #ifndef DISABLE_NETWORK
     gScSocket.Register(ctx);
@@ -621,6 +632,17 @@ void ScriptEngine::UnregisterClasses()
     gScTrackIterator.Unregister();
     gScTrackSegment.Unregister();
     gScEntity.Unregister();
+    gScPeep.Unregister();
+    gScGuest.Unregister();
+    gScStaff.Unregister();
+    gScHandyman.Unregister();
+    gScMechanic.Unregister();
+    gScSecurity.Unregister();
+    gScBalloon.Unregister();
+    gScLitter.Unregister();
+    gScMoneyEffect.Unregister();
+    gScCrashedVehicleParticle.Unregister();
+    gScVehicle.Unregister();
     gScThought.Unregister();
     #ifndef DISABLE_NETWORK
     gScSocket.Unregister();
