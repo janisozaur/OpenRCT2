@@ -66,6 +66,9 @@ namespace OpenRCT2::Ui::Windows
         Dropdown::CellDrawFunction drawFunction, int32_t numItems, int32_t itemWidth, int32_t itemHeight, int32_t numColumns);
 
     void WindowDropdownClose();
+    void WindowDropdownSelectItem(int32_t index);
+    void WindowDropdownHandleKeyDown(uint32_t key);
+    void WindowDropdownHandleTextInput(std::string_view text);
 
     int32_t DropdownIndexFromPoint(const ScreenCoordsXY& loc, WindowBase* w);
 
@@ -210,11 +213,16 @@ namespace OpenRCT2::Dropdown
         int32_t numItems{};
         std::array<Item, kItemsMaxSize> items{};
         bool hasTooltips{};
-        int32_t lastTooltipHover{};
-        int32_t highlightedIndex{};
-        int32_t defaultIndex{};
+        int32_t lastTooltipHover = -1;
+        int32_t highlightedIndex = -1;
+        int32_t defaultIndex = -1;
 
         std::optional<CellDrawFunction> cellDrawFunction;
+
+        // Search filtering
+        utf8 searchText[256]{};
+        int32_t numFilteredItems{};
+        std::array<int32_t, kItemsMaxSize> filteredItems{};
     };
 
     template<int N>

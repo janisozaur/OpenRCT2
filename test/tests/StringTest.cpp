@@ -352,3 +352,42 @@ TEST_F(StringTest, Parse_LargeNumber)
     ASSERT_TRUE(actual.has_value());
     ASSERT_EQ(*actual, 9223372036854775807LL);
 }
+
+TEST_F(StringTest, FuzzyContains)
+{
+    EXPECT_TRUE(String::fuzzyContains("Log Flume", "log"));
+    EXPECT_TRUE(String::fuzzyContains("Log Flume", "LOG"));
+    EXPECT_TRUE(String::fuzzyContains("Log Flume", "lfm"));
+    EXPECT_TRUE(String::fuzzyContains("Log Flume", ""));
+    EXPECT_TRUE(String::fuzzyContains("Junior Roller Coaster", "jrc"));
+    EXPECT_TRUE(String::fuzzyContains("Junior Roller Coaster", "roller"));
+
+    EXPECT_FALSE(String::fuzzyContains("Log Flume", "logs"));
+    EXPECT_FALSE(String::fuzzyContains("Log Flume", "abc"));
+}
+
+TEST_F(StringTest, Backspace)
+{
+    char buf[64];
+
+    strcpy(buf, "test");
+    String::backspace(buf);
+    ASSERT_STREQ(buf, "tes");
+
+    strcpy(buf, "a");
+    String::backspace(buf);
+    ASSERT_STREQ(buf, "");
+
+    strcpy(buf, "");
+    String::backspace(buf);
+    ASSERT_STREQ(buf, "");
+
+    // UTF-8
+    strcpy(buf, u8"ゲスト");
+    String::backspace(buf);
+    ASSERT_STREQ(buf, u8"ゲス");
+    String::backspace(buf);
+    ASSERT_STREQ(buf, u8"ゲ");
+    String::backspace(buf);
+    ASSERT_STREQ(buf, "");
+}

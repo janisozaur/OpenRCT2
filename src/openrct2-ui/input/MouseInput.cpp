@@ -1389,13 +1389,6 @@ namespace OpenRCT2
                             gTooltipWidget.windowClassification = cursor_w_class;
                             gTooltipWidget.windowNumber = cursor_w_number;
 
-                            if (dropdown_index == -1)
-                            {
-                                if (gDropdown.defaultIndex != -1 && !gDropdown.items[gDropdown.defaultIndex].isDisabled())
-                                {
-                                    dropdown_index = gDropdown.defaultIndex;
-                                }
-                            }
                             cursor_w->onDropdown(cursor_widgetIndex, dropdown_index);
                         }
                     }
@@ -1463,29 +1456,6 @@ namespace OpenRCT2
         {
             int32_t dropdown_index = DropdownIndexFromPoint(screenCoords, w);
             if (dropdown_index == -1)
-            {
-                if (gDropdown.hasTooltips && gDropdown.lastTooltipHover != -1)
-                {
-                    gDropdown.lastTooltipHover = -1;
-                    WindowTooltipClose();
-                }
-                return;
-            }
-
-            if (gDropdown.hasTooltips && gDropdown.lastTooltipHover != dropdown_index)
-            {
-                gDropdown.lastTooltipHover = dropdown_index;
-                WindowTooltipClose();
-
-                WindowTooltipShow(StringWithArgs{ gDropdown.items[dropdown_index].tooltip, {} }, screenCoords);
-            }
-
-            if (dropdown_index < Dropdown::kItemsMaxSize && gDropdown.items[dropdown_index].isDisabled())
-            {
-                return;
-            }
-
-            if (gDropdown.items[dropdown_index].isSeparator())
             {
                 return;
             }
