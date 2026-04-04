@@ -38,30 +38,19 @@ namespace OpenRCT2::Scripting
         };
 
     public:
-        void Register(JSContext* ctx)
-        {
-            static constexpr JSCFunctionListEntry funcs[] = {
-                JS_CGETSET_DEF("installedObject", ScObject::installedObject_get, nullptr),
-                JS_CGETSET_DEF("type", ScObject::type_get, nullptr),
-                JS_CGETSET_DEF("index", ScObject::index_get, nullptr),
-                JS_CGETSET_DEF("identifier", ScObject::identifier_get, nullptr),
-                JS_CGETSET_DEF("legacyIdentifier", ScObject::legacyIdentifier_get, nullptr),
-                JS_CGETSET_DEF("name", ScObject::name_get, nullptr),
-                JS_CGETSET_DEF("baseImageId", ScObject::baseImageId_get, nullptr),
-                JS_CGETSET_DEF("numImages", ScObject::numImages_get, nullptr),
-            };
-            RegisterBase(ctx, "Object", Finalize, funcs);
-        }
+        void Register(JSContext* ctx);
 
         JSValue NewInstance(JSContext* ctx, ObjectType type, int32_t index)
         {
             return MakeWithOpaque(ctx, new ObjectData{ type, index });
         }
 
-        static JSValue New(JSContext* ctx, ObjectType type, int32_t index)
+        JSValue NewDerivedInstance(JSContext* ctx, ObjectType type, int32_t index, JSValue derivedProto)
         {
-            return gScObject.NewInstance(ctx, type, index);
+            return MakeWithOpaqueAndProto(ctx, new ObjectData{ type, index }, derivedProto);
         }
+
+        static JSValue New(JSContext* ctx, ObjectType type, int32_t index);
 
     private:
         static void Finalize(JSRuntime* rt, JSValue thisVal)
@@ -161,6 +150,26 @@ namespace OpenRCT2::Scripting
             return objManager.GetLoadedObject(data->_type, data->_index);
         }
     };
+
+    inline void ScObject::Register(JSContext* ctx)
+    {
+        static constexpr JSCFunctionListEntry funcs[] = {
+            JS_CGETSET_DEF("installedObject", ScObject::installedObject_get, nullptr),
+            JS_CGETSET_DEF("type", ScObject::type_get, nullptr),
+            JS_CGETSET_DEF("index", ScObject::index_get, nullptr),
+            JS_CGETSET_DEF("identifier", ScObject::identifier_get, nullptr),
+            JS_CGETSET_DEF("legacyIdentifier", ScObject::legacyIdentifier_get, nullptr),
+            JS_CGETSET_DEF("name", ScObject::name_get, nullptr),
+            JS_CGETSET_DEF("baseImageId", ScObject::baseImageId_get, nullptr),
+            JS_CGETSET_DEF("numImages", ScObject::numImages_get, nullptr),
+        };
+        RegisterBase(ctx, "Object", Finalize, funcs);
+    }
+
+    inline JSValue ScObject::New(JSContext* ctx, ObjectType type, int32_t index)
+    {
+        return gScObject.NewInstance(ctx, type, index);
+    }
 
     class ScRideObjectVehicle;
     extern ScRideObjectVehicle gScRideObjectVehicle;
@@ -430,46 +439,16 @@ namespace OpenRCT2::Scripting
         }
     };
 
+    class ScRideObject;
+    extern ScRideObject gScRideObject;
+
     class ScRideObject final : public ScObject
     {
     public:
-        static JSValue New(JSContext* ctx, ObjectType type, int32_t index)
-        {
-            JSValue obj = ScObject::New(ctx, type, index);
-            AddFuncs(ctx, obj);
-            return obj;
-        }
+        static JSValue New(JSContext* ctx, ObjectType type, int32_t index);
+        void Register(JSContext* ctx);
 
     private:
-        static void AddFuncs(JSContext* ctx, JSValue obj)
-        {
-            static constexpr JSCFunctionListEntry funcs[] = {
-                JS_CGETSET_DEF("description", ScRideObject::description_get, nullptr),
-                JS_CGETSET_DEF("capacity", ScRideObject::capacity_get, nullptr),
-                JS_CGETSET_DEF("firstImageId", ScRideObject::firstImageId_get, nullptr),
-                JS_CGETSET_DEF("flags", ScRideObject::flags_get, nullptr),
-                JS_CGETSET_DEF("rideType", ScRideObject::rideType_get, nullptr),
-                JS_CGETSET_DEF("minCarsInTrain", ScRideObject::minCarsInTrain_get, nullptr),
-                JS_CGETSET_DEF("maxCarsInTrain", ScRideObject::maxCarsInTrain_get, nullptr),
-                JS_CGETSET_DEF("carsPerFlatRide", ScRideObject::carsPerFlatRide_get, nullptr),
-                JS_CGETSET_DEF("zeroCars", ScRideObject::zeroCars_get, nullptr),
-                JS_CGETSET_DEF("tabVehicle", ScRideObject::tabVehicle_get, nullptr),
-                JS_CGETSET_DEF("defaultVehicle", ScRideObject::defaultVehicle_get, nullptr),
-                JS_CGETSET_DEF("frontVehicle", ScRideObject::frontVehicle_get, nullptr),
-                JS_CGETSET_DEF("secondVehicle", ScRideObject::secondVehicle_get, nullptr),
-                JS_CGETSET_DEF("rearVehicle", ScRideObject::rearVehicle_get, nullptr),
-                JS_CGETSET_DEF("thirdVehicle", ScRideObject::thirdVehicle_get, nullptr),
-                JS_CGETSET_DEF("vehicles", ScRideObject::vehicles_get, nullptr),
-                JS_CGETSET_DEF("excitementMultiplier", ScRideObject::excitementMultiplier_get, nullptr),
-                JS_CGETSET_DEF("intensityMultiplier", ScRideObject::intensityMultiplier_get, nullptr),
-                JS_CGETSET_DEF("nauseaMultiplier", ScRideObject::nauseaMultiplier_get, nullptr),
-                JS_CGETSET_DEF("maxHeight", ScRideObject::maxHeight_get, nullptr),
-                JS_CGETSET_DEF("shopItem", ScRideObject::shopItem_get, nullptr),
-                JS_CGETSET_DEF("shopItemSecondary", ScRideObject::shopItemSecondary_get, nullptr),
-            };
-            JS_SetPropertyFunctionList(ctx, obj, funcs, std::size(funcs));
-        }
-
         static JSValue description_get(JSContext* ctx, JSValue thisVal)
         {
             auto obj = GetRideObject(thisVal);
@@ -638,25 +617,50 @@ namespace OpenRCT2::Scripting
         }
     };
 
+    inline JSValue ScRideObject::New(JSContext* ctx, ObjectType type, int32_t index)
+    {
+        return gScObject.NewDerivedInstance(ctx, type, index, gScRideObject.GetProto());
+    }
+
+    inline void ScRideObject::Register(JSContext* ctx)
+    {
+        static constexpr JSCFunctionListEntry funcs[] = {
+            JS_CGETSET_DEF("description", ScRideObject::description_get, nullptr),
+            JS_CGETSET_DEF("capacity", ScRideObject::capacity_get, nullptr),
+            JS_CGETSET_DEF("firstImageId", ScRideObject::firstImageId_get, nullptr),
+            JS_CGETSET_DEF("flags", ScRideObject::flags_get, nullptr),
+            JS_CGETSET_DEF("rideType", ScRideObject::rideType_get, nullptr),
+            JS_CGETSET_DEF("minCarsInTrain", ScRideObject::minCarsInTrain_get, nullptr),
+            JS_CGETSET_DEF("maxCarsInTrain", ScRideObject::maxCarsInTrain_get, nullptr),
+            JS_CGETSET_DEF("carsPerFlatRide", ScRideObject::carsPerFlatRide_get, nullptr),
+            JS_CGETSET_DEF("zeroCars", ScRideObject::zeroCars_get, nullptr),
+            JS_CGETSET_DEF("tabVehicle", ScRideObject::tabVehicle_get, nullptr),
+            JS_CGETSET_DEF("defaultVehicle", ScRideObject::defaultVehicle_get, nullptr),
+            JS_CGETSET_DEF("frontVehicle", ScRideObject::frontVehicle_get, nullptr),
+            JS_CGETSET_DEF("secondVehicle", ScRideObject::secondVehicle_get, nullptr),
+            JS_CGETSET_DEF("rearVehicle", ScRideObject::rearVehicle_get, nullptr),
+            JS_CGETSET_DEF("thirdVehicle", ScRideObject::thirdVehicle_get, nullptr),
+            JS_CGETSET_DEF("vehicles", ScRideObject::vehicles_get, nullptr),
+            JS_CGETSET_DEF("excitementMultiplier", ScRideObject::excitementMultiplier_get, nullptr),
+            JS_CGETSET_DEF("intensityMultiplier", ScRideObject::intensityMultiplier_get, nullptr),
+            JS_CGETSET_DEF("nauseaMultiplier", ScRideObject::nauseaMultiplier_get, nullptr),
+            JS_CGETSET_DEF("maxHeight", ScRideObject::maxHeight_get, nullptr),
+            JS_CGETSET_DEF("shopItem", ScRideObject::shopItem_get, nullptr),
+            JS_CGETSET_DEF("shopItemSecondary", ScRideObject::shopItemSecondary_get, nullptr),
+        };
+        RegisterDerived(ctx, gScObject, funcs);
+    }
+
+    class ScSceneryObject;
+    extern ScSceneryObject gScSceneryObject;
+
     class ScSceneryObject : public ScObject
     {
     public:
-        static JSValue New(JSContext* ctx, ObjectType type, int32_t index)
-        {
-            JSValue obj = ScObject::New(ctx, type, index);
-            AddFuncs(ctx, obj);
-            return obj;
-        }
+        static JSValue New(JSContext* ctx, ObjectType type, int32_t index);
+        void Register(JSContext* ctx);
 
     private:
-        static void AddFuncs(JSContext* ctx, JSValue obj)
-        {
-            static constexpr JSCFunctionListEntry funcs[] = {
-                JS_CGETSET_DEF("sceneryGroups", ScSceneryObject::sceneryGroups_get, nullptr),
-            };
-            JS_SetPropertyFunctionList(ctx, obj, funcs, std::size(funcs));
-        }
-
         static JSValue sceneryGroups_get(JSContext* ctx, JSValue thisVal)
         {
             JSValue result = JS_NewArray(ctx);
@@ -679,28 +683,29 @@ namespace OpenRCT2::Scripting
         }
     };
 
+    inline JSValue ScSceneryObject::New(JSContext* ctx, ObjectType type, int32_t index)
+    {
+        return gScObject.NewDerivedInstance(ctx, type, index, gScSceneryObject.GetProto());
+    }
+
+    inline void ScSceneryObject::Register(JSContext* ctx)
+    {
+        static constexpr JSCFunctionListEntry funcs[] = {
+            JS_CGETSET_DEF("sceneryGroups", ScSceneryObject::sceneryGroups_get, nullptr),
+        };
+        RegisterDerived(ctx, gScObject, funcs);
+    }
+
+    class ScSmallSceneryObject;
+    extern ScSmallSceneryObject gScSmallSceneryObject;
+
     class ScSmallSceneryObject final : public ScSceneryObject
     {
     public:
-        static JSValue New(JSContext* ctx, ObjectType type, int32_t index)
-        {
-            JSValue obj = ScSceneryObject::New(ctx, type, index);
-            AddFuncs(ctx, obj);
-            return obj;
-        }
+        static JSValue New(JSContext* ctx, ObjectType type, int32_t index);
+        void Register(JSContext* ctx);
 
     private:
-        static void AddFuncs(JSContext* ctx, JSValue obj)
-        {
-            static constexpr JSCFunctionListEntry funcs[] = {
-                JS_CGETSET_DEF("flags", ScSmallSceneryObject::flags_get, nullptr),
-                JS_CGETSET_DEF("height", ScSmallSceneryObject::height_get, nullptr),
-                JS_CGETSET_DEF("price", ScSmallSceneryObject::price_get, nullptr),
-                JS_CGETSET_DEF("removalPrice", ScSmallSceneryObject::removalPrice_get, nullptr),
-            };
-            JS_SetPropertyFunctionList(ctx, obj, funcs, std::size(funcs));
-        }
-
         static JSValue flags_get(JSContext* ctx, JSValue thisVal)
         {
             auto sceneryEntry = GetLegacyData(thisVal);
@@ -741,6 +746,22 @@ namespace OpenRCT2::Scripting
             return static_cast<SmallSceneryObject*>(GetObject(thisVal));
         }
     };
+
+    inline JSValue ScSmallSceneryObject::New(JSContext* ctx, ObjectType type, int32_t index)
+    {
+        return gScObject.NewDerivedInstance(ctx, type, index, gScSmallSceneryObject.GetProto());
+    }
+
+    inline void ScSmallSceneryObject::Register(JSContext* ctx)
+    {
+        static constexpr JSCFunctionListEntry funcs[] = {
+            JS_CGETSET_DEF("flags", ScSmallSceneryObject::flags_get, nullptr),
+            JS_CGETSET_DEF("height", ScSmallSceneryObject::height_get, nullptr),
+            JS_CGETSET_DEF("price", ScSmallSceneryObject::price_get, nullptr),
+            JS_CGETSET_DEF("removalPrice", ScSmallSceneryObject::removalPrice_get, nullptr),
+        };
+        RegisterDerived(ctx, gScSceneryObject, funcs);
+    }
 
     class ScLargeSceneryObjectTile;
     extern ScLargeSceneryObjectTile gScLargeSceneryObjectTile;
@@ -822,25 +843,16 @@ namespace OpenRCT2::Scripting
         }
     };
 
+    class ScLargeSceneryObject;
+    extern ScLargeSceneryObject gScLargeSceneryObject;
+
     class ScLargeSceneryObject final : public ScSceneryObject
     {
     public:
-        static JSValue New(JSContext* ctx, ObjectType type, int32_t index)
-        {
-            JSValue obj = ScSceneryObject::New(ctx, type, index);
-            AddFuncs(ctx, obj);
-            return obj;
-        }
+        static JSValue New(JSContext* ctx, ObjectType type, int32_t index);
+        void Register(JSContext* ctx);
 
     private:
-        static void AddFuncs(JSContext* ctx, JSValue obj)
-        {
-            static constexpr JSCFunctionListEntry funcs[] = {
-                JS_CGETSET_DEF("tiles", ScLargeSceneryObject::tiles_get, nullptr),
-            };
-            JS_SetPropertyFunctionList(ctx, obj, funcs, std::size(funcs));
-        }
-
         static JSValue tiles_get(JSContext* ctx, JSValue thisVal)
         {
             JSValue result = JS_NewArray(ctx);
@@ -872,52 +884,89 @@ namespace OpenRCT2::Scripting
         }
     };
 
+    inline JSValue ScLargeSceneryObject::New(JSContext* ctx, ObjectType type, int32_t index)
+    {
+        return gScObject.NewDerivedInstance(ctx, type, index, gScLargeSceneryObject.GetProto());
+    }
+
+    inline void ScLargeSceneryObject::Register(JSContext* ctx)
+    {
+        static constexpr JSCFunctionListEntry funcs[] = {
+            JS_CGETSET_DEF("tiles", ScLargeSceneryObject::tiles_get, nullptr),
+        };
+        RegisterDerived(ctx, gScSceneryObject, funcs);
+    }
+
+    class ScWallObject;
+    extern ScWallObject gScWallObject;
+
     class ScWallObject final : public ScSceneryObject
     {
     public:
-        static JSValue New(JSContext* ctx, ObjectType type, int32_t index)
-        {
-            return ScSceneryObject::New(ctx, type, index);
-        }
+        static JSValue New(JSContext* ctx, ObjectType type, int32_t index);
+        void Register(JSContext* ctx);
     };
+
+    inline JSValue ScWallObject::New(JSContext* ctx, ObjectType type, int32_t index)
+    {
+        return gScObject.NewDerivedInstance(ctx, type, index, gScWallObject.GetProto());
+    }
+
+    inline void ScWallObject::Register(JSContext* ctx)
+    {
+        RegisterDerived(ctx, gScSceneryObject, {});
+    }
+
+    class ScFootpathAdditionObject;
+    extern ScFootpathAdditionObject gScFootpathAdditionObject;
 
     class ScFootpathAdditionObject final : public ScSceneryObject
     {
     public:
-        static JSValue New(JSContext* ctx, ObjectType type, int32_t index)
-        {
-            return ScSceneryObject::New(ctx, type, index);
-        }
+        static JSValue New(JSContext* ctx, ObjectType type, int32_t index);
+        void Register(JSContext* ctx);
     };
+
+    inline JSValue ScFootpathAdditionObject::New(JSContext* ctx, ObjectType type, int32_t index)
+    {
+        return gScObject.NewDerivedInstance(ctx, type, index, gScFootpathAdditionObject.GetProto());
+    }
+
+    inline void ScFootpathAdditionObject::Register(JSContext* ctx)
+    {
+        RegisterDerived(ctx, gScSceneryObject, {});
+    }
+
+    class ScBannerObject;
+    extern ScBannerObject gScBannerObject;
 
     class ScBannerObject final : public ScSceneryObject
     {
     public:
-        static JSValue New(JSContext* ctx, ObjectType type, int32_t index)
-        {
-            return ScSceneryObject::New(ctx, type, index);
-        }
+        static JSValue New(JSContext* ctx, ObjectType type, int32_t index);
+        void Register(JSContext* ctx);
     };
+
+    inline JSValue ScBannerObject::New(JSContext* ctx, ObjectType type, int32_t index)
+    {
+        return gScObject.NewDerivedInstance(ctx, type, index, gScBannerObject.GetProto());
+    }
+
+    inline void ScBannerObject::Register(JSContext* ctx)
+    {
+        RegisterDerived(ctx, gScSceneryObject, {});
+    }
+
+    class ScSceneryGroupObject;
+    extern ScSceneryGroupObject gScSceneryGroupObject;
 
     class ScSceneryGroupObject final : public ScObject
     {
     public:
-        static JSValue New(JSContext* ctx, ObjectType type, int32_t index)
-        {
-            JSValue obj = ScObject::New(ctx, type, index);
-            AddFuncs(ctx, obj);
-            return obj;
-        }
+        static JSValue New(JSContext* ctx, ObjectType type, int32_t index);
+        void Register(JSContext* ctx);
 
     private:
-        static void AddFuncs(JSContext* ctx, JSValue obj)
-        {
-            static constexpr JSCFunctionListEntry funcs[] = {
-                JS_CGETSET_DEF("items", ScSceneryGroupObject::items_get, nullptr),
-            };
-            JS_SetPropertyFunctionList(ctx, obj, funcs, std::size(funcs));
-        }
-
         static JSValue items_get(JSContext* ctx, JSValue thisVal)
         {
             JSValue result = JS_NewArray(ctx);
@@ -939,6 +988,19 @@ namespace OpenRCT2::Scripting
             return static_cast<SceneryGroupObject*>(GetObject(thisVal));
         }
     };
+
+    inline JSValue ScSceneryGroupObject::New(JSContext* ctx, ObjectType type, int32_t index)
+    {
+        return gScObject.NewDerivedInstance(ctx, type, index, gScSceneryGroupObject.GetProto());
+    }
+
+    inline void ScSceneryGroupObject::Register(JSContext* ctx)
+    {
+        static constexpr JSCFunctionListEntry funcs[] = {
+            JS_CGETSET_DEF("items", ScSceneryGroupObject::items_get, nullptr),
+        };
+        RegisterDerived(ctx, gScObject, funcs);
+    }
 } // namespace OpenRCT2::Scripting
 
 #endif
