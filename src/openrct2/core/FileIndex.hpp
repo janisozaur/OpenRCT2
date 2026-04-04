@@ -27,6 +27,7 @@
 #include <chrono>
 #include <list>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -193,6 +194,7 @@ private:
                 const FileIndex* This;
                 int32_t Language;
                 std::string FilePath;
+                std::vector<uint8_t> Data;
                 std::optional<TItem> Item;
                 std::atomic<size_t>* Processed;
                 std::vector<TItem>* AllItems;
@@ -202,13 +204,13 @@ private:
 
             for (const auto& filePath : scanResult.Files)
             {
-                OpenRCT2::Platform::ReadAllBytesAsync(filePath, [&](std::vector<uint8_t> data, int err) {
+                OpenRCT2::Platform::ReadAllBytesAsync(filePath, [&, filePath](std::vector<uint8_t> data, int err) {
                     if (err == 0)
                     {
                         // Use libuv thread pool for heavy parsing
                         uv_work_t* work = new uv_work_t;
-                        WorkData* wd = new WorkData{ this,       language,  filePath, std::nullopt,
-                                                     &processed, &allItems, &mtx,     totalCount };
+                        WorkData* wd = new WorkData{ this,       language,       filePath, std::move(data), std::nullopt,
+                                                     &processed, &allItems, &mtx, totalCount };
                         work->data = wd;
 
                         uv_queue_work(
@@ -241,9 +243,12 @@ private:
                 });
             }
 
+            // Wait for all work to complete
+            // Note: The main thread (Context::Tick) drives the libuv loop with UV_RUN_NOWAIT.
+            // We just wait here for the work completion callbacks to increment 'processed'.
             while (processed < totalCount)
             {
-                OpenRCT2::Platform::LibuvLoop::Get().Run(UV_RUN_ONCE);
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
 #else
             JobPool jobPool;
