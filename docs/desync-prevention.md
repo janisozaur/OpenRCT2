@@ -12,7 +12,7 @@ OpenRCT2 uses a **deterministic lockstep** architecture for multiplayer. This me
 ### ❌ Don't: Use Floating Point Math in Game Logic
 Floating point results can vary between different CPU architectures (x86 vs ARM) and compiler optimisations.
 *   **Correction:** Use fixed-point math or integers.
-*   **Exception:** Rendering-only code or `consteval` blocks that resolve to constants at compile-time.
+*   **Exception:** Rendering-only code or `consteval` blocks that resolve to constants at compile-time. If you find floating point in the core, please report it as a bug.
 
 ### ❌ Don't: Use Non-Deterministic Randomness
 Functions like `rand()`, `std::mt19937`, or `UtilRand()` use system-specific entropy or local seeds.

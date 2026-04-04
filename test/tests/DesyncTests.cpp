@@ -10,9 +10,10 @@
 #include <gtest/gtest.h>
 #include <openrct2/Context.h>
 #include <openrct2/GameState.h>
+#include <openrct2/OpenRCT2.h>
 #include <openrct2/management/Research.h>
-#include <openrct2/scenario/Scenario.h>
 #include <openrct2/ride/Ride.h>
+#include <openrct2/scenario/Scenario.h>
 
 using namespace OpenRCT2;
 
@@ -53,8 +54,8 @@ TEST_F(DesyncTests, ScenarioRandMaxIsDeterministic)
     ASSERT_EQ(val1, ScenarioRandMax(100));
     ASSERT_EQ(val2, ScenarioRandMax(1000));
 
-    ASSERT_LT(val1, 100);
-    ASSERT_LT(val2, 1000);
+    ASSERT_LT(val1, 100u);
+    ASSERT_LT(val2, 1000u);
 }
 
 TEST_F(DesyncTests, ResearchShuffleIsDeterministic)
@@ -63,8 +64,10 @@ TEST_F(DesyncTests, ResearchShuffleIsDeterministic)
 
     // Setup some uninvented items
     gameState.researchItemsUninvented.clear();
-    for (int i = 0; i < 100; i++) {
-        gameState.researchItemsUninvented.emplace_back(Research::EntryType::ride, static_cast<ObjectEntryIndex>(i), 0, ResearchCategory::gentle, 0);
+    for (int i = 0; i < 100; i++)
+    {
+        gameState.researchItemsUninvented.emplace_back(
+            Research::EntryType::ride, static_cast<ObjectEntryIndex>(i), 0, ResearchCategory::gentle, 0);
     }
 
     auto originalList = gameState.researchItemsUninvented;
@@ -81,14 +84,17 @@ TEST_F(DesyncTests, ResearchShuffleIsDeterministic)
     auto result2 = gameState.researchItemsUninvented;
 
     ASSERT_EQ(result1.size(), originalList.size());
-    for (size_t i = 0; i < result1.size(); i++) {
+    for (size_t i = 0; i < result1.size(); i++)
+    {
         ASSERT_EQ(result1[i].entryIndex, result2[i].entryIndex);
     }
 
     // Verify it actually shuffled (low probability of being exactly the same)
     bool different = false;
-    for (size_t i = 0; i < result1.size(); i++) {
-        if (result1[i].entryIndex != originalList[i].entryIndex) {
+    for (size_t i = 0; i < result1.size(); i++)
+    {
+        if (result1[i].entryIndex != originalList[i].entryIndex)
+        {
             different = true;
             break;
         }
