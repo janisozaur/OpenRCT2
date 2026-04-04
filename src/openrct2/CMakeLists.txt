@@ -184,6 +184,13 @@ if (UNIX AND NOT HAIKU AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "BSD")
     target_link_libraries(libopenrct2 dl)
 endif ()
 
+if (UNIX AND NOT APPLE)
+    PKG_CHECK_MODULES(LIBUV REQUIRED libuv)
+    target_include_directories(libopenrct2 SYSTEM PUBLIC ${LIBUV_INCLUDE_DIRS})
+    target_link_libraries(libopenrct2 ${LIBUV_LIBRARIES})
+    target_compile_definitions(libopenrct2 PUBLIC USE_LIBUV)
+endif ()
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 target_link_libraries(libopenrct2 Threads::Threads)

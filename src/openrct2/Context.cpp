@@ -78,6 +78,10 @@
 #include "world/MapAnimation.h"
 #include "world/MapSelection.h"
 
+#ifdef USE_LIBUV
+    #include "platform/LibuvLoop.h"
+#endif
+
 #include <chrono>
 #include <cmath>
 #include <exception>
@@ -1447,6 +1451,10 @@ namespace OpenRCT2
 
             if (_activeScene)
                 _activeScene->Tick();
+
+#ifdef USE_LIBUV
+            OpenRCT2::Platform::LibuvLoop::Get().Run(UV_RUN_NOWAIT);
+#endif
 
 #ifdef __ENABLE_DISCORD__
             if (_discordService != nullptr)
