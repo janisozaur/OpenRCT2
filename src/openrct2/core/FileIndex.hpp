@@ -207,7 +207,8 @@ private:
                     {
                         // Use libuv thread pool for heavy parsing
                         uv_work_t* work = new uv_work_t;
-                        WorkData* wd = new WorkData{ this, language, filePath, std::nullopt, &processed, &allItems, &mtx, totalCount };
+                        WorkData* wd = new WorkData{ this,       language,  filePath, std::nullopt,
+                                                     &processed, &allItems, &mtx,     totalCount };
                         work->data = wd;
 
                         uv_queue_work(
@@ -234,7 +235,8 @@ private:
                     else
                     {
                         processed++;
-                        OpenRCT2::GetContext()->SetProgress(static_cast<uint32_t>(processed.load()), static_cast<uint32_t>(totalCount));
+                        OpenRCT2::GetContext()->SetProgress(
+                            static_cast<uint32_t>(processed.load()), static_cast<uint32_t>(totalCount));
                     }
                 });
             }

@@ -91,7 +91,8 @@ namespace OpenRCT2::Platform
                 data->iov = uv_buf_init(
                     reinterpret_cast<char*>(data->buffer.data() + data->offset),
                     static_cast<unsigned int>(data->buffer.size() - data->offset));
-                uv_fs_read(LibuvLoop::Get().GetLoop(), &data->read_req, data->open_req.result, &data->iov, 1, data->offset, on_read);
+                uv_fs_read(
+                    LibuvLoop::Get().GetLoop(), &data->read_req, data->open_req.result, &data->iov, 1, data->offset, on_read);
             }
             else
             {

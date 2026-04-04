@@ -39,7 +39,8 @@ namespace OpenRCT2::Platform
     /**
      * Reads all bytes from a file asynchronously.
      * @param path The path to the file.
-     * @param callback The callback to call when the file is read. The first parameter is the data, the second is the error code (0 for success).
+     * @param callback The callback to call when the file is read. The first parameter is the data, the second is the error code
+     * (0 for success).
      */
     void ReadAllBytesAsync(const std::string& path, std::function<void(std::vector<uint8_t>, int)> callback);
 } // namespace OpenRCT2::Platform
