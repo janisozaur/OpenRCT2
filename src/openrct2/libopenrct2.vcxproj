@@ -54,7 +54,7 @@
   <Import Project="..\..\openrct2.deps.targets" Condition="'$(IsSolutionBuild)' != 'true'" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>__ENABLE_DISCORD__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>__ENABLE_DISCORD__;USE_LIBUV;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Breakpad)'=='true' and ('$(Platform)'=='Win32' or '$(Platform)'=='x64')">USE_BREAKPAD;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Platform)'=='Win32' or '$(Platform)'=='x64'">USE_FRIBIDI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader Condition="'$(UsePCH)'=='true'">Use</PrecompiledHeader>
@@ -436,6 +436,7 @@
     <ClInclude Include="peep\RideUseSystem.h" />
     <ClInclude Include="PlatformEnvironment.h" />
     <ClInclude Include="platform\Crash.h" />
+    <ClInclude Include="platform\LibuvLoop.h" />
     <ClInclude Include="platform\Memory.h" />
     <ClInclude Include="platform\Platform.h" />
     <ClInclude Include="profiling\Profiling.h" />
@@ -1115,6 +1116,7 @@
     <ClCompile Include="platform\Crash.cpp" />
     <ClCompile Include="platform\Platform.Android.cpp" />
     <ClCompile Include="platform\Platform.Common.cpp" />
+    <ClCompile Include="platform\LibuvLoop.cpp" />
     <ClCompile Include="platform\Platform.Linux.cpp" />
     <ClCompile Include="platform\Platform.Posix.cpp" />
     <ClCompile Include="platform\Platform.Win32.cpp" />
