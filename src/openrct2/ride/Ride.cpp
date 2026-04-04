@@ -1675,7 +1675,7 @@ void DefaultMusicUpdate(Ride& ride)
         if (musicObj != nullptr)
         {
             auto numTracks = musicObj->GetTrackCount();
-            ride.musicTuneId = static_cast<uint8_t>(UtilRand() % numTracks);
+            ride.musicTuneId = static_cast<uint8_t>(ScenarioRandMax(numTracks));
             ride.musicPosition = 0;
         }
         return;
@@ -1943,10 +1943,10 @@ int32_t RideGetUnusedPresetVehicleColour(ObjectEntryIndex subType)
 
     // If all presets have been used, just go with a random preset
     if (unused.empty())
-        return UtilRand() % colourPresets->count;
+        return ScenarioRandMax(colourPresets->count);
 
     // Choose a random preset from the list of unused presets
-    auto unusedIndex = UtilRand() % unused.size();
+    auto unusedIndex = ScenarioRandMax(static_cast<uint32_t>(unused.size()));
     return unused[unusedIndex];
 }
 
@@ -4023,10 +4023,10 @@ int32_t RideGetRandomColourPresetIndex(ride_type_t rideType)
 
     // If all presets have been used, just go with a random preset
     if (unused.empty())
-        return UtilRand() % colourPresets.count;
+        return ScenarioRandMax(colourPresets.count);
 
     // Choose a random preset from the list of unused presets
-    auto unusedIndex = UtilRand() % unused.size();
+    auto unusedIndex = ScenarioRandMax(static_cast<uint32_t>(unused.size()));
     return unused[unusedIndex];
 }
 

@@ -71,6 +71,12 @@ namespace OpenRCT2::GameActions
 
     bool GameSetSpeedAction::IsValidSpeed(uint8_t speed) const
     {
+        // Limit game speed to 4x in multiplayer to prevent issues with slow clients.
+        // In single player, allow up to 8x if debugging tools are enabled.
+        if (Network::GetMode() != Network::Mode::none)
+        {
+            return speed >= 1 && speed <= 4;
+        }
         return speed >= 1 && (speed <= 4 || (Config::Get().general.debuggingTools && speed <= 8));
     }
 } // namespace OpenRCT2::GameActions

@@ -945,7 +945,7 @@ void ResearchItemsShuffle()
     auto& gameState = getGameState();
     std::shuffle(
         std::begin(gameState.researchItemsUninvented), std::end(gameState.researchItemsUninvented),
-        std::default_random_engine{});
+        gameState.scenarioRand);
 }
 
 bool ResearchItem::IsAlwaysResearched() const
