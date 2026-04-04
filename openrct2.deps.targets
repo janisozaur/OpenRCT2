@@ -295,12 +295,12 @@
     <RootDir>$(MsBuildThisFileDirectory)</RootDir>
     <DependenciesCheckFile>$(RootDir).dependencies</DependenciesCheckFile>
     <AssetsJsonPath>$(RootDir)assets.json</AssetsJsonPath>
-    <LibsUrl Condition="'$(Platform)'=='ARM64'">https://github.com/OpenRCT2/Dependencies/releases/download/v41/openrct2-libs-v41-arm64-windows-static.zip</LibsUrl>
-    <LibsSha256 Condition="'$(Platform)'=='ARM64'">5d171f23eee584bdc29b1186dc7a86d935a6ea58efa42b5674c196c5b581923b</LibsSha256>
-    <LibsUrl Condition="'$(Platform)'=='x64'">https://github.com/OpenRCT2/Dependencies/releases/download/v41/openrct2-libs-v41-x64-windows-static.zip</LibsUrl>
-    <LibsSha256 Condition="'$(Platform)'=='x64'">8e78f1c3c09c50cb0f509eab6845a93dd69771ff95cdf82d747568093d138f73</LibsSha256>
-    <LibsUrl Condition="'$(Platform)'=='Win32'">https://github.com/OpenRCT2/Dependencies/releases/download/v41/openrct2-libs-v41-x86-windows-static.zip</LibsUrl>
-    <LibsSha256 Condition="'$(Platform)'=='Win32'">490263b873dd02c13a043a04d26bb9837d2d378dacd8b2c8d29660fef44db3db</LibsSha256>
+    <LibsUrl Condition="'$(Platform)'=='ARM64'">https://github.com/janisozaur/Dependencies/releases/download/v999-libuv-1/openrct2-libs-v999-libuv-1-arm64-windows-static.zip</LibsUrl>
+    <LibsSha256 Condition="'$(Platform)'=='ARM64'">ef47aad40d807dac74c38e42d392769f37c14df86c1106565f70c1bd410b6af0</LibsSha256>
+    <LibsUrl Condition="'$(Platform)'=='x64'">https://github.com/janisozaur/Dependencies/releases/download/v999-libuv-1/openrct2-libs-v999-libuv-1-x64-windows-static.zip</LibsUrl>
+    <LibsSha256 Condition="'$(Platform)'=='x64'">9d771082ed0072b34de36807fe1138cfee623f463ab6b0ac4e42d9683fe16e82</LibsSha256>
+    <LibsUrl Condition="'$(Platform)'=='Win32'">https://github.com/janisozaur/Dependencies/releases/download/v999-libuv-1/openrct2-libs-v999-libuv-1-x86-windows-static.zip</LibsUrl>
+    <LibsSha256 Condition="'$(Platform)'=='Win32'">8a357d689337f9a307045951267b90b30ed14a6e00a36f85ef65d96ebc498b56</LibsSha256>
   </PropertyGroup>
 
   <!-- Load asset definitions from JSON first, before any download targets run -->
