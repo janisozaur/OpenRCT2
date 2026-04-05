@@ -1095,3 +1095,4 @@ namespace OpenRCT2::RCT2
 } // namespace OpenRCT2::RCT2
 
 std::vector<uint8_t> DecryptSea(const fs::path& path);
+std::vector<uint8_t> DecryptSea(const std::vector<uint8_t>& data, std::string_view filename);

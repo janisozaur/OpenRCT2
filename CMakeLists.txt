@@ -118,6 +118,7 @@ option(ENABLE_ASAN "Enable the AddressSanitizer.")
 option(ENABLE_UBSAN "Enable the UndefinedBehaviourSanitizer.")
 option(ENABLE_HEADERS_CHECK "Check if include directives in header files are correct. Only works with clang" OFF)
 option(DISABLE_GUI "Don't build GUI. (Headless only.)")
+option(USE_LIBUV "Enable libuv support." ON)
 
 
 if (FORCE32)
@@ -142,7 +143,7 @@ if (MACOS_USE_DEPENDENCIES)
 
     set(MACOS_DYLIBS_VERSION "999-libuv-1")
     set(MACOS_DYLIBS_ZIPFILE "openrct2-libs-v${MACOS_DYLIBS_VERSION}-universal-macos-dylibs.zip")
-    set(MACOS_DYLIBS_SHA256 "7a11cf259369d87edc5140a94809f0c937db010eac03f002ad20927f1122db21")
+    set(MACOS_DYLIBS_SHA256 "d96588edccfc294b0d3156169f18cf1368ffb7b145a5605015e5ee0f6bdd63ca")
     set(MACOS_DYLIBS_DIR "${ROOT_DIR}/lib/macos")
     set(MACOS_DYLIBS_URL "https://github.com/janisozaur/Dependencies/releases/download/v${MACOS_DYLIBS_VERSION}/${MACOS_DYLIBS_ZIPFILE}")
 

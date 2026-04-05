@@ -60,6 +60,7 @@
 #include "paint/Painter.h"
 #include "park/ParkFile.h"
 #include "platform/Crash.h"
+#include "platform/LibuvLoop.h"
 #include "platform/Platform.h"
 #include "profiling/Profiling.h"
 #include "rct2/RCT2.h"
@@ -90,6 +91,11 @@ using namespace OpenRCT2;
 using namespace OpenRCT2::Ui;
 
 using OpenRCT2::Audio::IAudioContext;
+
+// Undefine Windows macros that conflict with our functions
+#ifdef CreateDirectory
+    #undef CreateDirectory
+#endif
 
 namespace OpenRCT2
 {
@@ -1461,6 +1467,9 @@ namespace OpenRCT2
             {
                 _scriptEngine.Tick();
             }
+#endif
+#ifdef USE_LIBUV
+            Platform::LibuvLoop::Get().Tick();
 #endif
             _stdInOutConsole.ProcessEvalQueue();
             _uiContext->Tick();

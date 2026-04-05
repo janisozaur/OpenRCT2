@@ -11,6 +11,8 @@
 
 #include "../Context.h"
 #include "../Diagnostic.h"
+#include "../platform/LibuvLoop.h"
+#include "../platform/Platform.h"
 #include "Console.hpp"
 #include "DataSerialiser.h"
 #include "File.h"
@@ -20,8 +22,11 @@
 #include "Numerics.hpp"
 #include "Path.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <list>
+#include <memory>
+#include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -133,6 +138,14 @@ protected:
     virtual std::optional<TItem> Create(int32_t language, const std::string& path) const = 0;
 
     /**
+     * Loads the given file data and creates the item representing the data to store in the index.
+     */
+    virtual std::optional<TItem> Create(int32_t language, const std::string& path, std::vector<uint8_t>&& data) const
+    {
+        return Create(language, path);
+    }
+
+    /**
      * Serialises/DeSerialises an index item to/from the given stream.
      */
     virtual void Serialise(OpenRCT2::DataSerialiser& ds, const TItem& item) const = 0;
@@ -180,6 +193,92 @@ private:
         const size_t totalCount = scanResult.Files.size();
         if (totalCount > 0)
         {
+#ifdef USE_LIBUV
+            struct BuildContext
+            {
+                std::vector<TItem>& AllItems;
+                std::mutex& AllItemsMutex;
+                std::atomic<size_t>& FinishedCount;
+                std::atomic<size_t>& TotalProcessed;
+                const size_t TotalCount;
+                const int32_t Language;
+                const FileIndex<TItem>* Index;
+
+                BuildContext(
+                    std::vector<TItem>& allItems, std::mutex& allItemsMutex, std::atomic<size_t>& finishedCount,
+                    std::atomic<size_t>& totalProcessed, size_t totalCount, int32_t language, const FileIndex<TItem>* index)
+                    : AllItems(allItems)
+                    , AllItemsMutex(allItemsMutex)
+                    , FinishedCount(finishedCount)
+                    , TotalProcessed(totalProcessed)
+                    , TotalCount(totalCount)
+                    , Language(language)
+                    , Index(index)
+                {
+                }
+            };
+
+            struct WorkRequest
+            {
+                uv_work_t req;
+                std::string path;
+                std::vector<uint8_t> data;
+                std::optional<TItem> item;
+                std::shared_ptr<BuildContext> context;
+            };
+
+            std::mutex allItemsMutex;
+            std::atomic<size_t> finishedCount{ 0 };
+            std::atomic<size_t> totalProcessed{ 0 };
+            auto buildContext = std::make_shared<BuildContext>(
+                allItems, allItemsMutex, finishedCount, totalProcessed, totalCount, language, this);
+
+            for (size_t i = 0; i < totalCount; i++)
+            {
+                const auto& filePath = scanResult.Files.at(i);
+                OpenRCT2::Platform::ReadAllBytesAsync(filePath, [buildContext, filePath](std::vector<uint8_t>&& data) {
+                    if (data.empty())
+                    {
+                        buildContext->TotalProcessed++;
+                        buildContext->FinishedCount++;
+                        return;
+                    }
+
+                    auto* work = new WorkRequest();
+                    work->path = filePath;
+                    work->data = std::move(data);
+                    work->context = buildContext;
+                    work->req.data = work;
+
+                    uv_queue_work(
+                        OpenRCT2::Platform::LibuvLoop::Get().GetLoop(), &work->req,
+                        [](uv_work_t* req_inner) {
+                            auto* work_inner = static_cast<WorkRequest*>(req_inner->data);
+                            work_inner->item = work_inner->context->Index->Create(
+                                work_inner->context->Language, work_inner->path, std::move(work_inner->data));
+                        },
+                        [](uv_work_t* req_inner, int status) {
+                            auto* work_inner = static_cast<WorkRequest*>(req_inner->data);
+                            if (work_inner->item.has_value())
+                            {
+                                std::lock_guard lock(work_inner->context->AllItemsMutex);
+                                work_inner->context->AllItems.push_back(std::move(work_inner->item.value()));
+                            }
+                            work_inner->context->TotalProcessed++;
+                            work_inner->context->FinishedCount++;
+                            delete work_inner;
+                        });
+                });
+            }
+
+            while (finishedCount.load() < totalCount)
+            {
+                OpenRCT2::GetContext()->SetProgress(
+                    static_cast<uint32_t>(totalProcessed.load()), static_cast<uint32_t>(totalCount));
+                OpenRCT2::Platform::LibuvLoop::Get().Tick();
+                OpenRCT2::Platform::Sleep(1);
+            }
+#else
             JobPool jobPool;
             std::mutex mtx;
             std::atomic<size_t> processed{ 0 };
@@ -202,6 +301,7 @@ private:
             jobPool.Join([&]() {
                 OpenRCT2::GetContext()->SetProgress(static_cast<uint32_t>(processed.load()), static_cast<uint32_t>(totalCount));
             });
+#endif
         }
 
         WriteIndexFile(language, scanResult.Stats, allItems);

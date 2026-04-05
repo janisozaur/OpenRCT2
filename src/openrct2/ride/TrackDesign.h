@@ -237,6 +237,7 @@ extern bool gTrackDesignSaveMode;
 extern RideId gTrackDesignSaveRideIndex;
 
 [[nodiscard]] std::unique_ptr<TrackDesign> TrackDesignImport(const utf8* path);
+[[nodiscard]] std::unique_ptr<TrackDesign> TrackDesignImportFromData(u8string_view path, std::vector<uint8_t>&& data);
 
 void TrackDesignMirror(TrackDesign& td);
 

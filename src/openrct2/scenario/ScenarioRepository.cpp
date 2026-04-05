@@ -155,6 +155,19 @@ protected:
         return std::nullopt;
     }
 
+    std::optional<ScenarioIndexEntry> Create(
+        int32_t language, const std::string& path, std::vector<uint8_t>&& data) const override
+    {
+        ScenarioIndexEntry entry;
+        auto timestamp = File::GetLastModified(path);
+        if (GetScenarioInfoFromData(path, std::move(data), timestamp, &entry))
+        {
+            return entry;
+        }
+
+        return std::nullopt;
+    }
+
     void Serialise(DataSerialiser& ds, const ScenarioIndexEntry& item) const override
     {
         ds << item.Path;
@@ -197,6 +210,70 @@ private:
 
         auto fs = std::make_unique<FileStream>(path, FileMode::open);
         return fs;
+    }
+
+    /**
+     * Reads basic information from a scenario file data.
+     */
+    static bool GetScenarioInfoFromData(
+        const std::string& path, std::vector<uint8_t>&& data, uint64_t timestamp, ScenarioIndexEntry* entry)
+    {
+        LOG_VERBOSE("GetScenarioInfoFromData(%s, ..., %d, ...)", path.c_str(), timestamp);
+
+        try
+        {
+            auto& objRepository = GetContext()->GetObjectRepository();
+            std::unique_ptr<IParkImporter> importer;
+            std::string extension = Path::GetExtension(path);
+
+            auto stream = MemoryStream(data.data(), data.size());
+
+            if (String::iequals(extension, ".park"))
+            {
+                importer = ParkImporter::CreateParkFile(objRepository);
+                importer->LoadFromStream(&stream, true, true);
+            }
+            else if (String::iequals(extension, ".sc4"))
+            {
+                importer = ParkImporter::CreateS4();
+                importer->LoadFromStream(&stream, true, true);
+            }
+            else
+            {
+                importer = ParkImporter::CreateS6(objRepository);
+                // Handle .sea decryption if needed, but here we expect data to be already decrypted if it was .sea?
+                // Actually GetStreamFromRCT2Scenario handles .sea by reading file.
+                // If it's .sea, we should have decrypted it before calling this or handle it here.
+                if (String::iequals(extension, ".sea"))
+                {
+                    auto decryptedData = DecryptSea(data, Path::GetFileName(path));
+                    auto decryptedStream = MemoryStream(decryptedData.data(), decryptedData.size());
+                    importer->LoadFromStream(&decryptedStream, true, true);
+                }
+                else
+                {
+                    importer->LoadFromStream(&stream, true, true);
+                }
+            }
+
+            if (importer)
+            {
+                if (importer->PopulateIndexEntry(entry))
+                {
+                    entry->Path = path;
+                    entry->Timestamp = timestamp;
+                    return true;
+                }
+            }
+
+            LOG_VERBOSE("%s is not a scenario", path.c_str());
+            return false;
+        }
+        catch (const std::exception&)
+        {
+            Console::Error::WriteLine("Unable to read scenario from data: '%s'", path.c_str());
+        }
+        return false;
     }
 
     /**

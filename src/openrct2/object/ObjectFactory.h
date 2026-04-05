@@ -13,6 +13,7 @@
 
 #include <memory>
 #include <string_view>
+#include <vector>
 
 namespace OpenRCT2
 {
@@ -32,4 +33,6 @@ namespace OpenRCT2::ObjectFactory
     [[nodiscard]] std::unique_ptr<Object> CreateObject(ObjectType type);
 
     [[nodiscard]] std::unique_ptr<Object> CreateObjectFromJsonFile(const std::string& path, bool loadImages);
+    [[nodiscard]] std::unique_ptr<Object> CreateObjectFromData(
+        u8string_view path, std::vector<uint8_t>&& data, bool loadImages);
 } // namespace OpenRCT2::ObjectFactory

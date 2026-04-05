@@ -8,6 +8,7 @@
  *****************************************************************************/
 
 #include "../Date.h"
+#include "../Diagnostic.h"
 
 #ifdef _WIN32
     #ifndef WIN32_LEAN_AND_MEAN
@@ -31,6 +32,7 @@
 #include "../core/Path.hpp"
 #include "../core/String.hpp"
 #include "../localisation/Currency.h"
+#include "LibuvLoop.h"
 #include "Platform.h"
 
 #include <algorithm>
@@ -266,6 +268,97 @@ namespace OpenRCT2::Platform
     {
         return Path::Combine(
             steamroot, downloadDepotFolder, "app_" + std::to_string(data.appId), "depot_" + std::to_string(data.depotId));
+    }
+
+    void ReadAllBytesAsync(
+        [[maybe_unused]] u8string_view path, [[maybe_unused]] std::function<void(std::vector<uint8_t>&&)> callback)
+    {
+#if defined(USE_LIBUV) && !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
+        struct ReadRequest
+        {
+            uv_fs_t open_req;
+            uv_fs_t read_req;
+            uv_fs_t stat_req;
+            uv_fs_t close_req;
+            uv_buf_t buffer;
+            std::vector<uint8_t> data;
+            std::function<void(std::vector<uint8_t>&&)> callback;
+            std::string path;
+        };
+
+        auto* req = new ReadRequest();
+        req->callback = std::move(callback);
+        req->path = std::string(path);
+
+        auto on_open = [](uv_fs_t* open_req) {
+            auto* req_inner = static_cast<ReadRequest*>(open_req->data);
+            if (open_req->result < 0)
+            {
+                LOG_VERBOSE("Libuv error opening file: %s", uv_strerror(static_cast<int>(open_req->result)));
+                req_inner->callback({});
+                uv_fs_req_cleanup(open_req);
+                delete req_inner;
+                return;
+            }
+
+            req_inner->stat_req.data = req_inner;
+            uv_fs_fstat(open_req->loop, &req_inner->stat_req, static_cast<uv_file>(open_req->result), [](uv_fs_t* stat_req) {
+                auto* req_inner2 = static_cast<ReadRequest*>(stat_req->data);
+                if (stat_req->result < 0)
+                {
+                    LOG_VERBOSE("Libuv error stating file: %s", uv_strerror(static_cast<int>(stat_req->result)));
+                    uv_fs_close(
+                        stat_req->loop, &req_inner2->close_req, static_cast<uv_file>(req_inner2->open_req.result), nullptr);
+                    req_inner2->callback({});
+                    uv_fs_req_cleanup(&req_inner2->open_req);
+                    uv_fs_req_cleanup(stat_req);
+                    delete req_inner2;
+                    return;
+                }
+
+                auto size = stat_req->statbuf.st_size;
+                req_inner2->data.resize(size);
+                req_inner2->buffer = uv_buf_init(
+                    reinterpret_cast<char*>(req_inner2->data.data()), static_cast<unsigned int>(size));
+
+                req_inner2->read_req.data = req_inner2;
+                uv_fs_read(
+                    stat_req->loop, &req_inner2->read_req, static_cast<uv_file>(req_inner2->open_req.result),
+                    &req_inner2->buffer, 1, 0, [](uv_fs_t* read_req) {
+                        auto* req_inner3 = static_cast<ReadRequest*>(read_req->data);
+                        if (read_req->result < 0)
+                        {
+                            LOG_VERBOSE("Libuv error reading file: %s", uv_strerror(static_cast<int>(read_req->result)));
+                            req_inner3->callback({});
+                        }
+                        else
+                        {
+                            req_inner3->callback(std::move(req_inner3->data));
+                        }
+
+                        uv_fs_close(
+                            read_req->loop, &req_inner3->close_req, static_cast<uv_file>(req_inner3->open_req.result), nullptr);
+                        uv_fs_req_cleanup(&req_inner3->open_req);
+                        uv_fs_req_cleanup(&req_inner3->stat_req);
+                        uv_fs_req_cleanup(read_req);
+                        uv_fs_req_cleanup(&req_inner3->close_req);
+                        delete req_inner3;
+                    });
+            });
+        };
+
+        req->open_req.data = req;
+        uv_fs_open(LibuvLoop::Get().GetLoop(), &req->open_req, req->path.c_str(), O_RDONLY, 0, on_open);
+#else
+        try
+        {
+            callback(File::ReadAllBytes(path));
+        }
+        catch (const std::exception&)
+        {
+            callback({});
+        }
+#endif
     }
 
     bool triggerSteamDownload()

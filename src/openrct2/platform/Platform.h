@@ -15,6 +15,7 @@
 
 #include <bit>
 #include <ctime>
+#include <functional>
 #include <optional>
 #include <sfl/static_vector.hpp>
 #include <vector>
@@ -145,6 +146,7 @@ namespace OpenRCT2::Platform
     bool IsPathSeparator(char c);
     uint64_t GetLastModified(std::string_view path);
     uint64_t GetFileSize(std::string_view path);
+    void ReadAllBytesAsync(u8string_view path, std::function<void(std::vector<uint8_t>&&)> callback);
     std::string ResolveCasing(std::string_view path, bool fileExists);
     std::string SanitiseFilename(std::string_view originalName);
     bool IsFilenameValid(u8string_view fileName);

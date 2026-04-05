@@ -211,6 +211,26 @@ if (NOT MINGW AND NOT MSVC AND NOT EMSCRIPTEN)
     endif ()
 endif ()
 
+if (USE_LIBUV)
+    if (MSVC)
+        find_path(LIBUV_INCLUDE_DIRS uv.h)
+        find_library(LIBUV_LIBRARIES uv)
+    else ()
+        PKG_CHECK_MODULES(LIBUV REQUIRED IMPORTED_TARGET libuv>=1.0)
+    endif ()
+
+    target_include_directories(libopenrct2 SYSTEM PRIVATE ${LIBUV_INCLUDE_DIRS})
+    if (STATIC)
+        target_link_libraries(libopenrct2 ${LIBUV_STATIC_LIBRARIES})
+    else ()
+        if (NOT MSVC)
+            target_link_libraries(libopenrct2 PkgConfig::LIBUV)
+        else ()
+            target_link_libraries(libopenrct2 ${LIBUV_LIBRARIES})
+        endif ()
+    endif ()
+endif ()
+
 if (NOT DISABLE_TTF)
     if (STATIC)
         target_link_libraries(libopenrct2 ${FREETYPE_STATIC_LIBRARIES})
@@ -305,6 +325,7 @@ target_compile_definitions(libopenrct2 PUBLIC
         $<$<BOOL:${DISABLE_TTF}>:DISABLE_TTF>
         $<$<BOOL:${DISABLE_VERSION_CHECKER}>:DISABLE_VERSION_CHECKER>
         $<$<BOOL:${ENABLE_SCRIPTING}>:ENABLE_SCRIPTING>
+        $<$<BOOL:${USE_LIBUV}>:USE_LIBUV>
 )
 
 target_compile_options(libopenrct2 PUBLIC $<$<BOOL:${ENABLE_ASAN}>:-fsanitize=address>)

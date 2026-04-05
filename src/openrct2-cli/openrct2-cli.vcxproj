@@ -59,7 +59,7 @@
       <AdditionalOptions>$(OPENRCT2_CL_ADDITIONALOPTIONS) %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libopenrct2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libopenrct2.lib;libuv.lib;dbghelp.lib;Iphlpapi.lib;Userenv.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(OutDir)openrct2-cli.pdb</ProgramDatabaseFile>
       <SubSystem>Console</SubSystem>
     </Link>

@@ -13,6 +13,11 @@
 
 namespace OpenRCT2::Path
 {
+    // Prevent the Win32 CreateDirectory macro from rewriting this symbol to CreateDirectoryW.
+#ifdef CreateDirectory
+    #undef CreateDirectory
+#endif
+
     [[nodiscard]] u8string Combine(u8string_view a, u8string_view b);
 
     template<typename... Args>
