@@ -85,15 +85,21 @@ static void Decrypt(std::vector<uint8_t>& data, const EncryptionKey& key)
 
 std::vector<uint8_t> DecryptSea(const fs::path& path)
 {
-    auto key = GetEncryptionKey(path.filename().u8string());
     auto data = File::ReadAllBytes(path.u8string());
+    return DecryptSea(data, path.filename().u8string());
+}
+
+std::vector<uint8_t> DecryptSea(const std::vector<uint8_t>& data, std::string_view filename)
+{
+    auto key = GetEncryptionKey(filename);
+    auto decrypted = data;
 
     // Last 4 bytes is the checksum
-    size_t inputSize = data.size() - 4;
-    uint32_t checksum;
-    std::memcpy(&checksum, data.data() + inputSize, sizeof(checksum));
-    data.resize(inputSize);
+    if (decrypted.size() < 4)
+        return decrypted;
+    size_t inputSize = decrypted.size() - 4;
+    decrypted.resize(inputSize);
 
-    Decrypt(data, key);
-    return data;
+    Decrypt(decrypted, key);
+    return decrypted;
 }

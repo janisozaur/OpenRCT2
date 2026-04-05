@@ -60,6 +60,7 @@
 #include "paint/Painter.h"
 #include "park/ParkFile.h"
 #include "platform/Crash.h"
+#include "platform/LibuvLoop.h"
 #include "platform/Platform.h"
 #include "profiling/Profiling.h"
 #include "rct2/RCT2.h"
@@ -1461,6 +1462,9 @@ namespace OpenRCT2
             {
                 _scriptEngine.Tick();
             }
+#endif
+#ifdef USE_LIBUV
+            Platform::LibuvLoop::Get().Tick();
 #endif
             _stdInOutConsole.ProcessEvalQueue();
             _uiContext->Tick();

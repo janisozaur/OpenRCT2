@@ -489,6 +489,69 @@ namespace OpenRCT2::ObjectFactory
         return nullptr;
     }
 
+    std::unique_ptr<Object> CreateObjectFromData(u8string_view path, std::vector<uint8_t>&& data, bool loadImages)
+    {
+        std::unique_ptr<Object> object;
+        auto extension = Path::GetExtension(path);
+        if (String::iequals(extension, ".json"))
+        {
+            try
+            {
+                json_t jRoot = Json::FromVector(data);
+                auto fileDataRetriever = FileSystemDataRetriever(Path::GetDirectory(path));
+                object = CreateObjectFromJson(jRoot, &fileDataRetriever, loadImages, path);
+            }
+            catch (const std::exception& e)
+            {
+                Console::Error::WriteLine("Unable to read JSON from '%s': %s", u8string(path).c_str(), e.what());
+            }
+        }
+        else if (String::iequals(extension, ".parkobj"))
+        {
+            // For .parkobj, we still need to open the zip, which we can do from memory if needed,
+            // but for now, let's just use the file path since Zip::Open might not support memory yet.
+            object = CreateObjectFromZipFile(path, loadImages);
+        }
+        else
+        {
+            // Legacy DAT
+            try
+            {
+                auto chunkStream = MemoryStream(data.data(), data.size());
+                auto fs = chunkStream; // Mocked as IStream
+                auto chunkReader = SawyerChunkReader(&fs);
+
+                RCTObjectEntry entry = fs.ReadValue<RCTObjectEntry>();
+
+                if (entry.GetType() != ObjectType::scenarioMeta)
+                {
+                    object = CreateObject(entry.GetType());
+                    object->SetDescriptor(ObjectEntryDescriptor(entry));
+                    object->SetFileName(Path::GetFileNameWithoutExtension(path));
+
+                    utf8 objectName[kDatNameLength + 1] = { 0 };
+                    ObjectEntryGetNameFixed(objectName, sizeof(objectName), &entry);
+
+                    auto chunk = chunkReader.ReadChunk();
+                    auto innerChunkStream = MemoryStream(chunk->GetData(), chunk->GetLength());
+                    auto readContext = ReadObjectContext(objectName, loadImages, nullptr);
+                    ReadObjectLegacy(*object, &readContext, &innerChunkStream);
+                    if (readContext.WasError())
+                    {
+                        throw std::runtime_error("Object has errors");
+                    }
+                    object->SetSourceGames({ entry.GetSourceGame() });
+                }
+            }
+            catch (const std::exception& e)
+            {
+                LOG_ERROR("Error: %s when processing object %s from data", e.what(), u8string(path).c_str());
+            }
+        }
+
+        return object;
+    }
+
     static void ExtractSourceGames(const std::string& id, json_t& jRoot, Object& result)
     {
         auto sourceGames = jRoot["sourceGame"];

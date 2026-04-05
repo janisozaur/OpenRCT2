@@ -122,6 +122,36 @@ namespace OpenRCT2
             return item;
         }
 
+        std::optional<ObjectRepositoryItem> Create(
+            [[maybe_unused]] int32_t language, const std::string& path, std::vector<uint8_t>&& data) const override
+        {
+            std::unique_ptr<Object> object = ObjectFactory::CreateObjectFromData(path, std::move(data), false);
+
+            // All official DAT files have a JSON object counterpart. Avoid loading the obsolete .DAT versions,
+            // which can happen if the user copies the official DAT objects to their custom content folder.
+            if (object == nullptr
+                || (object->GetGeneration() == ObjectGeneration::DAT
+                    && object->GetObjectEntry().GetSourceGame() != ObjectSourceGame::custom))
+            {
+                return std::nullopt;
+            }
+
+            ObjectRepositoryItem item = {};
+            item.Type = object->GetObjectType();
+            item.Generation = object->GetGeneration();
+            item.Identifier = object->GetIdentifier();
+            item.ObjectEntry = object->GetObjectEntry();
+            item.Version = object->GetVersion();
+            item.Path = path;
+            item.Name = object->GetName();
+            item.Authors = object->GetAuthors();
+            item.Sources = object->GetSourceGames();
+            if (object->IsCompatibilityObject())
+                item.Flags |= ObjectItemFlags::IsCompatibilityObject;
+            object->SetRepositoryItem(&item);
+            return item;
+        }
+
     protected:
         void Serialise(DataSerialiser& ds, const ObjectRepositoryItem& item) const override
         {

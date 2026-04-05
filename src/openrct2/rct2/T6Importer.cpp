@@ -165,6 +165,12 @@ namespace OpenRCT2::RCT2
             return true;
         }
 
+        bool LoadFromData(std::vector<uint8_t>&& data) override
+        {
+            auto stream = MemoryStream(data.data(), data.size());
+            return LoadFromStream(&stream);
+        }
+
         std::unique_ptr<TrackDesign> Import() override
         {
             std::unique_ptr<TrackDesign> td = std::make_unique<TrackDesign>();

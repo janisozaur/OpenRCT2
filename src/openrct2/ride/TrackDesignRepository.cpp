@@ -92,6 +92,26 @@ public:
         return std::nullopt;
     }
 
+    std::optional<TrackRepositoryItem> Create(int32_t, const std::string& path, std::vector<uint8_t>&& data) const override
+    {
+        auto td = TrackDesignImportFromData(path, std::move(data));
+        if (td != nullptr)
+        {
+            TrackRepositoryItem item{};
+            item.Name = GetNameFromTrackPath(path);
+            item.Path = path;
+            item.RideType = td->trackAndVehicle.rtdIndex;
+            item.ObjectEntry = std::string(td->trackAndVehicle.vehicleObject.Entry.name, 8);
+            if (IsTrackReadOnly(path))
+            {
+                item.flags.set(TrackRepoItemFlag::readOnly);
+            }
+            return item;
+        }
+
+        return std::nullopt;
+    }
+
 protected:
     void Serialise(DataSerialiser& ds, const TrackRepositoryItem& item) const override
     {

@@ -620,6 +620,21 @@ std::unique_ptr<TrackDesign> TrackDesignImport(const utf8* path)
     return nullptr;
 }
 
+std::unique_ptr<TrackDesign> TrackDesignImportFromData(u8string_view path, std::vector<uint8_t>&& data)
+{
+    try
+    {
+        auto trackImporter = TrackImporter::Create(std::string(path));
+        trackImporter->LoadFromData(std::move(data));
+        return trackImporter->Import();
+    }
+    catch (const std::exception& e)
+    {
+        LOG_ERROR("Unable to load track design from data: %s", e.what());
+    }
+    return nullptr;
+}
+
 /**
  *
  *  rct2: 0x006ABDB0

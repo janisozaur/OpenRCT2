@@ -26,6 +26,7 @@ public:
 
     virtual bool Load(const utf8* path) = 0;
     virtual bool LoadFromStream(OpenRCT2::IStream* stream) = 0;
+    virtual bool LoadFromData(std::vector<uint8_t>&& data) = 0;
 
     [[nodiscard]] virtual std::unique_ptr<TrackDesign> Import() = 0;
 };
