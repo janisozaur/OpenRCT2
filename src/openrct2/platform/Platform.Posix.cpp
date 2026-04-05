@@ -255,7 +255,6 @@ namespace OpenRCT2::Platform
     }
     #endif
 
-
     bool ShouldIgnoreCase()
     {
         return false;

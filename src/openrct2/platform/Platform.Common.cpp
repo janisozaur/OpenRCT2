@@ -270,7 +270,8 @@ namespace OpenRCT2::Platform
             steamroot, downloadDepotFolder, "app_" + std::to_string(data.appId), "depot_" + std::to_string(data.depotId));
     }
 
-    void ReadAllBytesAsync([[maybe_unused]] u8string_view path, [[maybe_unused]] std::function<void(std::vector<uint8_t>&&)> callback)
+    void ReadAllBytesAsync(
+        [[maybe_unused]] u8string_view path, [[maybe_unused]] std::function<void(std::vector<uint8_t>&&)> callback)
     {
 #if defined(USE_LIBUV) && !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
         struct ReadRequest
@@ -317,12 +318,13 @@ namespace OpenRCT2::Platform
 
                 auto size = stat_req->statbuf.st_size;
                 req_inner2->data.resize(size);
-                req_inner2->buffer = uv_buf_init(reinterpret_cast<char*>(req_inner2->data.data()), static_cast<unsigned int>(size));
+                req_inner2->buffer = uv_buf_init(
+                    reinterpret_cast<char*>(req_inner2->data.data()), static_cast<unsigned int>(size));
 
                 req_inner2->read_req.data = req_inner2;
                 uv_fs_read(
-                    stat_req->loop, &req_inner2->read_req, static_cast<uv_file>(req_inner2->open_req.result), &req_inner2->buffer,
-                    1, 0, [](uv_fs_t* read_req) {
+                    stat_req->loop, &req_inner2->read_req, static_cast<uv_file>(req_inner2->open_req.result),
+                    &req_inner2->buffer, 1, 0, [](uv_fs_t* read_req) {
                         auto* req_inner3 = static_cast<ReadRequest*>(read_req->data);
                         if (read_req->result < 0)
                         {
