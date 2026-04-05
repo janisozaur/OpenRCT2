@@ -92,6 +92,11 @@ using namespace OpenRCT2::Ui;
 
 using OpenRCT2::Audio::IAudioContext;
 
+// Undefine Windows macros that conflict with our functions
+#ifdef CreateDirectory
+    #undef CreateDirectory
+#endif
+
 namespace OpenRCT2
 {
     namespace

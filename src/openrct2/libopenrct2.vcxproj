@@ -1113,6 +1113,7 @@
     <ClCompile Include="peep\RideUseSystem.cpp" />
     <ClCompile Include="PlatformEnvironment.cpp" />
     <ClCompile Include="platform\Crash.cpp" />
+    <ClCompile Include="platform\LibuvLoop.cpp" />
     <ClCompile Include="platform\Platform.Android.cpp" />
     <ClCompile Include="platform\Platform.Common.cpp" />
     <ClCompile Include="platform\Platform.Linux.cpp" />

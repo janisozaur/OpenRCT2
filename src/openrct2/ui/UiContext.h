@@ -17,6 +17,11 @@
 #include <string>
 #include <vector>
 
+// Undefine Windows macros that conflict with our functions
+#ifdef CreateWindow
+    #undef CreateWindow
+#endif
+
 struct ScreenCoordsXY;
 struct ITitleSequencePlayer;
 
