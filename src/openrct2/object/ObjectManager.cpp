@@ -11,6 +11,7 @@
 
 #include "../Context.h"
 #include "../Diagnostic.h"
+#include "../core/Watchdog.hpp"
 #include "../ParkImporter.h"
 #include "../audio/Audio.h"
 #include "../core/Console.hpp"

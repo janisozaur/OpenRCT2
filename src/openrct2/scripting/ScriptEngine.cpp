@@ -272,7 +272,7 @@ private:
         JS_FreeValue(_context, propsObj);
         JS_FreeValue(_context, objProto);
 
-        if (propsVec.size() == 0)
+        if (propsVec.empty())
         {
             _ss << "{}";
         }
