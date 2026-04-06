@@ -15,6 +15,7 @@
 #include "../Game.h"
 #include "../GameState.h"
 #include "../OpenRCT2.h"
+#include "../localisation/LocalisationService.h"
 #include "../actions/GameActionRunner.h"
 #include "../actions/park/ParkSetResearchFundingAction.h"
 #include "../config/Config.h"
@@ -22,6 +23,7 @@
 #include "../core/EnumUtils.hpp"
 #include "../core/Guard.hpp"
 #include "../core/Memory.hpp"
+#include "../core/Watchdog.hpp"
 #include "../localisation/Formatter.h"
 #include "../localisation/StringIds.h"
 #include "../object/ObjectEntryManager.h"
@@ -195,6 +197,13 @@ static void MarkResearchItemInvented(const ResearchItem& researchItem)
  */
 void ResearchFinishItem(const ResearchItem& researchItem)
 {
+#ifdef ENABLE_WATCHDOG
+    WatchdogScope watchdogScope("Research", [researchItem]() -> std::string {
+        auto& context = *GetContext();
+        auto& localisationService = context.GetLocalisationService();
+        return localisationService.GetString(researchItem.GetName());
+    });
+#endif
     auto& gameState = getGameState();
     gameState.researchLastItem = researchItem;
     ResearchInvalidateRelatedWindows();

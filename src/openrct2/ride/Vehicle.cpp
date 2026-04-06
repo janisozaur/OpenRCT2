@@ -20,6 +20,7 @@
 #include "../core/EnumUtils.hpp"
 #include "../core/FixedPoint.hpp"
 #include "../core/Memory.hpp"
+#include "../core/Watchdog.hpp"
 #include "../core/Speed.hpp"
 #include "../entity/EntityList.h"
 #include "../entity/EntityRegistry.h"
@@ -257,6 +258,9 @@ void VehicleUpdateAll()
 
     for (auto vehicle : TrainManager::View())
     {
+#ifdef ENABLE_WATCHDOG
+        WatchdogScope watchdogScope("Vehicle", [vehicle]() { return std::to_string(vehicle->Id.ToUnderlying()); });
+#endif
         vehicle->Update();
     }
 }

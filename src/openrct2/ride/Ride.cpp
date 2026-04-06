@@ -27,6 +27,7 @@
 #include "../core/EnumUtils.hpp"
 #include "../core/Guard.hpp"
 #include "../core/Numerics.hpp"
+#include "../core/Watchdog.hpp"
 #include "../drawing/Drawing.h"
 #include "../entity/EntityList.h"
 #include "../entity/EntityRegistry.h"
@@ -720,7 +721,12 @@ void Ride::updateAll()
 
     // Update rides
     for (auto& ride : RideManager(gameState))
+    {
+#ifdef ENABLE_WATCHDOG
+        WatchdogScope watchdogScope("Ride", [&ride]() { return ride.getName(); });
+#endif
         ride.update();
+    }
 
     RideAudio::UpdateMusicChannels();
 }

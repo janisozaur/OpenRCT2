@@ -17,6 +17,7 @@
 #include "../core/Guard.hpp"
 #include "../core/Memory.hpp"
 #include "../core/MemoryStream.h"
+#include "../core/Watchdog.hpp"
 #include "../entity/MoneyEffect.h"
 #include "../localisation/Formatter.h"
 #include "../network/Network.h"
@@ -270,6 +271,10 @@ namespace OpenRCT2::GameActions
     static Result ExecuteInternal(const GameAction* action, GameState_t& gameState, bool topLevel)
     {
         Guard::ArgumentNotNull(action);
+
+#ifdef ENABLE_WATCHDOG
+        WatchdogScope watchdogScope("GameAction", action->GetName());
+#endif
 
         uint16_t actionFlags = action->GetActionFlags();
         auto flags = action->GetFlags();
