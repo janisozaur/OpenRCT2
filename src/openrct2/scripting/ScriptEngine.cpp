@@ -1252,10 +1252,10 @@ JSValue ScriptEngine::ExecutePluginCall(
 {
     JSValue ret = JS_UNDEFINED;
 
-#ifdef ENABLE_WATCHDOG
+    #ifdef ENABLE_WATCHDOG
     std::string pluginName = plugin ? std::string(plugin->GetMetadata().Name) : "REPL";
     WatchdogScope watchdogScope("Plugin", pluginName);
-#endif
+    #endif
 
     // Note: the plugin pointer is null when called from the repl, so we assume the repl JSContext in that case.
     JSContext* ctx = plugin ? plugin->GetContext() : _replContext;

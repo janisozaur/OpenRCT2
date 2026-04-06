@@ -9,26 +9,25 @@
 
 #ifdef ENABLE_WATCHDOG
 
-#include "Watchdog.hpp"
+    #include "Watchdog.hpp"
 
-#include "../Context.h"
-#include "../OpenRCT2.h"
-#include "../Version.h"
-#include "../platform/Platform.h"
+    #include "../Context.h"
+    #include "../OpenRCT2.h"
+    #include "../Version.h"
+    #include "../platform/Platform.h"
 
-#ifdef _WIN32
-    #ifndef WIN32_LEAN_AND_MEAN
-        #define WIN32_LEAN_AND_MEAN
-    #endif
-    #include <windows.h>
-#else
-    #ifdef __APPLE__
-        #include <SDL.h>
+    #ifdef _WIN32
+        #ifndef WIN32_LEAN_AND_MEAN
+            #define WIN32_LEAN_AND_MEAN
+        #endif
+        #include <windows.h>
     #else
-        #include <SDL2/SDL.h>
+        #ifdef __APPLE__
+            #include <SDL.h>
+        #else
+            #include <SDL2/SDL.h>
+        #endif
     #endif
-#endif
-
 
 namespace OpenRCT2
 {
@@ -143,9 +142,12 @@ namespace OpenRCT2
                 // We should be careful calling a callback from the watchdog thread if it might access
                 // main-thread only data, but here we assume the callback is safe or the hang makes it
                 // "safe enough" to try for diagnostics.
-                try {
+                try
+                {
                     name = _culpritNameCallback();
-                } catch (...) {
+                }
+                catch (...)
+                {
                     name = "Error retrieving name";
                 }
             }
@@ -166,18 +168,19 @@ namespace OpenRCT2
         message += "This is typically caused by a misbehaving plugin or an exceptionally long game action. "
                    "You can change the timeout or disable this feature in your config.ini (watchdog_timeout_ms).\n\n";
 
-#ifdef USE_BREAKPAD
+    #ifdef USE_BREAKPAD
         message += "Would you like to terminate the game and upload a crash dump for analysis?";
 
-#ifdef _WIN32
-        int result = MessageBoxA(nullptr, message.c_str(), OPENRCT2_NAME " Watchdog", MB_YESNO | MB_ICONERROR | MB_SYSTEMMODAL);
+        #ifdef _WIN32
+        int result = MessageBoxA(
+            nullptr, message.c_str(), OPENRCT2_NAME " Watchdog", MB_YESNO | MB_ICONERROR | MB_SYSTEMMODAL);
         if (result == IDYES)
         {
             // Trigger breakpad crash
             volatile int* p = nullptr;
             (void)*p;
         }
-#else
+        #else
         const SDL_MessageBoxData messageboxdata = {
             SDL_MESSAGEBOX_ERROR,
             nullptr,
@@ -196,17 +199,16 @@ namespace OpenRCT2
             volatile int* p = nullptr;
             (void)*p;
         }
-#endif
-
-#else
+        #endif
+    #else
         message += "The game will continue to wait.";
-#ifdef _WIN32
+        #ifdef _WIN32
         MessageBoxA(nullptr, message.c_str(), OPENRCT2_NAME " Watchdog", MB_OK | MB_ICONWARNING | MB_SYSTEMMODAL);
-#else
+        #else
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, OPENRCT2_NAME " Watchdog", message.c_str(), nullptr);
-#endif
-#endif
+        #endif
+    #endif
     }
-}
+} // namespace OpenRCT2
 
 #endif // ENABLE_WATCHDOG

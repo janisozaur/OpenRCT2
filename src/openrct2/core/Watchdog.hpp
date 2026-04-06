@@ -11,11 +11,11 @@
 
 #ifdef ENABLE_WATCHDOG
 
-#include <atomic>
-#include <string>
-#include <thread>
-#include <mutex>
-#include <functional>
+    #include <atomic>
+    #include <functional>
+    #include <mutex>
+    #include <string>
+    #include <thread>
 
 namespace OpenRCT2
 {
@@ -23,10 +23,10 @@ namespace OpenRCT2
     {
     private:
         std::thread _watchdogThread;
-        std::atomic<bool> _running{false};
-        std::atomic<uint32_t> _lastHeartbeat{0};
-        std::atomic<uint32_t> _timeoutMs{10000};
-        std::atomic<bool> _paused{false};
+        std::atomic<bool> _running{ false };
+        std::atomic<uint32_t> _lastHeartbeat{ 0 };
+        std::atomic<uint32_t> _timeoutMs{ 10000 };
+        std::atomic<bool> _paused{ false };
 
         std::mutex _culpritMutex;
         std::string _culpritType;
@@ -115,6 +115,6 @@ namespace OpenRCT2
             GetWatchdog().Resume();
         }
     };
-}
+} // namespace OpenRCT2
 
 #endif // ENABLE_WATCHDOG

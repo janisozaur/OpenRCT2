@@ -22,10 +22,10 @@
 #include "../platform/Platform.h"
 #include "FileScanner.h"
 #include "Memory.hpp"
-#include "Watchdog.hpp"
 #include "Numerics.hpp"
 #include "Path.hpp"
 #include "String.hpp"
+#include "Watchdog.hpp"
 
 #include <memory>
 #include <set>
