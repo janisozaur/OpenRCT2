@@ -30,10 +30,13 @@
     #include <atomic>
     #include <chrono>
     #include <cstring>
+    #include <future>
     #include <iterator>
     #include <memory>
+    #include <mutex>
     #include <random>
     #include <string>
+    #include <vector>
 
 namespace OpenRCT2::Network
 {
@@ -75,6 +78,10 @@ namespace OpenRCT2::Network
 
         // See https://github.com/OpenRCT2/OpenRCT2/issues/6277 and 4953
         bool _forceIPv4 = false;
+
+        // Track outstanding async operations to ensure they complete before destruction
+        std::vector<std::shared_future<void>> _pendingRequests;
+        std::mutex _pendingRequestsMutex;
     #endif
 
     public:
@@ -91,6 +98,23 @@ namespace OpenRCT2::Network
         {
             _lanListener->Close();
             *_isAlive = false;
+
+    #ifndef DISABLE_HTTP
+            // Wait for all pending async HTTP requests to complete before destroying
+            std::vector<std::shared_future<void>> pendingCopy;
+            {
+                std::lock_guard<std::mutex> lock(_pendingRequestsMutex);
+                pendingCopy = _pendingRequests;
+                _pendingRequests.clear();
+            }
+            for (auto& future : pendingCopy)
+            {
+                if (future.valid())
+                {
+                    future.wait();
+                }
+            }
+    #endif
         }
 
         AdvertiseStatus GetStatus() const override
@@ -203,7 +227,7 @@ namespace OpenRCT2::Network
             request.header["Content-Type"] = "application/json";
 
             auto isAlive = _isAlive;
-            Http::DoAsync(request, [this, isAlive](Http::Response response) -> void {
+            auto future = Http::DoAsync(request, [this, isAlive](Http::Response response) -> void {
                 if (!*isAlive)
                 {
                     return;
@@ -222,6 +246,12 @@ namespace OpenRCT2::Network
                 root = Json::AsObject(root);
                 this->OnRegistrationResponse(root);
             });
+
+            // Store the future so destructor can wait for it
+            {
+                std::lock_guard<std::mutex> lock(_pendingRequestsMutex);
+                _pendingRequests.push_back(future);
+            }
         }
 
         void SendHeartbeat()
@@ -238,7 +268,7 @@ namespace OpenRCT2::Network
             _lastHeartbeatTime = Platform::GetTicks();
 
             auto isAlive = _isAlive;
-            Http::DoAsync(request, [this, isAlive](Http::Response response) -> void {
+            auto future = Http::DoAsync(request, [this, isAlive](Http::Response response) -> void {
                 if (!*isAlive)
                 {
                     return;
@@ -259,6 +289,12 @@ namespace OpenRCT2::Network
                 root = Json::AsObject(root);
                 this->OnHeartbeatResponse(root);
             });
+
+            // Store the future so destructor can wait for it
+            {
+                std::lock_guard<std::mutex> lock(_pendingRequestsMutex);
+                _pendingRequests.push_back(future);
+            }
         }
 
         /**
