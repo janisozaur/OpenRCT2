@@ -49,26 +49,15 @@ namespace OpenRCT2::Http
         Method method = Method::GET;
         std::string body;
         bool forceIPv4{};
+        int32_t timeoutMs{};
     };
 
     Response Do(const Request& req);
 
-    inline auto DoAsync(const Request& req, std::function<void(Response& res)> fn)
-    {
-        return std::async(std::launch::async, [=]() {
-            Response res{};
-            try
-            {
-                res = Do(req);
-            }
-            catch (std::exception& e)
-            {
-                res.error = e.what();
-                return;
-            }
-            fn(res);
-        });
-    }
+    /**
+     * Performs an asynchronous HTTP request.
+     */
+    std::shared_future<void> DoAsync(const Request& req, std::function<void(Response& res)> fn);
 } // namespace OpenRCT2::Http
 
 #endif // DISABLE_HTTP

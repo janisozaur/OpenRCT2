@@ -74,10 +74,17 @@ namespace OpenRCT2::Ui::Windows
         std::mutex _downloadStatusInfoMutex;
         std::string _lastDownloadSource;
 
+        std::shared_ptr<bool> _isAlive = std::make_shared<bool>(true);
+
         // TODO static due to INTENT_EXTRA_CALLBACK not allowing a std::function
         inline static bool _downloadingObjects;
 
     public:
+        ~ObjectDownloader()
+        {
+            *_isAlive = false;
+        }
+
         void Begin(const std::vector<ObjectEntryDescriptor>& entries)
         {
             _lastDownloadStatusInfo = {};
@@ -173,7 +180,13 @@ namespace OpenRCT2::Ui::Windows
                 Http::Request req;
                 req.method = Http::Method::GET;
                 req.url = url;
-                Http::DoAsync(req, [this, entry, name](Http::Response response) {
+                req.timeoutMs = 30000;
+                auto isAlive = _isAlive;
+                Http::DoAsync(req, [this, isAlive, entry, name](Http::Response response) {
+                    if (!*isAlive)
+                    {
+                        return;
+                    }
                     if (response.status == Http::Status::Ok)
                     {
                         // Check that download operation hasn't been cancelled
@@ -223,7 +236,13 @@ namespace OpenRCT2::Ui::Windows
                 Http::Request req;
                 req.method = Http::Method::GET;
                 req.url = kOpenRCT2ApiLegacyObjectURL + name;
-                Http::DoAsync(req, [this, entry, name](Http::Response response) {
+                req.timeoutMs = 10000;
+                auto isAlive = _isAlive;
+                Http::DoAsync(req, [this, isAlive, entry, name](Http::Response response) {
+                    if (!*isAlive)
+                    {
+                        return;
+                    }
                     if (response.status == Http::Status::Ok)
                     {
                         auto jresponse = Json::FromString(response.body);

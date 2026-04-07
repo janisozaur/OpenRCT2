@@ -108,6 +108,9 @@ namespace OpenRCT2::Http
             if (req.forceIPv4)
                 curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
 
+            if (req.timeoutMs > 0)
+                curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, static_cast<long>(req.timeoutMs));
+
             if (req.method == Method::POST)
                 curl_easy_setopt(curl, CURLOPT_POST, 1L);
 
