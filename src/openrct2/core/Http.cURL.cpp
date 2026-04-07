@@ -134,7 +134,7 @@ namespace OpenRCT2::Http
                 std::string hs = header.first + ": " + header.second;
                 chunk = curl_slist_append(chunk, hs.c_str());
             }
-            if (req.header.size() != 0)
+            if (!req.header.empty())
             {
                 if (chunk == nullptr)
                 {

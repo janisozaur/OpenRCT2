@@ -409,7 +409,7 @@ namespace OpenRCT2::Network
         status = Status::connected;
         listening_port = port;
         _serverState.gamestateSnapshotsEnabled = Config::Get().network.desyncDebugging;
-        _advertiser = std::dynamic_pointer_cast<NetworkServerAdvertiser>(CreateServerAdvertiser(listening_port));
+        _advertiser = CreateServerAdvertiser(listening_port);
 
         GameLoadScripts();
         GameNotifyMapChanged();

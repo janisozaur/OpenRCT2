@@ -51,7 +51,8 @@ namespace OpenRCT2::Network
     constexpr int32_t kMasterServerHeartbeatTime = std::chrono::milliseconds(1min).count();
     #endif
 
-    class NetworkServerAdvertiser final : public INetworkServerAdvertiser, public std::enable_shared_from_this<NetworkServerAdvertiser>
+    class NetworkServerAdvertiser final : public INetworkServerAdvertiser,
+                                          public std::enable_shared_from_this<NetworkServerAdvertiser>
     {
     private:
         uint16_t _port;

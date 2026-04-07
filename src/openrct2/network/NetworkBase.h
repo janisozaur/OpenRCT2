@@ -204,7 +204,7 @@ namespace OpenRCT2::Network
     private: // Server Data
         std::unordered_map<Command, CommandHandler> server_command_handlers;
         std::unique_ptr<ITcpSocket> _listenSocket;
-        std::shared_ptr<NetworkServerAdvertiser> _advertiser;
+        std::shared_ptr<INetworkServerAdvertiser> _advertiser;
         std::list<std::unique_ptr<Connection>> client_connection_list;
         std::string _serverLogPath;
         std::string _serverLogFilenameFormat = "%Y%m%d-%H%M%S.txt";
