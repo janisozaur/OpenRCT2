@@ -186,6 +186,8 @@ namespace OpenRCT2::Ui::Windows
                 Http::DoAsync(req, [this, isAlive, entry, name](Http::Response response) {
                     if (!*isAlive)
                     {
+                        // Even if cancelled, ensure we don't block future downloads
+                        _downloadingObjects = false;
                         return;
                     }
                     if (response.status == Http::Status::Ok)
@@ -242,6 +244,8 @@ namespace OpenRCT2::Ui::Windows
                 Http::DoAsync(req, [this, isAlive, entry, name](Http::Response response) {
                     if (!*isAlive)
                     {
+                        // Even if cancelled, ensure we don't block future downloads
+                        _downloadingObjects = false;
                         return;
                     }
                     if (response.status == Http::Status::Ok)
