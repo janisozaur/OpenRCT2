@@ -41,10 +41,10 @@ namespace OpenRCT2::Http
                           {
                               res = Do(req);
                           }
-                          catch (std::exception& e)
+                          catch (const std::exception& e)
                           {
+                              res.status = Status::Error;
                               res.error = e.what();
-                              return;
                           }
                           fn(res);
                       }).share();

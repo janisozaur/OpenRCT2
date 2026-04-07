@@ -51,7 +51,7 @@ namespace OpenRCT2::Network
     constexpr int32_t kMasterServerHeartbeatTime = std::chrono::milliseconds(1min).count();
     #endif
 
-    class NetworkServerAdvertiser final : public INetworkServerAdvertiser
+    class NetworkServerAdvertiser final : public INetworkServerAdvertiser, public std::enable_shared_from_this<NetworkServerAdvertiser>
     {
     private:
         uint16_t _port;
@@ -60,8 +60,6 @@ namespace OpenRCT2::Network
         uint32_t _lastListenTime{};
 
         AdvertiseStatus _status = AdvertiseStatus::unregistered;
-
-        std::shared_ptr<std::atomic<bool>> _isAlive = std::make_shared<std::atomic<bool>>(true);
 
     #ifndef DISABLE_HTTP
         uint32_t _lastAdvertiseTime = 0;
@@ -90,7 +88,6 @@ namespace OpenRCT2::Network
         ~NetworkServerAdvertiser() final
         {
             _lanListener->Close();
-            *_isAlive = false;
         }
 
         AdvertiseStatus GetStatus() const override
@@ -202,9 +199,10 @@ namespace OpenRCT2::Network
             request.body = body.dump();
             request.header["Content-Type"] = "application/json";
 
-            auto isAlive = _isAlive;
-            Http::DoAsync(request, [this, isAlive](Http::Response response) -> void {
-                if (!*isAlive)
+            auto weakThis = std::weak_ptr<NetworkServerAdvertiser>(shared_from_this());
+            Http::DoAsync(request, [weakThis](Http::Response response) -> void {
+                auto sharedThis = weakThis.lock();
+                if (!sharedThis)
                 {
                     return;
                 }
@@ -214,13 +212,13 @@ namespace OpenRCT2::Network
                     Console::Error::WriteLine(
                         "Unable to connect to master server, retrying in %d seconds", kMasterServerRegisterTime / 1000);
 
-                    _status = AdvertiseStatus::unregistered;
+                    sharedThis->_status = AdvertiseStatus::unregistered;
                     return;
                 }
 
                 json_t root = Json::FromString(response.body);
                 root = Json::AsObject(root);
-                this->OnRegistrationResponse(root);
+                sharedThis->OnRegistrationResponse(root);
             });
         }
 
@@ -237,9 +235,10 @@ namespace OpenRCT2::Network
 
             _lastHeartbeatTime = Platform::GetTicks();
 
-            auto isAlive = _isAlive;
-            Http::DoAsync(request, [this, isAlive](Http::Response response) -> void {
-                if (!*isAlive)
+            auto weakThis = std::weak_ptr<NetworkServerAdvertiser>(shared_from_this());
+            Http::DoAsync(request, [weakThis](Http::Response response) -> void {
+                auto sharedThis = weakThis.lock();
+                if (!sharedThis)
                 {
                     return;
                 }
@@ -249,15 +248,15 @@ namespace OpenRCT2::Network
                     Console::Error::WriteLine(
                         "Unable to connect to master server, retrying in %d seconds", kMasterServerRegisterTime / 1000);
 
-                    _status = AdvertiseStatus::unregistered;
+                    sharedThis->_status = AdvertiseStatus::unregistered;
                     // Don't immediately retry advertising, wait for kMasterServerRegisterTime.
-                    _lastAdvertiseTime = Platform::GetTicks();
+                    sharedThis->_lastAdvertiseTime = Platform::GetTicks();
                     return;
                 }
 
                 json_t root = Json::FromString(response.body);
                 root = Json::AsObject(root);
-                this->OnHeartbeatResponse(root);
+                sharedThis->OnHeartbeatResponse(root);
             });
         }
 
@@ -388,9 +387,9 @@ namespace OpenRCT2::Network
     #endif
     };
 
-    std::unique_ptr<INetworkServerAdvertiser> CreateServerAdvertiser(uint16_t port)
+    std::shared_ptr<INetworkServerAdvertiser> CreateServerAdvertiser(uint16_t port)
     {
-        return std::make_unique<NetworkServerAdvertiser>(port);
+        return std::make_shared<NetworkServerAdvertiser>(port);
     }
 } // namespace OpenRCT2::Network
 

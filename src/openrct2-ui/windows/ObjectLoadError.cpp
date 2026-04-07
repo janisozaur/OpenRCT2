@@ -41,7 +41,7 @@ namespace OpenRCT2::Ui::Windows
 #ifndef DISABLE_HTTP
 
     // TODO: move to its own compilation unit
-    class ObjectDownloader
+    class ObjectDownloader final : public std::enable_shared_from_this<ObjectDownloader>
     {
     private:
         static constexpr auto kOpenRCT2ApiLegacyObjectURL = "https://api.openrct2.io/objects/legacy/";
@@ -75,15 +75,13 @@ namespace OpenRCT2::Ui::Windows
         std::mutex _downloadStatusInfoMutex;
         std::string _lastDownloadSource;
 
-        std::shared_ptr<std::atomic<bool>> _isAlive = std::make_shared<std::atomic<bool>>(true);
-
         // TODO static due to INTENT_EXTRA_CALLBACK not allowing a std::function
         inline static bool _downloadingObjects;
 
     public:
         ~ObjectDownloader()
         {
-            *_isAlive = false;
+            _downloadingObjects = false;
         }
 
         void Begin(const std::vector<ObjectEntryDescriptor>& entries)
@@ -182,10 +180,12 @@ namespace OpenRCT2::Ui::Windows
                 req.method = Http::Method::GET;
                 req.url = url;
                 req.timeoutMs = 30000;
-                auto isAlive = _isAlive;
-                Http::DoAsync(req, [this, isAlive, entry, name](Http::Response response) {
-                    if (!*isAlive)
+                auto weakThis = std::weak_ptr<ObjectDownloader>(shared_from_this());
+                Http::DoAsync(req, [weakThis, entry, name](Http::Response response) {
+                    auto sharedThis = weakThis.lock();
+                    if (!sharedThis)
                     {
+                        _downloadingObjects = false;
                         return;
                     }
                     if (response.status == Http::Status::Ok)
@@ -199,15 +199,15 @@ namespace OpenRCT2::Ui::Windows
                             auto& objRepo = GetContext()->GetObjectRepository();
                             objRepo.AddObjectFromFile(ObjectGeneration::DAT, name, data, dataLen);
 
-                            std::lock_guard<std::mutex> guard(_downloadedEntriesMutex);
-                            _downloadedEntries.push_back(entry);
+                            std::lock_guard<std::mutex> guard(sharedThis->_downloadedEntriesMutex);
+                            sharedThis->_downloadedEntries.push_back(entry);
                         }
                     }
                     else
                     {
                         Console::Error::WriteLine("  Failed to download %s", name.c_str());
                     }
-                    QueueNextDownload();
+                    sharedThis->QueueNextDownload();
                 });
             }
             catch (const std::exception&)
@@ -238,10 +238,12 @@ namespace OpenRCT2::Ui::Windows
                 req.method = Http::Method::GET;
                 req.url = kOpenRCT2ApiLegacyObjectURL + name;
                 req.timeoutMs = 10000;
-                auto isAlive = _isAlive;
-                Http::DoAsync(req, [this, isAlive, entry, name](Http::Response response) {
-                    if (!*isAlive)
+                auto weakThis = std::weak_ptr<ObjectDownloader>(shared_from_this());
+                Http::DoAsync(req, [weakThis, entry, name](Http::Response response) {
+                    auto sharedThis = weakThis.lock();
+                    if (!sharedThis)
                     {
+                        _downloadingObjects = false;
                         return;
                     }
                     if (response.status == Http::Status::Ok)
@@ -254,22 +256,23 @@ namespace OpenRCT2::Ui::Windows
                             auto downloadLink = Json::GetString(jresponse["download"]);
                             if (!downloadLink.empty())
                             {
-                                _lastDownloadSource = source;
-                                UpdateProgress({ name, source, _currentDownloadIndex, _entries.size() });
-                                DownloadObject(entry, objName, downloadLink);
+                                sharedThis->_lastDownloadSource = source;
+                                sharedThis->UpdateProgress(
+                                    { name, source, sharedThis->_currentDownloadIndex, sharedThis->_entries.size() });
+                                sharedThis->DownloadObject(entry, objName, downloadLink);
                             }
                         }
                     }
                     else if (response.status == Http::Status::NotFound)
                     {
                         Console::Error::WriteLine("  %s not found", name.c_str());
-                        QueueNextDownload();
+                        sharedThis->QueueNextDownload();
                     }
                     else
                     {
                         Console::Error::WriteLine(
                             "  %s query failed (status %d)", name.c_str(), static_cast<int32_t>(response.status));
-                        QueueNextDownload();
+                        sharedThis->QueueNextDownload();
                     }
                 });
             }
@@ -360,21 +363,30 @@ namespace OpenRCT2::Ui::Windows
         int32_t _highlightedIndex = -1;
         std::string _filePath;
 #ifndef DISABLE_HTTP
-        ObjectDownloader _objDownloader;
+        std::shared_ptr<ObjectDownloader> _objDownloader;
         bool _updatedListAfterDownload{};
 
         void DownloadAllObjects()
         {
-            if (!_objDownloader.IsDownloading())
+            if (!_objDownloader)
+            {
+                _objDownloader = std::make_shared<ObjectDownloader>();
+            }
+            if (!_objDownloader->IsDownloading())
             {
                 _updatedListAfterDownload = false;
-                _objDownloader.Begin(_invalidEntries);
+                _objDownloader->Begin(_invalidEntries);
             }
         }
 
         void UpdateObjectList()
         {
-            const auto entries = _objDownloader.GetDownloadedEntries();
+            if (!_objDownloader)
+            {
+                numListItems = static_cast<uint16_t>(_invalidEntries.size());
+                return;
+            }
+            const auto entries = _objDownloader->GetDownloadedEntries();
             for (auto& de : entries)
             {
                 _invalidEntries.erase(
@@ -472,10 +484,13 @@ namespace OpenRCT2::Ui::Windows
             }
 
 #ifndef DISABLE_HTTP
-            _objDownloader.Update();
+            if (_objDownloader)
+            {
+                _objDownloader->Update();
+            }
 
             // Remove downloaded objects from our invalid entry list
-            if (_objDownloader.IsDownloading())
+            if (_objDownloader && _objDownloader->IsDownloading())
             {
                 // Don't do this too often as it isn't particularly efficient
                 if (currentFrame % 64 == 0)
