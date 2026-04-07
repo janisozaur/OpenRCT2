@@ -87,6 +87,7 @@ NewVersionInfo GetLatestVersion()
         Http::Request request;
         request.url = "https://api.github.com/repos/OpenRCT2/OpenRCT2/releases/latest";
         request.method = Http::Method::GET;
+        request.timeoutMs = 5000;
 
         Http::Response res;
         try

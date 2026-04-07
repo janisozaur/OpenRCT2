@@ -1553,6 +1553,7 @@ namespace OpenRCT2
             Http::Request request;
             request.url = url;
             request.method = Http::Method::GET;
+            request.timeoutMs = 30000;
 
             Http::Response res;
             try
