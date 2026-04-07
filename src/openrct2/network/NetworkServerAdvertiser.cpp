@@ -27,6 +27,7 @@
     #include "Network.h"
     #include "Socket.h"
 
+    #include <atomic>
     #include <chrono>
     #include <cstring>
     #include <iterator>
@@ -60,7 +61,7 @@ namespace OpenRCT2::Network
 
         AdvertiseStatus _status = AdvertiseStatus::unregistered;
 
-        std::shared_ptr<bool> _isAlive = std::make_shared<bool>(true);
+        std::shared_ptr<std::atomic<bool>> _isAlive = std::make_shared<std::atomic<bool>>(true);
 
     #ifndef DISABLE_HTTP
         uint32_t _lastAdvertiseTime = 0;

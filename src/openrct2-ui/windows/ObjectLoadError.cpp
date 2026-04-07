@@ -7,6 +7,7 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
+#include <atomic>
 #include <mutex>
 #include <openrct2-ui/interface/Widget.h>
 #include <openrct2-ui/windows/Windows.h>
@@ -74,7 +75,7 @@ namespace OpenRCT2::Ui::Windows
         std::mutex _downloadStatusInfoMutex;
         std::string _lastDownloadSource;
 
-        std::shared_ptr<bool> _isAlive = std::make_shared<bool>(true);
+        std::shared_ptr<std::atomic<bool>> _isAlive = std::make_shared<std::atomic<bool>>(true);
 
         // TODO static due to INTENT_EXTRA_CALLBACK not allowing a std::function
         inline static bool _downloadingObjects;

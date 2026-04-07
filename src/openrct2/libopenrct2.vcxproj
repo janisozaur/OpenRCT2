@@ -847,6 +847,7 @@
     <ClCompile Include="core\FileStream.cpp" />
     <ClCompile Include="core\FileWatcher.cpp" />
     <ClCompile Include="core\Guard.cpp" />
+    <ClCompile Include="core\Http.cpp" />
     <ClCompile Include="core\Http.cURL.cpp" />
     <ClCompile Include="core\Http.WinHttp.cpp" />
     <ClCompile Include="core\Imaging.cpp" />
