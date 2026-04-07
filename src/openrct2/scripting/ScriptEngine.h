@@ -330,6 +330,10 @@ namespace OpenRCT2::Scripting
 
         void RegisterDerived(JSContext* ctx, const ScBase& parent, std::span<const JSCFunctionListEntry> classFuncs)
         {
+            // Propagate the base class's classId and hasFinalizer so that MakeWithOpaqueAndProto
+            // works correctly when called on a derived instance (e.g. gScGroupBoxWidget).
+            classId = parent.classId;
+            hasFinalizer = parent.hasFinalizer;
             proto = JS_NewObject(ctx);
             protoCtx = ctx;
             JS_SetPrototype(ctx, proto, parent.GetProto());
