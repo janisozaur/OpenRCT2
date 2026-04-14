@@ -485,6 +485,10 @@ namespace OpenRCT2
             // Unload objects that are not in the hash set
             size_t totalObjectsLoaded = 0;
             size_t numObjectsUnloaded = 0;
+
+            // Track unique objects to avoid double counting for logging
+            std::unordered_set<Object*> uniqueObjects;
+
             for (auto type : getAllObjectTypes())
             {
                 if (!IsIntransientObjectType(type))
@@ -495,7 +499,8 @@ namespace OpenRCT2
                         if (object == nullptr)
                             continue;
 
-                        totalObjectsLoaded++;
+                        uniqueObjects.insert(object);
+
                         if (exceptSet.find(object) == exceptSet.end())
                         {
                             UnloadObject(object);
@@ -516,6 +521,8 @@ namespace OpenRCT2
                 {
                     if (!IsIntransientObjectType(item.Type))
                     {
+                        uniqueObjects.insert(item.LoadedObject.get());
+
                         if (exceptSet.find(item.LoadedObject.get()) == exceptSet.end())
                         {
                             item.LoadedObject->Unload();
@@ -525,6 +532,8 @@ namespace OpenRCT2
                     }
                 }
             }
+
+            totalObjectsLoaded = uniqueObjects.size();
 
             LOG_VERBOSE("%u / %u objects unloaded", numObjectsUnloaded, totalObjectsLoaded);
         }
