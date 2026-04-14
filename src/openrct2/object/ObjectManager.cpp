@@ -349,6 +349,23 @@ namespace OpenRCT2
                     list.clear();
                 }
             }
+
+            // Also unload everything in the repository that might have been loaded but not assigned a slot
+            const size_t numObjects = _objectRepository.GetNumObjects();
+            const ObjectRepositoryItem* items = _objectRepository.GetObjects();
+            for (size_t i = 0; i < numObjects; i++)
+            {
+                const auto& item = items[i];
+                if (item.LoadedObject != nullptr)
+                {
+                    if (!onlyTransient || !IsIntransientObjectType(item.Type))
+                    {
+                        item.LoadedObject->Unload();
+                        _objectRepository.UnregisterLoadedObject(&item, item.LoadedObject.get());
+                    }
+                }
+            }
+
             UpdateSceneryGroupIndexes();
             ResetTypeToRideEntryIndexMap();
         }
@@ -483,6 +500,26 @@ namespace OpenRCT2
                         {
                             UnloadObject(object);
                             object = nullptr;
+                            numObjectsUnloaded++;
+                        }
+                    }
+                }
+            }
+
+            // Also unload everything in the repository that is not in the exceptSet
+            const size_t numRepoObjects = _objectRepository.GetNumObjects();
+            const ObjectRepositoryItem* repoItems = _objectRepository.GetObjects();
+            for (size_t i = 0; i < numRepoObjects; i++)
+            {
+                const auto& item = repoItems[i];
+                if (item.LoadedObject != nullptr)
+                {
+                    if (!IsIntransientObjectType(item.Type))
+                    {
+                        if (exceptSet.find(item.LoadedObject.get()) == exceptSet.end())
+                        {
+                            item.LoadedObject->Unload();
+                            _objectRepository.UnregisterLoadedObject(&item, item.LoadedObject.get());
                             numObjectsUnloaded++;
                         }
                     }
