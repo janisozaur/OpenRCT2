@@ -160,6 +160,14 @@ void Plugin::SetMetadata(const JSValue obj)
     {
         metadata.Name = TryGetString(obj, "name", "Plugin name not specified.");
         metadata.Version = TryGetString(obj, "version", "Plugin version not specified.");
+
+        const JSValue url = JS_GetPropertyStr(_context, obj, "url");
+        if (JS_IsString(url))
+        {
+            metadata.URL = JSToStdString(_context, url);
+        }
+        JS_FreeValue(_context, url);
+
         metadata.Type = ParsePluginType(TryGetString(obj, "type", "Plugin type not specified."));
 
         const JSValue licence = JS_GetPropertyStr(_context, obj, "licence");

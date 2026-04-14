@@ -50,6 +50,7 @@ namespace OpenRCT2::Scripting
                 // Name and Version
                 JS_SetPropertyStr(ctx, val, "name", JSFromStdString(ctx, metadata.Name));
                 JS_SetPropertyStr(ctx, val, "version", JSFromStdString(ctx, metadata.Version));
+                JS_SetPropertyStr(ctx, val, "url", JSFromStdString(ctx, metadata.URL));
                 // Authors
                 JSValue authorsArray = JS_NewArray(ctx);
 

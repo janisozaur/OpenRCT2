@@ -3826,3 +3826,12 @@ STR_7026    :Makes the whole ride visible
 STR_7027    :{MOVE_X}{29}{STRINGID}
 STR_7028    :Quarter Helix up
 STR_7029    :Quarter Helix down
+STR_7030    :Plug-in Manager
+STR_7031    :Plug-in Name
+STR_7032    :Current
+STR_7033    :Available
+STR_7034    :Authors
+STR_7035    :Open release page
+STR_7036    :Open plug-in folder
+STR_7037    :Check for updates
+STR_7038    :Shows the plug-in manager.

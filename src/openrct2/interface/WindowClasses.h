@@ -90,6 +90,7 @@ enum class WindowClass : uint8_t
     progressWindow = 137,
     titleVersion = 138,
     editorParkEntrance = 139,
+    pluginManager = 140,
 
     // Only used for colour schemes
     staff = 220,
