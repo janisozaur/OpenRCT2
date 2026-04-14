@@ -24,6 +24,7 @@
 #include "../core/File.h"
 #include "../core/Guard.hpp"
 #include "../core/Json.hpp"
+#include "../core/Watchdog.hpp"
 #include "../drawing/Drawing.h"
 #include "../entity/EntityRegistry.h"
 #include "../entity/EntityTweener.h"
@@ -1756,6 +1757,9 @@ namespace OpenRCT2::Network
 
     static void displayNetworkProgress(StringId captionStringId)
     {
+    #ifdef ENABLE_WATCHDOG
+        GetWatchdog().Pause();
+    #endif
         auto captionString = GetContext()->GetLocalisationService().GetString(captionStringId);
         auto intent = Intent(INTENT_ACTION_PROGRESS_OPEN);
         intent.PutExtra(INTENT_EXTRA_MESSAGE, captionString);

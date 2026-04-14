@@ -11,6 +11,7 @@
 
 #include "../Context.h"
 #include "../Diagnostic.h"
+#include "../core/Watchdog.hpp"
 #include "../ParkImporter.h"
 #include "../audio/Audio.h"
 #include "../core/Console.hpp"
@@ -594,6 +595,9 @@ namespace OpenRCT2
 
         void LoadObjects(std::vector<ObjectToLoad>& requiredObjects, bool reportProgress)
         {
+#ifdef ENABLE_WATCHDOG
+            WatchdogPauseScope watchdogPauseScope;
+#endif
             std::vector<Object*> objects;
             std::vector<Object*> newLoadedObjects;
             std::vector<ObjectEntryDescriptor> badObjects;
@@ -624,6 +628,9 @@ namespace OpenRCT2
             auto numRequired = objectsToLoad.size();
             std::mutex commonMutex;
             auto loadSingleObject = [&](const ObjectRepositoryItem* requiredObject) {
+#ifdef ENABLE_WATCHDOG
+                WatchdogScope watchdogScope("Object", std::string(requiredObject->Identifier));
+#endif
                 // Object requires to be loaded, if the object successfully loads it will register it
                 // as a loaded object otherwise placed into the badObjects list.
                 auto newObject = _objectRepository.LoadObject(requiredObject);

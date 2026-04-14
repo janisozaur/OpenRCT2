@@ -175,6 +175,7 @@ namespace OpenRCT2::Config
         if (reader->ReadSection("general"))
         {
             auto model = &_config.general;
+            model->watchdogTimeoutMs = reader->GetInt32("watchdog_timeout_ms", 10000);
             model->alwaysShowGridlines = reader->GetBoolean("always_show_gridlines", false);
             model->autosaveFrequency = reader->GetInt32("autosave", AUTOSAVE_EVERY_5MINUTES);
             model->autosaveAmount = reader->GetInt32("autosave_amount", kDefaultNumAutosavesToKeep);
@@ -288,6 +289,7 @@ namespace OpenRCT2::Config
     {
         auto model = &_config.general;
         writer->WriteSection("general");
+        writer->WriteInt32("watchdog_timeout_ms", model->watchdogTimeoutMs);
         writer->WriteBoolean("always_show_gridlines", model->alwaysShowGridlines);
         writer->WriteInt32("autosave", model->autosaveFrequency);
         writer->WriteInt32("autosave_amount", model->autosaveAmount);

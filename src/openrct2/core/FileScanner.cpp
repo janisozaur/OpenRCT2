@@ -25,6 +25,7 @@
 #include "Numerics.hpp"
 #include "Path.hpp"
 #include "String.hpp"
+#include "Watchdog.hpp"
 
 #include <memory>
 #include <set>
@@ -402,6 +403,9 @@ std::unique_ptr<IFileScanner> Path::ScanDirectory(const std::string& pattern, bo
 
 void Path::QueryDirectory(QueryDirectoryResult* result, const std::string& pattern)
 {
+#ifdef ENABLE_WATCHDOG
+    WatchdogPauseScope watchdogPauseScope;
+#endif
     auto scanner = ScanDirectory(pattern, true);
     while (scanner->Next())
     {

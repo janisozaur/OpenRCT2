@@ -39,6 +39,7 @@
 #include "core/Path.hpp"
 #include "core/String.hpp"
 #include "core/Timer.hpp"
+#include "core/Watchdog.hpp"
 #include "drawing/ColourMap.h"
 #include "drawing/Drawing.h"
 #include "drawing/IDrawingEngine.h"
@@ -196,6 +197,10 @@ namespace OpenRCT2
         {
             // NOTE: We must shutdown all systems here before Instance is set back to null.
             //       If objects use GetContext() in their destructor things won't go well.
+
+#ifdef ENABLE_WATCHDOG
+            GetWatchdog().Stop();
+#endif
 
 #ifdef ENABLE_SCRIPTING
             _scriptEngine.StopUnloadRegisterAllPlugins();
@@ -400,7 +405,7 @@ namespace OpenRCT2
             ContextOpenWindow(WindowClass::savePrompt);
         }
 
-        bool Initialise() final override
+        bool Initialise() final
         {
             if (_initialised)
             {
@@ -409,6 +414,14 @@ namespace OpenRCT2
             _initialised = true;
 
             CrashInit();
+
+#ifdef ENABLE_WATCHDOG
+            if (Config::Get().general.watchdogTimeoutMs > 0)
+            {
+                GetWatchdog().SetTimeout(Config::Get().general.watchdogTimeoutMs);
+                GetWatchdog().Start();
+            }
+#endif
 
             if (String::equals(Config::Get().general.lastRunVersion, kOpenRCT2Version))
             {
@@ -630,7 +643,7 @@ namespace OpenRCT2
         }
 
     public:
-        void InitialiseDrawingEngine() final override
+        void InitialiseDrawingEngine() final
         {
             assert(_drawingEngine == nullptr);
 
@@ -697,13 +710,16 @@ namespace OpenRCT2
             WindowCheckAllValidZoom();
         }
 
-        void DisposeDrawingEngine() final override
+        void DisposeDrawingEngine() final
         {
             _drawingEngine = nullptr;
         }
 
         void OpenProgress(StringId captionStringId) override
         {
+#ifdef ENABLE_WATCHDOG
+            GetWatchdog().Pause();
+#endif
             auto captionString = _localisationService->GetString(captionStringId);
             auto intent = Intent(INTENT_ACTION_PROGRESS_OPEN);
             intent.PutExtra(INTENT_EXTRA_MESSAGE, captionString);
@@ -737,11 +753,14 @@ namespace OpenRCT2
 
         void CloseProgress() override
         {
+#ifdef ENABLE_WATCHDOG
+            GetWatchdog().Resume();
+#endif
             auto intent = Intent(INTENT_ACTION_PROGRESS_CLOSE);
             ContextOpenIntent(&intent);
         }
 
-        bool LoadParkFromFile(const u8string& path, bool loadTitleScreenOnFail = false, bool asScenario = false) final override
+        bool LoadParkFromFile(const u8string& path, bool loadTitleScreenOnFail = false, bool asScenario = false) final
         {
             LOG_VERBOSE("Context::LoadParkFromFile(%s)", path.c_str());
 
@@ -794,7 +813,7 @@ namespace OpenRCT2
 
         bool LoadParkFromStream(
             IStream* stream, const std::string& path, bool loadTitleScreenFirstOnFail = false,
-            bool asScenario = false) final override
+            bool asScenario = false) final
         {
             try
             {
@@ -1434,6 +1453,10 @@ namespace OpenRCT2
         {
             PROFILED_FUNCTION();
 
+#ifdef ENABLE_WATCHDOG
+            GetWatchdog().Heartbeat();
+#endif
+
             // TODO: This variable has been never "variable" in time, some code expects
             // this to be 40Hz (25 ms). Refactor this once the UI is decoupled.
             gCurrentDeltaTime = static_cast<uint16_t>(kGameUpdateTimeMS * 1000.0f);
@@ -1800,6 +1823,9 @@ namespace OpenRCT2
     {
         try
         {
+#ifdef ENABLE_WATCHDOG
+            WatchdogPauseScope watchdogPauseScope;
+#endif
             return GetContext()->GetUiContext().ShowFileDialog(desc);
         }
         catch (const std::exception& ex)

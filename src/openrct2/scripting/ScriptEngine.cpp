@@ -26,6 +26,7 @@
     #include "../core/FileScanner.h"
     #include "../core/FileWatcher.h"
     #include "../core/Path.hpp"
+    #include "../core/Watchdog.hpp"
     #include "../interface/InteractiveConsole.h"
     #include "../platform/Platform.h"
     #include "../profiling/Profiling.h"
@@ -271,7 +272,7 @@ private:
         JS_FreeValue(_context, propsObj);
         JS_FreeValue(_context, objProto);
 
-        if (propsVec.size() == 0)
+        if (propsVec.empty())
         {
             _ss << "{}";
         }
@@ -1250,6 +1251,11 @@ JSValue ScriptEngine::ExecutePluginCall(
     bool isGameStateMutable, bool keepArgsAlive, bool keepRetValueAlive)
 {
     JSValue ret = JS_UNDEFINED;
+
+    #ifdef ENABLE_WATCHDOG
+    std::string pluginName = plugin ? std::string(plugin->GetMetadata().Name) : "REPL";
+    WatchdogScope watchdogScope("Plugin", pluginName);
+    #endif
 
     // Note: the plugin pointer is null when called from the repl, so we assume the repl JSContext in that case.
     JSContext* ctx = plugin ? plugin->GetContext() : _replContext;
