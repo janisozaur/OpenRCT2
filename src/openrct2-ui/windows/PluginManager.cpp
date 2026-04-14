@@ -48,7 +48,6 @@ namespace OpenRCT2::Ui::Windows
 
     static constexpr StringId kWindowTitle = STR_PLUGIN_MANAGER_TITLE;
     static constexpr ScreenSize kWindowSize = { 600, 400 };
-    static constexpr int32_t kWindowWidthLessPadding = kWindowSize.width - 5;
 
     constexpr int32_t kNameColLeft = 4;
     constexpr int32_t kCurrentColLeft = 154;
