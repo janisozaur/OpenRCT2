@@ -25,10 +25,10 @@
     #include "../core/File.h"
     #include "../core/FileScanner.h"
     #include "../core/FileWatcher.h"
-    #include "../core/Path.hpp"
-    #include "../interface/InteractiveConsole.h"
     #include "../core/Http.h"
     #include "../core/Json.hpp"
+    #include "../core/Path.hpp"
+    #include "../interface/InteractiveConsole.h"
     #include "../platform/Platform.h"
     #include "../profiling/Profiling.h"
     #include "../ride/ted/PitchAndRoll.h"
@@ -1189,8 +1189,8 @@ void ScriptEngine::Tick()
 
 void ScriptEngine::CheckForPluginUpdates(bool manual)
 {
-#if !defined(DISABLE_HTTP) && !defined(DISABLE_VERSION_CHECKER)
-    auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    #if !defined(DISABLE_HTTP) && !defined(DISABLE_VERSION_CHECKER)
+        auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     auto then = Config::Get().general.lastVersionCheckTime;
     using namespace std::chrono_literals;
 
@@ -1277,7 +1277,7 @@ void ScriptEngine::CheckForPluginUpdates(bool manual)
             Config::Save();
         }
     }
-#endif
+    #endif
 }
 
 void ScriptEngine::CheckAndStartPlugins()

@@ -8,11 +8,13 @@
  *****************************************************************************/
 
 #include "../UiStringIds.h"
+
 #include <openrct2-ui/interface/Widget.h>
 #include <openrct2-ui/windows/Windows.h>
 #include <openrct2/Context.h>
 #include <openrct2/OpenRCT2.h>
 #include <openrct2/PlatformEnvironment.h>
+#include <openrct2/drawing/ColourMap.h>
 #include <openrct2/drawing/Drawing.h>
 #include <openrct2/drawing/Rectangle.h>
 #include <openrct2/drawing/Text.h>
@@ -55,15 +57,17 @@ namespace OpenRCT2::Ui::Windows
 
     static constexpr auto window_plugin_manager_widgets = makeWidgets(
         makeWindowShim(kWindowTitle, kWindowSize),
-        makeWidget({kNameColLeft,      57}, {150, 14}, WidgetType::tableHeader, WindowColour::primary, STR_PLUGIN_NAME),
-        makeWidget({kCurrentColLeft,   57}, {80,  14}, WidgetType::tableHeader, WindowColour::primary, STR_PLUGIN_VERSION_CURRENT),
-        makeWidget({kAvailableColLeft, 57}, {80,  14}, WidgetType::tableHeader, WindowColour::primary, STR_PLUGIN_VERSION_AVAILABLE),
-        makeWidget({kAuthorsColLeft,   57}, {282, 14}, WidgetType::tableHeader, WindowColour::primary, STR_PLUGIN_AUTHORS),
-        makeWidget({kNameColLeft,      71}, {592, 297}, WidgetType::scroll,      WindowColour::primary, SCROLL_VERTICAL),
-        makeWidget({kNameColLeft,      377}, {190, 14}, WidgetType::button,      WindowColour::primary, STR_OPEN_RELEASE_PAGE),
-        makeWidget({205,               377}, {190, 14}, WidgetType::button,      WindowColour::primary, STR_OPEN_PLUGIN_DIRECTORY),
-        makeWidget({406,               377}, {190, 14}, WidgetType::button,      WindowColour::primary, STR_CHECK_FOR_UPDATES)
-    );
+        makeWidget({ kNameColLeft, 57 }, { 150, 14 }, WidgetType::tableHeader, WindowColour::primary, STR_PLUGIN_NAME),
+        makeWidget(
+            { kCurrentColLeft, 57 }, { 80, 14 }, WidgetType::tableHeader, WindowColour::primary, STR_PLUGIN_VERSION_CURRENT),
+        makeWidget(
+            { kAvailableColLeft, 57 }, { 80, 14 }, WidgetType::tableHeader, WindowColour::primary,
+            STR_PLUGIN_VERSION_AVAILABLE),
+        makeWidget({ kAuthorsColLeft, 57 }, { 282, 14 }, WidgetType::tableHeader, WindowColour::primary, STR_PLUGIN_AUTHORS),
+        makeWidget({ kNameColLeft, 71 }, { 592, 297 }, WidgetType::scroll, WindowColour::primary, SCROLL_VERTICAL),
+        makeWidget({ kNameColLeft, 377 }, { 190, 14 }, WidgetType::button, WindowColour::primary, STR_OPEN_RELEASE_PAGE),
+        makeWidget({ 205, 377 }, { 190, 14 }, WidgetType::button, WindowColour::primary, STR_OPEN_PLUGIN_DIRECTORY),
+        makeWidget({ 406, 377 }, { 190, 14 }, WidgetType::button, WindowColour::primary, STR_CHECK_FOR_UPDATES));
 
     class PluginManagerWindow final : public Window
     {
@@ -170,13 +174,17 @@ namespace OpenRCT2::Ui::Windows
         void onScrollDraw(int32_t scrollIndex, RenderTarget& rt) override
         {
             auto rtCoords = ScreenCoordsXY{ rt.x, rt.y };
-            Rectangle::fill(rt, { rtCoords, rtCoords + ScreenCoordsXY{ rt.width - 1, rt.height - 1 } }, getColourMap(colours[1].colour).midLight);
+            Rectangle::fill(
+                rt, { rtCoords, rtCoords + ScreenCoordsXY{ rt.width - 1, rt.height - 1 } },
+                getColourMap(colours[1].colour).midLight);
 
             for (int32_t i = 0; i < static_cast<int32_t>(_plugins.size()); i++)
             {
                 int32_t y = i * kScrollableRowHeight;
-                if (y > rt.y + rt.height) break;
-                if (y + kScrollableRowHeight < rt.y) continue;
+                if (y > rt.y + rt.height)
+                    break;
+                if (y + kScrollableRowHeight < rt.y)
+                    continue;
 
                 const auto& plugin = _plugins[i];
                 const auto& metadata = plugin->GetMetadata();
@@ -211,7 +219,8 @@ namespace OpenRCT2::Ui::Windows
                 for (size_t a = 0; a < metadata.Authors.size(); a++)
                 {
                     authors += metadata.Authors[a];
-                    if (a < metadata.Authors.size() - 1) authors += ", ";
+                    if (a < metadata.Authors.size() - 1)
+                        authors += ", ";
                 }
                 drawText(rt, { kAuthorsColLeft, y }, authors.c_str(), { Colour::black });
             }
@@ -224,8 +233,9 @@ namespace OpenRCT2::Ui::Windows
         auto* window = windowMgr->BringToFrontByClass(WindowClass::pluginManager);
         if (window == nullptr)
         {
-            window = windowMgr->Create<PluginManagerWindow>(WindowClass::pluginManager, kWindowSize, { WindowFlag::stickToFront });
+            window = windowMgr->Create<PluginManagerWindow>(
+                WindowClass::pluginManager, kWindowSize, { WindowFlag::stickToFront });
         }
         return window;
     }
-}
+} // namespace OpenRCT2::Ui::Windows
