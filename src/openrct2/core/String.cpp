@@ -905,7 +905,10 @@ namespace OpenRCT2::String
         while (*curr != '\0')
         {
             prev = const_cast<char*>(curr);
-            UTF8GetNext(curr, &curr);
+            if (UTF8GetNext(curr, &curr) == 0)
+            {
+                break;
+            }
         }
         *prev = '\0';
     }

@@ -112,9 +112,10 @@ namespace OpenRCT2::Ui::Windows
                     if (IsSearchable)
                         availableHeight -= (ItemHeight + 2);
 
-                    int32_t numAvailableRows = std::max(1, availableHeight / ItemHeight);
-                    NumRows = std::min({ gDropdown.numFilteredItems, numAvailableRows, MaxRowsPerColumn });
+                    int32_t numAvailableRows = std::max(1, availableHeight / std::max(1, ItemHeight));
+                    NumRows = std::max(1, std::min({ gDropdown.numFilteredItems, numAvailableRows, MaxRowsPerColumn }));
                     NumColumns = (gDropdown.numFilteredItems + NumRows - 1) / NumRows;
+                    NumColumns = std::max(1, NumColumns);
                 }
             }
             else
@@ -174,17 +175,17 @@ namespace OpenRCT2::Ui::Windows
 
         void onKeyDown(uint32_t key)
         {
-            if (!IsSearchable)
-                return;
-
             switch (key)
             {
                 case SDLK_BACKSPACE:
                 {
-                    String::backspace(gDropdown.searchText);
-                    FilterItems();
-                    UpdateSizeAndPosition(BaseScreenPos, BaseExtraY);
-                    invalidate();
+                    if (IsSearchable)
+                    {
+                        String::backspace(gDropdown.searchText);
+                        FilterItems();
+                        UpdateSizeAndPosition(BaseScreenPos, BaseExtraY);
+                        invalidate();
+                    }
                     break;
                 }
                 case SDLK_ESCAPE:
@@ -445,7 +446,8 @@ namespace OpenRCT2::Ui::Windows
             size_t numItems, int32_t itemWidth, int32_t numRowsPerColumn)
         {
             // Set and calculate num items, rows and columns
-            ItemHeight = (txtFlags & Dropdown::Flag::CustomHeight) ? customItemHeight : GetDefaultRowHeight();
+            ItemHeight = std::max<int32_t>(
+                1, (txtFlags & Dropdown::Flag::CustomHeight) ? customItemHeight : GetDefaultRowHeight());
             ItemPadding = (txtFlags & Dropdown::Flag::CustomHeight) ? 0 : GetAdditionalRowPadding();
             ItemWidth = itemWidth;
             BaseScreenPos = screenPos;
@@ -453,7 +455,7 @@ namespace OpenRCT2::Ui::Windows
             MaxRowsPerColumn = numRowsPerColumn > 0 ? numRowsPerColumn : Dropdown::kItemsMaxSize;
 
             gDropdown.numItems = static_cast<int32_t>(numItems);
-            IsSearchable = (gDropdown.numItems > 10);
+            IsSearchable = (gDropdown.numItems > 10) && !(txtFlags & Dropdown::Flag::NoSearch);
             ListVertically = true;
 
             // Initial highlight from default index
@@ -525,11 +527,11 @@ namespace OpenRCT2::Ui::Windows
             if (left < 0 || left >= ItemWidth * NumColumns)
                 return -1;
 
-            int32_t columnNum = left / ItemWidth;
+            int32_t columnNum = left / std::max(1, ItemWidth);
             if (columnNum >= NumColumns)
                 return -1;
 
-            int32_t rowNum = top / ItemHeight;
+            int32_t rowNum = top / std::max(1, ItemHeight);
             if (rowNum >= NumRows)
                 return -1;
 

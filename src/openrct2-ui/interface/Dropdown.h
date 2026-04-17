@@ -83,10 +83,11 @@ namespace OpenRCT2::Ui::Windows
 
 namespace OpenRCT2::Dropdown
 {
-    enum Flag
+    enum Flag : uint8_t
     {
         CustomHeight = (1 << 6), // never set?
-        StayOpen = (1 << 7)
+        StayOpen = (1 << 7),
+        NoSearch = (1 << 0)
     };
 
     enum class ItemFlag : uint8_t

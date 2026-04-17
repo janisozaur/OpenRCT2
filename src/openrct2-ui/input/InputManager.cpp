@@ -389,7 +389,7 @@ void InputManager::process(const InputEvent& e)
 
             if (InputGetState() == InputState::DropdownActive)
             {
-                if (e.state == InputEventState::release)
+                if (e.state == InputEventState::down)
                 {
                     Ui::Windows::WindowDropdownHandleKeyDown(e.button);
                 }
