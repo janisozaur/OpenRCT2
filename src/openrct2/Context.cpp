@@ -84,6 +84,8 @@
 #include <future>
 #include <iterator>
 #include <memory>
+#include <mutex>
+#include <queue>
 #include <string>
 
 using namespace OpenRCT2;
@@ -160,6 +162,9 @@ namespace OpenRCT2
         Timer _forcedUpdateTimer;
 
         BackgroundWorker _backgroundWorker;
+
+        std::mutex _intentQueueMutex;
+        std::queue<Intent> _intentQueue;
 
     public:
         // Singleton of Context.
@@ -707,7 +712,16 @@ namespace OpenRCT2
             auto captionString = _localisationService->GetString(captionStringId);
             auto intent = Intent(INTENT_ACTION_PROGRESS_OPEN);
             intent.PutExtra(INTENT_EXTRA_MESSAGE, captionString);
-            ContextOpenIntent(&intent);
+
+            if (_mainThreadId == std::this_thread::get_id())
+            {
+                ContextOpenIntent(&intent);
+            }
+            else
+            {
+                std::lock_guard<std::mutex> lock(_intentQueueMutex);
+                _intentQueue.push(std::move(intent));
+            }
         }
 
         void SetProgress(uint32_t currentProgress, uint32_t totalCount, StringId format = kStringIdNone) override
@@ -721,24 +735,40 @@ namespace OpenRCT2
             intent.PutExtra(INTENT_EXTRA_PROGRESS_OFFSET, currentProgress);
             intent.PutExtra(INTENT_EXTRA_PROGRESS_TOTAL, totalCount);
             intent.PutExtra(INTENT_EXTRA_STRING_ID, format);
-            ContextOpenIntent(&intent);
 
-            // When we call this from the main thread we can pump messages and redraw.
             const auto isMainThread = _mainThreadId == std::this_thread::get_id();
-
-            if (!gOpenRCT2Headless && isMainThread)
+            if (isMainThread)
             {
-                _uiContext->ProcessMessages();
-                auto* windowMgr = GetWindowManager();
-                windowMgr->InvalidateByClass(WindowClass::progressWindow);
-                Draw();
+                ContextOpenIntent(&intent);
+
+                // When we call this from the main thread we can pump messages and redraw.
+                if (!gOpenRCT2Headless)
+                {
+                    _uiContext->ProcessMessages();
+                    auto* windowMgr = GetWindowManager();
+                    windowMgr->InvalidateByClass(WindowClass::progressWindow);
+                    Draw();
+                }
+            }
+            else
+            {
+                std::lock_guard<std::mutex> lock(_intentQueueMutex);
+                _intentQueue.push(std::move(intent));
             }
         }
 
         void CloseProgress() override
         {
             auto intent = Intent(INTENT_ACTION_PROGRESS_CLOSE);
-            ContextOpenIntent(&intent);
+            if (_mainThreadId == std::this_thread::get_id())
+            {
+                ContextOpenIntent(&intent);
+            }
+            else
+            {
+                std::lock_guard<std::mutex> lock(_intentQueueMutex);
+                _intentQueue.push(std::move(intent));
+            }
         }
 
         bool LoadParkFromFile(const u8string& path, bool loadTitleScreenOnFail = false, bool asScenario = false) final override
@@ -1433,6 +1463,21 @@ namespace OpenRCT2
         void Tick()
         {
             PROFILED_FUNCTION();
+
+            // Process any deferred intents from background threads
+            {
+                std::unique_lock<std::mutex> lock(_intentQueueMutex);
+                while (!_intentQueue.empty())
+                {
+                    Intent intent = std::move(_intentQueue.front());
+                    _intentQueue.pop();
+                    lock.unlock();
+
+                    ContextOpenIntent(&intent);
+
+                    lock.lock();
+                }
+            }
 
             // TODO: This variable has been never "variable" in time, some code expects
             // this to be 40Hz (25 ms). Refactor this once the UI is decoupled.
