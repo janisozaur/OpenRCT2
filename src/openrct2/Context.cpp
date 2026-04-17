@@ -163,8 +163,14 @@ namespace OpenRCT2
 
         BackgroundWorker _backgroundWorker;
 
+        struct QueuedIntent
+        {
+            Intent intent;
+            bool isBroadcast;
+        };
+
         std::mutex _intentQueueMutex;
-        std::queue<Intent> _intentQueue;
+        std::queue<QueuedIntent> _intentQueue;
 
     public:
         // Singleton of Context.
@@ -712,16 +718,7 @@ namespace OpenRCT2
             auto captionString = _localisationService->GetString(captionStringId);
             auto intent = Intent(INTENT_ACTION_PROGRESS_OPEN);
             intent.PutExtra(INTENT_EXTRA_MESSAGE, captionString);
-
-            if (_mainThreadId == std::this_thread::get_id())
-            {
-                ContextOpenIntent(&intent);
-            }
-            else
-            {
-                std::lock_guard<std::mutex> lock(_intentQueueMutex);
-                _intentQueue.push(std::move(intent));
-            }
+            ContextOpenIntent(&intent);
         }
 
         void SetProgress(uint32_t currentProgress, uint32_t totalCount, StringId format = kStringIdNone) override
@@ -735,40 +732,22 @@ namespace OpenRCT2
             intent.PutExtra(INTENT_EXTRA_PROGRESS_OFFSET, currentProgress);
             intent.PutExtra(INTENT_EXTRA_PROGRESS_TOTAL, totalCount);
             intent.PutExtra(INTENT_EXTRA_STRING_ID, format);
+            ContextOpenIntent(&intent);
 
-            const auto isMainThread = _mainThreadId == std::this_thread::get_id();
-            if (isMainThread)
+            // When we call this from the main thread we can pump messages and redraw.
+            if (!gOpenRCT2Headless && IsMainThread())
             {
-                ContextOpenIntent(&intent);
-
-                // When we call this from the main thread we can pump messages and redraw.
-                if (!gOpenRCT2Headless)
-                {
-                    _uiContext->ProcessMessages();
-                    auto* windowMgr = GetWindowManager();
-                    windowMgr->InvalidateByClass(WindowClass::progressWindow);
-                    Draw();
-                }
-            }
-            else
-            {
-                std::lock_guard<std::mutex> lock(_intentQueueMutex);
-                _intentQueue.push(std::move(intent));
+                _uiContext->ProcessMessages();
+                auto* windowMgr = GetWindowManager();
+                windowMgr->InvalidateByClass(WindowClass::progressWindow);
+                Draw();
             }
         }
 
         void CloseProgress() override
         {
             auto intent = Intent(INTENT_ACTION_PROGRESS_CLOSE);
-            if (_mainThreadId == std::this_thread::get_id())
-            {
-                ContextOpenIntent(&intent);
-            }
-            else
-            {
-                std::lock_guard<std::mutex> lock(_intentQueueMutex);
-                _intentQueue.push(std::move(intent));
-            }
+            ContextOpenIntent(&intent);
         }
 
         bool LoadParkFromFile(const u8string& path, bool loadTitleScreenOnFail = false, bool asScenario = false) final override
@@ -1469,11 +1448,18 @@ namespace OpenRCT2
                 std::unique_lock<std::mutex> lock(_intentQueueMutex);
                 while (!_intentQueue.empty())
                 {
-                    Intent intent = std::move(_intentQueue.front());
+                    QueuedIntent queuedIntent = std::move(_intentQueue.front());
                     _intentQueue.pop();
                     lock.unlock();
 
-                    ContextOpenIntent(&intent);
+                    if (queuedIntent.isBroadcast)
+                    {
+                        ContextBroadcastIntent(&queuedIntent.intent);
+                    }
+                    else
+                    {
+                        ContextOpenIntent(&queuedIntent.intent);
+                    }
 
                     lock.lock();
                 }
@@ -1643,6 +1629,17 @@ namespace OpenRCT2
         {
             return _backgroundWorker;
         }
+
+        bool IsMainThread() const override
+        {
+            return _mainThreadId == std::this_thread::get_id();
+        }
+
+        void EnqueueIntent(const Intent& intent, bool isBroadcast) override
+        {
+            std::lock_guard<std::mutex> lock(_intentQueueMutex);
+            _intentQueue.push({ intent, isBroadcast });
+        }
     };
 
     Context* Context::Instance = nullptr;
@@ -1802,14 +1799,28 @@ namespace OpenRCT2
 
     WindowBase* ContextOpenIntent(Intent* intent)
     {
-        auto windowManager = GetWindowManager();
-        return windowManager->OpenIntent(intent);
+        auto context = GetContext();
+        if (context->IsMainThread())
+        {
+            auto windowManager = GetWindowManager();
+            return windowManager->OpenIntent(intent);
+        }
+
+        context->EnqueueIntent(*intent, false);
+        return nullptr;
     }
 
     void ContextBroadcastIntent(Intent* intent)
     {
-        auto windowManager = GetWindowManager();
-        windowManager->BroadcastIntent(*intent);
+        auto context = GetContext();
+        if (context->IsMainThread())
+        {
+            auto windowManager = GetWindowManager();
+            windowManager->BroadcastIntent(*intent);
+            return;
+        }
+
+        context->EnqueueIntent(*intent, true);
     }
 
     void ContextForceCloseWindowByClass(WindowClass windowClass)

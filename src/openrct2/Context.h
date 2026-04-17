@@ -144,6 +144,9 @@ namespace OpenRCT2
         virtual float GetTimeScale() const = 0;
 
         virtual BackgroundWorker& GetBackgroundWorker() = 0;
+
+        virtual bool IsMainThread() const = 0;
+        virtual void EnqueueIntent(const Intent& intent, bool isBroadcast) = 0;
     };
 
     [[nodiscard]] std::unique_ptr<IContext> CreateContext();
