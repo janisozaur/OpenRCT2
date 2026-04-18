@@ -52,6 +52,10 @@ namespace OpenRCT2::Scripting
             JS_CGETSET_DEF("age", ScRide::age_get, nullptr),
             JS_CGETSET_DEF("runningCost", ScRide::runningCost_get, ScRide::runningCost_set),
             JS_CGETSET_DEF("totalProfit", ScRide::totalProfit_get, ScRide::totalProfit_set),
+            JS_CGETSET_DEF("numPrimaryItemsSold", ScRide::numPrimaryItemsSold_get, nullptr),
+            JS_CGETSET_DEF("numSecondaryItemsSold", ScRide::numSecondaryItemsSold_get, nullptr),
+            JS_CGETSET_DEF("primaryItem", ScRide::primaryItem_get, nullptr),
+            JS_CGETSET_DEF("secondaryItem", ScRide::secondaryItem_get, nullptr),
             JS_CGETSET_DEF("inspectionInterval", ScRide::inspectionInterval_get, ScRide::inspectionInterval_set),
             JS_CGETSET_DEF("value", ScRide::value_get, ScRide::value_set),
             JS_CGETSET_DEF("downtime", ScRide::downtime_get, nullptr),
@@ -603,6 +607,61 @@ namespace OpenRCT2::Scripting
             ride->totalProfit = valueInt;
         }
         return JS_UNDEFINED;
+    }
+
+    JSValue ScRide::numPrimaryItemsSold_get(JSContext* ctx, JSValue thisVal)
+    {
+        auto ride = GetRide(thisVal);
+        return JS_NewInt32(ctx, ride != nullptr ? ride->numPrimaryItemsSold : 0);
+    }
+
+    JSValue ScRide::numSecondaryItemsSold_get(JSContext* ctx, JSValue thisVal)
+    {
+        auto ride = GetRide(thisVal);
+        return JS_NewInt32(ctx, ride != nullptr ? ride->numSecondaryItemsSold : 0);
+    }
+
+    JSValue ScRide::primaryItem_get(JSContext* ctx, JSValue thisVal)
+    {
+        auto ride = GetRide(thisVal);
+        if (ride != nullptr)
+        {
+            ShopItem shopItem = ShopItem::none;
+            if (ride->getRideTypeDescriptor().specialType == RtdSpecialType::cashMachine
+                || ride->getRideTypeDescriptor().specialType == RtdSpecialType::toilet)
+            {
+                shopItem = ShopItem::admission;
+            }
+            else
+            {
+                auto rideEntry = ride->getRideEntry();
+                if (rideEntry != nullptr)
+                {
+                    shopItem = rideEntry->shop_item[0];
+                }
+            }
+            return JSFromStdString(ctx, ShopItemMap[shopItem]);
+        }
+        return JS_NULL;
+    }
+
+    JSValue ScRide::secondaryItem_get(JSContext* ctx, JSValue thisVal)
+    {
+        auto ride = GetRide(thisVal);
+        if (ride != nullptr)
+        {
+            auto shopItem = ride->flags.has(RideFlag::onRidePhoto) ? ride->getRideTypeDescriptor().PhotoItem : ShopItem::none;
+            if (shopItem == ShopItem::none)
+            {
+                auto rideEntry = ride->getRideEntry();
+                if (rideEntry != nullptr)
+                {
+                    shopItem = rideEntry->shop_item[1];
+                }
+            }
+            return JSFromStdString(ctx, ShopItemMap[shopItem]);
+        }
+        return JS_NULL;
     }
 
     JSValue ScRide::inspectionInterval_get(JSContext* ctx, JSValue thisVal)
