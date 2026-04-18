@@ -24,7 +24,6 @@ protected:
     {
         gOpenRCT2Headless = true;
         gOpenRCT2NoGraphics = true;
-        gCustomOpenRCT2DataPath = "../data";
         _context = CreateContext();
         _context->Initialise();
     }

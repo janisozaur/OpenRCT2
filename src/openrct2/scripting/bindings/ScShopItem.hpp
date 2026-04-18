@@ -17,7 +17,7 @@
 
 namespace OpenRCT2::Scripting
 {
-    static const EnumMap<ShopItem> ShopItemMap(
+    inline const EnumMap<ShopItem> ShopItemMap(
         {
             { "beef_noodles", ShopItem::beefNoodles },
             { "burger", ShopItem::burger },
