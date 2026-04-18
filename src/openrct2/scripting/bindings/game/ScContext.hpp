@@ -11,14 +11,15 @@
 
 #ifdef ENABLE_SCRIPTING
 
+    #include "../../../../thirdparty/base64.hpp"
     #include "../../../Game.h"
     #include "../../../OpenRCT2.h"
     #include "../../../actions/GameActionRunner.h"
+    #include "../../../core/Compression.h"
+    #include "../../../core/MemoryStream.h"
     #include "../../../interface/Screenshot.h"
     #include "../../../localisation/Formatting.h"
     #include "../../../object/ObjectManager.h"
-    #include "../../../core/Compression.h"
-    #include "../../../core/MemoryStream.h"
     #include "../../../scenario/Scenario.h"
     #include "../../HookEngine.h"
     #include "../../IconNames.hpp"
@@ -30,7 +31,6 @@
 
     #include <cstdio>
     #include <memory>
-    #include "../../../../thirdparty/base64.hpp"
     #include <zstd.h>
 
 namespace OpenRCT2::Scripting
@@ -491,7 +491,9 @@ namespace OpenRCT2::Scripting
                 if (Compression::zstdCompress(source, size, dest, Compression::ZstdMetadata::both, level))
                 {
                     JSValue obj = JS_NewObject(ctx);
-                    JS_SetPropertyStr(ctx, obj, "data", JS_NewUint8ArrayCopy(ctx, static_cast<const uint8_t*>(dest.GetData()), dest.GetLength()));
+                    JS_SetPropertyStr(
+                        ctx, obj, "data",
+                        JS_NewUint8ArrayCopy(ctx, static_cast<const uint8_t*>(dest.GetData()), dest.GetLength()));
                     return obj;
                 }
                 else
