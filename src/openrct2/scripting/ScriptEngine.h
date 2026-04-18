@@ -125,6 +125,9 @@ namespace OpenRCT2::Scripting
         bool _intransientPluginsStarted{};
         std::queue<std::tuple<std::promise<void>, std::string>> _evalQueue;
         std::vector<std::shared_ptr<Plugin>> _plugins;
+        std::atomic<bool> _pluginUpdateFound{ false };
+        std::atomic<uint32_t> _pluginUpdatesAvailable{ 0 };
+        std::atomic<uint32_t> _pluginUpdateChecksPending{ 0 };
         uint32_t _lastHotReloadCheckTick{};
         HookEngine _hookEngine;
         ScriptExecutionInfo _execInfo;
@@ -217,6 +220,7 @@ namespace OpenRCT2::Scripting
         void UnloadTransientPlugins();
         void StopUnloadRegisterAllPlugins();
         void Tick();
+        void CheckForPluginUpdates(bool manual);
         std::future<void> Eval(const std::string& s);
         void ExecutePluginCall(
             const std::shared_ptr<Plugin>& plugin, JSValue func, const std::vector<JSValue>& args, bool isGameStateMutable,
@@ -253,6 +257,16 @@ namespace OpenRCT2::Scripting
             JSContext* ctx, const GameActions::GameAction& action, const GameActions::Result& result);
 
         void SaveSharedStorage();
+
+        bool HasPluginUpdateFound() const
+        {
+            return _pluginUpdateFound;
+        }
+
+        uint32_t GetPluginUpdatesAvailable() const
+        {
+            return _pluginUpdatesAvailable;
+        }
 
         IntervalHandle AddInterval(
             const std::shared_ptr<Plugin>& plugin, int32_t delay, bool repeat, const JSCallback& callback);

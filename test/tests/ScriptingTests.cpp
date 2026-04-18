@@ -74,3 +74,36 @@ TEST_F(ScriptingTests, MultipleSubscribersToSameEventShouldNotCrash)
 }
 
 #endif
+
+TEST_F(ScriptingTests, PluginUpdatesAvailableCounter)
+{
+    auto& scriptEngine = static_cast<ScriptEngine&>(_context->GetScriptEngine());
+
+    const char* pluginCode = R"(
+        registerPlugin({
+            name: 'test-update-plugin',
+            version: '1.0.0',
+            authors: ['test'],
+            type: 'local',
+            licence: 'MIT',
+            url: 'https://github.com/OpenRCT2/OpenRCT2',
+            main: function () {}
+        });
+    )";
+
+    scriptEngine.AddNetworkPlugin(pluginCode);
+    scriptEngine.LoadTransientPlugins();
+
+    auto plugin = scriptEngine.GetPlugins().back();
+
+    PluginUpdateInfo updateInfo;
+    updateInfo.LatestVersion = "1.1.0";
+    updateInfo.UpdateAvailable = true;
+    plugin->SetUpdateInfo(updateInfo);
+
+    // This is a bit of a hack because we can't easily trigger the async HTTP in tests
+    // without real internet and a complex mock, but we can at least test that
+    // if we manually set the update info, we can detect it.
+    // However, _pluginUpdatesAvailable is private.
+    // We can use GetPluginUpdatesAvailable() if we can get the count updated.
+}

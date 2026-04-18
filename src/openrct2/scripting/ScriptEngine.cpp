@@ -25,6 +25,8 @@
     #include "../core/File.h"
     #include "../core/FileScanner.h"
     #include "../core/FileWatcher.h"
+    #include "../core/Http.h"
+    #include "../core/Json.hpp"
     #include "../core/Path.hpp"
     #include "../interface/InteractiveConsole.h"
     #include "../platform/Platform.h"
@@ -271,7 +273,7 @@ private:
         JS_FreeValue(_context, propsObj);
         JS_FreeValue(_context, objProto);
 
-        if (propsVec.size() == 0)
+        if (propsVec.empty())
         {
             _ss << "{}";
         }
@@ -1182,6 +1184,101 @@ void ScriptEngine::Tick()
     UpdateSockets();
     ProcessREPL();
     DoAutoReloadPluginCheck();
+    CheckForPluginUpdates(false);
+}
+
+void ScriptEngine::CheckForPluginUpdates(bool manual)
+{
+#if !defined(DISABLE_HTTP) && !defined(DISABLE_VERSION_CHECKER)
+    auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch())
+                   .count();
+    auto then = Config::Get().general.lastVersionCheckTime;
+    using namespace std::chrono_literals;
+
+    if (manual || then < now - std::chrono::seconds(24h).count())
+    {
+        bool anyUpdatesFound = false;
+        for (const auto& plugin : _plugins)
+        {
+            auto url = plugin->GetMetadata().URL;
+            if (url.empty())
+                continue;
+
+            // GitHub slug detection: github.com/<user>/<repo>
+            // Simple case-insensitive match as requested.
+            std::string githubPrefix = "github.com/";
+            auto pos = url.find(githubPrefix);
+            if (pos == std::string::npos)
+            {
+                // Try with https://
+                githubPrefix = "GITHUB.COM/";
+                std::string upperUrl = url;
+                std::transform(upperUrl.begin(), upperUrl.end(), upperUrl.begin(), ::toupper);
+                pos = upperUrl.find(githubPrefix);
+            }
+
+            if (pos != std::string::npos)
+            {
+                auto slugPart = url.substr(pos + githubPrefix.length());
+                // slugPart should be <user>/<repo>[/...]
+                auto firstSlash = slugPart.find('/');
+                if (firstSlash != std::string::npos)
+                {
+                    auto secondSlash = slugPart.find('/', firstSlash + 1);
+                    std::string slug;
+                    if (secondSlash != std::string::npos)
+                    {
+                        slug = slugPart.substr(0, secondSlash);
+                    }
+                    else
+                    {
+                        slug = slugPart;
+                    }
+
+                    // Now we have the slug, call the API
+                    Http::Request request;
+                    request.url = "https://api.github.com/repos/" + slug + "/releases/latest";
+                    request.method = Http::Method::GET;
+
+                    Http::DoAsync(request, [this, plugin, &anyUpdatesFound](Http::Response res) {
+                        if (res.status == Http::Status::Ok)
+                        {
+                            try
+                            {
+                                json_t root = Json::FromString(res.body);
+                                std::string latestTag = Json::GetString(root["tag_name"]);
+                                std::string releaseUrl = Json::GetString(root["html_url"]);
+
+                                PluginUpdateInfo updateInfo;
+                                updateInfo.LatestVersion = latestTag;
+                                updateInfo.ReleasePageURL = releaseUrl;
+
+                                // Simple strcmp as requested
+                                if (latestTag != plugin->GetMetadata().Version)
+                                {
+                                    updateInfo.UpdateAvailable = true;
+                                    _pluginUpdateFound = true;
+                                    anyUpdatesFound = true;
+                                }
+                                plugin->SetUpdateInfo(updateInfo);
+                            }
+                            catch (const std::exception& e)
+                            {
+                                LOG_ERROR("Failed to parse GitHub API response for plugin: %s", e.what());
+                            }
+                        }
+                    });
+                }
+            }
+        }
+        // For periodic check, update the timer.
+        if (!manual)
+        {
+            Config::Get().general.lastVersionCheckTime = now;
+            Config::Save();
+        }
+    }
+#endif
 }
 
 void ScriptEngine::CheckAndStartPlugins()

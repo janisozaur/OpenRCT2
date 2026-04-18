@@ -46,11 +46,19 @@ namespace OpenRCT2::Scripting
     {
         std::string Name;
         std::string Version;
+        std::string URL;
         std::vector<std::string> Authors;
         PluginType Type{};
         int32_t MinApiVersion{};
         std::optional<int32_t> TargetApiVersion{};
         JSCallback Main;
+    };
+
+    struct PluginUpdateInfo
+    {
+        std::string LatestVersion;
+        std::string ReleasePageURL;
+        bool UpdateAvailable = false;
     };
 
     class Plugin
@@ -59,6 +67,7 @@ namespace OpenRCT2::Scripting
         JSContext* _context = nullptr;
         std::string _path;
         PluginMetadata _metadata{};
+        PluginUpdateInfo _updateInfo{};
         std::string _code;
         bool _hasLoaded{};
         bool _hasStarted{};
@@ -88,6 +97,16 @@ namespace OpenRCT2::Scripting
         }
 
         void SetMetadata(JSValue obj);
+
+        const PluginUpdateInfo& GetUpdateInfo() const
+        {
+            return _updateInfo;
+        }
+
+        void SetUpdateInfo(const PluginUpdateInfo& info)
+        {
+            _updateInfo = info;
+        }
 
         const std::string& GetCode() const
         {
