@@ -17,6 +17,8 @@
     #include "../../../interface/Screenshot.h"
     #include "../../../localisation/Formatting.h"
     #include "../../../object/ObjectManager.h"
+    #include "../../../core/Compression.h"
+    #include "../../../core/MemoryStream.h"
     #include "../../../scenario/Scenario.h"
     #include "../../HookEngine.h"
     #include "../../IconNames.hpp"
@@ -28,6 +30,8 @@
 
     #include <cstdio>
     #include <memory>
+    #include "../../../../thirdparty/base64.hpp"
+    #include <zstd.h>
 
 namespace OpenRCT2::Scripting
 {
@@ -418,6 +422,203 @@ namespace OpenRCT2::Scripting
             return JS_NewInt64(ctx, GetIconByName(iconName));
         }
 
+        static JSValue base64encode(JSContext* ctx, JSValue thisVal, int argc, JSValue* argv)
+        {
+            JSValue data = argv[0];
+            size_t size = 0;
+            uint8_t* bytes = JS_GetUint8Array(ctx, &size, data);
+            if (bytes == nullptr)
+            {
+                return JS_ThrowTypeError(ctx, "Expected Uint8Array");
+            }
+
+            try
+            {
+                std::string encoded = base64::to_base64(std::string_view(reinterpret_cast<const char*>(bytes), size));
+                JSValue obj = JS_NewObject(ctx);
+                JS_SetPropertyStr(ctx, obj, "data", JSFromStdString(ctx, encoded));
+                return obj;
+            }
+            catch (const std::exception& e)
+            {
+                JSValue obj = JS_NewObject(ctx);
+                JS_SetPropertyStr(ctx, obj, "error", JS_NewInt32(ctx, 1));
+                JS_SetPropertyStr(ctx, obj, "message", JSFromStdString(ctx, e.what()));
+                return obj;
+            }
+        }
+
+        static JSValue base64decode(JSContext* ctx, JSValue thisVal, int argc, JSValue* argv)
+        {
+            JS_UNPACK_STR(str, ctx, argv[0]);
+            try
+            {
+                std::vector<uint8_t> decoded = base64::decode_into<std::vector<uint8_t>>(str);
+                JSValue data = JS_NewUint8ArrayCopy(ctx, decoded.data(), decoded.size());
+                JSValue obj = JS_NewObject(ctx);
+                JS_SetPropertyStr(ctx, obj, "data", data);
+                return obj;
+            }
+            catch (const std::exception& e)
+            {
+                JSValue obj = JS_NewObject(ctx);
+                JS_SetPropertyStr(ctx, obj, "error", JS_NewInt32(ctx, 1));
+                JS_SetPropertyStr(ctx, obj, "message", JSFromStdString(ctx, e.what()));
+                return obj;
+            }
+        }
+
+        static JSValue zstdCompress(JSContext* ctx, JSValue thisVal, int argc, JSValue* argv)
+        {
+            JSValue data = argv[0];
+            size_t size = 0;
+            uint8_t* bytes = JS_GetUint8Array(ctx, &size, data);
+            if (bytes == nullptr)
+            {
+                return JS_ThrowTypeError(ctx, "Expected Uint8Array");
+            }
+
+            int32_t level = Compression::kZstdDefaultCompressionLevel;
+            if (argc > 1 && JS_IsNumber(argv[1]))
+            {
+                JS_ToInt32(ctx, &level, argv[1]);
+            }
+
+            try
+            {
+                MemoryStream source(bytes, size);
+                MemoryStream dest;
+                if (Compression::zstdCompress(source, size, dest, Compression::ZstdMetadata::both, level))
+                {
+                    JSValue obj = JS_NewObject(ctx);
+                    JS_SetPropertyStr(ctx, obj, "data", JS_NewUint8ArrayCopy(ctx, static_cast<const uint8_t*>(dest.GetData()), dest.GetLength()));
+                    return obj;
+                }
+                else
+                {
+                    JSValue obj = JS_NewObject(ctx);
+                    JS_SetPropertyStr(ctx, obj, "error", JS_NewInt32(ctx, 1));
+                    JS_SetPropertyStr(ctx, obj, "message", JSFromStdString(ctx, "Compression failed"));
+                    return obj;
+                }
+            }
+            catch (const std::exception& e)
+            {
+                JSValue obj = JS_NewObject(ctx);
+                JS_SetPropertyStr(ctx, obj, "error", JS_NewInt32(ctx, 1));
+                JS_SetPropertyStr(ctx, obj, "message", JSFromStdString(ctx, e.what()));
+                return obj;
+            }
+        }
+
+        static JSValue zstdDecompress(JSContext* ctx, JSValue thisVal, int argc, JSValue* argv)
+        {
+            JSValue data = argv[0];
+            size_t size = 0;
+            uint8_t* bytes = JS_GetUint8Array(ctx, &size, data);
+            if (bytes == nullptr)
+            {
+                return JS_ThrowTypeError(ctx, "Expected Uint8Array");
+            }
+
+            int64_t requestedLength = -1;
+            if (argc > 1 && JS_IsNumber(argv[1]))
+            {
+                JS_ToInt64(ctx, &requestedLength, argv[1]);
+            }
+
+            if (requestedLength < -1)
+            {
+                return JS_ThrowRangeError(ctx, "Length must be >= 0 or -1");
+            }
+
+            try
+            {
+                unsigned long long contentSize = ZSTD_getFrameContentSize(bytes, size);
+                if (contentSize == ZSTD_CONTENTSIZE_ERROR)
+                {
+                    JSValue obj = JS_NewObject(ctx);
+                    JS_SetPropertyStr(ctx, obj, "error", JS_NewInt32(ctx, 1));
+                    JS_SetPropertyStr(ctx, obj, "message", JSFromStdString(ctx, "Not a valid zstd frame"));
+                    return obj;
+                }
+
+                if (requestedLength == 0)
+                {
+                    JSValue obj = JS_NewObject(ctx);
+                    JS_SetPropertyStr(ctx, obj, "data", JS_NewUint8ArrayCopy(ctx, bytes, 0));
+                    JS_SetPropertyStr(ctx, obj, "moreAvailable", JS_NewBool(ctx, true));
+                    if (contentSize != ZSTD_CONTENTSIZE_UNKNOWN)
+                    {
+                        JS_SetPropertyStr(ctx, obj, "totalSize", JS_NewInt64(ctx, contentSize));
+                    }
+                    return obj;
+                }
+
+                if (requestedLength == -1 && contentSize != ZSTD_CONTENTSIZE_UNKNOWN)
+                {
+                    requestedLength = contentSize;
+                }
+
+                std::vector<uint8_t> outputBuffer;
+                ZSTD_inBuffer input = { bytes, size, 0 };
+                const auto dctxDeleter = [](ZSTD_DCtx* ptr) { ZSTD_freeDCtx(ptr); };
+                std::unique_ptr<ZSTD_DCtx, decltype(dctxDeleter)> dctx(ZSTD_createDCtx(), dctxDeleter);
+                bool moreAvailable = false;
+
+                if (requestedLength != -1)
+                {
+                    outputBuffer.resize(static_cast<size_t>(requestedLength));
+                    ZSTD_outBuffer output = { outputBuffer.data(), outputBuffer.size(), 0 };
+                    size_t const ret = ZSTD_decompressStream(dctx.get(), &output, &input);
+                    if (ZSTD_isError(ret))
+                    {
+                        JSValue obj = JS_NewObject(ctx);
+                        JS_SetPropertyStr(ctx, obj, "error", JS_NewInt32(ctx, 3));
+                        JS_SetPropertyStr(ctx, obj, "message", JSFromStdString(ctx, ZSTD_getErrorName(ret)));
+                        return obj;
+                    }
+                    outputBuffer.resize(output.pos);
+                    moreAvailable = (ret > 0) || (input.pos < input.size);
+                }
+                else
+                {
+                    uint8_t temp[16384];
+                    size_t ret;
+                    do
+                    {
+                        ZSTD_outBuffer output = { temp, sizeof(temp), 0 };
+                        ret = ZSTD_decompressStream(dctx.get(), &output, &input);
+                        if (ZSTD_isError(ret))
+                        {
+                            JSValue obj = JS_NewObject(ctx);
+                            JS_SetPropertyStr(ctx, obj, "error", JS_NewInt32(ctx, 3));
+                            JS_SetPropertyStr(ctx, obj, "message", JSFromStdString(ctx, ZSTD_getErrorName(ret)));
+                            return obj;
+                        }
+                        outputBuffer.insert(outputBuffer.end(), temp, temp + output.pos);
+                    } while (ret > 0);
+                    moreAvailable = (input.pos < input.size);
+                }
+
+                JSValue obj = JS_NewObject(ctx);
+                JS_SetPropertyStr(ctx, obj, "data", JS_NewUint8ArrayCopy(ctx, outputBuffer.data(), outputBuffer.size()));
+                JS_SetPropertyStr(ctx, obj, "moreAvailable", JS_NewBool(ctx, moreAvailable));
+                if (contentSize != ZSTD_CONTENTSIZE_UNKNOWN)
+                {
+                    JS_SetPropertyStr(ctx, obj, "totalSize", JS_NewInt64(ctx, contentSize));
+                }
+                return obj;
+            }
+            catch (const std::exception& e)
+            {
+                JSValue obj = JS_NewObject(ctx);
+                JS_SetPropertyStr(ctx, obj, "error", JS_NewInt32(ctx, 4));
+                JS_SetPropertyStr(ctx, obj, "message", JSFromStdString(ctx, e.what()));
+                return obj;
+            }
+        }
+
     public:
         void Register(JSContext* ctx)
         {
@@ -444,6 +645,10 @@ namespace OpenRCT2::Scripting
                 JS_CFUNC_DEF("clearInterval", 1, ScContext::clearInterval),
                 JS_CFUNC_DEF("clearTimeout", 1, ScContext::clearTimeout),
                 JS_CFUNC_DEF("getIcon", 1, ScContext::getIcon),
+                JS_CFUNC_DEF("base64encode", 1, ScContext::base64encode),
+                JS_CFUNC_DEF("base64decode", 1, ScContext::base64decode),
+                JS_CFUNC_DEF("zstdCompress", 1, ScContext::zstdCompress),
+                JS_CFUNC_DEF("zstdDecompress", 1, ScContext::zstdDecompress),
             };
             RegisterBase(ctx, "Context", nullptr, funcs);
         }
