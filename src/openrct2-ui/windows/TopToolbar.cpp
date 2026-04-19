@@ -317,7 +317,8 @@ namespace OpenRCT2::Ui::Windows
 
             WindowDropdownShowText(
                 { windowPos.x + widget.left, windowPos.y + widget.top }, widget.height(),
-                colours[1].withFlag(ColourFlag::translucent, true), Dropdown::Flag::StayOpen, TOP_TOOLBAR_VIEW_MENU_COUNT);
+                colours[1].withFlag(ColourFlag::translucent, true), Dropdown::Flag::StayOpen | Dropdown::Flag::NoSearch,
+                TOP_TOOLBAR_VIEW_MENU_COUNT);
 
             auto mvpFlags = WindowGetMain()->viewport->flags;
             gDropdown.items[DDIDX_UNDERGROUND_INSIDE].setChecked(mvpFlags & VIEWPORT_FLAG_UNDERGROUND_INSIDE);
@@ -449,7 +450,7 @@ namespace OpenRCT2::Ui::Windows
 
             WindowDropdownShowText(
                 { windowPos.x + widget.left, windowPos.y + widget.top }, widget.height(),
-                colours[1].withFlag(ColourFlag::translucent, true), 0, i);
+                colours[1].withFlag(ColourFlag::translucent, true), Dropdown::Flag::NoSearch, i);
             gDropdown.defaultIndex = DDIDX_SHOW_MAP;
         }
 
@@ -516,7 +517,7 @@ namespace OpenRCT2::Ui::Windows
 
             WindowDropdownShowText(
                 { windowPos.x + widget.left, windowPos.y + widget.top }, widget.height(),
-                colours[0].withFlag(ColourFlag::translucent, true), 0, num_items);
+                colours[0].withFlag(ColourFlag::translucent, true), Dropdown::Flag::NoSearch, num_items);
 
             // Set checkmarks
             if (gGameSpeed <= 4)
@@ -628,7 +629,8 @@ namespace OpenRCT2::Ui::Windows
 
             WindowDropdownShowText(
                 { windowPos.x + widget.left, windowPos.y + widget.top }, widget.height(),
-                colours[0].withFlag(ColourFlag::translucent, true), Dropdown::Flag::StayOpen, numItems);
+                colours[0].withFlag(ColourFlag::translucent, true), Dropdown::Flag::StayOpen | Dropdown::Flag::NoSearch,
+                numItems);
         }
 
         void initCheatsMenu(Widget& widget)
@@ -652,7 +654,8 @@ namespace OpenRCT2::Ui::Windows
 
             WindowDropdownShowText(
                 { windowPos.x + widget.left, windowPos.y + widget.top }, widget.height(),
-                colours[0].withFlag(ColourFlag::translucent, true), Dropdown::Flag::StayOpen, TOP_TOOLBAR_CHEATS_COUNT);
+                colours[0].withFlag(ColourFlag::translucent, true), Dropdown::Flag::StayOpen | Dropdown::Flag::NoSearch,
+                TOP_TOOLBAR_CHEATS_COUNT);
 
             // Disable items that are not yet available in multiplayer
             if (Network::GetMode() != Network::Mode::none)
@@ -728,7 +731,8 @@ namespace OpenRCT2::Ui::Windows
 
             WindowDropdownShowText(
                 { windowPos.x + widget.left, windowPos.y + widget.top }, widget.height(),
-                colours[0].withFlag(ColourFlag::translucent, true), Dropdown::Flag::StayOpen, TOP_TOOLBAR_DEBUG_COUNT);
+                colours[0].withFlag(ColourFlag::translucent, true), Dropdown::Flag::StayOpen | Dropdown::Flag::NoSearch,
+                TOP_TOOLBAR_DEBUG_COUNT);
 
             auto* windowMgr = GetWindowManager();
             gDropdown.items[DDIDX_CONSOLE].setChecked(windowMgr->FindByClass(WindowClass::console) != nullptr);
@@ -772,7 +776,7 @@ namespace OpenRCT2::Ui::Windows
 
             WindowDropdownShowText(
                 { windowPos.x + widget.left, windowPos.y + widget.top }, widget.height(),
-                colours[0].withFlag(ColourFlag::translucent, true), 0, TOP_TOOLBAR_NETWORK_COUNT);
+                colours[0].withFlag(ColourFlag::translucent, true), Dropdown::Flag::NoSearch, TOP_TOOLBAR_NETWORK_COUNT);
 
             gDropdown.items[DDIDX_MULTIPLAYER_RECONNECT].setDisabled(!Network::IsDesynchronised());
 
