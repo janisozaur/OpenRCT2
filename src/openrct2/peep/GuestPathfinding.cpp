@@ -720,149 +720,247 @@ namespace OpenRCT2::PathFinding
      *
      *  rct2: 0x0069A997
      */
-    static void PeepPathfindHeuristicSearch(
-        PathFindingState& state, TileCoordsXYZ loc, const TileCoordsXYZ& goal, const Peep& peep,
-        TileElement* currentTileElement, const bool inPatrolArea, uint8_t numSteps, uint16_t* endScore, Direction testEdge,
-        uint8_t* endJunctions, TileCoordsXYZ junctionList[16], uint8_t directionList[16], TileCoordsXYZ* endXYZ,
-        uint8_t* endSteps)
+    struct PathFindingSearchState
     {
-        PathSearchResult searchResult = PathSearchResult::Failed;
+        TileCoordsXYZ loc;
+        Direction testEdge;
+        TileElement* currentTileElement;
+        bool inPatrolArea;
+        uint8_t numSteps;
+        uint32_t edges;
+        int32_t nextTestEdge;
+        uint8_t savedNumJunctions;
+        bool isThinJunction;
+        bool initialized;
+        TileElement* tileElement;
 
-        bool currentElementIsWide = currentTileElement->AsPath()->IsWide();
-        if (currentElementIsWide)
+        PathFindingSearchState() = default;
+
+        PathFindingSearchState(
+            TileCoordsXYZ _loc, Direction _testEdge, TileElement* _currentTileElement, bool _inPatrolArea, uint8_t _numSteps)
+            : loc(_loc)
+            , testEdge(_testEdge)
+            , currentTileElement(_currentTileElement)
+            , inPatrolArea(_inPatrolArea)
+            , numSteps(_numSteps)
+            , edges(0)
+            , nextTestEdge(-1)
+            , savedNumJunctions(0)
+            , isThinJunction(false)
+            , initialized(false)
+            , tileElement(nullptr)
         {
-            const Staff* staff = peep.As<Staff>();
-            if (staff != nullptr && staff->CanIgnoreWideFlag(loc.ToCoordsXYZ(), currentTileElement))
-                currentElementIsWide = false;
         }
+    };
 
-        loc += TileDirectionDelta[testEdge];
+    static void PeepPathfindHeuristicSearch(
+        PathFindingState& state, TileCoordsXYZ startLoc, const TileCoordsXYZ& goal, const Peep& peep,
+        TileElement* startTileElement, const bool startInPatrolArea, uint8_t startNumSteps, uint16_t* endScore,
+        Direction startTestEdge, uint8_t* endJunctions, TileCoordsXYZ junctionList[16], uint8_t directionList[16],
+        TileCoordsXYZ* endXYZ, uint8_t* endSteps)
+    {
+        PathFindingSearchState stack[256];
+        int32_t stackPtr = 0;
+        stack[stackPtr++] = { startLoc, startTestEdge, startTileElement, startInPatrolArea, startNumSteps };
 
-        ++numSteps;
-        state.countTilesChecked--;
-
-        /* If this is where the search started this is a search loop and the
-         * current search path ends here.
-         * Return without updating the parameters (best result so far). */
-        if (state.history[0].location == loc)
+        while (stackPtr > 0)
         {
-            LogPathfinding(&peep, "Return from %d,%d,%d; Steps: %u; At start", loc.x >> 5, loc.y >> 5, loc.z, numSteps);
-            return;
-        }
+            auto& top = stack[stackPtr - 1];
 
-        bool nextInPatrolArea = inPatrolArea;
-        auto* staff = peep.As<Staff>();
-        if (staff != nullptr && staff->IsMechanic())
-        {
-            nextInPatrolArea = staff->IsLocationInPatrol(loc.ToCoordsXY());
-            if (inPatrolArea && !nextInPatrolArea)
+            if (!top.initialized)
             {
-                /* The mechanic will leave his patrol area by taking
-                 * the test_edge so the current search path ends here.
+                bool currentElementIsWide = top.currentTileElement->AsPath()->IsWide();
+                if (currentElementIsWide)
+                {
+                    const Staff* staff = peep.As<Staff>();
+                    if (staff != nullptr && staff->CanIgnoreWideFlag(top.loc.ToCoordsXYZ(), top.currentTileElement))
+                        currentElementIsWide = false;
+                }
+
+                top.loc += TileDirectionDelta[top.testEdge];
+
+                top.numSteps++;
+                state.countTilesChecked--;
+
+                /* If this is where the search started this is a search loop and the
+                 * current search path ends here.
                  * Return without updating the parameters (best result so far). */
-                LogPathfinding(
-                    &peep, "Return from %d,%d,%d; Steps: %u; Left patrol area", loc.x >> 5, loc.y >> 5, loc.z, numSteps);
-                return;
+                if (state.history[0].location == top.loc)
+                {
+                    LogPathfinding(
+                        &peep, "Return from %d,%d,%d; Steps: %u; At start", top.loc.x >> 5, top.loc.y >> 5, top.loc.z,
+                        top.numSteps);
+                    stackPtr--;
+                    continue;
+                }
+
+                bool nextInPatrolArea = top.inPatrolArea;
+                auto* staff = peep.As<Staff>();
+                if (staff != nullptr && staff->IsMechanic())
+                {
+                    nextInPatrolArea = staff->IsLocationInPatrol(top.loc.ToCoordsXY());
+                    if (top.inPatrolArea && !nextInPatrolArea)
+                    {
+                        /* The mechanic will leave his patrol area by taking
+                         * the test_edge so the current search path ends here.
+                         * Return without updating the parameters (best result so far). */
+                        LogPathfinding(
+                            &peep, "Return from %d,%d,%d; Steps: %u; Left patrol area", top.loc.x >> 5, top.loc.y >> 5,
+                            top.loc.z, top.numSteps);
+                        stackPtr--;
+                        continue;
+                    }
+                }
+                top.inPatrolArea = nextInPatrolArea;
+
+                /* Get the next map element of interest in the direction of testEdge. */
+                top.tileElement = MapGetFirstElementAt(top.loc);
+                if (top.tileElement == nullptr)
+                {
+                    stackPtr--;
+                    continue;
+                }
+                top.initialized = true;
             }
-        }
+            else
+            {
+                // We are returning from a child search OR moving to the next tile element
+                if (top.nextTestEdge != -1)
+                {
+                    // Returning from a child search
+                    state.junctionCount = top.savedNumJunctions;
 
-        /* Get the next map element of interest in the direction of testEdge. */
-        bool found = false;
-        TileElement* tileElement = MapGetFirstElementAt(loc);
-        if (tileElement == nullptr)
-        {
-            return;
-        }
-        do
-        {
-            /* Look for all map elements that the peep could walk onto while
-             * navigating to the goal, including the goal tile. */
+                    LogPathfinding(
+                        &peep, "Returned to %d,%d,%d; Steps: %u; edge: %d; Score: %d", top.loc.x >> 5, top.loc.y >> 5,
+                        top.loc.z, top.numSteps, top.nextTestEdge, *endScore);
 
-            if (tileElement->IsGhost())
+                    top.nextTestEdge = Numerics::bitScanForward(top.edges);
+                    if (top.nextTestEdge != -1)
+                    {
+                        // Start next edge
+                        top.edges &= ~(1 << top.nextTestEdge);
+                        top.savedNumJunctions = state.junctionCount;
+
+                        uint8_t height = top.loc.z;
+                        if (top.tileElement->AsPath()->IsSloped()
+                            && top.tileElement->AsPath()->GetSlopeDirection() == top.nextTestEdge)
+                        {
+                            height += 2;
+                        }
+
+                        if (top.isThinJunction)
+                        {
+                            /* Add the current test_edge to the history. */
+                            state.history[state.junctionCount + 1].direction = top.nextTestEdge;
+                        }
+
+                        stack[stackPtr++] = { TileCoordsXYZ{ top.loc.x, top.loc.y, height },
+                                              static_cast<uint8_t>(top.nextTestEdge), top.tileElement, top.inPatrolArea,
+                                              top.numSteps };
+                        continue;
+                    }
+                    else
+                    {
+                        // Finished all edges for this tile element, go to next element
+                        if (top.tileElement->IsLastForTile())
+                        {
+                            LogPathfinding(
+                                &peep, "Returning from %d,%d,%d; Steps: %u; All map elements checked", top.loc.x >> 5,
+                                top.loc.y >> 5, top.loc.z, top.numSteps);
+                            stackPtr--;
+                            continue;
+                        }
+                        top.tileElement++;
+                        top.nextTestEdge = -1;
+                    }
+                }
+                else
+                {
+                    // Moving to the next tile element after a NON-recursive path
+                    if (top.tileElement->IsLastForTile())
+                    {
+                        LogPathfinding(
+                            &peep, "Returning from %d,%d,%d; Steps: %u; All map elements checked", top.loc.x >> 5,
+                            top.loc.y >> 5, top.loc.z, top.numSteps);
+                        stackPtr--;
+                        continue;
+                    }
+                    top.tileElement++;
+                }
+            }
+
+            // Process top.tileElement
+            if (top.tileElement->IsGhost())
                 continue;
 
+            PathSearchResult searchResult = PathSearchResult::Failed;
             RideId rideIndex = RideId::GetNull();
-            switch (tileElement->GetType())
+            bool elementFound = false;
+
+            switch (top.tileElement->GetType())
             {
                 case TileElementType::Track:
                 {
-                    if (loc.z != tileElement->BaseHeight)
-                        continue;
+                    if (top.loc.z != top.tileElement->BaseHeight)
+                        break;
                     /* For peeps heading for a shop, the goal is the shop
                      * tile. */
-                    rideIndex = tileElement->AsTrack()->GetRideIndex();
+                    rideIndex = top.tileElement->AsTrack()->GetRideIndex();
                     auto ride = GetRide(rideIndex);
                     if (ride == nullptr || !ride->getRideTypeDescriptor().flags.has(RtdFlag::isShopOrFacility))
-                        continue;
+                        break;
 
-                    found = true;
+                    elementFound = true;
                     searchResult = PathSearchResult::ShopEntrance;
                     break;
                 }
                 case TileElementType::Entrance:
-                    if (loc.z != tileElement->BaseHeight)
-                        continue;
+                    if (top.loc.z != top.tileElement->BaseHeight)
+                        break;
                     Direction direction;
                     searchResult = PathSearchResult::Other;
-                    switch (tileElement->AsEntrance()->GetEntranceType())
+                    switch (top.tileElement->AsEntrance()->GetEntranceType())
                     {
                         case ENTRANCE_TYPE_RIDE_ENTRANCE:
-                            /* For peeps heading for a ride without a queue, the
-                             * goal is the ride entrance tile.
-                             * For mechanics heading for the ride entrance
-                             * (in the case when the station has no exit),
-                             * the goal is the ride entrance tile. */
-                            direction = tileElement->GetDirection();
-                            if (direction == testEdge)
+                            direction = top.tileElement->GetDirection();
+                            if (direction == top.testEdge)
                             {
-                                /* The rideIndex will be useful for
-                                 * adding transport rides later. */
-                                rideIndex = tileElement->AsEntrance()->GetRideIndex();
+                                rideIndex = top.tileElement->AsEntrance()->GetRideIndex();
                                 searchResult = PathSearchResult::RideEntrance;
-                                found = true;
+                                elementFound = true;
                                 break;
                             }
-                            continue; // Ride entrance is not facing the right direction.
+                            break;
                         case ENTRANCE_TYPE_PARK_ENTRANCE:
-                            /* For peeps leaving the park, the goal is the park
-                             * entrance/exit tile. */
                             searchResult = PathSearchResult::ParkExit;
-                            found = true;
+                            elementFound = true;
                             break;
                         case ENTRANCE_TYPE_RIDE_EXIT:
-                            /* For mechanics heading for the ride exit, the
-                             * goal is the ride exit tile. */
-                            direction = tileElement->GetDirection();
-                            if (direction == testEdge)
+                            direction = top.tileElement->GetDirection();
+                            if (direction == top.testEdge)
                             {
                                 searchResult = PathSearchResult::RideExit;
-                                found = true;
+                                elementFound = true;
                                 break;
                             }
-                            continue; // Ride exit is not facing the right direction.
-                        default:
-                            continue;
+                            break;
                     }
                     break;
                 case TileElementType::Path:
                 {
-                    const auto* pathElement = tileElement->AsPath();
-                    /* For peeps heading for a ride with a queue, the goal is the last
-                     * queue path.
-                     * Otherwise, peeps walk on path tiles to get to the goal. */
-                    if (!FootpathIsZAndDirectionValid(*pathElement, loc.z, testEdge))
-                        continue;
+                    const auto* pathElement = top.tileElement->AsPath();
+                    if (!FootpathIsZAndDirectionValid(*pathElement, top.loc.z, top.testEdge))
+                        break;
 
-                    // Path may be sloped, so set z to path base height.
-                    loc.z = tileElement->BaseHeight;
+                    top.loc.z = top.tileElement->BaseHeight;
 
                     if (pathElement->IsWide())
                     {
-                        /* Check if staff can ignore this wide flag. */
-                        if (staff == nullptr || !staff->CanIgnoreWideFlag(loc.ToCoordsXYZ(), tileElement))
+                        const Staff* staff = peep.As<Staff>();
+                        if (staff == nullptr || !staff->CanIgnoreWideFlag(top.loc.ToCoordsXYZ(), top.tileElement))
                         {
                             searchResult = PathSearchResult::Wide;
-                            found = true;
+                            elementFound = true;
                             break;
                         }
                     }
@@ -885,48 +983,39 @@ namespace OpenRCT2::PathFinding
                         {
                             if (state.ignoreForeignQueues && !pathElement->GetRideIndex().IsNull())
                             {
-                                // Path is a queue we aren't interested in
-                                /* The rideIndex will be useful for
-                                 * adding transport rides later. */
                                 rideIndex = pathElement->GetRideIndex();
                                 searchResult = PathSearchResult::RideQueue;
                             }
                         }
                     }
-                    found = true;
+                    elementFound = true;
                 }
                 break;
                 default:
-                    continue;
+                    break;
+            }
+
+            if (!elementFound)
+            {
+                LogPathfinding(
+                    &peep, "Returning from %d,%d,%d; Steps: %u; No relevant map element found", top.loc.x >> 5, top.loc.y >> 5,
+                    top.loc.z, top.numSteps);
+                continue;
             }
 
             LogPathfinding(
-                &peep, "Checking map element at %d,%d,%d; Type: %s; Steps: %u", loc.x >> 5, loc.y >> 5, loc.z,
-                PathSearchToString(searchResult), numSteps);
+                &peep, "Checking map element at %d,%d,%d; Type: %s; Steps: %u", top.loc.x >> 5, top.loc.y >> 5, top.loc.z,
+                PathSearchToString(searchResult), top.numSteps);
 
-            /* At this point tileElement is of interest to the pathfinding. */
+            uint16_t newScore = CalculateHeuristicPathingScore(top.loc, goal);
 
-            /* Should we check that this tileElement is connected in the
-             * reverse direction? For some tileElement types this was
-             * already done above (e.g. ride entrances), but for others not.
-             * Ignore for now. */
-
-            // Calculate the heuristic score of this map element.
-            uint16_t newScore = CalculateHeuristicPathingScore(loc, goal);
-
-            /* If this map element is the search goal the current search path ends here. */
             if (newScore == 0)
             {
-                /* If the search result is better than the best so far (in the parameters),
-                 * then update the parameters with this search before continuing to the next map element. */
-                if (newScore < *endScore || (newScore == *endScore && numSteps < *endSteps))
+                if (newScore < *endScore || (newScore == *endScore && top.numSteps < *endSteps))
                 {
-                    // Update the search results
                     *endScore = newScore;
-                    *endSteps = numSteps;
-                    // Update the end x,y,z
-                    *endXYZ = loc;
-                    // Update the telemetry
+                    *endSteps = top.numSteps;
+                    *endXYZ = top.loc;
                     *endJunctions = state.maxJunctions - state.junctionCount;
                     for (uint8_t junctInd = 0; junctInd < *endJunctions; junctInd++)
                     {
@@ -938,46 +1027,35 @@ namespace OpenRCT2::PathFinding
                     }
                 }
                 LogPathfinding(
-                    &peep, "Search path ends at %d,%d,%d; Steps: %u; At goal; Score: %d", loc.x >> 5, loc.y >> 5, loc.z,
-                    numSteps, newScore);
+                    &peep, "Search path ends at %d,%d,%d; Steps: %u; At goal; Score: %d", top.loc.x >> 5, top.loc.y >> 5,
+                    top.loc.z, top.numSteps, newScore);
                 continue;
             }
 
-            /* At this point the map element tile is not the goal. */
-
-            /* If this map element is not a path, the search cannot be continued.
-             * Continue to the next map element without updating the parameters (best result so far). */
             if (searchResult != PathSearchResult::DeadEnd && searchResult != PathSearchResult::Thin
                 && searchResult != PathSearchResult::Junction && searchResult != PathSearchResult::Wide)
             {
                 LogPathfinding(
-                    &peep, "Search path ends at %d,%d,%d; Steps: %u; Not a path", loc.x >> 5, loc.y >> 5, loc.z, numSteps);
+                    &peep, "Search path ends at %d,%d,%d; Steps: %u; Not a path", top.loc.x >> 5, top.loc.y >> 5, top.loc.z,
+                    top.numSteps);
                 continue;
             }
 
-            /* At this point the map element is a path. */
-
-            /* If this is a wide path the search ends here. */
             if (searchResult == PathSearchResult::Wide)
             {
-                /* Ignore Wide paths as continuing paths UNLESS
-                 * the current path is also Wide (and, for staff, not ignored).
-                 * This permits a peep currently on a wide path to
-                 * cross other wide paths to reach a thin path.
-                 *
-                 * So, if the current path is also wide the goal could
-                 * still be reachable from here.
-                 * If the search result is better than the best so far
-                 * (in the parameters), then update the parameters with
-                 * this search before continuing to the next map element. */
-                if (currentElementIsWide && (newScore < *endScore || (newScore == *endScore && numSteps < *endSteps)))
+                bool currentElementIsWide_ = top.currentTileElement->AsPath()->IsWide();
+                if (currentElementIsWide_)
                 {
-                    // Update the search results
+                    const Staff* staff = peep.As<Staff>();
+                    if (staff != nullptr && staff->CanIgnoreWideFlag(top.loc.ToCoordsXYZ(), top.currentTileElement))
+                        currentElementIsWide_ = false;
+                }
+
+                if (currentElementIsWide_ && (newScore < *endScore || (newScore == *endScore && top.numSteps < *endSteps)))
+                {
                     *endScore = newScore;
-                    *endSteps = numSteps;
-                    // Update the end x,y,z
-                    *endXYZ = loc;
-                    // Update the telemetry
+                    *endSteps = top.numSteps;
+                    *endXYZ = top.loc;
                     *endJunctions = state.maxJunctions - state.junctionCount;
                     for (uint8_t junctInd = 0; junctInd < *endJunctions; junctInd++)
                     {
@@ -989,52 +1067,36 @@ namespace OpenRCT2::PathFinding
                     }
                 }
                 LogPathfinding(
-                    &peep, "Search path ends at %d,%d,%d; Steps: %u; Wide path; Score: %d", loc.x >> 5, loc.y >> 5, loc.z,
-                    numSteps, newScore);
+                    &peep, "Search path ends at %d,%d,%d; Steps: %u; Wide path; Score: %d", top.loc.x >> 5, top.loc.y >> 5,
+                    top.loc.z, top.numSteps, newScore);
                 continue;
             }
 
-            /* At this point the map element is a non-wide path.*/
-
-            /* Get all the permitted_edges of the map element. */
-            Guard::Assert(tileElement->AsPath() != nullptr);
-            uint32_t edges = PathGetPermittedEdges(staff != nullptr, tileElement->AsPath());
+            const Staff* staff = peep.As<Staff>();
+            uint32_t permittedEdges = PathGetPermittedEdges(staff != nullptr, top.tileElement->AsPath());
 
             LogPathfinding(
-                &peep, "Path element at %d,%d,%d; Steps: %u; Edges (0123):%d%d%d%d; Reverse: %d", loc.x >> 5, loc.y >> 5, loc.z,
-                numSteps, edges & 1, (edges & 2) >> 1, (edges & 4) >> 2, (edges & 8) >> 3, testEdge ^ 2);
+                &peep, "Path element at %d,%d,%d; Steps: %u; Edges (0123):%d%d%d%d; Reverse: %d", top.loc.x >> 5,
+                top.loc.y >> 5, top.loc.z, top.numSteps, permittedEdges & 1, (permittedEdges & 2) >> 1,
+                (permittedEdges & 4) >> 2, (permittedEdges & 8) >> 3, top.testEdge ^ 2);
 
-            /* Remove the reverse edge (i.e. the edge back to the previous map element.) */
-            edges &= ~(1 << DirectionReverse(testEdge));
+            permittedEdges &= ~(1 << DirectionReverse(top.testEdge));
 
-            int32_t nextTestEdge = Numerics::bitScanForward(edges);
-
-            /* If there are no other edges the current search ends here.
-             * Continue to the next map element without updating the parameters (best result so far). */
-            if (nextTestEdge == -1)
+            if (permittedEdges == 0)
             {
                 LogPathfinding(
-                    &peep, "Search path ends at %d,%d,%d; Steps: %u; No more edges/dead end", loc.x >> 5, loc.y >> 5, loc.z,
-                    numSteps);
+                    &peep, "Search path ends at %d,%d,%d; Steps: %u; No more edges/dead end", top.loc.x >> 5, top.loc.y >> 5,
+                    top.loc.z, top.numSteps);
                 continue;
             }
 
-            /* Check if either of the search limits has been reached:
-             * - max number of steps or max tiles checked. */
-            if (numSteps >= 200 || state.countTilesChecked <= 0)
+            if (top.numSteps >= 200 || state.countTilesChecked <= 0)
             {
-                /* The current search ends here.
-                 * The path continues, so the goal could still be reachable from here.
-                 * If the search result is better than the best so far (in the parameters),
-                 * then update the parameters with this search before continuing to the next map element. */
-                if (newScore < *endScore || (newScore == *endScore && numSteps < *endSteps))
+                if (newScore < *endScore || (newScore == *endScore && top.numSteps < *endSteps))
                 {
-                    // Update the search results
                     *endScore = newScore;
-                    *endSteps = numSteps;
-                    // Update the end x,y,z
-                    *endXYZ = loc;
-                    // Update the telemetry
+                    *endSteps = top.numSteps;
+                    *endXYZ = top.loc;
                     *endJunctions = state.maxJunctions - state.junctionCount;
                     for (uint8_t junctInd = 0; junctInd < *endJunctions; junctInd++)
                     {
@@ -1046,50 +1108,30 @@ namespace OpenRCT2::PathFinding
                     }
                 }
                 LogPathfinding(
-                    &peep, "Search path ends at %d,%d,%d; Steps: %u; Search limit reached; Score: %d", loc.x >> 5, loc.y >> 5,
-                    loc.z, numSteps, newScore);
+                    &peep, "Search path ends at %d,%d,%d; Steps: %u; Search limit reached; Score: %d", top.loc.x >> 5,
+                    top.loc.y >> 5, top.loc.z, top.numSteps, newScore);
                 continue;
             }
 
-            bool isThinJunction = false;
+            top.isThinJunction = false;
             if (searchResult == PathSearchResult::Junction)
             {
-                /* Check if this is a thin junction. And perform additional
-                 * necessary checks. */
-                isThinJunction = PathIsThinJunction(tileElement->AsPath(), loc);
+                top.isThinJunction = PathIsThinJunction(top.tileElement->AsPath(), top.loc);
 
-                if (isThinJunction)
+                if (top.isThinJunction)
                 {
-                    /* The current search path is passing through a thin
-                     * junction on this map element. Only 'thin' junctions
-                     * are counted towards the junction search limit. */
-
-                    /* First check if going through the junction would be
-                     * a loop.  If so, the current search path ends here.
-                     * Path finding loop detection can take advantage of both the
-                     * peep.PathfindHistory - loops through remembered junctions
-                     *     the peep has already passed through getting to its
-                     *     current position while on the way to its current goal;
-                     * _peepPathFindHistory - loops in the current search path. */
                     bool pathLoop = false;
-                    /* Check the peep.PathfindHistory to see if this junction has
-                     * already been visited by the peep while heading for this goal. */
                     for (auto& pathfindHistory : peep.PathfindHistory)
                     {
-                        if (pathfindHistory == loc)
+                        if (pathfindHistory == top.loc)
                         {
                             if (pathfindHistory.direction == 0)
                             {
-                                /* If all directions have already been tried while
-                                 * heading to this goal, this is a loop. */
                                 pathLoop = true;
                             }
                             else
                             {
-                                /* The peep remembers walking through this junction
-                                 * before, but has not yet tried all directions.
-                                 * Limit the edges to search to those not yet tried. */
-                                edges &= pathfindHistory.direction;
+                                permittedEdges &= pathfindHistory.direction;
                             }
                             break;
                         }
@@ -1097,12 +1139,9 @@ namespace OpenRCT2::PathFinding
 
                     if (!pathLoop)
                     {
-                        /* Check the _peepPathFindHistory to see if this junction has been
-                         * previously passed through in the current search path.
-                         * i.e. this is a loop in the current search path. */
                         for (int32_t junctionNum = state.junctionCount + 1; junctionNum <= state.maxJunctions; junctionNum++)
                         {
-                            if (state.history[junctionNum].location == loc)
+                            if (state.history[junctionNum].location == top.loc)
                             {
                                 pathLoop = true;
                                 break;
@@ -1111,29 +1150,20 @@ namespace OpenRCT2::PathFinding
                     }
                     if (pathLoop)
                     {
-                        /* Loop detected.  The current search path ends here.
-                         * Continue to the next map element without updating the parameters (best result so far). */
                         LogPathfinding(
-                            &peep, "Search path ends at %d,%d,%d; Steps: %u; Loop", loc.x >> 5, loc.y >> 5, loc.z, numSteps);
+                            &peep, "Search path ends at %d,%d,%d; Steps: %u; Loop", top.loc.x >> 5, top.loc.y >> 5, top.loc.z,
+                            top.numSteps);
                         continue;
                     }
 
-                    /* If the junction search limit is reached, the
-                     * current search path ends here. The goal may still
-                     * be reachable from here.
-                     * If the search result is better than the best so far (in the parameters),
-                     * then update the parameters with this search before continuing to the next map element. */
                     if (state.junctionCount <= 0)
                     {
-                        if (newScore < *endScore || (newScore == *endScore && numSteps < *endSteps))
+                        if (newScore < *endScore || (newScore == *endScore && top.numSteps < *endSteps))
                         {
-                            // Update the search results
                             *endScore = newScore;
-                            *endSteps = numSteps;
-                            // Update the end x,y,z
-                            *endXYZ = loc;
-                            // Update the telemetry
-                            *endJunctions = state.maxJunctions; // - _peepPathFindNumJunctions;
+                            *endSteps = top.numSteps;
+                            *endXYZ = top.loc;
+                            *endJunctions = state.maxJunctions;
                             for (uint8_t junctInd = 0; junctInd < *endJunctions; junctInd++)
                             {
                                 uint8_t histIdx = state.maxJunctions - junctInd;
@@ -1142,29 +1172,26 @@ namespace OpenRCT2::PathFinding
                             }
                         }
                         LogPathfinding(
-                            &peep, "Search path ends at %d,%d,%d; Steps: %u; NumJunctions < 0; Score: %d", loc.x >> 5,
-                            loc.y >> 5, loc.z, numSteps, newScore);
+                            &peep, "Search path ends at %d,%d,%d; Steps: %u; NumJunctions < 0; Score: %d", top.loc.x >> 5,
+                            top.loc.y >> 5, top.loc.z, top.numSteps, newScore);
                         continue;
                     }
 
-                    /* This junction was NOT previously visited in the current
-                     * search path, so add the junction to the history. */
-                    state.history[state.junctionCount].location = loc;
-                    // .direction take is added below.
-
+                    state.history[state.junctionCount].location = top.loc;
                     state.junctionCount--;
                 }
             }
 
-            /* Continue searching down each remaining edge of the path
-             * (recursive call). */
-            do
+            // Edges logic
+            top.edges = permittedEdges;
+            top.nextTestEdge = Numerics::bitScanForward(top.edges);
+            if (top.nextTestEdge != -1)
             {
-                edges &= ~(1 << nextTestEdge);
-                uint8_t savedNumJunctions = state.junctionCount;
+                top.edges &= ~(1 << top.nextTestEdge);
+                top.savedNumJunctions = state.junctionCount;
 
-                uint8_t height = loc.z;
-                if (tileElement->AsPath()->IsSloped() && tileElement->AsPath()->GetSlopeDirection() == nextTestEdge)
+                uint8_t height = top.loc.z;
+                if (top.tileElement->AsPath()->IsSloped() && top.tileElement->AsPath()->GetSlopeDirection() == top.nextTestEdge)
                 {
                     height += 2;
                 }
@@ -1173,53 +1200,31 @@ namespace OpenRCT2::PathFinding
                 {
                     if (searchResult == PathSearchResult::Junction)
                     {
-                        if (isThinJunction)
+                        if (top.isThinJunction)
                             LogPathfinding(
-                                &peep, "Recurse from %d,%d,%d; Steps: %u; edge: %d; Thin-Junction", loc.x >> 5, loc.y >> 5,
-                                loc.z, numSteps, nextTestEdge);
+                                &peep, "Recurse from %d,%d,%d; Steps: %u; edge: %d; Thin-Junction", top.loc.x >> 5,
+                                top.loc.y >> 5, top.loc.z, top.numSteps, top.nextTestEdge);
                         else
                             LogPathfinding(
-                                &peep, "Recurse from %d,%d,%d; Steps: %u; edge: %d; Wide-Junction", loc.x >> 5, loc.y >> 5,
-                                loc.z, numSteps, nextTestEdge);
+                                &peep, "Recurse from %d,%d,%d; Steps: %u; edge: %d; Wide-Junction", top.loc.x >> 5,
+                                top.loc.y >> 5, top.loc.z, top.numSteps, top.nextTestEdge);
                     }
                     else
                     {
                         LogPathfinding(
-                            &peep, "Recurse from %d,%d,%d; Steps: %u; edge: %d; Segment", loc.x >> 5, loc.y >> 5, loc.z,
-                            numSteps, nextTestEdge);
+                            &peep, "Recurse from %d,%d,%d; Steps: %u; edge: %d; Segment", top.loc.x >> 5, top.loc.y >> 5,
+                            top.loc.z, top.numSteps, top.nextTestEdge);
                     }
                 }
 
-                if (isThinJunction)
+                if (top.isThinJunction)
                 {
-                    /* Add the current test_edge to the history. */
-                    state.history[state.junctionCount + 1].direction = nextTestEdge;
+                    state.history[state.junctionCount + 1].direction = top.nextTestEdge;
                 }
 
-                PeepPathfindHeuristicSearch(
-                    state, { loc.x, loc.y, height }, goal, peep, tileElement, nextInPatrolArea, numSteps, endScore,
-                    nextTestEdge, endJunctions, junctionList, directionList, endXYZ, endSteps);
-                state.junctionCount = savedNumJunctions;
-
-                LogPathfinding(
-                    &peep, "Returned to %d,%d,%d; Steps: %u; edge: %d; Score: %d", loc.x >> 5, loc.y >> 5, loc.z, numSteps,
-                    nextTestEdge, *endScore);
-            } while ((nextTestEdge = Numerics::bitScanForward(edges)) != -1);
-
-        } while (!(tileElement++)->IsLastForTile());
-
-        if (!found)
-        {
-            /* No map element could be found.
-             * Return without updating the parameters (best result so far). */
-            LogPathfinding(
-                &peep, "Returning from %d,%d,%d; Steps: %u; No relevant map element found", loc.x >> 5, loc.y >> 5, loc.z,
-                numSteps);
-        }
-        else
-        {
-            LogPathfinding(
-                &peep, "Returning from %d,%d,%d; Steps: %u; All map elements checked", loc.x >> 5, loc.y >> 5, loc.z, numSteps);
+                stack[stackPtr++] = { TileCoordsXYZ{ top.loc.x, top.loc.y, height }, static_cast<uint8_t>(top.nextTestEdge),
+                                      top.tileElement, top.inPatrolArea, top.numSteps };
+            }
         }
     }
 
