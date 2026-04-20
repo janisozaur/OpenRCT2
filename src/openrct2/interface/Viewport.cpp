@@ -919,22 +919,6 @@ namespace OpenRCT2
 
         _paintColumns.clear();
 
-        bool useMultithreading = Config::Get().general.multiThreading;
-        if (useMultithreading && _paintJobs == nullptr)
-        {
-            _paintJobs = std::make_unique<JobPool>();
-        }
-        else if (useMultithreading == false && _paintJobs != nullptr)
-        {
-            _paintJobs.reset();
-        }
-
-        bool useParallelDrawing = false;
-        if (useMultithreading && rt.DrawingEngine->GetFlags().has(DrawingEngineFlag::parallelDrawing))
-        {
-            useParallelDrawing = true;
-        }
-
         const int32_t columnWidth = worldRT.zoom_level.ApplyInversedTo(kCoordsXYStep);
         const int32_t rightBorder = worldRT.x + worldRT.width;
         const int32_t alignedX = floor2(worldRT.x, columnWidth);
@@ -974,12 +958,33 @@ namespace OpenRCT2
             columnRT.cullingHeight = cullingY * 2;
         }
 
+        const bool configMultithreading = Config::Get().general.multiThreading;
+        bool useMultithreading = configMultithreading;
+        bool useParallelDrawing = false;
+
         // If we have very few columns, it's faster to do it all on the main thread
         // to avoid the overhead of the job pool.
         if (static_cast<int32_t>(_paintColumns.size()) <= kViewportMultithreadingThreshold)
         {
             useMultithreading = false;
-            useParallelDrawing = false;
+        }
+
+        if (useMultithreading)
+        {
+            if (_paintJobs == nullptr)
+            {
+                _paintJobs = std::make_unique<JobPool>();
+            }
+
+            if (rt.DrawingEngine->GetFlags().has(DrawingEngineFlag::parallelDrawing))
+            {
+                useParallelDrawing = true;
+            }
+        }
+
+        if (!configMultithreading && _paintJobs != nullptr)
+        {
+            _paintJobs.reset();
         }
 
         if (useParallelDrawing)
