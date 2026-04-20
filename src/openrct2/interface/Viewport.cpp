@@ -66,6 +66,9 @@ namespace OpenRCT2
     static std::list<Viewport> _viewports;
     Viewport* gMusicTrackingViewport;
 
+    constexpr int32_t kViewportMultithreadingThreshold = 4;
+    constexpr int32_t kViewportShiftThreshold = 256;
+
     static std::unique_ptr<JobPool> _paintJobs;
     static std::vector<PaintSession*> _paintColumns;
 
@@ -468,7 +471,17 @@ namespace OpenRCT2
         if (DrawingEngineHasDirtyOptimisations())
         {
             RenderTarget& rt = DrawingEngineGetRT();
-            ViewportShiftPixels(rt, w, { left, top, right, bottom }, { x_diff, y_diff });
+
+            // Shifting pixels is expensive when there are many overlapping windows.
+            // Small viewports are faster to redraw entirely.
+            if (viewport->width <= kViewportShiftThreshold && viewport->height <= kViewportShiftThreshold)
+            {
+                WindowDrawAll(rt, left, top, right, bottom);
+            }
+            else
+            {
+                ViewportShiftPixels(rt, w, { left, top, right, bottom }, { x_diff, y_diff });
+            }
         }
         else
         {
@@ -959,37 +972,51 @@ namespace OpenRCT2
             columnRT.cullingY = -cullingY;
             columnRT.cullingWidth = columnWidth;
             columnRT.cullingHeight = cullingY * 2;
+        }
+
+        // If we have very few columns, it's faster to do it all on the main thread
+        // to avoid the overhead of the job pool.
+        if (static_cast<int32_t>(_paintColumns.size()) <= kViewportMultithreadingThreshold)
+        {
+            useMultithreading = false;
+            useParallelDrawing = false;
+        }
+
+        if (useParallelDrawing)
+        {
+            for (auto* session : _paintColumns)
+            {
+                _paintJobs->AddTask([session]() -> void {
+                    ViewportFillColumn(*session);
+                    ViewportPaintColumn(*session);
+                });
+            }
+            _paintJobs->Join();
+        }
+        else
+        {
+            for (auto* session : _paintColumns)
+            {
+                if (useMultithreading)
+                {
+                    _paintJobs->AddTask([session]() -> void { ViewportFillColumn(*session); });
+                }
+                else
+                {
+                    ViewportFillColumn(*session);
+                }
+            }
 
             if (useMultithreading)
             {
-                _paintJobs->AddTask([session]() -> void { ViewportFillColumn(*session); });
+                _paintJobs->Join();
             }
-            else
-            {
-                ViewportFillColumn(*session);
-            }
-        }
 
-        if (useMultithreading)
-        {
-            _paintJobs->Join();
-        }
-
-        // Paint columns.
-        for (auto* session : _paintColumns)
-        {
-            if (useParallelDrawing)
-            {
-                _paintJobs->AddTask([session]() -> void { ViewportPaintColumn(*session); });
-            }
-            else
+            // Paint columns.
+            for (auto* session : _paintColumns)
             {
                 ViewportPaintColumn(*session);
             }
-        }
-        if (useParallelDrawing)
-        {
-            _paintJobs->Join();
         }
 
         // Release resources.
