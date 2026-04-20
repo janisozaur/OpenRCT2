@@ -449,6 +449,21 @@ namespace OpenRCT2::Scripting
         return ScTrackIterator::FromElement(ctx, position, elementIndex);
     }
 
+    JSValue ScMap::getPathNavigator(JSContext* ctx, JSValue thisVal, int argc, JSValue* argv)
+    {
+        JS_UNPACK_OBJECT(pos, ctx, argv[0]);
+
+        if (argc > 1)
+        {
+            JS_UNPACK_UINT32(elementIndex, ctx, argv[1]);
+            const auto position = JSToCoordsXY(ctx, pos);
+            return ScPathNavigator::FromElement(ctx, position, elementIndex);
+        }
+
+        const auto position = JSToCoordsXYZ(ctx, pos);
+        return ScPathNavigator::FromPosition(ctx, position);
+    }
+
     void ScMap::Register(JSContext* ctx)
     {
         static constexpr JSCFunctionListEntry funcs[] = {
@@ -463,6 +478,7 @@ namespace OpenRCT2::Scripting
             JS_CFUNC_DEF("getAllEntitiesOnTile", 2, ScMap::getAllEntitiesOnTile),
             JS_CFUNC_DEF("createEntity", 2, ScMap::createEntity),
             JS_CFUNC_DEF("getTrackIterator", 2, ScMap::getTrackIterator),
+            JS_CFUNC_DEF("getPathNavigator", 1, ScMap::getPathNavigator),
         };
         RegisterBase(ctx, "Map", nullptr, funcs);
     }
