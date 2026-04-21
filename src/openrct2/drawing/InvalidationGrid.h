@@ -1,10 +1,11 @@
 #pragma once
 
+#include "../world/Location.hpp"
+
 #include <algorithm>
 #include <cstdint>
 #include <limits>
 #include <vector>
-#include "../world/Location.hpp"
 
 namespace OpenRCT2::Drawing
 {
