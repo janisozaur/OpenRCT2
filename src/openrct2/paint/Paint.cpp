@@ -63,7 +63,8 @@ bool gPaintBoundingBoxes;
 bool gPaintBlockedTiles;
 bool gPaintStableSort;
 
-static void PaintPSImageWithBoundingBoxes(PaintSession& session, PaintStruct* ps, ImageId imageId, RenderTarget& rt, const ScreenCoordsXY& screenPos);
+static void PaintPSImageWithBoundingBoxes(
+    PaintSession& session, PaintStruct* ps, ImageId imageId, RenderTarget& rt, const ScreenCoordsXY& screenPos);
 static ImageId PaintPSColourifyImage(const PaintStruct* ps, ImageId imageId, uint32_t viewFlags);
 
 static int32_t RemapPositionToQuadrant(const PaintStruct& ps, uint8_t rotation)
@@ -756,7 +757,8 @@ void PaintDrawStructs(PaintSession& session, RenderTarget& rt)
     }
 }
 
-static void PaintPSImageWithBoundingBoxes(PaintSession& session, PaintStruct* ps, ImageId imageId, RenderTarget& rt, const ScreenCoordsXY& screenPos)
+static void PaintPSImageWithBoundingBoxes(
+    PaintSession& session, PaintStruct* ps, ImageId imageId, RenderTarget& rt, const ScreenCoordsXY& screenPos)
 {
     const PaletteIndex colour = kBoundBoxDebugColours[EnumValue(ps->InteractionItem)];
     const uint8_t rotation = session.CurrentRotation;
