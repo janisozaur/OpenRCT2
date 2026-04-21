@@ -5,6 +5,16 @@
 
 namespace OpenRCT2::Drawing
 {
+    ScreenRect InvalidationGrid::getDirtyBoundingBox() const noexcept
+    {
+        if (_lowestRow > _highestRow || _lowestColumn > _highestColumn)
+            return {};
+
+        return { static_cast<int32_t>(_lowestColumn * _blockWidth), static_cast<int32_t>(_lowestRow * _blockHeight),
+                 static_cast<int32_t>(std::min<uint32_t>((_highestColumn + 1) * _blockWidth, _screenWidth)),
+                 static_cast<int32_t>(std::min<uint32_t>((_highestRow + 1) * _blockHeight, _screenHeight)) };
+    }
+
     uint32_t InvalidationGrid::getRowCount() const noexcept
     {
         return _rowCount;

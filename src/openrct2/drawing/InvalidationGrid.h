@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../world/Location.hpp"
+
 #include <algorithm>
 #include <cstdint>
 #include <limits>
@@ -25,6 +27,7 @@ namespace OpenRCT2::Drawing
         uint32_t _highestColumn{};
 
     public:
+        ScreenRect getDirtyBoundingBox() const noexcept;
         uint32_t getRowCount() const noexcept;
 
         uint32_t getColumnCount() const noexcept;

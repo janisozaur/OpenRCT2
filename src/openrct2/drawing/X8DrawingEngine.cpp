@@ -189,15 +189,24 @@ void X8DrawingEngine::PaintWindows()
     if (gPaintForceRedraw)
     {
         WindowUpdateAllViewports();
+        ViewportsPrepareBatch({ 0, 0, static_cast<int32_t>(_width), static_cast<int32_t>(_height) });
         WindowDrawAll(_mainRT, 0, 0, _width, _height);
+        ViewportsFinalizeBatch();
     }
     else
     {
         // Redraw dirty regions before updating the viewports, otherwise
         // when viewports get panned, they copy dirty pixels
         DrawAllDirtyBlocks();
+
         WindowUpdateAllViewports();
-        DrawAllDirtyBlocks();
+
+        {
+            auto dirtyRect = _invalidationGrid.getDirtyBoundingBox();
+            ViewportsPrepareBatch(dirtyRect);
+            DrawAllDirtyBlocks();
+            ViewportsFinalizeBatch();
+        }
     }
 }
 

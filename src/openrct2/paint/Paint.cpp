@@ -63,7 +63,8 @@ bool gPaintBoundingBoxes;
 bool gPaintBlockedTiles;
 bool gPaintStableSort;
 
-static void PaintPSImageWithBoundingBoxes(PaintSession& session, PaintStruct* ps, ImageId imageId, int32_t x, int32_t y);
+static void PaintPSImageWithBoundingBoxes(
+    PaintSession& session, PaintStruct* ps, ImageId imageId, RenderTarget& rt, const ScreenCoordsXY& screenPos);
 static ImageId PaintPSColourifyImage(const PaintStruct* ps, ImageId imageId, uint32_t viewFlags);
 
 static int32_t RemapPositionToQuadrant(const PaintStruct& ps, uint8_t rotation)
@@ -706,16 +707,16 @@ static inline void PaintAttachedPS(RenderTarget& rt, PaintStruct* ps, uint32_t v
     }
 }
 
-static inline void PaintDrawStruct(PaintSession& session, PaintStruct* ps)
+static inline void PaintDrawStruct(PaintSession& session, PaintStruct* ps, RenderTarget& rt)
 {
     auto screenPos = ps->ScreenPos;
     if (ps->InteractionItem == ViewportInteractionItem::entity)
     {
-        if (session.rt.zoom_level >= ZoomLevel{ 1 })
+        if (rt.zoom_level >= ZoomLevel{ 1 })
         {
             screenPos.x = floor2(screenPos.x, 2);
             screenPos.y = floor2(screenPos.y, 2);
-            if (session.rt.zoom_level >= ZoomLevel{ 2 })
+            if (rt.zoom_level >= ZoomLevel{ 2 })
             {
                 screenPos.x = floor2(screenPos.x, 4);
                 screenPos.y = floor2(screenPos.y, 4);
@@ -725,20 +726,20 @@ static inline void PaintDrawStruct(PaintSession& session, PaintStruct* ps)
     auto imageId = PaintPSColourifyImage(ps, ps->image_id, session.ViewFlags);
     if (gPaintBoundingBoxes)
     {
-        PaintPSImageWithBoundingBoxes(session, ps, imageId, screenPos.x, screenPos.y);
+        PaintPSImageWithBoundingBoxes(session, ps, imageId, rt, screenPos);
     }
     else
     {
-        GfxDrawSprite(session.rt, imageId, screenPos);
+        GfxDrawSprite(rt, imageId, screenPos);
     }
 
     if (ps->Children != nullptr)
     {
-        PaintDrawStruct(session, ps->Children);
+        PaintDrawStruct(session, ps->Children, rt);
     }
     else
     {
-        PaintAttachedPS(session.rt, ps, session.ViewFlags);
+        PaintAttachedPS(rt, ps, session.ViewFlags);
     }
 }
 
@@ -746,20 +747,19 @@ static inline void PaintDrawStruct(PaintSession& session, PaintStruct* ps)
  *
  *  rct2: 0x00688485
  */
-void PaintDrawStructs(PaintSession& session)
+void PaintDrawStructs(PaintSession& session, RenderTarget& rt)
 {
     PROFILED_FUNCTION();
 
     for (PaintStruct* ps = session.PaintHead; ps != nullptr; ps = ps->NextQuadrantEntry)
     {
-        PaintDrawStruct(session, ps);
+        PaintDrawStruct(session, ps, rt);
     }
 }
 
-static void PaintPSImageWithBoundingBoxes(PaintSession& session, PaintStruct* ps, ImageId imageId, int32_t x, int32_t y)
+static void PaintPSImageWithBoundingBoxes(
+    PaintSession& session, PaintStruct* ps, ImageId imageId, RenderTarget& rt, const ScreenCoordsXY& screenPos)
 {
-    auto& rt = session.rt;
-
     const PaletteIndex colour = kBoundBoxDebugColours[EnumValue(ps->InteractionItem)];
     const uint8_t rotation = session.CurrentRotation;
 
@@ -834,7 +834,7 @@ static void PaintPSImageWithBoundingBoxes(PaintSession& session, PaintStruct* ps
     GfxDrawLine(rt, { screenCoordBackTop, screenCoordLeftTop }, colour);
     GfxDrawLine(rt, { screenCoordBackTop, screenCoordRightTop }, colour);
 
-    GfxDrawSprite(rt, imageId, { x, y });
+    GfxDrawSprite(rt, imageId, screenPos);
 
     // vertical front
     GfxDrawLine(rt, { screenCoordFrontTop, screenCoordFrontBottom }, colour);

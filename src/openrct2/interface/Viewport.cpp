@@ -45,7 +45,11 @@
 
 #include <cstring>
 #include <list>
+#include <map>
+#include <tuple>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace OpenRCT2
 {
@@ -70,7 +74,12 @@ namespace OpenRCT2
     constexpr int32_t kViewportShiftThreshold = 256;
 
     static std::unique_ptr<JobPool> _paintJobs;
-    static std::vector<PaintSession*> _paintColumns;
+
+    struct ViewportPaintSession
+    {
+        PaintSession* session;
+        bool isBatched;
+    };
 
     InteractionInfo::InteractionInfo(const PaintStruct* ps)
         : Loc(ps->MapPos)
@@ -82,6 +91,7 @@ namespace OpenRCT2
 
     static void ViewportPaintWeatherGloom(RenderTarget& rt);
     static void ViewportPaint(const Viewport* viewport, RenderTarget& rt);
+    static void ViewportFillColumn(PaintSession& session);
     static void ViewportUpdateFollowSprite(WindowBase* window);
     static void ViewportUpdateSmartFollowEntity(WindowBase* window);
     static void ViewportUpdateSmartFollowStaff(WindowBase* window, const Staff& peep);
@@ -847,6 +857,170 @@ namespace OpenRCT2
         ViewportPaint(viewport, rt);
     }
 
+    static void ViewportClipToBucket(RenderTarget& rt, int32_t colX, int32_t colWidth, int32_t colY, int32_t colHeight)
+    {
+        int32_t oldX = rt.x;
+        int32_t oldY = rt.y;
+        int32_t oldRight = rt.x + rt.width;
+        int32_t oldBottom = rt.y + rt.height;
+        int32_t stride = rt.LineStride();
+
+        rt.x = std::max(oldX, colX);
+        rt.y = std::max(oldY, colY);
+        int32_t newRight = std::min(oldRight, colX + colWidth);
+        int32_t newBottom = std::min(oldBottom, colY + colHeight);
+
+        if (rt.x >= newRight || rt.y >= newBottom)
+        {
+            rt.width = 0;
+            rt.height = 0;
+            return;
+        }
+
+        rt.width = newRight - rt.x;
+        rt.height = newBottom - rt.y;
+        rt.pitch = stride - rt.width;
+
+        int32_t leftOffset = rt.x - oldX;
+        int32_t topOffset = rt.y - oldY;
+        if (rt.bits != nullptr)
+        {
+            rt.bits += leftOffset + topOffset * stride;
+        }
+    }
+
+    static void ViewportSetupColumn(PaintSession* session, int32_t x, int32_t columnWidth)
+    {
+        ViewportClipToBucket(session->rt, x, columnWidth, session->rt.y, session->rt.height);
+
+        // culling sprites outside the clipped column causes sorting differences between invalidation blocks
+        // not culling sprites outside the full column width also causes a different kind of glitching
+        constexpr int32_t cullingY = ZoomLevel::max().ApplyInversedTo(std::numeric_limits<int32_t>::max()) / 2;
+
+        session->rt.cullingX = floor2(session->rt.x, columnWidth);
+        session->rt.cullingY = -cullingY;
+        session->rt.cullingWidth = columnWidth;
+        session->rt.cullingHeight = cullingY * 2;
+    }
+
+    struct ColumnKey
+    {
+        uint8_t rotation;
+        uint32_t viewFlags;
+        ZoomLevel zoom;
+        int32_t x;
+
+        bool operator<(const ColumnKey& other) const
+        {
+            return std::tie(rotation, viewFlags, zoom, x) < std::tie(other.rotation, other.viewFlags, other.zoom, other.x);
+        }
+    };
+
+    static std::map<ColumnKey, PaintSession*> _sharedSessions;
+
+    void ViewportsPrepareBatch(const ScreenRect& dirtyRect)
+    {
+        PROFILED_FUNCTION();
+
+        if (!Config::Get().general.multiThreading)
+            return;
+
+        // Collect all visible viewports that intersect with the dirty rect
+        std::vector<const Viewport*> viewportsToPrepare;
+        for (const auto& vp : _viewports)
+        {
+            if (vp.isVisible && !(vp.flags & VIEWPORT_FLAG_RENDERING_INHIBITED))
+            {
+                ScreenRect vpRect = { vp.pos, vp.pos + ScreenCoordsXY{ vp.width, vp.height } };
+                if (vpRect.Intersects(dirtyRect))
+                {
+                    viewportsToPrepare.push_back(&vp);
+                }
+            }
+        }
+
+        if (viewportsToPrepare.empty())
+            return;
+
+        struct ColumnRange
+        {
+            int32_t minWorldY = std::numeric_limits<int32_t>::max();
+            int32_t maxWorldY = std::numeric_limits<int32_t>::min();
+        };
+        std::map<ColumnKey, ColumnRange> columnRanges;
+
+        // For each viewport, identify columns and required Y ranges
+        for (const auto* vp : viewportsToPrepare)
+        {
+            ScreenRect vpRect = { vp->pos, vp->pos + ScreenCoordsXY{ vp->width, vp->height } };
+            ScreenRect drawRect = vpRect.Intersection(dirtyRect);
+            if (drawRect.IsEmpty())
+                continue;
+
+            const int32_t offsetX = drawRect.GetLeft() - vp->pos.x;
+            const int32_t offsetY = drawRect.GetTop() - vp->pos.y;
+
+            const int32_t screenX = vp->zoom.ApplyInversedTo(vp->viewPos.x) + std::max(0, offsetX);
+            const int32_t worldYStart = vp->zoom.ApplyInversedTo(vp->viewPos.y) + std::max(0, offsetY);
+
+            const int32_t width = drawRect.GetWidth();
+            const int32_t height = drawRect.GetHeight();
+
+            const int32_t columnWidth = vp->zoom.ApplyInversedTo(kCoordsXYStep);
+            const int32_t alignedX = floor2(screenX, columnWidth);
+            const int32_t alignedRight = ceil2(screenX + width, columnWidth);
+
+            const int32_t worldYEnd = worldYStart + height;
+
+            for (int32_t x = alignedX; x < alignedRight; x += columnWidth)
+            {
+                ColumnKey key = { vp->rotation, vp->flags, vp->zoom, x };
+                auto& range = columnRanges[key];
+                range.minWorldY = std::min(range.minWorldY, worldYStart);
+                range.maxWorldY = std::max(range.maxWorldY, worldYEnd);
+            }
+        }
+
+        if (columnRanges.empty())
+            return;
+
+        if (_paintJobs == nullptr)
+        {
+            _paintJobs = std::make_unique<JobPool>();
+        }
+
+        for (auto const& [key, range] : columnRanges)
+        {
+            RenderTarget worldRT;
+            worldRT.DrawingEngine = nullptr;
+            worldRT.bits = nullptr;
+            worldRT.x = key.x;
+            worldRT.y = range.minWorldY;
+            worldRT.width = key.zoom.ApplyInversedTo(kCoordsXYStep);
+            worldRT.height = range.maxWorldY - range.minWorldY;
+            worldRT.pitch = 0;
+            worldRT.zoom_level = key.zoom;
+
+            PaintSession* session = PaintSessionAlloc(worldRT, key.viewFlags, key.rotation);
+            _sharedSessions[key] = session;
+
+            ViewportSetupColumn(session, key.x, worldRT.width);
+
+            _paintJobs->AddTask([session]() { ViewportFillColumn(*session); });
+        }
+
+        _paintJobs->Join();
+    }
+
+    void ViewportsFinalizeBatch()
+    {
+        for (auto& pair : _sharedSessions)
+        {
+            PaintSessionFree(pair.second);
+        }
+        _sharedSessions.clear();
+    }
+
     static void ViewportFillColumn(PaintSession& session)
     {
         PROFILED_FUNCTION();
@@ -855,7 +1029,7 @@ namespace OpenRCT2
         PaintSessionArrange(session);
     }
 
-    static void ViewportPaintColumn(PaintSession& session)
+    static void ViewportPaintColumn(PaintSession& session, RenderTarget& rt)
     {
         PROFILED_FUNCTION();
 
@@ -869,20 +1043,20 @@ namespace OpenRCT2
             {
                 colour = PaletteIndex::transparent;
             }
-            GfxClear(session.rt, colour);
+            GfxClear(rt, colour);
         }
 
-        PaintDrawStructs(session);
+        PaintDrawStructs(session, rt);
 
         if (Config::Get().general.renderWeatherGloom && !gTrackDesignSaveMode
             && !(session.ViewFlags & VIEWPORT_FLAG_HIDE_ENTITIES) && !(session.ViewFlags & VIEWPORT_FLAG_HIGHLIGHT_PATH_ISSUES))
         {
-            ViewportPaintWeatherGloom(session.rt);
+            ViewportPaintWeatherGloom(rt);
         }
 
         if (session.PSStringHead != nullptr)
         {
-            PaintDrawMoneyStructs(session.rt, session.PSStringHead);
+            PaintDrawMoneyStructs(rt, session.PSStringHead);
         }
     }
 
@@ -902,69 +1076,55 @@ namespace OpenRCT2
 
         const int32_t offsetX = rt.x - viewport->pos.x;
         const int32_t offsetY = rt.y - viewport->pos.y;
-        const int32_t worldX = viewport->zoom.ApplyInversedTo(viewport->viewPos.x) + std::max(0, offsetX);
-        const int32_t worldY = viewport->zoom.ApplyInversedTo(viewport->viewPos.y) + std::max(0, offsetY);
+
+        const int32_t screenX = viewport->zoom.ApplyInversedTo(viewport->viewPos.x) + std::max(0, offsetX);
+        const int32_t screenY = viewport->zoom.ApplyInversedTo(viewport->viewPos.y) + std::max(0, offsetY);
+
         const int32_t width = std::min(viewport->pos.x + viewport->width, rt.x + rt.width) - std::max(viewport->pos.x, rt.x);
         const int32_t height = std::min(viewport->pos.y + viewport->height, rt.y + rt.height) - std::max(viewport->pos.y, rt.y);
 
         RenderTarget worldRT;
         worldRT.DrawingEngine = rt.DrawingEngine;
         worldRT.bits = rt.bits + std::max(0, -offsetX) + std::max(0, -offsetY) * rt.LineStride();
-        worldRT.x = worldX;
-        worldRT.y = worldY;
+        worldRT.x = screenX;
+        worldRT.y = screenY;
         worldRT.width = width;
         worldRT.height = height;
         worldRT.pitch = rt.LineStride() - worldRT.width;
         worldRT.zoom_level = viewport->zoom;
 
-        _paintColumns.clear();
+        std::vector<ViewportPaintSession> paintColumns;
 
         const int32_t columnWidth = worldRT.zoom_level.ApplyInversedTo(kCoordsXYStep);
         const int32_t rightBorder = worldRT.x + worldRT.width;
         const int32_t alignedX = floor2(worldRT.x, columnWidth);
 
-        // Generate and sort columns.
+        // Identify columns and associate sessions.
         for (int32_t x = alignedX; x < rightBorder; x += columnWidth)
         {
-            PaintSession* session = PaintSessionAlloc(worldRT, viewport->flags, viewport->rotation);
-            _paintColumns.push_back(session);
-
-            RenderTarget& columnRT = session->rt;
-            if (x >= columnRT.x)
+            ColumnKey key = { viewport->rotation, viewport->flags, viewport->zoom, x };
+            auto it = _sharedSessions.find(key);
+            if (it != _sharedSessions.end())
             {
-                const int32_t leftPitch = x - columnRT.x;
-                columnRT.width = columnRT.width - leftPitch;
-                columnRT.bits += leftPitch;
-                columnRT.pitch += leftPitch;
-                columnRT.x = x;
+                paintColumns.push_back({ it->second, true });
             }
-
-            int32_t paintRight = columnRT.x + columnRT.width;
-            if (paintRight >= x + columnWidth)
+            else
             {
-                const int32_t rightPitch = paintRight - x - columnWidth;
-                paintRight -= rightPitch;
-                columnRT.pitch += rightPitch;
+                RenderTarget colRT = worldRT;
+                colRT.x = x;
+                colRT.width = columnWidth;
+
+                PaintSession* session = PaintSessionAlloc(colRT, viewport->flags, viewport->rotation);
+                ViewportSetupColumn(session, x, columnWidth);
+                paintColumns.push_back({ session, false });
             }
-            columnRT.width = paintRight - columnRT.x;
-
-            // culling sprites outside the clipped column causes sorting differences between invalidation blocks
-            // not culling sprites outside the full column width also causes a different kind of glitching
-            constexpr int32_t cullingY = ZoomLevel::max().ApplyInversedTo(std::numeric_limits<int32_t>::max()) / 2;
-
-            columnRT.cullingX = floor2(columnRT.x, columnWidth);
-            columnRT.cullingY = -cullingY;
-            columnRT.cullingWidth = columnWidth;
-            columnRT.cullingHeight = cullingY * 2;
         }
 
         const bool configMultithreading = Config::Get().general.multiThreading;
         bool useMultithreading = configMultithreading;
         bool useParallelDrawing = false;
 
-        // If we have very few columns, it's faster to do it all on the main thread
-        // to avoid the overhead of the job pool.
-        if (static_cast<int32_t>(_paintColumns.size()) <= kViewportMultithreadingThreshold)
+        if (static_cast<int32_t>(paintColumns.size()) <= kViewportMultithreadingThreshold)
         {
             useMultithreading = false;
         }
@@ -989,26 +1149,40 @@ namespace OpenRCT2
 
         if (useParallelDrawing)
         {
-            for (auto* session : _paintColumns)
+            for (const auto& info : paintColumns)
             {
-                _paintJobs->AddTask([session]() -> void {
-                    ViewportFillColumn(*session);
-                    ViewportPaintColumn(*session);
+                _paintJobs->AddTask([info, rt_copy = worldRT, columnWidth]() mutable -> void {
+                    if (!info.isBatched)
+                    {
+                        ViewportFillColumn(*info.session);
+                    }
+
+                    // Setup column RT based on the viewport drawing context
+                    RenderTarget columnRT = rt_copy;
+                    ViewportClipToBucket(columnRT, info.session->rt.x, columnWidth, rt_copy.y, rt_copy.height);
+
+                    if (columnRT.width > 0 && columnRT.height > 0)
+                    {
+                        ViewportPaintColumn(*info.session, columnRT);
+                    }
                 });
             }
             _paintJobs->Join();
         }
         else
         {
-            for (auto* session : _paintColumns)
+            for (const auto& info : paintColumns)
             {
-                if (useMultithreading)
+                if (!info.isBatched)
                 {
-                    _paintJobs->AddTask([session]() -> void { ViewportFillColumn(*session); });
-                }
-                else
-                {
-                    ViewportFillColumn(*session);
+                    if (useMultithreading)
+                    {
+                        _paintJobs->AddTask([session = info.session]() -> void { ViewportFillColumn(*session); });
+                    }
+                    else
+                    {
+                        ViewportFillColumn(*info.session);
+                    }
                 }
             }
 
@@ -1018,16 +1192,26 @@ namespace OpenRCT2
             }
 
             // Paint columns.
-            for (auto* session : _paintColumns)
+            for (const auto& info : paintColumns)
             {
-                ViewportPaintColumn(*session);
+                // Setup column RT based on the viewport drawing context
+                RenderTarget columnRT = worldRT;
+                ViewportClipToBucket(columnRT, info.session->rt.x, columnWidth, worldRT.y, worldRT.height);
+
+                if (columnRT.width > 0 && columnRT.height > 0)
+                {
+                    ViewportPaintColumn(*info.session, columnRT);
+                }
             }
         }
 
-        // Release resources.
-        for (auto* session : _paintColumns)
+        // Release non-batched resources.
+        for (const auto& info : paintColumns)
         {
-            PaintSessionFree(session);
+            if (!info.isBatched)
+            {
+                PaintSessionFree(info.session);
+            }
         }
     }
 

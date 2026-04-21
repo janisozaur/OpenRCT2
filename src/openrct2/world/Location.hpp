@@ -898,6 +898,27 @@ struct ScreenRect : public RectRange<ScreenCoordsXY>
     {
         return coords.x >= GetLeft() && coords.x <= GetRight() && coords.y >= GetTop() && coords.y <= GetBottom();
     }
+
+    constexpr bool Intersects(const ScreenRect& other) const
+    {
+        return !(
+            other.GetLeft() >= GetRight() || other.GetRight() <= GetLeft() || other.GetTop() >= GetBottom()
+            || other.GetBottom() <= GetTop());
+    }
+
+    constexpr ScreenRect Intersection(const ScreenRect& other) const
+    {
+        int32_t left = GetLeft() > other.GetLeft() ? GetLeft() : other.GetLeft();
+        int32_t top = GetTop() > other.GetTop() ? GetTop() : other.GetTop();
+        int32_t right = GetRight() < other.GetRight() ? GetRight() : other.GetRight();
+        int32_t bottom = GetBottom() < other.GetBottom() ? GetBottom() : other.GetBottom();
+        return { left, top, right, bottom };
+    }
+
+    constexpr bool IsEmpty() const
+    {
+        return GetLeft() >= GetRight() || GetTop() >= GetBottom();
+    }
 };
 
 // This uses the convention from the kTileSlope constants that north is at the bottom of the tile at rotation 0

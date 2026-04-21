@@ -304,5 +304,5 @@ PaintSession* PaintSessionAlloc(OpenRCT2::Drawing::RenderTarget& rt, uint32_t vi
 void PaintSessionFree(PaintSession* session);
 void PaintSessionGenerate(PaintSession& session);
 void PaintSessionArrange(PaintSessionCore& session);
-void PaintDrawStructs(PaintSession& session);
+void PaintDrawStructs(PaintSession& session, OpenRCT2::Drawing::RenderTarget& rt);
 void PaintDrawMoneyStructs(OpenRCT2::Drawing::RenderTarget& rt, PaintStringStruct* ps);
