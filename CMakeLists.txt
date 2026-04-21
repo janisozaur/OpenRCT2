@@ -335,6 +335,18 @@ if (WINDOWS_USE_DEPENDENCIES)
             "${WIN_LIBS_LIB_DIR}/libbreakpad_client${DEBUG_SUFFIX}.lib"
         )
     endif ()
+
+    if (WITH_TESTS)
+        add_library(gtest INTERFACE)
+        add_library(GTest::gtest ALIAS gtest)
+        target_include_directories(gtest INTERFACE "${WIN_LIBS_DIR}/include")
+        target_link_libraries(gtest INTERFACE "${WIN_LIBS_LIB_DIR}/gtest${DEBUG_SUFFIX}.lib")
+
+        add_library(gtest_main INTERFACE)
+        add_library(GTest::gtest_main ALIAS gtest_main)
+        target_include_directories(gtest_main INTERFACE "${WIN_LIBS_DIR}/include")
+        target_link_libraries(gtest_main INTERFACE "${WIN_LIBS_LIB_DIR}/gtest_main${DEBUG_SUFFIX}.lib" gtest)
+    endif ()
 elseif (MACOS_USE_DEPENDENCIES)
     set(HAVE_ZLIB ON)
     set(HAVE_PNG ON)
@@ -412,6 +424,18 @@ elseif (MACOS_USE_DEPENDENCIES)
     add_library(PkgConfig::LIBZIP ALIAS libzip)
     target_include_directories(libzip INTERFACE "${MACOS_DYLIBS_DIR}/include")
     target_link_libraries(libzip INTERFACE "${MACOS_DYLIBS_DIR}/lib/libzip.dylib")
+
+    if (WITH_TESTS)
+        add_library(gtest INTERFACE)
+        add_library(GTest::gtest ALIAS gtest)
+        target_include_directories(gtest INTERFACE "${MACOS_DYLIBS_DIR}/include")
+        target_link_libraries(gtest INTERFACE "${MACOS_DYLIBS_DIR}/lib/libgtest.dylib")
+
+        add_library(gtest_main INTERFACE)
+        add_library(GTest::gtest_main ALIAS gtest_main)
+        target_include_directories(gtest_main INTERFACE "${MACOS_DYLIBS_DIR}/include")
+        target_link_libraries(gtest_main INTERFACE "${MACOS_DYLIBS_DIR}/lib/libgtest_main.dylib" gtest)
+    endif ()
 endif ()
 
 # LIST of supported flags, use SET_CHECK_CXX_FLAGS() to apply to target.
