@@ -214,12 +214,19 @@ jobs:
           else
              echo "CONFIGURATION=Release" >> "$GITHUB_ENV"
           fi
+      - name: Install Ninja
+        run: choco install ninja
       - name: Checkout
         uses: actions/checkout@v6
       - name: Install MSVC problem matcher
         uses: ammaraskar/msvc-problem-matcher@master
       - name: Build OpenRCT2
         run: . scripts/setenv && build
+      - name: Download graphics .dat files
+        uses: actions/download-artifact@v7
+        with:
+          name: graphics-${{ needs.build_variables.outputs.name }}
+          path: bin/data
       - name: Upload unsigned binaries
         id: upload-windows-binaries-unsigned
         uses: actions/upload-artifact@v6
@@ -251,12 +258,6 @@ jobs:
         run: |
           mv files-signed/openrct2.com bin/openrct2.com
           mv files-signed/openrct2.exe bin/openrct2.exe
-      - name: Download graphics .dat files on ARM64
-        if: matrix.platform == 'arm64'
-        uses: actions/download-artifact@v7
-        with:
-          name: graphics-${{ needs.build_variables.outputs.name }}
-          path: bin/data
       - name: Build artifacts
         run: |
           . scripts/setenv -q

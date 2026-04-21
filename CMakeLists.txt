@@ -96,6 +96,8 @@ CMAKE_DEPENDENT_OPTION(DOWNLOAD_REPLAYS "Download replays during installation." 
     "WITH_TESTS" OFF)
 CMAKE_DEPENDENT_OPTION(MACOS_USE_DEPENDENCIES "Use OpenRCT2 dependencies instead of system libraries" ON
     "APPLE" OFF)
+CMAKE_DEPENDENT_OPTION(WINDOWS_USE_DEPENDENCIES "Use OpenRCT2 dependencies instead of system libraries" ON
+    "MSVC" OFF)
 CMAKE_DEPENDENT_OPTION(MACOS_BUNDLE "Build macOS application bundle (OpenRCT2.app)" ON
      "MACOS_USE_DEPENDENCIES; NOT DISABLE_GUI" OFF)
 
@@ -118,6 +120,7 @@ option(ENABLE_ASAN "Enable the AddressSanitizer.")
 option(ENABLE_UBSAN "Enable the UndefinedBehaviourSanitizer.")
 option(ENABLE_HEADERS_CHECK "Check if include directives in header files are correct. Only works with clang" OFF)
 option(DISABLE_GUI "Don't build GUI. (Headless only.)")
+option(ENABLE_BREAKPAD "Enable Breakpad support." OFF)
 
 
 if (FORCE32)
@@ -171,6 +174,80 @@ if (MACOS_USE_DEPENDENCIES)
             set(CMAKE_INSTALL_RPATH "${destdirRealPath}${CMAKE_INSTALL_PREFIX}/lib")
         endif()
     endif ()
+endif ()
+
+if (WINDOWS_USE_DEPENDENCIES)
+    message("Using OpenRCT2 dependencies instead of system libraries")
+    include(cmake/download.cmake)
+
+    set(WIN_LIBS_VERSION "41")
+    if (CMAKE_SYSTEM_PROCESSOR STREQUAL "ARM64")
+        set(WIN_LIBS_ARCH "arm64")
+        set(WIN_LIBS_SHA256 "5d171f23eee584bdc29b1186dc7a86d935a6ea58efa42b5674c196c5b581923b")
+        set(WIN_PLATFORM "ARM64")
+    elseif (CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(WIN_LIBS_ARCH "x64")
+        set(WIN_LIBS_SHA256 "8e78f1c3c09c50cb0f509eab6845a93dd69771ff95cdf82d747568093d138f73")
+        set(WIN_PLATFORM "x64")
+    else ()
+        set(WIN_LIBS_ARCH "x86")
+        set(WIN_LIBS_SHA256 "490263b873dd02c13a043a04d26bb9837d2d378dacd8b2c8d29660fef44db3db")
+        set(WIN_PLATFORM "Win32")
+    endif ()
+
+    set(WIN_LIBS_ZIPFILE "openrct2-libs-v${WIN_LIBS_VERSION}-${WIN_LIBS_ARCH}-windows-static.zip")
+    set(WIN_LIBS_URL "https://github.com/OpenRCT2/Dependencies/releases/download/v${WIN_LIBS_VERSION}/${WIN_LIBS_ZIPFILE}")
+    set(WIN_LIBS_DIR "${ROOT_DIR}/lib/${WIN_PLATFORM}")
+
+    download_openrct2_zip(
+        DOWNLOAD_DIR ${WIN_LIBS_DIR}
+        ZIP_URL ${WIN_LIBS_URL}
+        SHA256 ${WIN_LIBS_SHA256}
+    )
+
+    include_directories("${WIN_LIBS_DIR}/include")
+    include_directories("${WIN_LIBS_DIR}/include/SDL2")
+
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        link_directories("${WIN_LIBS_DIR}/debug/lib")
+    else ()
+        link_directories("${WIN_LIBS_DIR}/lib")
+    endif ()
+
+    # Add dependencies that are not found via find_package
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(DEBUG_SUFFIX "d")
+    else ()
+        set(DEBUG_SUFFIX "")
+    endif ()
+
+    link_libraries(wininet imm32 version winmm crypt32 wldap32 shlwapi setupapi bcrypt winhttp)
+    if (CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "IA64" OR CMAKE_SIZEOF_VOID_P EQUAL 4)
+         # fribidi is only available for x86 and x64 in the precompiled deps
+         if (NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "ARM64")
+            link_libraries(fribidi)
+         endif ()
+    endif ()
+    link_libraries(brotlicommon${DEBUG_SUFFIX} brotlidec${DEBUG_SUFFIX} brotlienc${DEBUG_SUFFIX})
+    if (ENABLE_BREAKPAD)
+        link_libraries(libbreakpad${DEBUG_SUFFIX} libbreakpad_client${DEBUG_SUFFIX})
+    endif ()
+
+    link_libraries(zlib${DEBUG_SUFFIX} libpng16${DEBUG_SUFFIX} libzip${DEBUG_SUFFIX} zstd${DEBUG_SUFFIX})
+    link_libraries(freetype${DEBUG_SUFFIX} SDL2-static${DEBUG_SUFFIX} discord-rpc${DEBUG_SUFFIX} bz2${DEBUG_SUFFIX})
+    link_libraries(flac${DEBUG_SUFFIX} ogg${DEBUG_SUFFIX} vorbis${DEBUG_SUFFIX} vorbisfile${DEBUG_SUFFIX})
+
+    set(SDL2_LIBRARIES SDL2-static${DEBUG_SUFFIX})
+    set(SDL2_INCLUDE_DIRS "${WIN_LIBS_DIR}/include/SDL2")
+    set(PNG_LIBRARIES libpng16${DEBUG_SUFFIX})
+    set(ZLIB_LIBRARIES zlib${DEBUG_SUFFIX})
+    set(ZSTD_LIBRARIES zstd${DEBUG_SUFFIX})
+    set(LIBZIP_LIBRARIES libzip${DEBUG_SUFFIX})
+    set(FREETYPE_LIBRARIES freetype${DEBUG_SUFFIX})
+    set(DISCORDRPC_LIBRARY discord-rpc${DEBUG_SUFFIX})
+
+    set(HAVE_DISCORD_RPC ON)
+    set(OPENRCT2_QUICKJS_NG_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/thirdparty/quickjs-ng/quickjs-amalgam.c")
 endif ()
 
 # LIST of supported flags, use SET_CHECK_CXX_FLAGS() to apply to target.
@@ -288,19 +365,47 @@ if (MSVC)
     set(CMAKE_CXX_FLAGS_RELEASE "/MT /O2 /Ob2 /DNDEBUG")
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8 /permissive- /Zc:externConstexpr /EHsc /WX")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244") # C4244: 'conversion_type': conversion from 'type1' to 'type2', possible loss of data
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068") # C4068: unknown pragma
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4091") # C4091: 'keyword': ignored on left of 'type' when no variable is declared
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4100") # C4100: 'identifier': unreferenced formal parameter
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4121") # C4121: 'alignment of a member was sensitive to packing
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4132") # C4132: 'const object should be initialized
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4200") # C4200: nonstandard extension used: zero-sized array in struct/union
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4201") # C4201: nonstandard extension used: nameless struct/union
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4204") # C4204: nonstandard extension used: non-constant aggregate initializer
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4206") # C4206: nonstandard extension used: translation unit is empty
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4221") # C4221: nonstandard extension used: 'identifier': cannot be initialized using address of automatic variable 'identifier'
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244") # C4244: 'conversion_type': conversion from 'type1' to 'type2', possible loss of data
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4263") # C4263: 'member function does not override any base class virtual member function
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4265") # C4265: 'class': class has virtual functions, but destructor is not virtual
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4548") # C4548: expression before comma has no effect
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4549") # C4549: 'operator': operator before comma has no effect
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4555") # C4555: expression has no effect
+
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /OPT:NOLBR /ignore:4099")
+
+    if (CMAKE_SIZEOF_VOID_P EQUAL 4)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LARGEADDRESSAWARE")
+    endif ()
 
     # Enable char8_t<->char conversion
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:char8_t-")
 
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+    add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
+    add_definitions(-DSDL_MAIN_HANDLED)
+    add_definitions(-DWIN32_LEAN_AND_MEAN)
     if (CMAKE_SIZEOF_VOID_P EQUAL 8 AND CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64")
         add_definitions(-D__SSE4_1__)
         add_definitions(-D__AVX2__)
     endif ()
     add_definitions(-DNOMINMAX)
+
+    if (ENABLE_BREAKPAD)
+        add_definitions(-DUSE_BREAKPAD)
+    endif ()
 else ()
     ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_SUGGEST_OVERRIDE -Wsuggest-override)
     ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_DUPLICATED_COND -Wduplicated-cond)
@@ -414,7 +519,85 @@ if (NOT CMAKE_CROSSCOMPILING)
     if(NOT DISABLE_GUI)
         add_dependencies(openrct2 graphics)
     endif()
-    
+
+    if (MSVC)
+        # Copy language, shaders, and scenario patches to build directory
+        add_custom_target(copy-resources ALL
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/language" "${CMAKE_BINARY_DIR}/data/language"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/shaders" "${CMAKE_BINARY_DIR}/data/shaders"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/scenario_patches" "${CMAKE_BINARY_DIR}/data/scenario_patches"
+            COMMENT "Copying language, shaders, and scenario patches to build directory"
+        )
+        if(NOT DISABLE_GUI)
+            add_dependencies(openrct2 copy-resources)
+        endif()
+    endif ()
+
+    function(add_asset_download_target target_name download_dir zip_url sha256 skip_if_exists)
+        add_custom_target(${target_name}
+            COMMAND ${CMAKE_COMMAND}
+                -DDOWNLOAD_DIR=${download_dir}
+                -DZIP_URL=${zip_url}
+                -DSHA256=${sha256}
+                "-DSKIP_IF_EXISTS=${skip_if_exists}"
+                -P "${CMAKE_SOURCE_DIR}/cmake/download_asset.cmake"
+            COMMENT "Downloading ${target_name} asset"
+        )
+    endfunction()
+
+    if (DOWNLOAD_TITLE_SEQUENCES)
+        add_asset_download_target(title-sequences
+            "${CMAKE_BINARY_DIR}/data/sequence/"
+            "${TITLE_SEQUENCE_URL}"
+            "${TITLE_SEQUENCE_SHA256}"
+            "${CMAKE_SOURCE_DIR}/data/sequence/"
+        )
+        if(NOT DISABLE_GUI)
+            add_dependencies(openrct2 title-sequences)
+        endif()
+    endif ()
+    if (DOWNLOAD_OBJECTS)
+        add_asset_download_target(objects
+            "${CMAKE_BINARY_DIR}/data/object/"
+            "${OBJECTS_URL}"
+            "${OBJECTS_SHA256}"
+            "${CMAKE_SOURCE_DIR}/data/object/"
+        )
+        if(NOT DISABLE_GUI)
+            add_dependencies(openrct2 objects)
+        endif()
+    endif ()
+    if (DOWNLOAD_OPENSFX)
+        add_asset_download_target(opensfx
+            "${CMAKE_BINARY_DIR}/data/"
+            "${OPENSFX_URL}"
+            "${OPENSFX_SHA256}"
+            "${CMAKE_SOURCE_DIR}/data/assetpack/openrct2.sound.parkap"
+        )
+        if(NOT DISABLE_GUI)
+            add_dependencies(openrct2 opensfx)
+        endif()
+    endif ()
+    if (DOWNLOAD_OPENMUSIC)
+        add_asset_download_target(openmusic
+            "${CMAKE_BINARY_DIR}/data/"
+            "${OPENMUSIC_URL}"
+            "${OPENMUSIC_SHA256}"
+            "${CMAKE_SOURCE_DIR}/data/assetpack/openrct2.music.alternative.parkap"
+        )
+        if(NOT DISABLE_GUI)
+            add_dependencies(openrct2 openmusic)
+        endif()
+    endif ()
+    if (DOWNLOAD_REPLAYS)
+        add_asset_download_target(replays
+            "${CMAKE_BINARY_DIR}/testdata/replays/"
+            "${REPLAYS_URL}"
+            "${REPLAYS_SHA256}"
+            ""
+        )
+    endif ()
+
 else ()
     message("Skipping graphics generation in cross-compile")
 endif ()

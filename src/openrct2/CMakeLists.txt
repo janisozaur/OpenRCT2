@@ -44,6 +44,10 @@ endif ()
 set_target_properties(libopenrct2 PROPERTIES PREFIX "")
 SET_CHECK_CXX_FLAGS(libopenrct2)
 
+if (MSVC)
+    target_precompile_headers(libopenrct2 PRIVATE "${CMAKE_CURRENT_LIST_DIR}/OpenRCT2.h")
+endif ()
+
 if (NOT DISABLE_NETWORK OR NOT DISABLE_HTTP)
     if (WIN32)
         target_link_libraries(libopenrct2 bcrypt)
