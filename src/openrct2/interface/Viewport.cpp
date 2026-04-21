@@ -80,7 +80,6 @@ namespace OpenRCT2
         PaintSession* session;
         bool isBatched;
     };
-    static std::vector<ViewportPaintSession> _paintColumns;
 
     InteractionInfo::InteractionInfo(const PaintStruct* ps)
         : Loc(ps->MapPos)
@@ -949,15 +948,19 @@ namespace OpenRCT2
 
             const int32_t offsetX = drawRect.GetLeft() - vp->pos.x;
             const int32_t offsetY = drawRect.GetTop() - vp->pos.y;
-            const int32_t worldX = vp->zoom.ApplyInversedTo(vp->viewPos.x) + std::max(0, offsetX);
-            const int32_t worldY = vp->zoom.ApplyInversedTo(vp->viewPos.y) + std::max(0, offsetY);
+
+            // worldX/Y are in world coordinates. vp->viewPos is also in world coordinates.
+            // offsetX/Y are in screen pixels. We need to convert screen pixels to world coordinates using vp->zoom.
+            const int32_t worldX = vp->viewPos.x + vp->zoom.ApplyTo(std::max(0, offsetX));
+            const int32_t worldY = vp->viewPos.y + vp->zoom.ApplyTo(std::max(0, offsetY));
+
             const int32_t width = drawRect.GetWidth();
             const int32_t height = drawRect.GetHeight();
 
             // To allow sharing across dirty grid cells (usually 128x128), we align the world coordinates.
-            const int32_t worldAlignment = vp->zoom.ApplyInversedTo(128);
+            const int32_t worldAlignment = 128;
             const int32_t alignedWorldY = floor2(worldY, worldAlignment);
-            const int32_t alignedWorldHeight = ceil2(worldY + height - alignedWorldY, worldAlignment);
+            const int32_t alignedWorldHeight = ceil2(worldY + vp->zoom.ApplyTo(height) - alignedWorldY, worldAlignment);
 
             RenderTarget worldRT;
             worldRT.DrawingEngine = nullptr;
@@ -1056,14 +1059,19 @@ namespace OpenRCT2
 
         const int32_t offsetX = rt.x - viewport->pos.x;
         const int32_t offsetY = rt.y - viewport->pos.y;
-        const int32_t worldX = viewport->zoom.ApplyInversedTo(viewport->viewPos.x) + std::max(0, offsetX);
-        const int32_t worldY = viewport->zoom.ApplyInversedTo(viewport->viewPos.y) + std::max(0, offsetY);
+
+        // worldX/Y are in world coordinates. viewport->viewPos is also in world coordinates.
+        // offsetX/Y are in screen pixels. We need to convert screen pixels to world coordinates using viewport->zoom.
+        const int32_t worldX = viewport->viewPos.x + viewport->zoom.ApplyTo(std::max(0, offsetX));
+        const int32_t worldY = viewport->viewPos.y + viewport->zoom.ApplyTo(std::max(0, offsetY));
+
         const int32_t width = std::min(viewport->pos.x + viewport->width, rt.x + rt.width) - std::max(viewport->pos.x, rt.x);
         const int32_t height = std::min(viewport->pos.y + viewport->height, rt.y + rt.height) - std::max(viewport->pos.y, rt.y);
 
-        const int32_t worldAlignment = viewport->zoom.ApplyInversedTo(128);
+        // alignedWorld coordinates should also be based on world coordinates.
+        const int32_t worldAlignment = 128;
         const int32_t alignedWorldY = floor2(worldY, worldAlignment);
-        const int32_t alignedWorldHeight = ceil2(worldY + height - alignedWorldY, worldAlignment);
+        const int32_t alignedWorldHeight = ceil2(worldY + viewport->zoom.ApplyTo(height) - alignedWorldY, worldAlignment);
 
         RenderTarget worldRT;
         worldRT.DrawingEngine = rt.DrawingEngine;
@@ -1075,10 +1083,10 @@ namespace OpenRCT2
         worldRT.pitch = rt.LineStride() - worldRT.width;
         worldRT.zoom_level = viewport->zoom;
 
-        _paintColumns.clear();
+        std::vector<ViewportPaintSession> paintColumns;
 
         const int32_t columnWidth = worldRT.zoom_level.ApplyInversedTo(kCoordsXYStep);
-        const int32_t rightBorder = worldRT.x + worldRT.width;
+        const int32_t rightBorder = worldRT.x + worldRT.zoom_level.ApplyTo(worldRT.width);
         const int32_t alignedX = floor2(worldRT.x, columnWidth);
 
         // Identify columns and associate sessions.
@@ -1088,13 +1096,13 @@ namespace OpenRCT2
             auto it = _sharedSessions.find(key);
             if (it != _sharedSessions.end())
             {
-                _paintColumns.push_back({ it->second, true });
+                paintColumns.push_back({ it->second, true });
             }
             else
             {
                 PaintSession* session = PaintSessionAlloc(worldRT, viewport->flags, viewport->rotation);
                 ViewportSetupColumn(session, x, columnWidth);
-                _paintColumns.push_back({ session, false });
+                paintColumns.push_back({ session, false });
             }
         }
 
@@ -1102,7 +1110,7 @@ namespace OpenRCT2
         bool useMultithreading = configMultithreading;
         bool useParallelDrawing = false;
 
-        if (static_cast<int32_t>(_paintColumns.size()) <= kViewportMultithreadingThreshold)
+        if (static_cast<int32_t>(paintColumns.size()) <= kViewportMultithreadingThreshold)
         {
             useMultithreading = false;
         }
@@ -1127,16 +1135,15 @@ namespace OpenRCT2
 
         if (useParallelDrawing)
         {
-            for (const auto& info : _paintColumns)
+            for (const auto& info : paintColumns)
             {
-                _paintJobs->AddTask([info, rt_copy = worldRT]() mutable -> void {
+                _paintJobs->AddTask([info, rt_copy = worldRT, columnWidth]() mutable -> void {
                     if (!info.isBatched)
                     {
                         ViewportFillColumn(*info.session);
                     }
 
                     // Setup column RT based on the viewport drawing context
-                    int32_t columnWidth = rt_copy.zoom_level.ApplyInversedTo(kCoordsXYStep);
                     RenderTarget columnRT = rt_copy;
                     int32_t x = info.session->rt.x;
                     const int32_t leftPitch = x - columnRT.x;
@@ -1164,7 +1171,7 @@ namespace OpenRCT2
         }
         else
         {
-            for (const auto& info : _paintColumns)
+            for (const auto& info : paintColumns)
             {
                 if (!info.isBatched)
                 {
@@ -1185,10 +1192,9 @@ namespace OpenRCT2
             }
 
             // Paint columns.
-            for (const auto& info : _paintColumns)
+            for (const auto& info : paintColumns)
             {
                 // Setup column RT based on the viewport drawing context
-                int32_t columnWidth = worldRT.zoom_level.ApplyInversedTo(kCoordsXYStep);
                 RenderTarget columnRT = worldRT;
                 int32_t x = info.session->rt.x;
                 const int32_t leftPitch = x - columnRT.x;
@@ -1214,7 +1220,7 @@ namespace OpenRCT2
         }
 
         // Release non-batched resources.
-        for (const auto& info : _paintColumns)
+        for (const auto& info : paintColumns)
         {
             if (!info.isBatched)
             {
