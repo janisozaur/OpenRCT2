@@ -250,6 +250,15 @@ if (WINDOWS_USE_DEPENDENCIES)
     set(OPENRCT2_QUICKJS_NG_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/thirdparty/quickjs-ng/quickjs-amalgam.c")
 endif ()
 
+if (WINDOWS_USE_DEPENDENCIES OR MACOS_USE_DEPENDENCIES)
+    set(HAVE_ZLIB ON)
+    set(HAVE_PNG ON)
+    set(HAVE_FREETYPE ON)
+    set(HAVE_SDL2 ON)
+    set(HAVE_LIBZIP ON)
+    set(HAVE_ZSTD ON)
+endif ()
+
 # LIST of supported flags, use SET_CHECK_CXX_FLAGS() to apply to target.
 # Use ADD_CHECK_CXX_COMPILER_FLAG() to add to list.
 set(SUPPORTED_CHECK_CXX_COMPILER_FLAGS "")

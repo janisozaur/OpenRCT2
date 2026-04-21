@@ -46,10 +46,12 @@ if not exist "%vspath%" goto notfound
 
 echo Using Visual Studio from %vspath%
 
-if "%platform%"=="x64" (
+if /i "%platform%"=="x64" (
     call "%vspath%\Common7\Tools\VsDevCmd.bat" -no_logo -arch=x64
+) else if /i "%platform%"=="arm64" (
+    call "%vspath%\Common7\Tools\VsDevCmd.bat" -no_logo -arch=arm64
 ) else (
-    call "%vspath%\Common7\Tools\VsDevCmd.bat" -no_logo
+    call "%vspath%\Common7\Tools\VsDevCmd.bat" -no_logo -arch=x86
 )
 
 %*

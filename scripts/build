@@ -37,7 +37,7 @@ if [[ "$OSTYPE" == "cygwin" || "$OSTYPE" == "msys" ]]; then
         cmake_arch="ARM64"
     fi
 
-    vstool cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=$build_type -DENABLE_BREAKPAD=ON -DCMAKE_GENERATOR_PLATFORM=$cmake_arch
+    vstool cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=$build_type -DENABLE_BREAKPAD=ON
     vstool ninja -C build
 
     # Create openrct2.exe and openrct2.com with correct subsystem
