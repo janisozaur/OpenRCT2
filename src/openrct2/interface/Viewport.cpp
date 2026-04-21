@@ -898,17 +898,17 @@ namespace OpenRCT2
         uint32_t viewFlags;
         ZoomLevel zoom;
         int32_t x;
-        int32_t y;
-        int32_t height;
+        int32_t alignedY;
+        int32_t alignedHeight;
 
         bool operator<(const ColumnKey& other) const
         {
-            return std::tie(rotation, viewFlags, zoom, x, y, height)
-                < std::tie(other.rotation, other.viewFlags, other.zoom, other.x, other.y, other.height);
+            return std::tie(rotation, viewFlags, zoom, x, alignedY, alignedHeight)
+                < std::tie(other.rotation, other.viewFlags, other.zoom, other.x, other.alignedY, other.alignedHeight);
         }
     };
 
-    static std::map<ColumnKey, PaintSession*> _batchedSessions;
+    static std::map<ColumnKey, PaintSession*> _sharedSessions;
 
     void ViewportsPrepareBatch(const ScreenRect& dirtyRect)
     {
@@ -954,13 +954,18 @@ namespace OpenRCT2
             const int32_t width = drawRect.GetWidth();
             const int32_t height = drawRect.GetHeight();
 
+            // To allow sharing across dirty grid cells (usually 128x128), we align the world coordinates.
+            const int32_t worldAlignment = vp->zoom.ApplyInversedTo(128);
+            const int32_t alignedWorldY = floor2(worldY, worldAlignment);
+            const int32_t alignedWorldHeight = ceil2(worldY + height - alignedWorldY, worldAlignment);
+
             RenderTarget worldRT;
             worldRT.DrawingEngine = nullptr;
             worldRT.bits = nullptr;
             worldRT.x = worldX;
-            worldRT.y = worldY;
+            worldRT.y = alignedWorldY;
             worldRT.width = width;
-            worldRT.height = height;
+            worldRT.height = alignedWorldHeight;
             worldRT.pitch = 0;
             worldRT.zoom_level = vp->zoom;
 
@@ -970,16 +975,17 @@ namespace OpenRCT2
 
             for (int32_t x = alignedX; x < rightBorder; x += columnWidth)
             {
-                ColumnKey key = { vp->rotation, vp->flags, vp->zoom, x, worldRT.y, worldRT.height };
-                if (_batchedSessions.find(key) != _batchedSessions.end())
-                    continue;
+                ColumnKey key = { vp->rotation, vp->flags, vp->zoom, x, alignedWorldY, alignedWorldHeight };
+                auto itShared = _sharedSessions.find(key);
+                if (itShared == _sharedSessions.end())
+                {
+                    PaintSession* session = PaintSessionAlloc(worldRT, vp->flags, vp->rotation);
+                    _sharedSessions[key] = session;
 
-                PaintSession* session = PaintSessionAlloc(worldRT, vp->flags, vp->rotation);
-                _batchedSessions[key] = session;
+                    ViewportSetupColumn(session, x, columnWidth);
 
-                ViewportSetupColumn(session, x, columnWidth);
-
-                _paintJobs->AddTask([session]() { ViewportFillColumn(*session); });
+                    _paintJobs->AddTask([session]() { ViewportFillColumn(*session); });
+                }
             }
         }
 
@@ -988,11 +994,11 @@ namespace OpenRCT2
 
     void ViewportsFinalizeBatch()
     {
-        for (auto& pair : _batchedSessions)
+        for (auto& pair : _sharedSessions)
         {
             PaintSessionFree(pair.second);
         }
-        _batchedSessions.clear();
+        _sharedSessions.clear();
     }
 
     static void ViewportFillColumn(PaintSession& session)
@@ -1003,7 +1009,7 @@ namespace OpenRCT2
         PaintSessionArrange(session);
     }
 
-    static void ViewportPaintColumn(PaintSession& session)
+    static void ViewportPaintColumn(PaintSession& session, RenderTarget& rt)
     {
         PROFILED_FUNCTION();
 
@@ -1017,20 +1023,20 @@ namespace OpenRCT2
             {
                 colour = PaletteIndex::transparent;
             }
-            GfxClear(session.rt, colour);
+            GfxClear(rt, colour);
         }
 
-        PaintDrawStructs(session);
+        PaintDrawStructs(session, rt);
 
         if (Config::Get().general.renderWeatherGloom && !gTrackDesignSaveMode
             && !(session.ViewFlags & VIEWPORT_FLAG_HIDE_ENTITIES) && !(session.ViewFlags & VIEWPORT_FLAG_HIGHLIGHT_PATH_ISSUES))
         {
-            ViewportPaintWeatherGloom(session.rt);
+            ViewportPaintWeatherGloom(rt);
         }
 
         if (session.PSStringHead != nullptr)
         {
-            PaintDrawMoneyStructs(session.rt, session.PSStringHead);
+            PaintDrawMoneyStructs(rt, session.PSStringHead);
         }
     }
 
@@ -1055,6 +1061,10 @@ namespace OpenRCT2
         const int32_t width = std::min(viewport->pos.x + viewport->width, rt.x + rt.width) - std::max(viewport->pos.x, rt.x);
         const int32_t height = std::min(viewport->pos.y + viewport->height, rt.y + rt.height) - std::max(viewport->pos.y, rt.y);
 
+        const int32_t worldAlignment = viewport->zoom.ApplyInversedTo(128);
+        const int32_t alignedWorldY = floor2(worldY, worldAlignment);
+        const int32_t alignedWorldHeight = ceil2(worldY + height - alignedWorldY, worldAlignment);
+
         RenderTarget worldRT;
         worldRT.DrawingEngine = rt.DrawingEngine;
         worldRT.bits = rt.bits + std::max(0, -offsetX) + std::max(0, -offsetY) * rt.LineStride();
@@ -1071,43 +1081,27 @@ namespace OpenRCT2
         const int32_t rightBorder = worldRT.x + worldRT.width;
         const int32_t alignedX = floor2(worldRT.x, columnWidth);
 
-        // Generate and sort columns.
+        // Identify columns and associate sessions.
         for (int32_t x = alignedX; x < rightBorder; x += columnWidth)
         {
-            // Try to find a matching session in the batch.
-            ColumnKey key = { viewport->rotation, viewport->flags, viewport->zoom, x, worldRT.y, worldRT.height };
-            auto it = _batchedSessions.find(key);
-
-            PaintSession* session;
-            bool isBatched;
-            if (it != _batchedSessions.end())
+            ColumnKey key = { viewport->rotation, viewport->flags, viewport->zoom, x, alignedWorldY, alignedWorldHeight };
+            auto it = _sharedSessions.find(key);
+            if (it != _sharedSessions.end())
             {
-                session = it->second;
-                isBatched = true;
-
-                // Update the RenderTarget with current bits and pitch
-                session->rt.bits = worldRT.bits;
-                session->rt.pitch = worldRT.pitch;
-                session->rt.y = worldRT.y;
-                session->rt.height = worldRT.height;
-                ViewportSetupColumn(session, x, columnWidth);
+                _paintColumns.push_back({ it->second, true });
             }
             else
             {
-                session = PaintSessionAlloc(worldRT, viewport->flags, viewport->rotation);
-                isBatched = false;
-
+                PaintSession* session = PaintSessionAlloc(worldRT, viewport->flags, viewport->rotation);
                 ViewportSetupColumn(session, x, columnWidth);
+                _paintColumns.push_back({ session, false });
             }
-            _paintColumns.push_back({ session, isBatched });
         }
 
         const bool configMultithreading = Config::Get().general.multiThreading;
         bool useMultithreading = configMultithreading;
         bool useParallelDrawing = false;
 
-        // If we have very few columns, it's faster to do it all on the main thread
-        // to avoid the overhead of the job pool.
         if (static_cast<int32_t>(_paintColumns.size()) <= kViewportMultithreadingThreshold)
         {
             useMultithreading = false;
@@ -1135,12 +1129,35 @@ namespace OpenRCT2
         {
             for (const auto& info : _paintColumns)
             {
-                _paintJobs->AddTask([info]() -> void {
+                _paintJobs->AddTask([info, rt_copy = worldRT]() mutable -> void {
                     if (!info.isBatched)
                     {
                         ViewportFillColumn(*info.session);
                     }
-                    ViewportPaintColumn(*info.session);
+
+                    // Setup column RT based on the viewport drawing context
+                    int32_t columnWidth = rt_copy.zoom_level.ApplyInversedTo(kCoordsXYStep);
+                    RenderTarget columnRT = rt_copy;
+                    int32_t x = info.session->rt.x;
+                    const int32_t leftPitch = x - columnRT.x;
+                    columnRT.width = columnRT.width - leftPitch;
+                    if (columnRT.bits != nullptr)
+                    {
+                        columnRT.bits += leftPitch;
+                    }
+                    columnRT.pitch += leftPitch;
+                    columnRT.x = x;
+
+                    int32_t paintRight = columnRT.x + columnRT.width;
+                    if (paintRight >= x + columnWidth)
+                    {
+                        const int32_t rightPitch = paintRight - x - columnWidth;
+                        paintRight -= rightPitch;
+                        columnRT.pitch += rightPitch;
+                    }
+                    columnRT.width = paintRight - columnRT.x;
+
+                    ViewportPaintColumn(*info.session, columnRT);
                 });
             }
             _paintJobs->Join();
@@ -1170,11 +1187,33 @@ namespace OpenRCT2
             // Paint columns.
             for (const auto& info : _paintColumns)
             {
-                ViewportPaintColumn(*info.session);
+                // Setup column RT based on the viewport drawing context
+                int32_t columnWidth = worldRT.zoom_level.ApplyInversedTo(kCoordsXYStep);
+                RenderTarget columnRT = worldRT;
+                int32_t x = info.session->rt.x;
+                const int32_t leftPitch = x - columnRT.x;
+                columnRT.width = columnRT.width - leftPitch;
+                if (columnRT.bits != nullptr)
+                {
+                    columnRT.bits += leftPitch;
+                }
+                columnRT.pitch += leftPitch;
+                columnRT.x = x;
+
+                int32_t paintRight = columnRT.x + columnRT.width;
+                if (paintRight >= x + columnWidth)
+                {
+                    const int32_t rightPitch = paintRight - x - columnWidth;
+                    paintRight -= rightPitch;
+                    columnRT.pitch += rightPitch;
+                }
+                columnRT.width = paintRight - columnRT.x;
+
+                ViewportPaintColumn(*info.session, columnRT);
             }
         }
 
-        // Release resources.
+        // Release non-batched resources.
         for (const auto& info : _paintColumns)
         {
             if (!info.isBatched)
