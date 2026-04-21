@@ -880,19 +880,27 @@ namespace OpenRCT2::String
         auto h = toUpper(haystack);
         auto n = toUpper(needle);
 
-        size_t hIdx = 0;
-        size_t nIdx = 0;
+        const utf8* hPtr = h.c_str();
+        const utf8* nPtr = n.c_str();
 
-        while (hIdx < h.size() && nIdx < n.size())
+        uint32_t nCodepoint = UTF8GetNext(nPtr, &nPtr);
+        while (nCodepoint != 0)
         {
-            if (h[hIdx] == n[nIdx])
+            uint32_t hCodepoint = UTF8GetNext(hPtr, &hPtr);
+            while (hCodepoint != 0 && hCodepoint != nCodepoint)
             {
-                nIdx++;
+                hCodepoint = UTF8GetNext(hPtr, &hPtr);
             }
-            hIdx++;
+
+            if (hCodepoint == 0)
+            {
+                return false;
+            }
+
+            nCodepoint = UTF8GetNext(nPtr, &nPtr);
         }
 
-        return nIdx == n.size();
+        return true;
     }
 
     void backspace(char* str)

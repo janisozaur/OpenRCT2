@@ -78,7 +78,7 @@ namespace OpenRCT2::Ui::Windows
         void FilterItems()
         {
             gDropdown.numFilteredItems = 0;
-            if (gDropdown.searchText[0] == '\0')
+            if (gDropdown.searchText.empty())
             {
                 for (int32_t i = 0; i < gDropdown.numItems; i++)
                 {
@@ -167,7 +167,6 @@ namespace OpenRCT2::Ui::Windows
             if (!IsSearchable)
                 return;
 
-            String::safeConcat(gDropdown.searchText, text.data(), sizeof(gDropdown.searchText));
             FilterItems();
             UpdateSizeAndPosition(BaseScreenPos, BaseExtraY);
             invalidate();
@@ -181,7 +180,6 @@ namespace OpenRCT2::Ui::Windows
                 {
                     if (IsSearchable)
                     {
-                        String::backspace(gDropdown.searchText);
                         FilterItems();
                         UpdateSizeAndPosition(BaseScreenPos, BaseExtraY);
                         invalidate();
@@ -361,7 +359,7 @@ namespace OpenRCT2::Ui::Windows
                 const ScreenCoordsXY searchBoxBottomRight = searchBoxTopLeft + ScreenCoordsXY{ width - 5, ItemHeight - 1 };
                 Rectangle::fillInset(rt, { searchBoxTopLeft, searchBoxBottomRight }, colours[0], Rectangle::BorderStyle::inset);
 
-                std::string searchDisplay = std::string(reinterpret_cast<const char*>(gDropdown.searchText));
+                std::string searchDisplay = gDropdown.searchText;
                 if (TextBoxCaretIsFlashed())
                 {
                     searchDisplay += "_";
@@ -374,11 +372,11 @@ namespace OpenRCT2::Ui::Windows
                 yOffset += ItemHeight + 2;
             }
 
-            if (gDropdown.numFilteredItems == 0 && IsSearchable && gDropdown.searchText[0] != '\0')
+            if (gDropdown.numFilteredItems == 0 && IsSearchable && !gDropdown.searchText.empty())
             {
                 ScreenCoordsXY screenCoords = windowPos + ScreenCoordsXY{ 2, yOffset };
-                drawText(
-                    rt, screenCoords + ScreenCoordsXY{ 2, 1 }, STR_NO_MATCHES_FOUND, {},
+                drawTextEllipsised(
+                    rt, screenCoords + ScreenCoordsXY{ 2, 1 }, width - 7, STR_NO_MATCHES_FOUND, {},
                     { { colours[0].colour, { ColourFlag::inset } } });
                 return;
             }
@@ -461,6 +459,11 @@ namespace OpenRCT2::Ui::Windows
             // Initial highlight from default index
             gDropdown.highlightedIndex = gDropdown.defaultIndex;
             FilterItems();
+
+            if (IsSearchable)
+            {
+                ContextStartTextInput(gDropdown.searchText, 255);
+            }
 
             UpdateSizeAndPosition(BaseScreenPos, BaseExtraY);
 
@@ -725,6 +728,7 @@ namespace OpenRCT2::Ui::Windows
     {
         auto* windowMgr = GetWindowManager();
         windowMgr->CloseByClass(WindowClass::dropdown);
+        ContextStopTextInput();
     }
 
     void WindowDropdownSelectItem(int32_t index)

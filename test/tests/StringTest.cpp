@@ -364,6 +364,11 @@ TEST_F(StringTest, FuzzyContains)
 
     EXPECT_FALSE(String::fuzzyContains("Log Flume", "logs"));
     EXPECT_FALSE(String::fuzzyContains("Log Flume", "abc"));
+
+    // Unicode / Multi-byte
+    EXPECT_TRUE(String::fuzzyContains(u8"ストリング", u8"トリ"));
+    EXPECT_TRUE(String::fuzzyContains(u8"ストリング", u8"スン"));
+    EXPECT_FALSE(String::fuzzyContains(u8"ストリング", u8"ストス"));
 }
 
 TEST_F(StringTest, Backspace)

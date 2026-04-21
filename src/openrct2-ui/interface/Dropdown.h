@@ -221,7 +221,7 @@ namespace OpenRCT2::Dropdown
         std::optional<CellDrawFunction> cellDrawFunction;
 
         // Search filtering
-        utf8 searchText[256]{};
+        u8string searchText;
         int32_t numFilteredItems{};
         std::array<int32_t, kItemsMaxSize> filteredItems{};
     };
