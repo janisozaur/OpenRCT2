@@ -2832,7 +2832,7 @@ namespace OpenRCT2::Ui::Windows
             gameState.mapSize = preserveMapSize;
 
             PaintSessionArrange(*session);
-            PaintDrawStructs(*session);
+            PaintDrawStructs(*session, rt);
             PaintSessionFree(session);
         }
     };
