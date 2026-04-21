@@ -74,7 +74,13 @@ namespace OpenRCT2
     constexpr int32_t kViewportShiftThreshold = 256;
 
     static std::unique_ptr<JobPool> _paintJobs;
-    static std::vector<PaintSession*> _paintColumns;
+
+    struct ViewportPaintSession
+    {
+        PaintSession* session;
+        bool isBatched;
+    };
+    static std::vector<ViewportPaintSession> _paintColumns;
 
     InteractionInfo::InteractionInfo(const PaintStruct* ps)
         : Loc(ps->MapPos)
@@ -978,16 +984,6 @@ namespace OpenRCT2
         }
 
         _paintJobs->Join();
-
-        for (auto& pair : _batchedSessions)
-        {
-            PaintSession* session = pair.second;
-            if (session->PaintHead == nullptr)
-            {
-                _paintJobs->AddTask([session]() { PaintSessionArrange(*session); });
-            }
-        }
-        _paintJobs->Join();
     }
 
     void ViewportsFinalizeBatch()
@@ -1078,24 +1074,32 @@ namespace OpenRCT2
         // Generate and sort columns.
         for (int32_t x = alignedX; x < rightBorder; x += columnWidth)
         {
+            // Try to find a matching session in the batch.
             ColumnKey key = { viewport->rotation, viewport->flags, viewport->zoom, x, worldRT.y, worldRT.height };
             auto it = _batchedSessions.find(key);
+
+            PaintSession* session;
+            bool isBatched;
             if (it != _batchedSessions.end())
             {
-                PaintSession* session = it->second;
+                session = it->second;
+                isBatched = true;
+
                 // Update the RenderTarget with current bits and pitch
                 session->rt.bits = worldRT.bits;
                 session->rt.pitch = worldRT.pitch;
+                session->rt.y = worldRT.y;
+                session->rt.height = worldRT.height;
                 ViewportSetupColumn(session, x, columnWidth);
-
-                _paintColumns.push_back(session);
-                continue;
             }
+            else
+            {
+                session = PaintSessionAlloc(worldRT, viewport->flags, viewport->rotation);
+                isBatched = false;
 
-            PaintSession* session = PaintSessionAlloc(worldRT, viewport->flags, viewport->rotation);
-            _paintColumns.push_back(session);
-
-            ViewportSetupColumn(session, x, columnWidth);
+                ViewportSetupColumn(session, x, columnWidth);
+            }
+            _paintColumns.push_back({ session, isBatched });
         }
 
         const bool configMultithreading = Config::Get().general.multiThreading;
@@ -1129,26 +1133,32 @@ namespace OpenRCT2
 
         if (useParallelDrawing)
         {
-            for (auto* session : _paintColumns)
+            for (const auto& info : _paintColumns)
             {
-                _paintJobs->AddTask([session]() -> void {
-                    ViewportFillColumn(*session);
-                    ViewportPaintColumn(*session);
+                _paintJobs->AddTask([info]() -> void {
+                    if (!info.isBatched)
+                    {
+                        ViewportFillColumn(*info.session);
+                    }
+                    ViewportPaintColumn(*info.session);
                 });
             }
             _paintJobs->Join();
         }
         else
         {
-            for (auto* session : _paintColumns)
+            for (const auto& info : _paintColumns)
             {
-                if (useMultithreading)
+                if (!info.isBatched)
                 {
-                    _paintJobs->AddTask([session]() -> void { ViewportFillColumn(*session); });
-                }
-                else
-                {
-                    ViewportFillColumn(*session);
+                    if (useMultithreading)
+                    {
+                        _paintJobs->AddTask([session = info.session]() -> void { ViewportFillColumn(*session); });
+                    }
+                    else
+                    {
+                        ViewportFillColumn(*info.session);
+                    }
                 }
             }
 
@@ -1158,22 +1168,18 @@ namespace OpenRCT2
             }
 
             // Paint columns.
-            for (auto* session : _paintColumns)
+            for (const auto& info : _paintColumns)
             {
-                ViewportPaintColumn(*session);
+                ViewportPaintColumn(*info.session);
             }
         }
 
         // Release resources.
-        for (auto* session : _paintColumns)
+        for (const auto& info : _paintColumns)
         {
-            ColumnKey key = {
-                session->CurrentRotation, session->ViewFlags, session->rt.zoom_level, session->rt.x, session->rt.y,
-                session->rt.height
-            };
-            if (_batchedSessions.find(key) == _batchedSessions.end())
+            if (!info.isBatched)
             {
-                PaintSessionFree(session);
+                PaintSessionFree(info.session);
             }
         }
     }
