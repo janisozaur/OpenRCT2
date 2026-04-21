@@ -909,16 +909,15 @@ namespace OpenRCT2
         uint32_t viewFlags;
         ZoomLevel zoom;
         int32_t x;
-        int32_t yBucket;
 
         bool operator<(const ColumnKey& other) const
         {
-            return std::tie(rotation, viewFlags, zoom, x, yBucket) < std::tie(other.rotation, other.viewFlags, other.zoom, other.x, other.yBucket);
+            return std::tie(rotation, viewFlags, zoom, x)
+                < std::tie(other.rotation, other.viewFlags, other.zoom, other.x);
         }
     };
 
     static std::map<ColumnKey, PaintSession*> _sharedSessions;
-    static constexpr int32_t kViewportBucketSize = 128;
 
     void ViewportsPrepareBatch(const ScreenRect& dirtyRect)
     {
@@ -944,12 +943,14 @@ namespace OpenRCT2
         if (viewportsToPrepare.empty())
             return;
 
-        if (_paintJobs == nullptr)
+        struct ColumnRange
         {
-            _paintJobs = std::make_unique<JobPool>();
-        }
+            int32_t minWorldY = std::numeric_limits<int32_t>::max();
+            int32_t maxWorldY = std::numeric_limits<int32_t>::min();
+        };
+        std::map<ColumnKey, ColumnRange> columnRanges;
 
-        // For each viewport, identify columns and allocate sessions
+        // For each viewport, identify columns and required Y ranges
         for (const auto* vp : viewportsToPrepare)
         {
             ScreenRect vpRect = { vp->pos, vp->pos + ScreenCoordsXY{ vp->width, vp->height } };
@@ -961,7 +962,7 @@ namespace OpenRCT2
             const int32_t offsetY = drawRect.GetTop() - vp->pos.y;
 
             const int32_t screenX = vp->zoom.ApplyInversedTo(vp->viewPos.x) + std::max(0, offsetX);
-            const int32_t screenY = vp->zoom.ApplyInversedTo(vp->viewPos.y) + std::max(0, offsetY);
+            const int32_t worldYStart = vp->zoom.ApplyInversedTo(vp->viewPos.y) + std::max(0, offsetY);
 
             const int32_t width = drawRect.GetWidth();
             const int32_t height = drawRect.GetHeight();
@@ -970,36 +971,43 @@ namespace OpenRCT2
             const int32_t alignedX = floor2(screenX, columnWidth);
             const int32_t alignedRight = ceil2(screenX + width, columnWidth);
 
-            const int32_t startBucketY = floor2(screenY, kViewportBucketSize);
-            const int32_t endBucketY = ceil2(screenY + height, kViewportBucketSize);
+            const int32_t worldYEnd = worldYStart + height;
 
             for (int32_t x = alignedX; x < alignedRight; x += columnWidth)
             {
-                for (int32_t bucketY = startBucketY; bucketY < endBucketY; bucketY += kViewportBucketSize)
-                {
-                    ColumnKey key = { vp->rotation, vp->flags, vp->zoom, x, bucketY };
-                    auto itShared = _sharedSessions.find(key);
-                    if (itShared == _sharedSessions.end())
-                    {
-                        RenderTarget worldRT;
-                        worldRT.DrawingEngine = nullptr;
-                        worldRT.bits = nullptr;
-                        worldRT.x = x;
-                        worldRT.y = bucketY;
-                        worldRT.width = columnWidth;
-                        worldRT.height = kViewportBucketSize;
-                        worldRT.pitch = 0;
-                        worldRT.zoom_level = vp->zoom;
-
-                        PaintSession* session = PaintSessionAlloc(worldRT, vp->flags, vp->rotation);
-                        _sharedSessions[key] = session;
-
-                        ViewportSetupColumn(session, x, columnWidth);
-
-                        _paintJobs->AddTask([session]() { ViewportFillColumn(*session); });
-                    }
-                }
+                ColumnKey key = { vp->rotation, vp->flags, vp->zoom, x };
+                auto& range = columnRanges[key];
+                range.minWorldY = std::min(range.minWorldY, worldYStart);
+                range.maxWorldY = std::max(range.maxWorldY, worldYEnd);
             }
+        }
+
+        if (columnRanges.empty())
+            return;
+
+        if (_paintJobs == nullptr)
+        {
+            _paintJobs = std::make_unique<JobPool>();
+        }
+
+        for (auto const& [key, range] : columnRanges)
+        {
+            RenderTarget worldRT;
+            worldRT.DrawingEngine = nullptr;
+            worldRT.bits = nullptr;
+            worldRT.x = key.x;
+            worldRT.y = range.minWorldY;
+            worldRT.width = key.zoom.ApplyInversedTo(kCoordsXYStep);
+            worldRT.height = range.maxWorldY - range.minWorldY;
+            worldRT.pitch = 0;
+            worldRT.zoom_level = key.zoom;
+
+            PaintSession* session = PaintSessionAlloc(worldRT, key.viewFlags, key.rotation);
+            _sharedSessions[key] = session;
+
+            ViewportSetupColumn(session, key.x, worldRT.width);
+
+            _paintJobs->AddTask([session]() { ViewportFillColumn(*session); });
         }
 
         _paintJobs->Join();
@@ -1076,7 +1084,6 @@ namespace OpenRCT2
         const int32_t width = std::min(viewport->pos.x + viewport->width, rt.x + rt.width) - std::max(viewport->pos.x, rt.x);
         const int32_t height = std::min(viewport->pos.y + viewport->height, rt.y + rt.height) - std::max(viewport->pos.y, rt.y);
 
-
         RenderTarget worldRT;
         worldRT.DrawingEngine = rt.DrawingEngine;
         worldRT.bits = rt.bits + std::max(0, -offsetX) + std::max(0, -offsetY) * rt.LineStride();
@@ -1096,29 +1103,21 @@ namespace OpenRCT2
         // Identify columns and associate sessions.
         for (int32_t x = alignedX; x < rightBorder; x += columnWidth)
         {
-            const int32_t startBucketY = floor2(screenY, kViewportBucketSize);
-            const int32_t endBucketY = ceil2(screenY + height, kViewportBucketSize);
-
-            for (int32_t bucketY = startBucketY; bucketY < endBucketY; bucketY += kViewportBucketSize)
+            ColumnKey key = { viewport->rotation, viewport->flags, viewport->zoom, x };
+            auto it = _sharedSessions.find(key);
+            if (it != _sharedSessions.end())
             {
-                ColumnKey key = { viewport->rotation, viewport->flags, viewport->zoom, x, bucketY };
-                auto it = _sharedSessions.find(key);
-                if (it != _sharedSessions.end())
-                {
-                    paintColumns.push_back({ it->second, true });
-                }
-                else
-                {
-                    RenderTarget colRT = worldRT;
-                    colRT.x = x;
-                    colRT.y = bucketY;
-                    colRT.width = columnWidth;
-                    colRT.height = kViewportBucketSize;
+                paintColumns.push_back({ it->second, true });
+            }
+            else
+            {
+                RenderTarget colRT = worldRT;
+                colRT.x = x;
+                colRT.width = columnWidth;
 
-                    PaintSession* session = PaintSessionAlloc(colRT, viewport->flags, viewport->rotation);
-                    ViewportSetupColumn(session, x, columnWidth);
-                    paintColumns.push_back({ session, false });
-                }
+                PaintSession* session = PaintSessionAlloc(colRT, viewport->flags, viewport->rotation);
+                ViewportSetupColumn(session, x, columnWidth);
+                paintColumns.push_back({ session, false });
             }
         }
 
@@ -1161,7 +1160,7 @@ namespace OpenRCT2
 
                     // Setup column RT based on the viewport drawing context
                     RenderTarget columnRT = rt_copy;
-                    ViewportClipToBucket(columnRT, info.session->rt.x, columnWidth, info.session->rt.y, kViewportBucketSize);
+                    ViewportClipToBucket(columnRT, info.session->rt.x, columnWidth, rt_copy.y, rt_copy.height);
 
                     if (columnRT.width > 0 && columnRT.height > 0)
                     {
@@ -1198,7 +1197,7 @@ namespace OpenRCT2
             {
                 // Setup column RT based on the viewport drawing context
                 RenderTarget columnRT = worldRT;
-                ViewportClipToBucket(columnRT, info.session->rt.x, columnWidth, info.session->rt.y, kViewportBucketSize);
+                ViewportClipToBucket(columnRT, info.session->rt.x, columnWidth, worldRT.y, worldRT.height);
 
                 if (columnRT.width > 0 && columnRT.height > 0)
                 {

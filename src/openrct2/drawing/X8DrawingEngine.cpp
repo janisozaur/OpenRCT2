@@ -197,12 +197,7 @@ void X8DrawingEngine::PaintWindows()
     {
         // Redraw dirty regions before updating the viewports, otherwise
         // when viewports get panned, they copy dirty pixels
-        {
-            auto dirtyRect = _invalidationGrid.getDirtyBoundingBox();
-            ViewportsPrepareBatch(dirtyRect);
-            DrawAllDirtyBlocks();
-            ViewportsFinalizeBatch();
-        }
+        DrawAllDirtyBlocks();
 
         WindowUpdateAllViewports();
 
