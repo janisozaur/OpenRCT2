@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <limits>
 #include <vector>
+#include "../world/Location.hpp"
 
 namespace OpenRCT2::Drawing
 {
@@ -25,6 +26,7 @@ namespace OpenRCT2::Drawing
         uint32_t _highestColumn{};
 
     public:
+        ScreenRect getDirtyBoundingBox() const noexcept;
         uint32_t getRowCount() const noexcept;
 
         uint32_t getColumnCount() const noexcept;
