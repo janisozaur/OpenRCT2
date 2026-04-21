@@ -912,8 +912,7 @@ namespace OpenRCT2
 
         bool operator<(const ColumnKey& other) const
         {
-            return std::tie(rotation, viewFlags, zoom, x)
-                < std::tie(other.rotation, other.viewFlags, other.zoom, other.x);
+            return std::tie(rotation, viewFlags, zoom, x) < std::tie(other.rotation, other.viewFlags, other.zoom, other.x);
         }
     };
 
