@@ -158,18 +158,21 @@ PaintSession* Painter::CreateSession(RenderTarget& rt, uint32_t viewFlags, uint8
 
     PaintSession* session = nullptr;
 
-    if (_freePaintSessions.empty() == false)
     {
-        // Re-use.
-        session = _freePaintSessions.back();
+        std::lock_guard<std::mutex> lock(_sessionMutex);
+        if (_freePaintSessions.empty() == false)
+        {
+            // Re-use.
+            session = _freePaintSessions.back();
 
-        // Shrink by one.
-        _freePaintSessions.pop_back();
-    }
-    else
-    {
-        // Create new one in pool.
-        session = &_paintSessionPool.emplace_back();
+            // Shrink by one.
+            _freePaintSessions.pop_back();
+        }
+        else
+        {
+            // Create new one in pool.
+            session = &_paintSessionPool.emplace_back();
+        }
     }
 
     session->rt = rt;
@@ -203,6 +206,7 @@ void Painter::ReleaseSession(PaintSession* session)
 
     session->paintEntries.clear();
 
+    std::lock_guard<std::mutex> lock(_sessionMutex);
     _freePaintSessions.push_back(session);
 }
 
