@@ -45,12 +45,15 @@ set_target_properties(libopenrct2 PROPERTIES PREFIX "")
 SET_CHECK_CXX_FLAGS(libopenrct2)
 
 if (MSVC)
-    target_precompile_headers(libopenrct2 PRIVATE "${CMAKE_CURRENT_LIST_DIR}/OpenRCT2.h")
+    target_precompile_headers(libopenrct2 PRIVATE
+        $<$<COMPILE_LANGUAGE:CXX>:"${CMAKE_CURRENT_LIST_DIR}/OpenRCT2.h">
+    )
+    set_source_files_properties(${OPENRCT2_QUICKJS_NG_SOURCES} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 endif ()
 
 if (NOT DISABLE_NETWORK OR NOT DISABLE_HTTP)
     if (WIN32)
-        target_link_libraries(libopenrct2 bcrypt)
+        target_link_libraries(libopenrct2 bcrypt wininet)
     else ()
         if (APPLE AND NOT MACOS_USE_DEPENDENCIES)
             # note - we are not yet compatible with openssl3, which is now default brew version
@@ -71,7 +74,7 @@ if (NOT DISABLE_NETWORK OR NOT DISABLE_HTTP)
 endif ()
 
 if (NOT DISABLE_NETWORK AND WIN32)
-    target_link_libraries(libopenrct2 ws2_32 crypt32 wldap32 version winmm imm32 advapi32 shell32 ole32)
+    target_link_libraries(libopenrct2 ws2_32 crypt32 wldap32 version winmm imm32 advapi32 shell32 ole32 shlwapi)
 endif ()
 
 if (NOT DISABLE_HTTP)
@@ -95,12 +98,15 @@ if (NOT DISABLE_TTF)
         PKG_CHECK_MODULES(FONTCONFIG REQUIRED fontconfig)
     endif ()
 
-    if (MSVC AND NOT WINDOWS_USE_DEPENDENCIES)
+    if (WINDOWS_USE_DEPENDENCIES)
+        target_link_libraries(libopenrct2 freetype::freetype)
+    elseif (MSVC)
         find_package(freetype REQUIRED)
-    elseif (NOT MSVC)
+        target_link_libraries(libopenrct2 Freetype::Freetype)
+    else ()
         PKG_CHECK_MODULES(FREETYPE REQUIRED IMPORTED_TARGET freetype2)
+        target_link_libraries(libopenrct2 PkgConfig::FREETYPE)
     endif ()
-
     target_include_directories(libopenrct2 SYSTEM PRIVATE ${FREETYPE_INCLUDE_DIRS})
 
     if (UNIX AND NOT APPLE)
@@ -135,8 +141,12 @@ elseif (MSVC AND NOT WINDOWS_USE_DEPENDENCIES)
     find_package(zlib REQUIRED)
     find_package(zstd REQUIRED)
 
-    find_path(LIBZIP_INCLUDE_DIRS zip.h)
-    find_library(LIBZIP_LIBRARIES zip)
+    if (WINDOWS_USE_DEPENDENCIES)
+        set(LIBZIP_LIBRARIES libzip${DEBUG_SUFFIX})
+    else ()
+        find_path(LIBZIP_INCLUDE_DIRS zip.h)
+        find_library(LIBZIP_LIBRARIES zip)
+    endif ()
 elseif (NOT MSVC)
     PKG_CHECK_MODULES(LIBZIP REQUIRED IMPORTED_TARGET libzip>=1.0)
     PKG_CHECK_MODULES(ZLIB REQUIRED IMPORTED_TARGET zlib)
@@ -161,7 +171,15 @@ if (STATIC)
             ${LIBZIP_STATIC_LIBRARIES}
             ${ZSTD_STATIC_LIBRARIES})
 else ()
-    if (NOT MSVC AND NOT EMSCRIPTEN)
+    if (WINDOWS_USE_DEPENDENCIES)
+        target_link_libraries(libopenrct2 png zlib zstd bz2 flac ogg vorbis vorbisfile libzip)
+    elseif (MSVC)
+        target_link_libraries(libopenrct2
+                ${PNG_LIBRARIES}
+                ${ZLIB_LIBRARIES}
+                ${LIBZIP_LIBRARIES}
+                ${ZSTD_LIBRARIES})
+    elseif (NOT MSVC AND NOT EMSCRIPTEN)
         target_link_libraries(libopenrct2
                 PkgConfig::PNG
                 PkgConfig::ZLIB
