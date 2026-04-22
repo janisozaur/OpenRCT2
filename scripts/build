@@ -29,7 +29,7 @@ if [[ "$OSTYPE" == "cygwin" || "$OSTYPE" == "msys" ]]; then
         build_type="Release"
     fi
 
-    vstool cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=$build_type -DENABLE_BREAKPAD=ON -DWITH_TESTS=ON
+    vstool cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=$build_type -DENABLE_BREAKPAD=ON -DWITH_TESTS=ON -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
     vstool ninja -C build
 
     # Create openrct2.exe and openrct2.com with correct subsystem

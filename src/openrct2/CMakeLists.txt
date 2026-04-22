@@ -52,9 +52,7 @@ if (MSVC)
 endif ()
 
 if (NOT DISABLE_NETWORK OR NOT DISABLE_HTTP)
-    if (WINDOWS_USE_DEPENDENCIES)
-        # targets already link to bcrypt and wininet via windows blocks
-    elseif (WIN32)
+    if (WIN32)
         target_link_libraries(libopenrct2 bcrypt wininet)
     else ()
         if (APPLE AND NOT MACOS_USE_DEPENDENCIES)
