@@ -222,15 +222,6 @@ if (WINDOWS_USE_DEPENDENCIES)
         set(WIN_LIBS_LIB_DIR "${WIN_LIBS_DIR}/lib")
     endif ()
 
-    set(SDL2_LIBRARIES SDL2-static${DEBUG_SUFFIX})
-    set(SDL2_INCLUDE_DIRS "${WIN_LIBS_DIR}/include/SDL2")
-    set(PNG_LIBRARIES libpng16${DEBUG_SUFFIX})
-    set(ZLIB_LIBRARIES zlib${DEBUG_SUFFIX})
-    set(ZSTD_LIBRARIES zstd${DEBUG_SUFFIX})
-    set(LIBZIP_LIBRARIES libzip${DEBUG_SUFFIX})
-    set(FREETYPE_LIBRARIES freetype${DEBUG_SUFFIX})
-    set(DISCORDRPC_LIBRARY discord-rpc${DEBUG_SUFFIX})
-
     set(HAVE_DISCORD_RPC ON)
 endif ()
 
@@ -254,72 +245,82 @@ if (WINDOWS_USE_DEPENDENCIES)
 
     add_library(freetype INTERFACE)
     add_library(Freetype::Freetype ALIAS freetype)
-    add_library(freetype::freetype ALIAS freetype)
     target_include_directories(freetype INTERFACE "${WIN_LIBS_DIR}/include")
-    target_link_libraries(freetype INTERFACE "${WIN_LIBS_LIB_DIR}/freetype${DEBUG_SUFFIX}.lib")
+    find_library(LIB_FREETYPE NAMES freetype${DEBUG_SUFFIX} freetype PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(freetype INTERFACE ${LIB_FREETYPE})
 
     add_library(discord-rpc INTERFACE)
     target_include_directories(discord-rpc INTERFACE "${WIN_LIBS_DIR}/include")
-    target_link_libraries(discord-rpc INTERFACE "${WIN_LIBS_LIB_DIR}/discord-rpc${DEBUG_SUFFIX}.lib")
+    find_library(LIB_DISCORD NAMES discord-rpc${DEBUG_SUFFIX} discord-rpc PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(discord-rpc INTERFACE ${LIB_DISCORD})
 
     add_library(SDL2 INTERFACE)
     add_library(SDL2::SDL2-static ALIAS SDL2)
     target_include_directories(SDL2 INTERFACE "${WIN_LIBS_DIR}/include/SDL2")
-    target_link_libraries(SDL2 INTERFACE "${WIN_LIBS_LIB_DIR}/SDL2-static${DEBUG_SUFFIX}.lib" winmm imm32 version setupapi)
+    find_library(LIB_SDL2 NAMES SDL2-static${DEBUG_SUFFIX} SDL2-static SDL2d SDL2 PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(SDL2 INTERFACE ${LIB_SDL2} winmm imm32 version setupapi)
 
     add_library(zlib INTERFACE)
     add_library(zlib::zlib ALIAS zlib)
     target_include_directories(zlib INTERFACE "${WIN_LIBS_DIR}/include")
-    target_link_libraries(zlib INTERFACE "${WIN_LIBS_LIB_DIR}/zlib${DEBUG_SUFFIX}.lib")
+    find_library(LIB_ZLIB NAMES zlib${DEBUG_SUFFIX} zlib libz PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(zlib INTERFACE ${LIB_ZLIB})
 
     add_library(png INTERFACE)
     add_library(png::png ALIAS png)
     add_library(PNG::PNG ALIAS png)
     add_library(PkgConfig::PNG ALIAS png)
     target_include_directories(png INTERFACE "${WIN_LIBS_DIR}/include")
-    target_link_libraries(png INTERFACE "${WIN_LIBS_LIB_DIR}/libpng16${DEBUG_SUFFIX}.lib")
+    find_library(LIB_PNG NAMES libpng16${DEBUG_SUFFIX} libpng16 libpng PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(png INTERFACE ${LIB_PNG})
 
     add_library(zstd INTERFACE)
     add_library(zstd::zstd ALIAS zstd)
     add_library(zstd::libzstd_static ALIAS zstd)
     add_library(PkgConfig::ZSTD ALIAS zstd)
     target_include_directories(zstd INTERFACE "${WIN_LIBS_DIR}/include")
-    target_link_libraries(zstd INTERFACE "${WIN_LIBS_LIB_DIR}/zstd${DEBUG_SUFFIX}.lib")
+    find_library(LIB_ZSTD NAMES zstd${DEBUG_SUFFIX} zstd libzstd PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(zstd INTERFACE ${LIB_ZSTD})
 
     add_library(bz2 INTERFACE)
     target_include_directories(bz2 INTERFACE "${WIN_LIBS_DIR}/include")
-    target_link_libraries(bz2 INTERFACE "${WIN_LIBS_LIB_DIR}/bz2${DEBUG_SUFFIX}.lib")
+    find_library(LIB_BZ2 NAMES bz2${DEBUG_SUFFIX} bz2 libbz2 PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(bz2 INTERFACE ${LIB_BZ2})
 
     add_library(flac INTERFACE)
     add_library(PkgConfig::FLAC ALIAS flac)
     target_include_directories(flac INTERFACE "${WIN_LIBS_DIR}/include")
-    target_link_libraries(flac INTERFACE "${WIN_LIBS_LIB_DIR}/flac${DEBUG_SUFFIX}.lib")
+    find_library(LIB_FLAC NAMES flac${DEBUG_SUFFIX} flac libflac PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(flac INTERFACE ${LIB_FLAC})
 
     add_library(ogg INTERFACE)
     add_library(PkgConfig::OGG ALIAS ogg)
     target_include_directories(ogg INTERFACE "${WIN_LIBS_DIR}/include")
-    target_link_libraries(ogg INTERFACE "${WIN_LIBS_LIB_DIR}/ogg${DEBUG_SUFFIX}.lib")
+    find_library(LIB_OGG NAMES ogg${DEBUG_SUFFIX} ogg libogg PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(ogg INTERFACE ${LIB_OGG})
 
     add_library(vorbis INTERFACE)
     target_include_directories(vorbis INTERFACE "${WIN_LIBS_DIR}/include")
-    target_link_libraries(vorbis INTERFACE "${WIN_LIBS_LIB_DIR}/vorbis${DEBUG_SUFFIX}.lib")
+    find_library(LIB_VORBIS NAMES vorbis${DEBUG_SUFFIX} vorbis libvorbis PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(vorbis INTERFACE ${LIB_VORBIS})
 
     add_library(vorbisfile INTERFACE)
     add_library(PkgConfig::VORBISFILE ALIAS vorbisfile)
     target_include_directories(vorbisfile INTERFACE "${WIN_LIBS_DIR}/include")
-    target_link_libraries(vorbisfile INTERFACE "${WIN_LIBS_LIB_DIR}/vorbisfile${DEBUG_SUFFIX}.lib")
+    find_library(LIB_VORBISFILE NAMES vorbisfile${DEBUG_SUFFIX} vorbisfile libvorbisfile PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(vorbisfile INTERFACE ${LIB_VORBISFILE})
 
     add_library(libzip INTERFACE)
     add_library(PkgConfig::LIBZIP ALIAS libzip)
     target_include_directories(libzip INTERFACE "${WIN_LIBS_DIR}/include")
-    target_link_libraries(libzip INTERFACE "${WIN_LIBS_LIB_DIR}/libzip${DEBUG_SUFFIX}.lib")
+    find_library(LIB_ZIP NAMES libzip${DEBUG_SUFFIX} libzip zip PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(libzip INTERFACE ${LIB_ZIP})
 
     add_library(brotli INTERFACE)
-    target_link_libraries(brotli INTERFACE
-        "${WIN_LIBS_LIB_DIR}/brotlicommon${DEBUG_SUFFIX}.lib"
-        "${WIN_LIBS_LIB_DIR}/brotlidec${DEBUG_SUFFIX}.lib"
-        "${WIN_LIBS_LIB_DIR}/brotlienc${DEBUG_SUFFIX}.lib"
-    )
+    find_library(LIB_BROTLICOMMON NAMES brotlicommon${DEBUG_SUFFIX} brotlicommon PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    find_library(LIB_BROTLIDEC NAMES brotlidec${DEBUG_SUFFIX} brotlidec PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    find_library(LIB_BROTLIENC NAMES brotlienc${DEBUG_SUFFIX} brotlienc PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(brotli INTERFACE ${LIB_BROTLICOMMON} ${LIB_BROTLIDEC} ${LIB_BROTLIENC})
 
     if (CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "IA64" OR CMAKE_SIZEOF_VOID_P EQUAL 4)
          if (NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "ARM64")
@@ -330,22 +331,23 @@ if (WINDOWS_USE_DEPENDENCIES)
 
     if (ENABLE_BREAKPAD)
         add_library(breakpad INTERFACE)
-        target_link_libraries(breakpad INTERFACE
-            "${WIN_LIBS_LIB_DIR}/libbreakpad${DEBUG_SUFFIX}.lib"
-            "${WIN_LIBS_LIB_DIR}/libbreakpad_client${DEBUG_SUFFIX}.lib"
-        )
+        find_library(LIB_BREAKPAD NAMES libbreakpad${DEBUG_SUFFIX} libbreakpad PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+        find_library(LIB_BREAKPAD_CLIENT NAMES libbreakpad_client${DEBUG_SUFFIX} libbreakpad_client PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+        target_link_libraries(breakpad INTERFACE ${LIB_BREAKPAD} ${LIB_BREAKPAD_CLIENT})
     endif ()
 
     if (WITH_TESTS)
         add_library(gtest INTERFACE)
         add_library(GTest::gtest ALIAS gtest)
         target_include_directories(gtest INTERFACE "${WIN_LIBS_DIR}/include")
-        target_link_libraries(gtest INTERFACE "${WIN_LIBS_LIB_DIR}/gtest${DEBUG_SUFFIX}.lib")
+        find_library(LIB_GTEST NAMES gtest${DEBUG_SUFFIX} gtest PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+        target_link_libraries(gtest INTERFACE ${LIB_GTEST})
 
         add_library(gtest_main INTERFACE)
         add_library(GTest::gtest_main ALIAS gtest_main)
         target_include_directories(gtest_main INTERFACE "${WIN_LIBS_DIR}/include")
-        target_link_libraries(gtest_main INTERFACE "${WIN_LIBS_LIB_DIR}/gtest_main${DEBUG_SUFFIX}.lib" gtest)
+        find_library(LIB_GTEST_MAIN NAMES gtest_main${DEBUG_SUFFIX} gtest_main PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+        target_link_libraries(gtest_main INTERFACE ${LIB_GTEST_MAIN} gtest)
     endif ()
 elseif (MACOS_USE_DEPENDENCIES)
     set(HAVE_ZLIB ON)
@@ -690,7 +692,7 @@ if(NOT DISABLE_GUI)
 endif()
 
 # graphics files (g2.dat, fonts.dat, palettes.dat, tracks.dat)
-if (NOT CMAKE_CROSSCOMPILING AND (WIN32 OR NOT WITH_TESTS))
+if (NOT CMAKE_CROSSCOMPILING)
     set(graphics_files "g2" "fonts" "palettes" "tracks")
     foreach(graphics_file ${graphics_files})
         set(output_file "${graphics_file}.dat")
@@ -698,14 +700,14 @@ if (NOT CMAKE_CROSSCOMPILING AND (WIN32 OR NOT WITH_TESTS))
         file(GLOB_RECURSE dependent_files CONFIGURE_DEPENDS "${ROOT_DIR}/resources/${graphics_file}/*")
         add_custom_command(
             OUTPUT ${output_file}
-            COMMAND ./openrct2-cli sprite build "${CMAKE_BINARY_DIR}/${output_file}" "${json_file}" silent
+            COMMAND $<TARGET_FILE:openrct2-cli> sprite build "${CMAKE_BINARY_DIR}/${output_file}" "${json_file}" silent
             WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            DEPENDS ${dependent_files}
+            DEPENDS ${dependent_files} openrct2-cli
         )
         list(APPEND output_files "${output_file}")
     endforeach()
 
-    add_custom_target(graphics DEPENDS OpenRCT2::openrct2-cli ${output_files})
+    add_custom_target(graphics ALL DEPENDS OpenRCT2::openrct2-cli ${output_files})
 
     if(NOT DISABLE_GUI)
         add_dependencies(openrct2 graphics)
