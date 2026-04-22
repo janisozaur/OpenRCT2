@@ -455,14 +455,40 @@ namespace OpenRCT2
     void MapInit(const TileCoordsXY& size)
     {
         auto numTiles = kMaximumMapSizeTechnical * kMaximumMapSizeTechnical;
-
         auto& gameState = getGameState();
-        SetTileElements(gameState, std::vector<TileElement>(numTiles, GetDefaultSurfaceElement()));
+
+        TileElement inRangeElement = GetDefaultSurfaceElement();
+        inRangeElement.AsSurface()->SetOwnership(OWNERSHIP_UNOWNED);
+
+        TileElement outOfRangeElement = inRangeElement;
+        outOfRangeElement.BaseHeight = kMinimumLandHeight;
+        outOfRangeElement.ClearanceHeight = kMinimumLandHeight;
+
+        int32_t mapSizeMaxX = (size.x == 0) ? 0 : size.x - 1;
+        int32_t mapSizeMaxY = (size.y == 0) ? 0 : size.y - 1;
+
+        std::vector<TileElement> elements;
+        elements.reserve(numTiles);
+        for (int32_t y = 0; y < kMaximumMapSizeTechnical; y++)
+        {
+            for (int32_t x = 0; x < kMaximumMapSizeTechnical; x++)
+            {
+                if (x == 0 || y == 0 || x >= mapSizeMaxX || y >= mapSizeMaxY)
+                {
+                    elements.push_back(outOfRangeElement);
+                }
+                else
+                {
+                    elements.push_back(inRangeElement);
+                }
+            }
+        }
+        SetTileElements(gameState, std::move(elements));
 
         gameState.grassSceneryTileLoopPosition = 0;
         gameState.widePathTileLoopPosition = {};
         gameState.mapSize = size;
-        MapRemoveOutOfRangeElements();
+        gameState.peepSpawns.clear();
         MapAnimations::ClearAll();
 
         auto intent = Intent(INTENT_ACTION_MAP);
@@ -1258,27 +1284,36 @@ namespace OpenRCT2
     void MapRemoveOutOfRangeElements()
     {
         auto mapSizeMax = GetMapSizeMaxXY();
+        auto mapSizeUnits = GetMapSizeUnits();
+        auto& gameState = getGameState();
+
+        // Remove spawn points in out-of-range tiles
+        gameState.peepSpawns.erase(
+            std::remove_if(
+                gameState.peepSpawns.begin(), gameState.peepSpawns.end(),
+                [&mapSizeMax](const CoordsXY& spawn) {
+                    auto loc = spawn.ToTileStart();
+                    return loc.x == 0 || loc.y == 0 || loc.x >= mapSizeMax.x || loc.y >= mapSizeMax.y;
+                }),
+            gameState.peepSpawns.end());
 
         // Ensure that we can remove elements
         //
         // NOTE: This is only a workaround for non-networked games.
         // Map resize has to become its own Game Action to properly solve this issue.
         //
-        auto& gameState = getGameState();
         bool buildState = gameState.cheats.buildInPauseMode;
         gameState.cheats.buildInPauseMode = true;
 
-        for (int32_t y = kMaximumMapSizeBig - kCoordsXYStep; y >= 0; y -= kCoordsXYStep)
+        for (int32_t y = 0; y < kMaximumMapSizeBig; y += kCoordsXYStep)
         {
-            for (int32_t x = kMaximumMapSizeBig - kCoordsXYStep; x >= 0; x -= kCoordsXYStep)
+            for (int32_t x = 0; x < kMaximumMapSizeBig; x += kCoordsXYStep)
             {
                 if (x == 0 || y == 0 || x >= mapSizeMax.x || y >= mapSizeMax.y)
                 {
-                    // Note this purposely does not use LandSetRightsAction as X Y coordinates are outside of normal range.
-                    auto surfaceElement = MapGetSurfaceElementAt(CoordsXY{ x, y });
-                    if (surfaceElement != nullptr)
+                    // Update fences only for boundary tiles
+                    if (x == 0 || y == 0 || x == mapSizeUnits.x || y == mapSizeUnits.y)
                     {
-                        surfaceElement->SetOwnership(OWNERSHIP_UNOWNED);
                         Park::UpdateFencesAroundTile({ x, y });
                     }
                     ClearElementsAt({ x, y });
@@ -1499,14 +1534,6 @@ namespace OpenRCT2
      */
     static void ClearElementsAt(const CoordsXY& loc)
     {
-        auto& gameState = getGameState();
-        // Remove the spawn point (if there is one in the current tile)
-        gameState.peepSpawns.erase(
-            std::remove_if(
-                gameState.peepSpawns.begin(), gameState.peepSpawns.end(),
-                [loc](const CoordsXY& spawn) { return spawn.ToTileStart() == loc.ToTileStart(); }),
-            gameState.peepSpawns.end());
-
         TileElement* tileElement = MapGetFirstElementAt(loc);
         if (tileElement == nullptr)
             return;
@@ -1854,6 +1881,9 @@ namespace OpenRCT2
     /* Clears all map elements, to be used before generating a new map */
     void MapClearAllElements()
     {
+        auto& gameState = getGameState();
+        gameState.peepSpawns.clear();
+
         for (int32_t y = 0; y < kMaximumMapSizeBig; y += kCoordsXYStep)
         {
             for (int32_t x = 0; x < kMaximumMapSizeBig; x += kCoordsXYStep)
