@@ -71,18 +71,23 @@ file(READ "${CMAKE_CURRENT_SOURCE_DIR}/assets.json" ASSETS_JSON)
 
 string(JSON TITLE_SEQUENCE_URL GET "${ASSETS_JSON}" "title-sequences" url)
 string(JSON TITLE_SEQUENCE_SHA256 GET "${ASSETS_JSON}" "title-sequences" sha256)
+get_filename_component(TITLE_SEQUENCE_ZIPNAME ${TITLE_SEQUENCE_URL} NAME)
 
 string(JSON OBJECTS_URL GET "${ASSETS_JSON}" objects url)
 string(JSON OBJECTS_SHA256 GET "${ASSETS_JSON}" objects sha256)
+get_filename_component(OBJECTS_ZIPNAME ${OBJECTS_URL} NAME)
 
 string(JSON OPENSFX_URL GET "${ASSETS_JSON}" opensfx url)
 string(JSON OPENSFX_SHA256 GET "${ASSETS_JSON}" opensfx sha256)
+get_filename_component(OPENSFX_ZIPNAME ${OPENSFX_URL} NAME)
 
 string(JSON OPENMUSIC_URL GET "${ASSETS_JSON}" openmusic url)
 string(JSON OPENMUSIC_SHA256 GET "${ASSETS_JSON}" openmusic sha256)
+get_filename_component(OPENMUSIC_ZIPNAME ${OPENMUSIC_URL} NAME)
 
 string(JSON REPLAYS_URL GET "${ASSETS_JSON}" replays url)
 string(JSON REPLAYS_SHA256 GET "${ASSETS_JSON}" replays sha256)
+get_filename_component(REPLAYS_ZIPNAME ${REPLAYS_URL} NAME)
 
 option(FORCE32 "Force 32-bit build. It will add `-m32` to compiler flags.")
 option(WITH_TESTS "Build tests")
@@ -96,6 +101,8 @@ CMAKE_DEPENDENT_OPTION(DOWNLOAD_REPLAYS "Download replays during installation." 
     "WITH_TESTS" OFF)
 CMAKE_DEPENDENT_OPTION(MACOS_USE_DEPENDENCIES "Use OpenRCT2 dependencies instead of system libraries" ON
     "APPLE" OFF)
+CMAKE_DEPENDENT_OPTION(WINDOWS_USE_DEPENDENCIES "Use OpenRCT2 dependencies instead of system libraries" ON
+    "MSVC" OFF)
 CMAKE_DEPENDENT_OPTION(MACOS_BUNDLE "Build macOS application bundle (OpenRCT2.app)" ON
      "MACOS_USE_DEPENDENCIES; NOT DISABLE_GUI" OFF)
 
@@ -118,6 +125,7 @@ option(ENABLE_ASAN "Enable the AddressSanitizer.")
 option(ENABLE_UBSAN "Enable the UndefinedBehaviourSanitizer.")
 option(ENABLE_HEADERS_CHECK "Check if include directives in header files are correct. Only works with clang" OFF)
 option(DISABLE_GUI "Don't build GUI. (Headless only.)")
+option(ENABLE_BREAKPAD "Enable Breakpad support." OFF)
 
 
 if (FORCE32)
@@ -173,6 +181,280 @@ if (MACOS_USE_DEPENDENCIES)
     endif ()
 endif ()
 
+if (WINDOWS_USE_DEPENDENCIES)
+    message("Using OpenRCT2 dependencies instead of system libraries")
+    include(cmake/download.cmake)
+
+    set(WIN_LIBS_VERSION "41")
+    if (CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64|arm64")
+        set(WIN_LIBS_ARCH "arm64")
+        set(WIN_LIBS_SHA256 "5d171f23eee584bdc29b1186dc7a86d935a6ea58efa42b5674c196c5b581923b")
+        set(WIN_PLATFORM "ARM64")
+    elseif (CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(WIN_LIBS_ARCH "x64")
+        set(WIN_LIBS_SHA256 "8e78f1c3c09c50cb0f509eab6845a93dd69771ff95cdf82d747568093d138f73")
+        set(WIN_PLATFORM "x64")
+    else ()
+        set(WIN_LIBS_ARCH "x86")
+        set(WIN_LIBS_SHA256 "490263b873dd02c13a043a04d26bb9837d2d378dacd8b2c8d29660fef44db3db")
+        set(WIN_PLATFORM "Win32")
+    endif ()
+
+    set(WIN_LIBS_ZIPFILE "openrct2-libs-v${WIN_LIBS_VERSION}-${WIN_LIBS_ARCH}-windows-static.zip")
+    set(WIN_LIBS_URL "https://github.com/OpenRCT2/Dependencies/releases/download/v${WIN_LIBS_VERSION}/${WIN_LIBS_ZIPFILE}")
+    set(WIN_LIBS_DIR "${ROOT_DIR}/lib/${WIN_PLATFORM}")
+
+    download_openrct2_zip(
+        DOWNLOAD_DIR ${WIN_LIBS_DIR}
+        ZIP_URL ${WIN_LIBS_URL}
+        SHA256 ${WIN_LIBS_SHA256}
+    )
+
+    include_directories("${WIN_LIBS_DIR}/include")
+    include_directories("${WIN_LIBS_DIR}/include/SDL2")
+
+    # Add dependencies that are not found via find_package
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(DEBUG_SUFFIX "d")
+        set(WIN_LIBS_LIB_DIR "${WIN_LIBS_DIR}/debug/lib")
+    else ()
+        set(DEBUG_SUFFIX "")
+        set(WIN_LIBS_LIB_DIR "${WIN_LIBS_DIR}/lib")
+    endif ()
+
+    set(HAVE_DISCORD_RPC ON)
+endif ()
+
+if (WINDOWS_USE_DEPENDENCIES)
+    set(HAVE_ZLIB ON)
+    set(HAVE_PNG ON)
+    set(HAVE_FREETYPE ON)
+    set(HAVE_SDL2 ON)
+    set(HAVE_LIBZIP ON)
+    set(HAVE_ZSTD ON)
+    set(HAVE_BZ2 ON)
+    set(HAVE_FLAC ON)
+    set(HAVE_OGG ON)
+    set(HAVE_VORBIS ON)
+    set(PNG_FOUND ON)
+    set(ZLIB_FOUND ON)
+    set(ZSTD_FOUND ON)
+    set(SDL2_FOUND ON)
+    set(FREETYPE_FOUND ON)
+    set(PkgConfig_FOUND ON)
+
+    add_library(freetype INTERFACE)
+    add_library(Freetype::Freetype ALIAS freetype)
+    target_include_directories(freetype INTERFACE "${WIN_LIBS_DIR}/include")
+    find_library(LIB_FREETYPE NAMES freetype${DEBUG_SUFFIX} freetype PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(freetype INTERFACE ${LIB_FREETYPE})
+
+    add_library(discord-rpc INTERFACE)
+    target_include_directories(discord-rpc INTERFACE "${WIN_LIBS_DIR}/include")
+    find_library(LIB_DISCORD NAMES discord-rpc${DEBUG_SUFFIX} discord-rpc PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(discord-rpc INTERFACE ${LIB_DISCORD})
+
+    add_library(SDL2 INTERFACE)
+    add_library(SDL2::SDL2-static ALIAS SDL2)
+    target_include_directories(SDL2 INTERFACE "${WIN_LIBS_DIR}/include/SDL2")
+    find_library(LIB_SDL2 NAMES SDL2-static${DEBUG_SUFFIX} SDL2-static SDL2d SDL2 PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(SDL2 INTERFACE ${LIB_SDL2} winmm imm32 version setupapi shell32 user32 gdi32 advapi32 ole32 oleaut32 uuid)
+
+    add_library(zlib INTERFACE)
+    add_library(zlib::zlib ALIAS zlib)
+    target_include_directories(zlib INTERFACE "${WIN_LIBS_DIR}/include")
+    find_library(LIB_ZLIB NAMES zlib${DEBUG_SUFFIX} zlib libz PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(zlib INTERFACE ${LIB_ZLIB})
+
+    add_library(png INTERFACE)
+    add_library(png::png ALIAS png)
+    add_library(PNG::PNG ALIAS png)
+    add_library(PkgConfig::PNG ALIAS png)
+    target_include_directories(png INTERFACE "${WIN_LIBS_DIR}/include")
+    find_library(LIB_PNG NAMES libpng16${DEBUG_SUFFIX} libpng16 libpng PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(png INTERFACE ${LIB_PNG})
+
+    add_library(zstd INTERFACE)
+    add_library(zstd::zstd ALIAS zstd)
+    add_library(zstd::libzstd_static ALIAS zstd)
+    add_library(PkgConfig::ZSTD ALIAS zstd)
+    target_include_directories(zstd INTERFACE "${WIN_LIBS_DIR}/include")
+    find_library(LIB_ZSTD NAMES zstd${DEBUG_SUFFIX} zstd libzstd PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(zstd INTERFACE ${LIB_ZSTD})
+
+    add_library(bz2 INTERFACE)
+    target_include_directories(bz2 INTERFACE "${WIN_LIBS_DIR}/include")
+    find_library(LIB_BZ2 NAMES bz2${DEBUG_SUFFIX} bz2 libbz2 PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(bz2 INTERFACE ${LIB_BZ2})
+
+    add_library(flac INTERFACE)
+    add_library(PkgConfig::FLAC ALIAS flac)
+    target_include_directories(flac INTERFACE "${WIN_LIBS_DIR}/include")
+    find_library(LIB_FLAC NAMES flac${DEBUG_SUFFIX} flac libflac PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(flac INTERFACE ${LIB_FLAC})
+
+    add_library(ogg INTERFACE)
+    add_library(PkgConfig::OGG ALIAS ogg)
+    target_include_directories(ogg INTERFACE "${WIN_LIBS_DIR}/include")
+    find_library(LIB_OGG NAMES ogg${DEBUG_SUFFIX} ogg libogg PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(ogg INTERFACE ${LIB_OGG})
+
+    add_library(vorbis INTERFACE)
+    target_include_directories(vorbis INTERFACE "${WIN_LIBS_DIR}/include")
+    find_library(LIB_VORBIS NAMES vorbis${DEBUG_SUFFIX} vorbis libvorbis PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(vorbis INTERFACE ${LIB_VORBIS})
+
+    add_library(vorbisfile INTERFACE)
+    add_library(PkgConfig::VORBISFILE ALIAS vorbisfile)
+    target_include_directories(vorbisfile INTERFACE "${WIN_LIBS_DIR}/include")
+    find_library(LIB_VORBISFILE NAMES vorbisfile${DEBUG_SUFFIX} vorbisfile libvorbisfile PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(vorbisfile INTERFACE ${LIB_VORBISFILE})
+
+    add_library(libzip INTERFACE)
+    add_library(PkgConfig::LIBZIP ALIAS libzip)
+    target_include_directories(libzip INTERFACE "${WIN_LIBS_DIR}/include")
+    find_library(LIB_ZIP NAMES libzip${DEBUG_SUFFIX} libzip zip PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(libzip INTERFACE ${LIB_ZIP})
+
+    add_library(brotli INTERFACE)
+    find_library(LIB_BROTLICOMMON NAMES brotlicommon${DEBUG_SUFFIX} brotlicommon PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    find_library(LIB_BROTLIDEC NAMES brotlidec${DEBUG_SUFFIX} brotlidec PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    find_library(LIB_BROTLIENC NAMES brotlienc${DEBUG_SUFFIX} brotlienc PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+    target_link_libraries(brotli INTERFACE ${LIB_BROTLICOMMON} ${LIB_BROTLIDEC} ${LIB_BROTLIENC})
+
+    if (CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "IA64" OR CMAKE_SIZEOF_VOID_P EQUAL 4)
+         if (NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "ARM64")
+            add_library(fribidi INTERFACE)
+            target_link_libraries(fribidi INTERFACE "${WIN_LIBS_LIB_DIR}/fribidi.lib")
+         endif ()
+    endif ()
+
+    if (ENABLE_BREAKPAD)
+        add_library(breakpad INTERFACE)
+        find_library(LIB_BREAKPAD NAMES libbreakpad${DEBUG_SUFFIX} libbreakpad PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+        find_library(LIB_BREAKPAD_CLIENT NAMES libbreakpad_client${DEBUG_SUFFIX} libbreakpad_client PATHS "${WIN_LIBS_LIB_DIR}" REQUIRED)
+        target_link_libraries(breakpad INTERFACE ${LIB_BREAKPAD} ${LIB_BREAKPAD_CLIENT})
+    endif ()
+
+    if (WITH_TESTS)
+        add_library(gtest INTERFACE)
+        add_library(GTest::gtest ALIAS gtest)
+        target_include_directories(gtest INTERFACE "${WIN_LIBS_DIR}/include")
+        find_library(LIB_GTEST NAMES gtest${DEBUG_SUFFIX} gtest PATHS "${WIN_LIBS_LIB_DIR}" PATH_SUFFIXES manual-link REQUIRED)
+        target_link_libraries(gtest INTERFACE ${LIB_GTEST})
+
+        add_library(gtest_main INTERFACE)
+        add_library(GTest::gtest_main ALIAS gtest_main)
+        target_include_directories(gtest_main INTERFACE "${WIN_LIBS_DIR}/include")
+        find_library(LIB_GTEST_MAIN NAMES gtest_main${DEBUG_SUFFIX} gtest_main PATHS "${WIN_LIBS_LIB_DIR}" PATH_SUFFIXES manual-link REQUIRED)
+        target_link_libraries(gtest_main INTERFACE ${LIB_GTEST_MAIN} gtest)
+    endif ()
+elseif (MACOS_USE_DEPENDENCIES)
+    set(HAVE_ZLIB ON)
+    set(HAVE_PNG ON)
+    set(HAVE_FREETYPE ON)
+    set(HAVE_SDL2 ON)
+    set(HAVE_LIBZIP ON)
+    set(HAVE_ZSTD ON)
+    set(HAVE_BZ2 ON)
+    set(HAVE_FLAC ON)
+    set(HAVE_OGG ON)
+    set(HAVE_VORBIS ON)
+    set(PNG_FOUND ON)
+    set(ZLIB_FOUND ON)
+    set(ZSTD_FOUND ON)
+    set(SDL2_FOUND ON)
+    set(FREETYPE_FOUND ON)
+
+    include_directories("${MACOS_DYLIBS_DIR}/include")
+    include_directories("${MACOS_DYLIBS_DIR}/include/SDL2")
+
+    set(MACOS_LIBS_LIB_DIR "${MACOS_DYLIBS_DIR}/lib")
+
+    add_library(freetype INTERFACE)
+    add_library(freetype::freetype ALIAS freetype)
+    target_include_directories(freetype INTERFACE "${MACOS_DYLIBS_DIR}/include")
+    find_library(LIB_FREETYPE NAMES freetype PATHS "${MACOS_LIBS_LIB_DIR}" NO_DEFAULT_PATH REQUIRED)
+    target_link_libraries(freetype INTERFACE ${LIB_FREETYPE})
+
+    add_library(SDL2 INTERFACE)
+    add_library(SDL2::SDL2-static ALIAS SDL2)
+    target_include_directories(SDL2 INTERFACE "${MACOS_DYLIBS_DIR}/include/SDL2")
+    find_library(LIB_SDL2 NAMES SDL2 PATHS "${MACOS_LIBS_LIB_DIR}" NO_DEFAULT_PATH REQUIRED)
+    target_link_libraries(SDL2 INTERFACE ${LIB_SDL2})
+
+    add_library(zlib INTERFACE)
+    add_library(zlib::zlib ALIAS zlib)
+    add_library(ZLIB::ZLIB ALIAS zlib)
+    add_library(PkgConfig::ZLIB ALIAS zlib)
+    target_include_directories(zlib INTERFACE "${MACOS_DYLIBS_DIR}/include")
+    find_library(LIB_ZLIB NAMES z libz PATHS "${MACOS_LIBS_LIB_DIR}" NO_DEFAULT_PATH REQUIRED)
+    target_link_libraries(zlib INTERFACE ${LIB_ZLIB})
+
+    add_library(png INTERFACE)
+    add_library(png::png ALIAS png)
+    add_library(PNG::PNG ALIAS png)
+    add_library(PkgConfig::PNG ALIAS png)
+    target_include_directories(png INTERFACE "${MACOS_DYLIBS_DIR}/include")
+    find_library(LIB_PNG NAMES png libpng PATHS "${MACOS_LIBS_LIB_DIR}" NO_DEFAULT_PATH REQUIRED)
+    target_link_libraries(png INTERFACE ${LIB_PNG})
+
+    add_library(zstd INTERFACE)
+    add_library(zstd::zstd ALIAS zstd)
+    add_library(PkgConfig::ZSTD ALIAS zstd)
+    target_include_directories(zstd INTERFACE "${MACOS_DYLIBS_DIR}/include")
+    find_library(LIB_ZSTD NAMES zstd libzstd PATHS "${MACOS_LIBS_LIB_DIR}" NO_DEFAULT_PATH REQUIRED)
+    target_link_libraries(zstd INTERFACE ${LIB_ZSTD})
+
+    add_library(bz2 INTERFACE)
+    target_include_directories(bz2 INTERFACE "${MACOS_DYLIBS_DIR}/include")
+    find_library(LIB_BZ2 NAMES bz2 libbz2 PATHS "${MACOS_LIBS_LIB_DIR}" NO_DEFAULT_PATH REQUIRED)
+    target_link_libraries(bz2 INTERFACE ${LIB_BZ2})
+
+    add_library(flac INTERFACE)
+    add_library(PkgConfig::FLAC ALIAS flac)
+    target_include_directories(flac INTERFACE "${MACOS_DYLIBS_DIR}/include")
+    find_library(LIB_FLAC NAMES FLAC libFLAC PATHS "${MACOS_LIBS_LIB_DIR}" NO_DEFAULT_PATH REQUIRED)
+    target_link_libraries(flac INTERFACE ${LIB_FLAC})
+
+    add_library(ogg INTERFACE)
+    add_library(PkgConfig::OGG ALIAS ogg)
+    target_include_directories(ogg INTERFACE "${MACOS_DYLIBS_DIR}/include")
+    find_library(LIB_OGG NAMES ogg libogg PATHS "${MACOS_LIBS_LIB_DIR}" NO_DEFAULT_PATH REQUIRED)
+    target_link_libraries(ogg INTERFACE ${LIB_OGG})
+
+    add_library(vorbis INTERFACE)
+    target_include_directories(vorbis INTERFACE "${MACOS_DYLIBS_DIR}/include")
+    find_library(LIB_VORBIS NAMES vorbis libvorbis PATHS "${MACOS_LIBS_LIB_DIR}" NO_DEFAULT_PATH REQUIRED)
+    target_link_libraries(vorbis INTERFACE ${LIB_VORBIS})
+
+    add_library(vorbisfile INTERFACE)
+    add_library(PkgConfig::VORBISFILE ALIAS vorbisfile)
+    target_include_directories(vorbisfile INTERFACE "${MACOS_DYLIBS_DIR}/include")
+    find_library(LIB_VORBISFILE NAMES vorbisfile libvorbisfile PATHS "${MACOS_LIBS_LIB_DIR}" NO_DEFAULT_PATH REQUIRED)
+    target_link_libraries(vorbisfile INTERFACE ${LIB_VORBISFILE})
+
+    add_library(libzip INTERFACE)
+    add_library(PkgConfig::LIBZIP ALIAS libzip)
+    target_include_directories(libzip INTERFACE "${MACOS_DYLIBS_DIR}/include")
+    find_library(LIB_ZIP NAMES zip libzip PATHS "${MACOS_LIBS_LIB_DIR}" NO_DEFAULT_PATH REQUIRED)
+    target_link_libraries(libzip INTERFACE ${LIB_ZIP})
+
+    if (WITH_TESTS)
+        add_library(gtest INTERFACE)
+        add_library(GTest::gtest ALIAS gtest)
+        target_include_directories(gtest INTERFACE "${MACOS_DYLIBS_DIR}/include")
+        find_library(LIB_GTEST NAMES gtest libgtest PATHS "${MACOS_LIBS_LIB_DIR}" NO_DEFAULT_PATH REQUIRED)
+        target_link_libraries(gtest INTERFACE ${LIB_GTEST})
+
+        add_library(gtest_main INTERFACE)
+        add_library(GTest::gtest_main ALIAS gtest_main)
+        target_include_directories(gtest_main INTERFACE "${MACOS_DYLIBS_DIR}/include")
+        find_library(LIB_GTEST_MAIN NAMES gtest_main libgtest_main PATHS "${MACOS_LIBS_LIB_DIR}" PATH_SUFFIXES manual-link NO_DEFAULT_PATH REQUIRED)
+        target_link_libraries(gtest_main INTERFACE ${LIB_GTEST_MAIN} gtest)
+    endif ()
+endif ()
+
 # LIST of supported flags, use SET_CHECK_CXX_FLAGS() to apply to target.
 # Use ADD_CHECK_CXX_COMPILER_FLAG() to add to list.
 set(SUPPORTED_CHECK_CXX_COMPILER_FLAGS "")
@@ -211,7 +493,10 @@ execute_process(
 
 
 if (NOT DISABLE_DISCORD_RPC)
-    if (UNIX AND NOT APPLE)
+    if (WINDOWS_USE_DEPENDENCIES)
+        set(HAVE_DISCORD_RPC TRUE)
+        add_definitions(-D__ENABLE_DISCORD__)
+    elseif (UNIX AND NOT APPLE)
         find_package(DiscordRPC)
         if(${DISCORDRPC_FOUND})
             set(HAVE_DISCORD_RPC TRUE)
@@ -288,19 +573,47 @@ if (MSVC)
     set(CMAKE_CXX_FLAGS_RELEASE "/MT /O2 /Ob2 /DNDEBUG")
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8 /permissive- /Zc:externConstexpr /EHsc /WX")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244") # C4244: 'conversion_type': conversion from 'type1' to 'type2', possible loss of data
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068") # C4068: unknown pragma
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4091") # C4091: 'keyword': ignored on left of 'type' when no variable is declared
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4100") # C4100: 'identifier': unreferenced formal parameter
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4121") # C4121: 'alignment of a member was sensitive to packing
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4132") # C4132: 'const object should be initialized
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4200") # C4200: nonstandard extension used: zero-sized array in struct/union
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4201") # C4201: nonstandard extension used: nameless struct/union
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4204") # C4204: nonstandard extension used: non-constant aggregate initializer
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4206") # C4206: nonstandard extension used: translation unit is empty
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4221") # C4221: nonstandard extension used: 'identifier': cannot be initialized using address of automatic variable 'identifier'
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244") # C4244: 'conversion_type': conversion from 'type1' to 'type2', possible loss of data
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4263") # C4263: 'member function does not override any base class virtual member function
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4265") # C4265: 'class': class has virtual functions, but destructor is not virtual
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4548") # C4548: expression before comma has no effect
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4549") # C4549: 'operator': operator before comma has no effect
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /we4555") # C4555: expression has no effect
+
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /OPT:NOLBR /ignore:4099")
+
+    if (CMAKE_SIZEOF_VOID_P EQUAL 4)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LARGEADDRESSAWARE")
+    endif ()
 
     # Enable char8_t<->char conversion
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:char8_t-")
 
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     add_definitions(-D_SCL_SECURE_NO_WARNINGS)
-    if (CMAKE_SIZEOF_VOID_P EQUAL 8 AND CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64")
+    add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
+    add_definitions(-DSDL_MAIN_HANDLED)
+    add_definitions(-DWIN32_LEAN_AND_MEAN)
+    if (X86 OR X86_64)
         add_definitions(-D__SSE4_1__)
         add_definitions(-D__AVX2__)
     endif ()
     add_definitions(-DNOMINMAX)
+
+    if (ENABLE_BREAKPAD)
+        add_definitions(-DUSE_BREAKPAD)
+    endif ()
 else ()
     ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_SUGGEST_OVERRIDE -Wsuggest-override)
     ADD_CHECK_CXX_COMPILER_FLAG(CMAKE_CXX_FLAGS CXX_WARN_DUPLICATED_COND -Wduplicated-cond)
@@ -394,7 +707,7 @@ if(NOT DISABLE_GUI)
 endif()
 
 # graphics files (g2.dat, fonts.dat, palettes.dat, tracks.dat)
-if (NOT CMAKE_CROSSCOMPILING)
+if (NOT CMAKE_CROSSCOMPILING AND (WIN32 OR NOT WITH_TESTS))
     set(graphics_files "g2" "fonts" "palettes" "tracks")
     foreach(graphics_file ${graphics_files})
         set(output_file "${graphics_file}.dat")
@@ -402,19 +715,107 @@ if (NOT CMAKE_CROSSCOMPILING)
         file(GLOB_RECURSE dependent_files CONFIGURE_DEPENDS "${ROOT_DIR}/resources/${graphics_file}/*")
         add_custom_command(
             OUTPUT ${output_file}
-            COMMAND ./openrct2-cli sprite build "${CMAKE_BINARY_DIR}/${output_file}" "${json_file}" silent
+            COMMAND $<TARGET_FILE:openrct2-cli> sprite build "${CMAKE_BINARY_DIR}/${output_file}" "${json_file}" silent
             WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-            DEPENDS ${dependent_files}
+            DEPENDS ${dependent_files} openrct2-cli
         )
         list(APPEND output_files "${output_file}")
     endforeach()
 
-    add_custom_target(graphics DEPENDS OpenRCT2::openrct2-cli ${output_files})
+    add_custom_target(graphics ALL DEPENDS OpenRCT2::openrct2-cli ${output_files})
 
     if(NOT DISABLE_GUI)
         add_dependencies(openrct2 graphics)
     endif()
-    
+
+    if (MSVC AND NOT WITH_TESTS)
+        # Copy language, shaders, and scenario patches to build directory
+        add_custom_target(copy-resources ALL
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/language" "${CMAKE_BINARY_DIR}/data/language"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/shaders" "${CMAKE_BINARY_DIR}/data/shaders"
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/scenario_patches" "${CMAKE_BINARY_DIR}/data/scenario_patches"
+            COMMENT "Copying language, shaders, and scenario patches to build directory"
+        )
+        if(NOT DISABLE_GUI)
+            add_dependencies(openrct2 copy-resources)
+        endif()
+    endif ()
+
+    function(add_asset_download_target target_name download_dir zip_url sha256 zip_name skip_if_exists)
+        set(DOWNLOAD_MARKER "${download_dir}/${zip_name}.zipversion")
+        add_custom_command(
+            OUTPUT "${DOWNLOAD_MARKER}"
+            COMMAND ${CMAKE_COMMAND}
+                -DDOWNLOAD_DIR=${download_dir}
+                -DZIP_URL=${zip_url}
+                -DSHA256=${sha256}
+                "-DSKIP_IF_EXISTS=${skip_if_exists}"
+                -P "${CMAKE_SOURCE_DIR}/cmake/download_asset.cmake"
+            COMMENT "Downloading ${target_name} asset"
+        )
+        add_custom_target(${target_name} DEPENDS "${DOWNLOAD_MARKER}")
+    endfunction()
+
+    if (WIN32 AND NOT WITH_TESTS)
+        if (DOWNLOAD_TITLE_SEQUENCES)
+            add_asset_download_target(title-sequences
+                "${CMAKE_BINARY_DIR}/data/sequence/"
+                "${TITLE_SEQUENCE_URL}"
+                "${TITLE_SEQUENCE_SHA256}"
+                "${TITLE_SEQUENCE_ZIPNAME}"
+                "${CMAKE_SOURCE_DIR}/data/sequence/"
+            )
+            if(NOT DISABLE_GUI)
+                add_dependencies(openrct2 title-sequences)
+            endif()
+        endif ()
+        if (DOWNLOAD_OBJECTS)
+            add_asset_download_target(objects
+                "${CMAKE_BINARY_DIR}/data/object/"
+                "${OBJECTS_URL}"
+                "${OBJECTS_SHA256}"
+                "${OBJECTS_ZIPNAME}"
+                "${CMAKE_SOURCE_DIR}/data/object/"
+            )
+            if(NOT DISABLE_GUI)
+                add_dependencies(openrct2 objects)
+            endif()
+        endif ()
+        if (DOWNLOAD_OPENSFX)
+            add_asset_download_target(opensfx
+                "${CMAKE_BINARY_DIR}/data/"
+                "${OPENSFX_URL}"
+                "${OPENSFX_SHA256}"
+                "${OPENSFX_ZIPNAME}"
+                "${CMAKE_SOURCE_DIR}/data/assetpack/openrct2.sound.parkap"
+            )
+            if(NOT DISABLE_GUI)
+                add_dependencies(openrct2 opensfx)
+            endif()
+        endif ()
+        if (DOWNLOAD_OPENMUSIC)
+            add_asset_download_target(openmusic
+                "${CMAKE_BINARY_DIR}/data/"
+                "${OPENMUSIC_URL}"
+                "${OPENMUSIC_SHA256}"
+                "${OPENMUSIC_ZIPNAME}"
+                "${CMAKE_SOURCE_DIR}/data/assetpack/openrct2.music.alternative.parkap"
+            )
+            if(NOT DISABLE_GUI)
+                add_dependencies(openrct2 openmusic)
+            endif()
+        endif ()
+        if (DOWNLOAD_REPLAYS)
+            add_asset_download_target(replays
+                "${CMAKE_BINARY_DIR}/testdata/replays/"
+                "${REPLAYS_URL}"
+                "${REPLAYS_SHA256}"
+                "${REPLAYS_ZIPNAME}"
+                ""
+            )
+        endif ()
+    endif ()
+
 else ()
     message("Skipping graphics generation in cross-compile")
 endif ()

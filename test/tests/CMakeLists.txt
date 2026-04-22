@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
 include(GoogleTest)
 
-find_package(GTest REQUIRED)
+if (NOT TARGET GTest::gtest)
+    find_package(GTest REQUIRED)
+endif ()
 
 file(CREATE_LINK "${CMAKE_CURRENT_LIST_DIR}/testdata" "${CMAKE_BINARY_DIR}/testdata" SYMBOLIC)
 install(CODE "execute_process(COMMAND \"${CMAKE_COMMAND}\" -E create_symlink \"\$ENV{DESTDIR}${CMAKE_INSTALL_FULL_DATADIR}/openrct2\" \"${CMAKE_BINARY_DIR}/data\")")
