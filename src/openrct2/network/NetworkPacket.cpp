@@ -93,21 +93,23 @@ namespace OpenRCT2::Network
             return {};
 
         const char* str = reinterpret_cast<const char*>(Data.data() + BytesRead);
+        const char* start = str;
+        const char* end = reinterpret_cast<const char*>(Data.data() + Data.size());
 
-        size_t stringLen = 0;
-        while (BytesRead < Data.size() && str[stringLen] != '\0')
+        while (str < end && *str != '\0')
         {
-            BytesRead++;
-            stringLen++;
+            str++;
         }
 
-        if (str[stringLen] != '\0')
+        if (str == end || *str != '\0')
             return {};
 
-        // Skip null terminator.
-        BytesRead++;
+        size_t stringLen = str - start;
 
-        return std::string_view(str, stringLen);
+        // Skip string and null terminator.
+        BytesRead += stringLen + 1;
+
+        return std::string_view(start, stringLen);
     }
 } // namespace OpenRCT2::Network
 

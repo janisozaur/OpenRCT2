@@ -2621,6 +2621,12 @@ namespace OpenRCT2::Network
             if (generation == static_cast<uint8_t>(ObjectGeneration::DAT))
             {
                 const auto* entry = reinterpret_cast<const RCTObjectEntry*>(packet.Read(sizeof(RCTObjectEntry)));
+                if (entry == nullptr)
+                {
+                    LOG_ERROR("Malformed map request packet");
+                    connection.Disconnect();
+                    return;
+                }
                 objectName = std::string(entry->GetName());
                 LOG_VERBOSE("Client requested object %s", objectName.c_str());
                 item = repo.FindObject(entry);
