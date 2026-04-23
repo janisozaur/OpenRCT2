@@ -373,6 +373,7 @@ namespace OpenRCT2::Network
         request.url = std::move(masterServerUrl);
         request.method = Http::Method::GET;
         request.header["Accept"] = "application/json";
+        request.timeoutMs = 10000;
         Http::DoAsync(request, [p](Http::Response& response) -> void {
             json_t root;
             try

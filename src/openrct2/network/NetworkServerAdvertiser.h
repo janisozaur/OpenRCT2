@@ -32,5 +32,5 @@ namespace OpenRCT2::Network
         virtual void Update() = 0;
     };
 
-    [[nodiscard]] std::unique_ptr<INetworkServerAdvertiser> CreateServerAdvertiser(uint16_t port);
+    [[nodiscard]] std::shared_ptr<INetworkServerAdvertiser> CreateServerAdvertiser(uint16_t port);
 } // namespace OpenRCT2::Network
