@@ -1653,10 +1653,9 @@ namespace OpenRCT2
 
         InteractionInfo info{};
 
-        PaintStruct* ps = session->PaintHead;
-        while (ps != nullptr)
+        for (const auto& item : session->SortedItems)
         {
-            PaintStruct* old_ps = ps;
+            PaintStruct* ps = item.Original;
             PaintStruct* next_ps = ps;
             while (next_ps != nullptr)
             {
@@ -1686,8 +1685,6 @@ namespace OpenRCT2
                 }
             }
 #pragma GCC diagnostic pop
-
-            ps = old_ps->NextQuadrantEntry;
         }
         return info;
     }

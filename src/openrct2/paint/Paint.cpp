@@ -380,281 +380,122 @@ namespace OpenRCT2::PaintSortFlags
     static constexpr uint8_t None = 0;
     static constexpr uint8_t PendingVisit = (1u << 0);
     static constexpr uint8_t Neighbour = (1u << 1);
-    static constexpr uint8_t OutsideQuadrant = (1u << 7);
 } // namespace OpenRCT2::PaintSortFlags
 
-static PaintStruct* PaintStructsFirstInQuadrant(PaintStruct* psNext, uint16_t quadrantIndex)
+template<bool TStableSort, uint8_t TRotation>
+static void PaintArrangeStructsHelperRotation(PaintSessionCore& session, uint16_t quadrantIndex, uint8_t flag)
 {
-    PaintStruct* ps;
-    do
-    {
-        ps = psNext;
-        psNext = psNext->NextQuadrantEntry;
-        if (psNext == nullptr)
-            return ps;
-    } while (quadrantIndex > psNext->QuadrantIndex);
-    return ps;
-}
+    auto& sortedItems = session.SortedItems;
+    const uint32_t startIdx = session.QuadrantStartIndices[quadrantIndex];
+    const uint32_t nextQuadrantStartIdx = session.QuadrantStartIndices[quadrantIndex + 1];
+    const uint32_t endIdx = session.QuadrantStartIndices[quadrantIndex + 2];
 
-// Initializes sorting flags for all entries in the specified quadrant by quadrantIndex.
-// Sorting flags specify whether a node needs to be traversed, is a neighbour, or is outside the
-// quadrant range.
-static void PaintStructsInitializeSort(PaintStruct* ps, uint16_t quadrantIndex, uint8_t flag)
-{
-    do
+    // Initialize flags for the current quadrant and its neighbor.
+    for (uint32_t i = startIdx; i < nextQuadrantStartIdx; ++i)
     {
-        ps = ps->NextQuadrantEntry;
-        if (ps == nullptr)
-            break;
-
-        if (ps->QuadrantIndex > quadrantIndex + 1)
-        {
-            // Outside of the range.
-            ps->SortFlags = PaintSortFlags::OutsideQuadrant;
-        }
-        else if (ps->QuadrantIndex == quadrantIndex + 1)
-        {
-            // Is neighbour and requires a visit.
-            ps->SortFlags = PaintSortFlags::Neighbour | PaintSortFlags::PendingVisit;
-        }
-        else if (ps->QuadrantIndex == quadrantIndex)
-        {
-            // In specified quadrant, requires visit.
-            ps->SortFlags = flag | PaintSortFlags::PendingVisit;
-        }
-    } while (ps->QuadrantIndex <= quadrantIndex + 1);
-}
-
-// Returns a pair of parent and child where child is the next node that requires traversal.
-// Because this structure uses a singly linked list we need to keep track of the parent in order
-// to be able to re-order the list.
-static std::pair<PaintStruct*, PaintStruct*> PaintStructsGetNextPending(PaintStruct* ps)
-{
-    PaintStruct* ps_next;
-    while (true)
-    {
-        ps_next = ps->NextQuadrantEntry;
-        if (ps_next == nullptr)
-        {
-            // End of the current list.
-            return { nullptr, nullptr };
-        }
-        if (ps_next->SortFlags & PaintSortFlags::OutsideQuadrant)
-        {
-            // Reached point outside of specified quadrant.
-            return { nullptr, nullptr };
-        }
-        if (ps_next->SortFlags & PaintSortFlags::PendingVisit)
-        {
-            // Found node to check on.
-            break;
-        }
-        ps = ps_next;
+        sortedItems[i].SortFlags = flag | PaintSortFlags::PendingVisit;
     }
-    return { ps, ps_next };
-}
-
-// Re-orders all nodes after the specified child node and marks the child node as traversed. The resulting
-// order of the children is the depth based on rotation and dimensions of the bounding box.
-template<uint8_t TRotation>
-static void PaintStructsSortQuadrantLegacy(PaintStruct* parent, PaintStruct* child)
-{
-    // Mark visited.
-    child->SortFlags &= ~PaintSortFlags::PendingVisit;
-
-    // Compare all the children below the first child and move them up in the list if they intersect.
-    const PaintStructBoundBox& initialBBox = child->Bounds;
-
-    for (;;)
+    for (uint32_t i = nextQuadrantStartIdx; i < endIdx; ++i)
     {
-        auto* ps = child;
-        child = child->NextQuadrantEntry;
-
-        if (child != nullptr)
-        {
-            PREFETCH(&child->Bounds);
-        }
-        if (child == nullptr || child->SortFlags & PaintSortFlags::OutsideQuadrant)
-        {
-            break;
-        }
-
-        if (!(child->SortFlags & PaintSortFlags::Neighbour))
-        {
-            continue;
-        }
-
-        if (CheckBoundingBox<TRotation>(initialBBox, child->Bounds))
-        {
-            // Child node intersects with current node, move behind.
-            ps->NextQuadrantEntry = child->NextQuadrantEntry;
-
-            auto* psTemp = parent->NextQuadrantEntry;
-            parent->NextQuadrantEntry = child;
-
-            child->NextQuadrantEntry = psTemp;
-            child = ps;
-        }
+        sortedItems[i].SortFlags = PaintSortFlags::Neighbour | PaintSortFlags::PendingVisit;
     }
-}
 
-// Re-orders all nodes after the specified child node and marks the child node as traversed. The resulting
-// order of the children is the depth based on rotation and dimensions of the bounding box.
-template<uint8_t TRotation>
-static void PaintStructsSortQuadrantStable(PaintStruct* parent, PaintStruct* child)
-{
-    // Mark visited.
-    child->SortFlags &= ~PaintSortFlags::PendingVisit;
-
-    // Compare all the children below the first child and move them up in the list if they intersect.
-    const PaintStructBoundBox& initialBBox = child->Bounds;
-
-    // Create a temporary list to collect sorted nodes in stable order.
-    PaintStruct* sortedHead = nullptr;
-    PaintStruct* sortedTail = nullptr;
-
-    // Traverse the list and reorder based on intersection.
-    for (;;)
+    for (size_t i = startIdx; i < endIdx;)
     {
-        PaintStruct* next = child->NextQuadrantEntry;
-
-        if (next != nullptr)
+        if (sortedItems[i].SortFlags & PaintSortFlags::PendingVisit)
         {
-            PREFETCH(&next->Bounds);
-        }
+            sortedItems[i].SortFlags &= ~PaintSortFlags::PendingVisit;
+            const PaintStructBoundBox initialBBox = sortedItems[i].Bounds;
 
-        // Stop if at the end of the list or outside the quadrant range.
-        if (next == nullptr || next->SortFlags & PaintSortFlags::OutsideQuadrant)
-        {
-            break;
-        }
-
-        // Ignore nodes that are not neighbors.
-        if (!(next->SortFlags & PaintSortFlags::Neighbour))
-        {
-            child = next;
-            continue;
-        }
-
-        // Detach the current node from the list if it intersects.
-        if (CheckBoundingBox<TRotation>(initialBBox, next->Bounds))
-        {
-            child->NextQuadrantEntry = next->NextQuadrantEntry;
-
-            if (sortedHead == nullptr)
+            if constexpr (TStableSort)
             {
-                sortedHead = next;
-                sortedTail = next;
-                next->NextQuadrantEntry = nullptr;
+                static thread_local std::vector<PaintSortItem> moveList;
+                moveList.clear();
+
+                for (auto it = sortedItems.begin() + i + 1; it != sortedItems.begin() + endIdx;)
+                {
+                    if (!(it->SortFlags & PaintSortFlags::Neighbour))
+                    {
+                        ++it;
+                        continue;
+                    }
+
+                    if (CheckBoundingBox<TRotation>(initialBBox, it->Bounds))
+                    {
+                        moveList.push_back(std::move(*it));
+                        it = sortedItems.erase(it);
+                    }
+                    else
+                    {
+                        ++it;
+                    }
+                }
+
+                if (!moveList.empty())
+                {
+                    sortedItems.insert(sortedItems.begin() + i, moveList.begin(), moveList.end());
+                }
             }
             else
             {
-                sortedTail->NextQuadrantEntry = next;
-                sortedTail = next;
-                next->NextQuadrantEntry = nullptr;
+                for (size_t j = i + 1; j < endIdx; ++j)
+                {
+                    if (!(sortedItems[j].SortFlags & PaintSortFlags::Neighbour))
+                    {
+                        continue;
+                    }
+
+                    if (CheckBoundingBox<TRotation>(initialBBox, sortedItems[j].Bounds))
+                    {
+                        PaintSortItem item = std::move(sortedItems[j]);
+                        sortedItems.erase(sortedItems.begin() + j);
+                        sortedItems.insert(sortedItems.begin() + i, item);
+                    }
+                }
             }
+            // Do not increment i, process the moved item (or the same item if none moved)
+            continue;
         }
-        else
-        {
-            child = next;
-        }
+        i++;
     }
-
-    // Merge the sorted list back into the main list after parent.
-    if (sortedHead != nullptr)
-    {
-        PaintStruct* originalNext = parent->NextQuadrantEntry;
-        parent->NextQuadrantEntry = sortedHead;
-        sortedTail->NextQuadrantEntry = originalNext;
-    }
-}
-
-template<bool TStableSort, uint8_t TRotation>
-static PaintStruct* PaintArrangeStructsHelperRotation(PaintStruct* psQuadrantEntry, uint16_t quadrantIndex, uint8_t flag)
-{
-    // We keep track of the first node in the quadrant so the next call with a higher quadrant index
-    // can use this node to skip some iterations.
-    psQuadrantEntry = PaintStructsFirstInQuadrant(psQuadrantEntry, quadrantIndex);
-
-    // Visit all nodes in the linked quadrant list and determine their current
-    // sorting relevancy.
-    PaintStructsInitializeSort(psQuadrantEntry, quadrantIndex, flag);
-
-    // Iterate all nodes in the current list and re-order them based on
-    // the current rotation and their bounding box.
-    for (auto* ps = psQuadrantEntry; ps != nullptr;)
-    {
-        const auto [parent, child] = PaintStructsGetNextPending(ps);
-        if (parent == nullptr)
-        {
-            break;
-        }
-
-        if constexpr (TStableSort)
-        {
-            PaintStructsSortQuadrantStable<TRotation>(parent, child);
-        }
-        else
-        {
-            PaintStructsSortQuadrantLegacy<TRotation>(parent, child);
-        }
-
-        ps = parent;
-    }
-
-    return psQuadrantEntry;
-}
-
-// Iterates over all the quadrant lists and links them together as a
-// singly linked list.
-// The paint session has a head member which is the first entry.
-static void PaintStructsLinkQuadrants(PaintSessionCore& session, PaintStruct& psHead)
-{
-    PaintStruct* ps = &psHead;
-    ps->NextQuadrantEntry = nullptr;
-
-    uint32_t quadrantIndex = session.QuadrantBackIndex;
-    do
-    {
-        PaintStruct* psNext = session.Quadrants[quadrantIndex];
-        if (psNext != nullptr)
-        {
-            ps->NextQuadrantEntry = psNext;
-            do
-            {
-                ps = psNext;
-                psNext = psNext->NextQuadrantEntry;
-
-            } while (psNext != nullptr);
-        }
-    } while (++quadrantIndex <= session.QuadrantFrontIndex);
 }
 
 template<bool TStableSort, int TRotation>
 static void PaintSessionArrangeImpl(PaintSessionCore& session)
 {
-    uint32_t quadrantIndex = session.QuadrantBackIndex;
-    if (quadrantIndex == UINT32_MAX)
+    if (session.QuadrantBackIndex == UINT32_MAX)
     {
         return;
     }
 
-    // psHead is an intermediate node that is used to link all the quadrant lists together,
-    // this was previously stored in PaintSession but only the NextQuadrantEntry is relevant here.
-    // The head node is not part of the linked list and just serves as an entry point.
-    PaintStruct psHead{};
-    PaintStructsLinkQuadrants(session, psHead);
+    session.SortedItems.clear();
+    std::fill(std::begin(session.QuadrantStartIndices), std::end(session.QuadrantStartIndices), 0);
 
-    PaintStruct* psNextQuadrant = PaintArrangeStructsHelperRotation<TStableSort, TRotation>(
-        &psHead, session.QuadrantBackIndex, PaintSortFlags::Neighbour);
+    for (uint32_t i = session.QuadrantBackIndex; i <= session.QuadrantFrontIndex; ++i)
+    {
+        session.QuadrantStartIndices[i] = static_cast<uint32_t>(session.SortedItems.size());
+        for (PaintStruct* ps = session.Quadrants[i]; ps != nullptr; ps = ps->NextQuadrantEntry)
+        {
+            session.SortedItems.push_back({ ps->Bounds, ps, ps->QuadrantIndex, 0 });
+        }
+    }
+    for (uint32_t i = session.QuadrantFrontIndex + 1; i <= MaxPaintQuadrants + 1; ++i)
+    {
+        session.QuadrantStartIndices[i] = static_cast<uint32_t>(session.SortedItems.size());
+    }
+
+    if (session.SortedItems.empty())
+    {
+        return;
+    }
+
+    uint32_t quadrantIndex = session.QuadrantBackIndex;
+    PaintArrangeStructsHelperRotation<TStableSort, TRotation>(session, quadrantIndex, PaintSortFlags::Neighbour);
 
     while (++quadrantIndex < session.QuadrantFrontIndex)
     {
-        psNextQuadrant = PaintArrangeStructsHelperRotation<TStableSort, TRotation>(
-            psNextQuadrant, quadrantIndex, PaintSortFlags::None);
+        PaintArrangeStructsHelperRotation<TStableSort, TRotation>(session, quadrantIndex, PaintSortFlags::None);
     }
-
-    session.PaintHead = psHead.NextQuadrantEntry;
 }
 
 using PaintArrangeWithRotation = void (*)(PaintSessionCore& session);
@@ -750,9 +591,9 @@ void PaintDrawStructs(PaintSession& session)
 {
     PROFILED_FUNCTION();
 
-    for (PaintStruct* ps = session.PaintHead; ps != nullptr; ps = ps->NextQuadrantEntry)
+    for (const auto& item : session.SortedItems)
     {
-        PaintDrawStruct(session, ps);
+        PaintDrawStruct(session, item.Original);
     }
 }
 

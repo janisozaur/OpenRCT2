@@ -180,7 +180,6 @@ PaintSession* Painter::CreateSession(RenderTarget& rt, uint32_t viewFlags, uint8
     session->CurrentRotation = rotation;
 
     std::fill(std::begin(session->Quadrants), std::end(session->Quadrants), nullptr);
-    session->PaintHead = nullptr;
     session->LastPS = nullptr;
     session->LastAttachedPS = nullptr;
     session->PSStringHead = nullptr;
@@ -202,6 +201,7 @@ void Painter::ReleaseSession(PaintSession* session)
     PROFILED_FUNCTION();
 
     session->paintEntries.clear();
+    session->SortedItems.clear();
 
     _freePaintSessions.push_back(session);
 }
