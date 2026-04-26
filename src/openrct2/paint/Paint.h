@@ -24,6 +24,7 @@
 #include <sfl/segmented_vector.hpp>
 #include <sfl/static_vector.hpp>
 #include <thread>
+#include <vector>
 
 enum class ViewportInteractionItem : uint8_t;
 
@@ -71,6 +72,14 @@ struct PaintStruct
     uint16_t QuadrantIndex;
     uint8_t SortFlags;
     ViewportInteractionItem InteractionItem;
+};
+
+struct PaintSortItem
+{
+    PaintStructBoundBox Bounds;
+    PaintStruct* Original;
+    uint16_t QuadrantIndex;
+    uint8_t SortFlags;
 };
 
 struct PaintStringStruct
@@ -135,7 +144,8 @@ static constexpr int32_t MaxPaintQuadrants = kMaximumMapSizeTechnical * 2;
 
 struct PaintSessionCore
 {
-    PaintStruct* PaintHead;
+    std::vector<PaintSortItem> SortedItems;
+    uint32_t QuadrantStartIndices[MaxPaintQuadrants + 2];
     PaintStruct* Quadrants[MaxPaintQuadrants];
     PaintStruct* LastPS;
     PaintStringStruct* PSStringHead;
