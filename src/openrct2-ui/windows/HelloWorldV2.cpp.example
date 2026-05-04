@@ -61,14 +61,18 @@ namespace OpenRCT2::Ui::Windows
         /**
          * The layout is automatically recalculated by FlexWindow base class
          * whenever logical dimensions or UI scale changes.
+         *
+         * The IDrawingContext provides an abstraction over the RGBA32 buffer,
+         * handling the mapping from logical units to physical pixels.
          */
-        void OnDraw(UIRenderContext& ctx) override
+        void OnDraw(IDrawingContext& ctx) override
         {
-            // Base class draws the Yoga-managed widgets into the RGBA buffer
+            // Base class draws the Yoga-managed widgets into the RGBA32 overlay
             FlexWindow::OnDraw(ctx);
 
-            // Additional custom drawing can happen here using physical/scaled pixels
-            // ctx.DrawLine(...)
+            // Example of custom drawing using logical units.
+            // If ctx.GetScale() is 2.0, this 2-unit line will be 4 physical pixels thick.
+            ctx.DrawLine({0, 50}, {100, 50}, {0, 0, 0, 255}, 2.0f);
         }
     };
 

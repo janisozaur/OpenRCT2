@@ -13,11 +13,65 @@ The primary goals are:
 
 ## 1. Core Architecture
 
-### 1.1 Rendering Pipeline
-Currently, OpenRCT2 renders everything into a single 8-bit paletted buffer. For UI v2:
-- **Game World**: Continues to render into the paletted buffer (or its own layer).
-- **UI Overlay**: Rendered into a separate **RGBA32** buffer at the "scaled" resolution.
-- **Composition**: The UI layer is composited over the game world. If the game world is 1080p and the UI scale is 1.5x, the UI is effectively rendered at 1080p density but logic-wise it behaves as a smaller canvas, then upscaled/downscaled or ideally rendered directly at the target pixel density.
+### 1.1 Rendering Pipeline & Layer Separation
+OpenRCT2's legacy renderer uses an 8-bit indexed (paletted) buffer. To support modern HiDPI and full-color UI, we must implement a multi-layered rendering pipeline.
+
+#### Layer 1: Game World (Legacy Palette)
+- Remains at the "Game Resolution" (which might be lower than native for performance or aesthetic reasons).
+- Uses the traditional 256-color palette.
+- Rendered into an 8-bit buffer as it is today.
+
+#### Layer 2: UI Overlay (Modern RGBA32)
+- Rendered into a **separate RGBA32 (32-bit) surface**.
+- **Pixel Density**: This surface should match the **physical display resolution** (or the OS window's resolution) to ensure text and vector elements remain sharp.
+- **Transparency**: Supports per-pixel alpha, allowing for modern shadows, blurs, and semi-transparent windows without the "checkerboard" dither patterns of the legacy engine.
+
+#### Composition
+The final frame is created by:
+1. Upscaling the Game World layer (if necessary) to the physical window size.
+2. Compositing the UI Overlay on top using alpha blending.
+
+---
+
+## 2. Technical Implementation of the Rendering Layer
+
+### 2.1 The `IDrawingContext` Interface
+To decouple the UI from the underlying pixel format, we should introduce an abstraction layer.
+
+```cpp
+class IDrawingContext {
+public:
+    virtual ~IDrawingContext() = default;
+
+    // Primitives using logical coordinates
+    virtual void DrawRect(Rect rect, Color color) = 0;
+    virtual void DrawText(Point pos, std::string_view text, FontHandle font) = 0;
+    virtual void DrawImage(Point pos, ImageId image) = 0;
+
+    // Scaling Metadata
+    virtual float GetScale() const = 0; // The current UI scale factor
+};
+```
+
+### 2.2 Handling HiDPI & Fractional Scaling
+The system must distinguish between different coordinate spaces to handle fractional scaling (e.g., 125% or 150% OS zoom):
+
+1. **Logical Units (Yoga)**: Floating point units used for layout (e.g., "this button is 100.0 units wide").
+2. **Scaled Pixels**: Logical units * `UI_Scale`. These are the "virtual" pixels the UI thinks it has.
+3. **Physical Pixels**: The actual pixels on the display.
+
+**Formula**: `Physical_Size = Logical_Size * UI_Scale * Display_DPI_Factor`
+
+For a window on a 4K monitor with 200% scaling and a 1.5x UI scale setting:
+- A logical 100-unit button will be layout-calculated as 100.0.
+- It will be rendered at `100 * 1.5 * 2.0 = 300` physical pixels wide.
+- **Critical**: The UI layer's RGBA buffer must be allocated at the **Physical Pixel** size to avoid blurriness.
+
+### 2.3 Full Colour & Antialiasing
+By moving the UI to RGBA32:
+- **Fonts**: FreeType can use sub-pixel antialiasing (LCD rendering) directly into the UI buffer.
+- **Sprites**: High-resolution UI sprites (PNG/SVG) can be used alongside legacy sprites (which will be converted to RGBA on-the-fly or pre-cached).
+- **Effects**: We can implement modern UI effects like drop shadows and rounded corners using signed distance fields (SDF) or simple alpha blending.
 
 ### 1.2 Layout Engine (Yoga)
 Yoga will handle the calculation of widget positions and sizes.
@@ -41,24 +95,19 @@ auto window = FlexWindow::Create("Settings")
 
 ---
 
-## 2. Decoupling the UI Layer
+## 3. Decoupling the UI Layer
 
-### 2.1 Coordinate Systems
-We must distinguish between:
-- **Logical Pixels**: The coordinates used in window definitions (e.g., a button is 100 units wide).
-- **Scaled Pixels**: Logical pixels * UI Scale.
-- **Physical Pixels**: The actual pixels on the screen/window.
+### 3.1 Coordinate Systems
+As detailed in section 2.2, we must strictly separate logical layout units from physical pixels. The UI engine will handle the conversion during the layout and paint passes.
 
-The `Drawing::RenderTarget` should be updated to handle a `scale` factor, or a new `UIRenderTarget` should be introduced that works in the RGBA space.
-
-### 2.2 Font System
+### 3.2 Font System
 - Move away from `SPR_FONT_*` sprites for UI v2.
 - Use `FreeTypeFont` to render glyphs directly into the RGBA buffer.
 - Implement **Dynamic Font Scaling**: Instead of scaling a rendered bitmap, the font is re-rasterized at the exact physical size needed for the current UI scale to ensure maximum crispness.
 
 ---
 
-## 3. Implementation Guideline
+## 4. Implementation Guideline
 
 ### Step 1: Yoga Integration
 1. Add Yoga as a dependency (via `cmake/download.cmake` or system package).
@@ -74,7 +123,7 @@ The `Drawing::RenderTarget` should be updated to handle a `scale` factor, or a n
 
 ---
 
-## 4. Prototype Example ("Hello World")
+## 5. Prototype Example ("Hello World")
 
 Below is a conceptual implementation of a modern "About" window.
 
@@ -126,7 +175,7 @@ namespace OpenRCT2::Ui::Windows
 
 ---
 
-## 5. Next Steps for Developers
+## 6. Next Steps for Developers
 1. **Refactor RenderTarget**: Introduce `IDrawingContext` which can be implemented by both the legacy paletted engine and the new RGBA engine.
 2. **Yoga Integration**: Set up the build system to include Yoga.
 3. **Widget Library**: Build out basic `FlexWidget` implementations (Button, Checkbox, Slider, etc.).
