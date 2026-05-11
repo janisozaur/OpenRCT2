@@ -96,6 +96,7 @@
     <ClCompile Include="LocalisationTest.cpp" />
     <ClCompile Include="MultiLaunch.cpp" />
     <ClCompile Include="ReplayTests.cpp" />
+    <ClCompile Include="NetworkTests.cpp" />
     <ClCompile Include="PlayTests.cpp" />
     <ClCompile Include="Pathfinding.cpp" />
     <ClCompile Include="RideRatings.cpp" />
