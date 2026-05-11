@@ -2651,7 +2651,8 @@ namespace OpenRCT2::Network
 
         if (connection.player == nullptr)
         {
-            LOG_WARNING("Connection %s requested map but has no player, disconnecting.", connection.Socket->GetIpAddress().c_str());
+            LOG_WARNING(
+                "Connection %s requested map but has no player, disconnecting.", connection.Socket->GetIpAddress().c_str());
             connection.Disconnect();
             return;
         }
