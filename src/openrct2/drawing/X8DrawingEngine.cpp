@@ -521,18 +521,23 @@ void X8DrawingContext::FilterRect(
     if (paletteMap.has_value())
     {
         const auto& paletteEntries = paletteMap.value();
-        const int32_t scaled_width = width;
         const int32_t step = rt.LineStride();
 
-        // Fill the rectangle with the colours from the colour table
-        auto c = height;
-        for (int32_t i = 0; i < c; i++)
+        if (Platform::AVX512Available())
         {
-            PaletteIndex* nextdst = dst + step * i;
-            for (int32_t j = 0; j < scaled_width; j++)
+            FilterRectAvx512(dst, width, height, step, &paletteEntries[0]);
+        }
+        else
+        {
+            // Fill the rectangle with the colours from the colour table
+            for (int32_t i = 0; i < height; i++)
             {
-                auto index = *(nextdst + j);
-                *(nextdst + j) = paletteEntries[EnumValue(index)];
+                PaletteIndex* nextdst = dst + step * i;
+                for (int32_t j = 0; j < width; j++)
+                {
+                    auto index = *(nextdst + j);
+                    *(nextdst + j) = paletteEntries[EnumValue(index)];
+                }
             }
         }
     }

@@ -108,6 +108,15 @@ void MaskSse4_1(
 void MaskAvx2(
     int32_t width, int32_t height, const uint8_t* RESTRICT maskSrc, const uint8_t* RESTRICT colourSrc,
     OpenRCT2::Drawing::PaletteIndex* RESTRICT dst, int32_t maskWrap, int32_t colourWrap, int32_t dstWrap);
+void MaskAvx512(
+    int32_t width, int32_t height, const uint8_t* RESTRICT maskSrc, const uint8_t* RESTRICT colourSrc,
+    OpenRCT2::Drawing::PaletteIndex* RESTRICT dst, int32_t maskWrap, int32_t colourWrap, int32_t dstWrap);
+void FilterRectAvx512(
+    OpenRCT2::Drawing::PaletteIndex* dst, int32_t width, int32_t height, int32_t stride,
+    const OpenRCT2::Drawing::PaletteIndex* paletteMap);
+void LightFxRenderToTextureAvx512(
+    void* dstPixels, uint32_t dstPitch, const OpenRCT2::Drawing::PaletteIndex* bits, uint32_t width, uint32_t height,
+    const uint32_t* palette, const uint32_t* lightPalette, const uint8_t* lightBits);
 
 void MaskFn(
     int32_t width, int32_t height, const uint8_t* RESTRICT maskSrc, const uint8_t* RESTRICT colourSrc,

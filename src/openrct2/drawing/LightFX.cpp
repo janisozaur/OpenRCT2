@@ -1039,30 +1039,37 @@ namespace OpenRCT2::Drawing::LightFx
             return;
         }
 
-        for (uint32_t y = 0; y < height; y++)
+        if (Platform::AVX512Available())
         {
-            uintptr_t dstOffset = static_cast<uintptr_t>(y * dstPitch);
-            uint32_t* dst = reinterpret_cast<uint32_t*>(reinterpret_cast<uintptr_t>(dstPixels) + dstOffset);
-            for (uint32_t x = 0; x < width; x++)
+            LightFxRenderToTextureAvx512(dstPixels, dstPitch, bits, width, height, palette, lightPalette, lightBits);
+        }
+        else
+        {
+            for (uint32_t y = 0; y < height; y++)
             {
-                PaletteIndex src = bits[y * width + x];
-                uint32_t darkColour = palette[EnumValue(src)];
-                uint32_t lightColour = lightPalette[EnumValue(src)];
-                uint8_t lightIntensity = lightBits[y * width + x];
+                uintptr_t dstOffset = static_cast<uintptr_t>(y * dstPitch);
+                uint32_t* dst = reinterpret_cast<uint32_t*>(reinterpret_cast<uintptr_t>(dstPixels) + dstOffset);
+                for (uint32_t x = 0; x < width; x++)
+                {
+                    PaletteIndex src = bits[y * width + x];
+                    uint32_t darkColour = palette[EnumValue(src)];
+                    uint32_t lightColour = lightPalette[EnumValue(src)];
+                    uint8_t lightIntensity = lightBits[y * width + x];
 
-                uint32_t colour = 0;
-                if (lightIntensity == 0)
-                {
-                    colour = darkColour;
+                    uint32_t colour = 0;
+                    if (lightIntensity == 0)
+                    {
+                        colour = darkColour;
+                    }
+                    else
+                    {
+                        colour |= MixLight((darkColour >> 0) & 0xFF, (lightColour >> 0) & 0xFF, lightIntensity);
+                        colour |= MixLight((darkColour >> 8) & 0xFF, (lightColour >> 8) & 0xFF, lightIntensity) << 8;
+                        colour |= MixLight((darkColour >> 16) & 0xFF, (lightColour >> 16) & 0xFF, lightIntensity) << 16;
+                        colour |= MixLight((darkColour >> 24) & 0xFF, (lightColour >> 24) & 0xFF, lightIntensity) << 24;
+                    }
+                    *dst++ = colour;
                 }
-                else
-                {
-                    colour |= MixLight((darkColour >> 0) & 0xFF, (lightColour >> 0) & 0xFF, lightIntensity);
-                    colour |= MixLight((darkColour >> 8) & 0xFF, (lightColour >> 8) & 0xFF, lightIntensity) << 8;
-                    colour |= MixLight((darkColour >> 16) & 0xFF, (lightColour >> 16) & 0xFF, lightIntensity) << 16;
-                    colour |= MixLight((darkColour >> 24) & 0xFF, (lightColour >> 24) & 0xFF, lightIntensity) << 24;
-                }
-                *dst++ = colour;
             }
         }
     }

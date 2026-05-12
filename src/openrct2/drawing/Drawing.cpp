@@ -477,7 +477,12 @@ ImageCatalogue ImageId::GetCatalogue() const
 
 static auto GetMaskFunction()
 {
-    if (Platform::AVX2Available())
+    if (Platform::AVX512Available())
+    {
+        LOG_VERBOSE("registering AVX-512 mask function");
+        return MaskAvx512;
+    }
+    else if (Platform::AVX2Available())
     {
         LOG_VERBOSE("registering AVX2 mask function");
         return MaskAvx2;

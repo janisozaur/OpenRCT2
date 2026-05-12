@@ -869,6 +869,7 @@
     <ClCompile Include="Date.cpp" />
     <ClCompile Include="Diagnostic.cpp" />
     <ClCompile Include="drawing\AVX2Drawing.cpp" />
+    <ClCompile Include="drawing\AVX512Drawing.cpp" />
     <ClCompile Include="drawing\BlendColourMap.cpp" />
     <ClCompile Include="drawing\Colour.cpp" />
     <ClCompile Include="drawing\ColourMap.cpp" />
