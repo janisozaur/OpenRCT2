@@ -149,6 +149,8 @@ TEST_F(NetworkTests, MapRequestWithoutPlayerDisconnectsAndDoesNotCrash)
 TEST_F(NetworkTests, ProcessPacketInterceptsUnauthorizedCommands)
 {
     NetworkBase network(*_context);
+    // Set to server mode
+    network.BeginServer(0, "127.0.0.1");
 
     Connection connection;
     connection.Socket = std::make_unique<MockTcpSocket>();

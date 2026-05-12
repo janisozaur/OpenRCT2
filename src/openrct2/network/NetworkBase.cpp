@@ -1869,7 +1869,7 @@ namespace OpenRCT2::Network
                     LOG_VERBOSE("Exception during packet processing: %s", ex.what());
                 }
             }
-            else
+            else if (GetMode() == Mode::server)
             {
                 LOG_WARNING(
                     "Connection %s sent command %u that requires authentication, disconnecting.",
@@ -2426,6 +2426,9 @@ namespace OpenRCT2::Network
     {
         auto player = AddPlayer(std::string(name), keyhash);
         connection.player = player;
+
+        ServerSendAuth(connection);
+
         if (player != nullptr)
         {
             char text[256];
@@ -2781,6 +2784,7 @@ namespace OpenRCT2::Network
                 {
                     connection.AuthStatus = Auth::ok;
                     ServerClientJoined(name, hash, connection);
+                    return;
                 }
                 else
                 {
