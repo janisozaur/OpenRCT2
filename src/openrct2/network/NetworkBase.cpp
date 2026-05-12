@@ -1869,6 +1869,13 @@ namespace OpenRCT2::Network
                     LOG_VERBOSE("Exception during packet processing: %s", ex.what());
                 }
             }
+            else if (GetMode() == Mode::server)
+            {
+                LOG_WARNING(
+                    "Connection %s sent command %u that requires authentication, disconnecting.",
+                    connection.Socket->GetIpAddress().c_str(), static_cast<uint32_t>(packet.GetCommand()));
+                connection.Disconnect();
+            }
         }
 
         packet.Clear();
@@ -2419,6 +2426,9 @@ namespace OpenRCT2::Network
     {
         auto player = AddPlayer(std::string(name), keyhash);
         connection.player = player;
+
+        ServerSendAuth(connection);
+
         if (player != nullptr)
         {
             char text[256];
@@ -2642,6 +2652,14 @@ namespace OpenRCT2::Network
             }
         }
 
+        if (connection.player == nullptr)
+        {
+            LOG_WARNING(
+                "Connection %s requested map but has no player, disconnecting.", connection.Socket->GetIpAddress().c_str());
+            connection.Disconnect();
+            return;
+        }
+
         auto player_name = connection.player->Name.c_str();
         ServerSendMap(&connection);
         ServerSendEventPlayerJoined(player_name);
@@ -2766,6 +2784,7 @@ namespace OpenRCT2::Network
                 {
                     connection.AuthStatus = Auth::ok;
                     ServerClientJoined(name, hash, connection);
+                    return;
                 }
                 else
                 {
