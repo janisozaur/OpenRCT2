@@ -20,11 +20,13 @@
     #include <cpuid.h>
     #include <immintrin.h>
     #define OpenRCT2_CPUID_GNUC_X86
+    #define OPENRCT2_X86
 #elif defined(_MSC_VER) && (_MSC_VER >= 1500) && (defined(_M_X64) || defined(_M_IX86)) // VS2008
     #include <immintrin.h>
     #include <intrin.h>
     #include <nmmintrin.h>
     #define OpenRCT2_CPUID_MSVC_X86
+    #define OPENRCT2_X86
 #endif
 
 #include "../Context.h"

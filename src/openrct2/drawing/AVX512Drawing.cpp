@@ -8,8 +8,11 @@
  *****************************************************************************/
 
 #include "../core/Guard.hpp"
+#include "Drawing.Sprite.h"
 #include "Drawing.h"
 #include "PaletteIndex.h"
+
+#include <algorithm>
 
 using OpenRCT2::Drawing::PaletteIndex;
 
@@ -42,7 +45,7 @@ void FilterRectAvx512(PaletteIndex* dst, int32_t width, int32_t height, int32_t 
             __m512i res34 = _mm512_permutex2var_epi8(map3, indices, map4);
 
             // Select between res12 and res34 based on the 7th bit of indices
-            __mmask64 highBitMask = _mm512_test_epi8_mask(indices, _mm512_set1_epi8(static_cast<uint8_t>(0x80U)));
+            __mmask64 highBitMask = _mm512_test_epi8_mask(indices, _mm512_set1_epi8(static_cast<int8_t>(0x80)));
             __m512i res = _mm512_mask_blend_epi8(highBitMask, res12, res34);
 
             _mm512_storeu_si512(reinterpret_cast<__m512i*>(d), res);
@@ -57,7 +60,7 @@ void FilterRectAvx512(PaletteIndex* dst, int32_t width, int32_t height, int32_t 
             __m512i res12 = _mm512_permutex2var_epi8(map, indices, map2);
             __m512i res34 = _mm512_permutex2var_epi8(map3, indices, map4);
 
-            __mmask64 highBitMask = _mm512_test_epi8_mask(indices, _mm512_set1_epi8(static_cast<uint8_t>(0x80U)));
+            __mmask64 highBitMask = _mm512_test_epi8_mask(indices, _mm512_set1_epi8(static_cast<int8_t>(0x80)));
             __m512i res = _mm512_mask_blend_epi8(highBitMask, res12, res34);
 
             _mm512_mask_storeu_epi8(d, tailMask, res);
@@ -81,10 +84,10 @@ void LightFxRenderToTextureAvx512(
         const uint8_t* lb = lightBits + yy * width;
 
         int32_t ww = width;
-        for (; ww > 0;)
+        while (ww > 0)
         {
             int32_t count = std::min(ww, 16);
-            __mmask16 loadMask = static_cast<__mmask16>((1U << count) - 1U);
+            __mmask16 loadMask = static_cast<__mmask16>((1ULL << count) - 1ULL);
 
             __m128i indices8 = _mm_maskz_loadu_epi8(loadMask, b);
             __m512i indices32 = _mm512_cvtepu8_epi32(indices8);

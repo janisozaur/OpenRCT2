@@ -10,13 +10,13 @@
 #include "X8DrawingEngine.h"
 
 #include "../Context.h"
-#include "../platform/Platform.h"
 #include "../config/Config.h"
 #include "../core/Guard.hpp"
 #include "../core/Numerics.hpp"
 #include "../interface/Screenshot.h"
 #include "../interface/Viewport.h"
 #include "../interface/Window.h"
+#include "../platform/Platform.h"
 #include "../scenes/intro/IntroScene.h"
 #include "../ui/UiContext.h"
 #include "BlendColourMap.h"
@@ -586,7 +586,7 @@ void X8DrawingContext::DrawGlyph(RenderTarget& rt, const ImageId image, int32_t 
 }
 
 #ifndef DISABLE_TTF
-template<bool TUseHinting>
+template <bool TUseHinting>
 static void DrawTTFBitmapInternal(
     RenderTarget& rt, PaletteIndex colour, TTFSurface* surface, int32_t x, int32_t y, uint8_t hintingThreshold)
 {
@@ -655,7 +655,7 @@ static void DrawTTFBitmapInternal(
         dst += dstScanSkip;
     }
 }
-#endif // DISABLE_TTF
+#endif // DISABLE_TTT
 
 void X8DrawingContext::DrawTTFBitmap(
     RenderTarget& rt, const TextDrawInfo& info, TTFSurface* surface, int32_t x, int32_t y, uint8_t hintingThreshold)
