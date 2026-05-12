@@ -1079,7 +1079,6 @@ namespace OpenRCT2::Network
         group_list.at(0)->ActionsAllowed.fill(0xFF);
     }
 
-
     void NetworkBase::BeginChatLog()
     {
         _logger->BeginChatLog();
@@ -1122,6 +1121,13 @@ namespace OpenRCT2::Network
         const std::string& name, const std::string& password, const std::string& pubkey, const std::vector<uint8_t>& signature)
     {
         Packet packet(Command::auth);
+        packet.WriteString(kStreamID);
+        packet.WriteString(name);
+        packet.WriteString(password);
+        packet.WriteString(pubkey);
+        assert(signature.size() <= static_cast<size_t>(UINT32_MAX));
+        packet << static_cast<uint32_t>(signature.size());
+        packet.Write(signature.data(), signature.size());
         _serverConnection->AuthStatus = Auth::requested;
         _serverConnection->QueuePacket(std::move(packet));
     }
@@ -1261,7 +1267,7 @@ namespace OpenRCT2::Network
         packet << static_cast<uint32_t>(connection.AuthStatus) << new_playerid;
         if (connection.AuthStatus == Auth::badVersion)
         {
-            packet.WriteString(GetVersion());
+            packet.WriteString(kStreamID);
         }
         connection.QueuePacket(std::move(packet));
         if (connection.AuthStatus != Auth::ok && connection.AuthStatus != Auth::requirePassword)
@@ -1484,14 +1490,10 @@ namespace OpenRCT2::Network
     json_t NetworkBase::GetServerInfoAsJson() const
     {
         json_t jsonObj = {
-            { "name", Config::Get().network.serverName },
-            { "requiresPassword", !_password.empty() },
-            { "version", GetVersion() },
-            { "players", GetNumVisiblePlayers() },
-            { "maxPlayers", Config::Get().network.maxplayers },
-            { "description", Config::Get().network.serverDescription },
-            { "greeting", Config::Get().network.serverGreeting },
-            { "dedicated", gOpenRCT2Headless },
+            { "name", Config::Get().network.serverName },         { "requiresPassword", !_password.empty() },
+            { "version", kStreamID },       { "players", GetNumVisiblePlayers() },
+            { "maxPlayers", Config::Get().network.maxplayers },   { "description", Config::Get().network.serverDescription },
+            { "greeting", Config::Get().network.serverGreeting }, { "dedicated", gOpenRCT2Headless },
         };
         return jsonObj;
     }
@@ -2522,7 +2524,7 @@ namespace OpenRCT2::Network
                     passwordless = group->CanPerformAction(Permission::passwordlessLogin);
                 }
             }
-            if (gameversion != GetVersion())
+            if (gameversion != kStreamID)
             {
                 connection.AuthStatus = Auth::badVersion;
                 LOG_INFO("Connection %s: Bad version.", hostName);

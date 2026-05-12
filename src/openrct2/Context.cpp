@@ -798,9 +798,7 @@ namespace OpenRCT2
             return false;
         }
 
-        bool LoadParkFromStream(
-            IStream* stream, const std::string& path, bool loadTitleScreenFirstOnFail = false,
-            bool asScenario = false) final
+        bool LoadParkFromStream(IStream* stream, const std::string& path, bool loadTitleScreenFirstOnFail = false, bool asScenario = false) final
         {
             try
             {
