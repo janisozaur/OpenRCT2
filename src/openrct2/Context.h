@@ -63,7 +63,7 @@ namespace OpenRCT2
         class NetworkBase;
         struct INetworkPlatform;
         struct INetworkLogger;
-    }
+    } // namespace Network
 
     namespace Scripting
     {

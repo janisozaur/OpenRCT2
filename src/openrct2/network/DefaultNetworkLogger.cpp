@@ -7,21 +7,21 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
-#ifndef DISABLE_NETWORK
+#include "DefaultNetworkLogger.h"
 
-    #include "DefaultNetworkLogger.h"
+#include "../Context.h"
+#include "../PlatformEnvironment.h"
+#include "../config/Config.h"
+#include "../core/File.h"
+#include "../core/FileSystem.hpp"
+#include "../core/Path.hpp"
+#include "../core/String.hpp"
+#include "../localisation/Formatting.h"
+#include "../localisation/LocalisationService.h"
+#include "../localisation/StringIds.h"
+#include "../platform/Platform.h"
 
-    #include "../Context.h"
-    #include "../PlatformEnvironment.h"
-    #include "../config/Config.h"
-    #include "../core/File.h"
-    #include "../core/Path.hpp"
-    #include "../core/String.hpp"
-    #include "../localisation/StringIds.h"
-    #include "../localisation/Formatting.h"
-    #include "../platform/Platform.h"
-
-    #include <ctime>
+#include <ctime>
 
 namespace OpenRCT2::Network
 {
@@ -45,7 +45,7 @@ namespace OpenRCT2::Network
     {
         auto& env = _context.GetPlatformEnvironment();
         auto directory = env.GetDirectoryPath(DirBase::user, DirId::chatLogs);
-        _chatLogPath = BeginLog(directory, "", _chatLogFilenameFormat);
+        _chatLogPath = BeginLog(directory, "", kChatLogFilenameFormat);
         _chat_log_fs.open(fs::u8path(_chatLogPath), std::ios::out | std::ios::app);
     }
 
@@ -69,7 +69,7 @@ namespace OpenRCT2::Network
     {
         auto& env = _context.GetPlatformEnvironment();
         auto directory = env.GetDirectoryPath(DirBase::user, DirId::serverLogs);
-        _serverLogPath = BeginLog(directory, serverName, _serverLogFilenameFormat);
+        _serverLogPath = BeginLog(directory, serverName, kServerLogFilenameFormat);
         _server_log_fs.open(fs::u8path(_serverLogPath), std::ios::out | std::ios::app | std::ios::binary);
 
         // Log server start event
@@ -154,5 +154,3 @@ namespace OpenRCT2::Network
         }
     }
 } // namespace OpenRCT2::Network
-
-#endif

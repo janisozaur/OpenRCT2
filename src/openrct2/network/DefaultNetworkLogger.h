@@ -30,12 +30,12 @@ namespace OpenRCT2::Network
         std::string _chatLogPath;
         std::string _serverLogPath;
 
-        static constexpr const char* _chatLogFilenameFormat = "%Y%m%d-%H%M%S.txt";
-        static constexpr const char* _serverLogFilenameFormat = "%Y%m%d-%H%M%S.txt";
+        static constexpr const char* kChatLogFilenameFormat = "%Y%m%d-%H%M%S.txt";
+        static constexpr const char* kServerLogFilenameFormat = "%Y%m%d-%H%M%S.txt";
 
     public:
         DefaultNetworkLogger(IContext& context);
-        ~DefaultNetworkLogger();
+        ~DefaultNetworkLogger() override;
 
         void BeginChatLog() override;
         void AppendChatLog(std::string_view s) override;

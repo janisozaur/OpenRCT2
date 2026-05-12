@@ -107,7 +107,8 @@ namespace OpenRCT2::Network
 {
     static void ChatShowConnectedMessage();
     static void ChatShowServerGreeting();
-    NetworkBase::NetworkBase(IContext& context, std::unique_ptr<INetworkPlatform> platform, std::unique_ptr<INetworkLogger> logger)
+    NetworkBase::NetworkBase(
+        IContext& context, std::unique_ptr<INetworkPlatform> platform, std::unique_ptr<INetworkLogger> logger)
         : System(context)
         , _platform(std::move(platform))
         , _logger(std::move(logger))
@@ -1078,56 +1079,10 @@ namespace OpenRCT2::Network
         group_list.at(0)->ActionsAllowed.fill(0xFF);
     }
 
-    std::string NetworkBase::BeginLog(
-        const std::string& directory, const std::string& midName, const std::string& filenameFormat)
-    {
-        utf8 filename[256];
-        time_t timer;
-        time(&timer);
-        auto tmInfo = localtime(&timer);
-        if (strftime(filename, sizeof(filename), filenameFormat.c_str(), tmInfo) == 0)
-        {
-            throw std::runtime_error("strftime failed");
-        }
-
-        auto directoryMidName = Path::Combine(directory, midName);
-        Path::CreateDirectory(directoryMidName);
-        return Path::Combine(directoryMidName, filename);
-    }
-
-    void NetworkBase::AppendLog(std::ostream& fs, std::string_view s)
-    {
-        if (fs.fail())
-        {
-            LOG_ERROR("bad ostream failed to append log");
-            return;
-        }
-        try
-        {
-            utf8 buffer[1024];
-            time_t timer;
-            time(&timer);
-            auto tmInfo = localtime(&timer);
-            if (strftime(buffer, sizeof(buffer), "[%Y/%m/%d %H:%M:%S] ", tmInfo) != 0)
-            {
-                String::append(buffer, sizeof(buffer), std::string(s).c_str());
-                String::append(buffer, sizeof(buffer), PLATFORM_NEWLINE);
-
-                fs.write(buffer, strlen(buffer));
-            }
-        }
-        catch (const std::exception& ex)
-        {
-            LOG_ERROR("%s", ex.what());
-        }
-    }
 
     void NetworkBase::BeginChatLog()
     {
-        auto& env = GetContext().GetPlatformEnvironment();
-        auto directory = env.GetDirectoryPath(DirBase::user, DirId::chatLogs);
-        _chatLogPath = BeginLog(directory, "", _chatLogFilenameFormat);
-        _chat_log_fs.open(fs::u8path(_chatLogPath), std::ios::out | std::ios::app);
+        _logger->BeginChatLog();
     }
 
     void NetworkBase::AppendChatLog(std::string_view s)
@@ -1167,13 +1122,6 @@ namespace OpenRCT2::Network
         const std::string& name, const std::string& password, const std::string& pubkey, const std::vector<uint8_t>& signature)
     {
         Packet packet(Command::auth);
-        packet.WriteString(GetVersion());
-        packet.WriteString(name);
-        packet.WriteString(password);
-        packet.WriteString(pubkey);
-        assert(signature.size() <= static_cast<size_t>(UINT32_MAX));
-        packet << static_cast<uint32_t>(signature.size());
-        packet.Write(signature.data(), signature.size());
         _serverConnection->AuthStatus = Auth::requested;
         _serverConnection->QueuePacket(std::move(packet));
     }
@@ -2513,9 +2461,9 @@ namespace OpenRCT2::Network
                 {
                     // RSA technically supports keys up to 65536 bits, so this is the
                     // maximum signature size for now.
-                    constexpr auto MaxRSASignatureSizeInBytes = 8192;
+                    constexpr auto kMaxRsaSignatureSizeInBytes = 8192;
 
-                    if (sigsize == 0 || sigsize > MaxRSASignatureSizeInBytes)
+                    if (sigsize == 0 || sigsize > kMaxRsaSignatureSizeInBytes)
                     {
                         throw std::runtime_error("Invalid signature size");
                     }
@@ -3457,7 +3405,7 @@ namespace OpenRCT2::Network
                 User* networkUser = userManager.GetOrAddUser(player->KeyHash);
                 networkUser->GroupId = groupId;
                 networkUser->Name = player->Name;
-                network._platform->SaveUserManager(userManager);
+                network.GetPlatform().SaveUserManager(userManager);
             }
 
             auto* windowMgr = Ui::GetWindowManager();
@@ -3642,9 +3590,9 @@ namespace OpenRCT2::Network
                 network.KickPlayer(playerId);
 
                 UserManager& networkUserManager = network._userManager;
-                network._platform->LoadUserManager(networkUserManager);
+                network.GetPlatform().LoadUserManager(networkUserManager);
                 networkUserManager.RemoveUser(player->KeyHash);
-                network._platform->SaveUserManager(networkUserManager);
+                network.GetPlatform().SaveUserManager(networkUserManager);
             }
         }
         return GameActions::Result();
@@ -3818,7 +3766,7 @@ namespace OpenRCT2::Network
     void SendPassword(const std::string& password)
     {
         auto& network = GetContext()->GetNetwork();
-        if (!network._platform->LoadPrivateKey(Config::Get().network.playerName, network._key))
+        if (!network.GetPlatform().LoadPrivateKey(Config::Get().network.playerName, network._key))
         {
             LOG_ERROR("Private key missing! Restart the game to generate it.");
             return;

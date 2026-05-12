@@ -3,12 +3,12 @@
 #include "../System.hpp"
 #include "../actions/GameAction.hpp"
 #include "../scenario/Scenario.h"
+#include "INetworkLogger.h"
+#include "INetworkPlatform.h"
 #include "NetworkConnection.h"
 #include "NetworkGroup.h"
 #include "NetworkPlayer.h"
 #include "NetworkServerAdvertiser.h"
-#include "INetworkLogger.h"
-#include "INetworkPlatform.h"
 #include "NetworkTypes.h"
 #include "NetworkUser.h"
 
@@ -31,6 +31,11 @@ namespace OpenRCT2::Network
     public:
         NetworkBase(IContext& context, std::unique_ptr<INetworkPlatform> platform, std::unique_ptr<INetworkLogger> logger);
 
+        INetworkPlatform& GetPlatform()
+        {
+            return *_platform;
+        }
+
     public: // Uncategorized
         bool BeginServer(uint16_t port, const std::string& address);
         bool BeginClient(const std::string& host, uint16_t port);
@@ -52,11 +57,10 @@ namespace OpenRCT2::Network
         int32_t GetNumVisiblePlayers() const noexcept;
         void SetPassword(u8string_view password);
         uint8_t GetDefaultGroup() const noexcept;
-        std::string BeginLog(const std::string& directory, const std::string& midName, const std::string& filenameFormat);
-        void AppendLog(std::ostream& fs, std::string_view s);
         void BeginChatLog();
         void AppendChatLog(std::string_view s);
         void CloseChatLog();
+        void AppendServerLog(const std::string& s);
         Stats GetStats() const;
         json_t GetServerInfoAsJson() const;
         bool ProcessConnection(Connection& connection);
@@ -74,9 +78,6 @@ namespace OpenRCT2::Network
         void SaveGroups();
         void RemoveGroup(uint8_t id);
         uint8_t GetGroupIDByHash(const std::string& keyhash);
-        void BeginServerLog();
-        void AppendServerLog(const std::string& s);
-        void CloseServerLog();
         void DecayCooldown(Player* player);
         void AddClient(std::unique_ptr<ITcpSocket>&& socket);
         std::string GetMasterServerUrl();
