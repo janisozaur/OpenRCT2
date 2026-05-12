@@ -107,12 +107,10 @@ namespace OpenRCT2::Network
 {
     static void ChatShowConnectedMessage();
     static void ChatShowServerGreeting();
-    static u8string GetKeysDirectory();
-    static u8string GetPrivateKeyPath(u8string_view playerName);
-    static u8string GetPublicKeyPath(u8string_view playerName, u8string_view hash);
-
-    NetworkBase::NetworkBase(IContext& context)
+    NetworkBase::NetworkBase(IContext& context, std::unique_ptr<INetworkPlatform> platform, std::unique_ptr<INetworkLogger> logger)
         : System(context)
+        , _platform(std::move(platform))
+        , _logger(std::move(logger))
     {
         mode = Mode::none;
         status = Status::none;
@@ -148,9 +146,6 @@ namespace OpenRCT2::Network
         server_command_handlers[Command::mapRequest] = &NetworkBase::ServerHandleMapRequest;
         server_command_handlers[Command::requestGameState] = &NetworkBase::ServerHandleRequestGamestate;
         server_command_handlers[Command::heartbeat] = &NetworkBase::ServerHandleHeartbeat;
-
-        _chat_log_fs << std::unitbuf;
-        _server_log_fs << std::unitbuf;
     }
 
     bool NetworkBase::Init()
@@ -193,8 +188,8 @@ namespace OpenRCT2::Network
                 return;
             }
 
-            CloseChatLog();
-            CloseServerLog();
+            _logger->CloseChatLog();
+            _logger->CloseServerLog(mode == Mode::client);
             CloseConnection();
 
             client_connection_list.clear();
@@ -267,7 +262,7 @@ namespace OpenRCT2::Network
         _port = port;
 
         _serverConnection = std::make_unique<Connection>();
-        _serverConnection->Socket = CreateTcpSocket();
+        _serverConnection->Socket = _platform->CreateTcpSocket();
         _serverConnection->Socket->ConnectAsync(host, port);
         _serverState.gamestateSnapshotsEnabled = false;
 
@@ -276,75 +271,39 @@ namespace OpenRCT2::Network
         _clientMapLoaded = false;
         _serverTickData.clear();
 
-        BeginChatLog();
-        BeginServerLog();
+        _logger->BeginChatLog();
+        _logger->BeginServerLog("", true);
 
         // We need to wait for the map load before we execute any actions.
         // If the client has the title screen running then there's a potential
         // risk of tick collision with the server map and title screen map.
         GameActions::SuspendQueue();
 
-        auto keyPath = GetPrivateKeyPath(Config::Get().network.playerName);
-        if (!File::Exists(keyPath))
+        const auto& playerName = Config::Get().network.playerName;
+        if (!_platform->LoadPrivateKey(playerName, _key))
         {
             Console::WriteLine("Generating key... This may take a while");
             Console::WriteLine("Need to collect enough entropy from the system");
-            _key.Generate();
-            Console::WriteLine("Key generated, saving private bits as %s", keyPath.c_str());
+            _platform->GenerateKey(_key);
+            Console::WriteLine("Key generated, saving keys.");
 
-            const auto keysDirectory = GetKeysDirectory();
-            if (!Path::CreateDirectory(keysDirectory))
+            if (!_platform->SavePrivateKey(playerName, _key))
             {
-                LOG_ERROR("Unable to create directory %s.", keysDirectory.c_str());
+                LOG_ERROR("Unable to save private key.");
                 return false;
             }
 
-            try
+            if (!_platform->SavePublicKey(playerName, _key))
             {
-                auto fs = FileStream(keyPath, FileMode::write);
-                _key.SavePrivate(&fs);
-            }
-            catch (const std::exception&)
-            {
-                LOG_ERROR("Unable to save private key at %s.", keyPath.c_str());
-                return false;
-            }
-
-            const std::string hash = _key.PublicKeyHash();
-            const utf8* publicKeyHash = hash.c_str();
-            keyPath = GetPublicKeyPath(Config::Get().network.playerName, publicKeyHash);
-            Console::WriteLine("Key generated, saving public bits as %s", keyPath.c_str());
-
-            try
-            {
-                auto fs = FileStream(keyPath, FileMode::write);
-                _key.SavePublic(&fs);
-            }
-            catch (const std::exception&)
-            {
-                LOG_ERROR("Unable to save public key at %s.", keyPath.c_str());
+                LOG_ERROR("Unable to save public key.");
                 return false;
             }
         }
         else
         {
-            // LoadPrivate returns validity of loaded key
-            bool ok = false;
-            try
-            {
-                LOG_VERBOSE("Loading key from %s", keyPath.c_str());
-                auto fs = FileStream(keyPath, FileMode::open);
-                ok = _key.LoadPrivate(&fs);
-            }
-            catch (const std::exception&)
-            {
-                LOG_ERROR("Unable to read private key from %s.", keyPath.c_str());
-                return false;
-            }
-
             // Don't store private key in memory when it's not in use.
             _key.Unload();
-            return ok;
+            return true;
         }
 
         return true;
@@ -358,11 +317,11 @@ namespace OpenRCT2::Network
 
         mode = Mode::server;
 
-        _userManager.Load();
+        _platform->LoadUserManager(_userManager);
 
         LOG_VERBOSE("Begin listening for clients");
 
-        _listenSocket = CreateTcpSocket();
+        _listenSocket = _platform->CreateTcpSocket();
         try
         {
             _listenSocket->Listen(address, port);
@@ -384,8 +343,8 @@ namespace OpenRCT2::Network
         IsServerPlayerInvisible = gOpenRCT2Headless;
 
         LoadGroups();
-        BeginChatLog();
-        BeginServerLog();
+        _logger->BeginChatLog();
+        _logger->BeginServerLog(ServerName, false);
 
         Player* player = AddPlayer(Config::Get().network.playerName, "");
         player->Flags |= PlayerFlags::kIsServer;
@@ -398,7 +357,7 @@ namespace OpenRCT2::Network
             User* networkUser = _userManager.GetOrAddUser(player->KeyHash);
             networkUser->GroupId = player->Group;
             networkUser->Name = player->Name;
-            _userManager.Save();
+            _platform->SaveUserManager(_userManager);
         }
 
         auto* szAddress = address.empty() ? "*" : address.c_str();
@@ -409,7 +368,7 @@ namespace OpenRCT2::Network
         status = Status::connected;
         listening_port = port;
         _serverState.gamestateSnapshotsEnabled = Config::Get().network.desyncDebugging;
-        _advertiser = CreateServerAdvertiser(listening_port);
+        _advertiser = _platform->CreateServerAdvertiser(listening_port);
 
         GameLoadScripts();
         GameNotifyMapChanged();
@@ -1017,7 +976,7 @@ namespace OpenRCT2::Network
         if (GetMode() == Mode::server)
         {
             _userManager.UnsetUsersOfGroup(id);
-            _userManager.Save();
+            _platform->SaveUserManager(_userManager);
         }
     }
 
@@ -1060,26 +1019,7 @@ namespace OpenRCT2::Network
     {
         if (GetMode() == Mode::server)
         {
-            auto& env = GetContext().GetPlatformEnvironment();
-            auto path = Path::Combine(env.GetDirectoryPath(DirBase::user), u8"groups.json");
-
-            json_t jsonGroups = json_t::array();
-            for (auto& group : group_list)
-            {
-                jsonGroups.push_back(group->ToJson());
-            }
-            json_t jsonGroupsCfg = {
-                { "default_group", default_group },
-                { "groups", jsonGroups },
-            };
-            try
-            {
-                Json::WriteToFile(path, jsonGroupsCfg);
-            }
-            catch (const std::exception& ex)
-            {
-                LOG_ERROR("Unable to save %s: %s", path.c_str(), ex.what());
-            }
+            _platform->SaveGroups(group_list, default_group);
         }
     }
 
@@ -1120,38 +1060,14 @@ namespace OpenRCT2::Network
     {
         group_list.clear();
 
-        auto& env = GetContext().GetPlatformEnvironment();
-        auto path = Path::Combine(env.GetDirectoryPath(DirBase::user), u8"groups.json");
+        _platform->LoadGroups(group_list, default_group);
 
-        json_t jsonGroupConfig;
-        if (File::Exists(path))
-        {
-            try
-            {
-                jsonGroupConfig = Json::ReadFromFile(path);
-            }
-            catch (const std::exception& e)
-            {
-                LOG_ERROR("Failed to read %s as JSON. Setting default groups. %s", path.c_str(), e.what());
-            }
-        }
-
-        if (!jsonGroupConfig.is_object())
+        if (group_list.empty())
         {
             SetupDefaultGroups();
         }
         else
         {
-            json_t jsonGroups = jsonGroupConfig["groups"];
-            if (jsonGroups.is_array())
-            {
-                for (auto& jsonGroup : jsonGroups)
-                {
-                    group_list.emplace_back(std::make_unique<NetworkGroup>(NetworkGroup::FromJson(jsonGroup)));
-                }
-            }
-
-            default_group = Json::GetNumber<uint8_t>(jsonGroupConfig["default_group"]);
             if (GetGroupByID(default_group) == nullptr)
             {
                 default_group = 0;
@@ -1216,69 +1132,12 @@ namespace OpenRCT2::Network
 
     void NetworkBase::AppendChatLog(std::string_view s)
     {
-        if (Config::Get().network.logChat && _chat_log_fs.is_open())
-        {
-            AppendLog(_chat_log_fs, s);
-        }
-    }
-
-    void NetworkBase::CloseChatLog()
-    {
-        _chat_log_fs.close();
-    }
-
-    void NetworkBase::BeginServerLog()
-    {
-        auto& env = GetContext().GetPlatformEnvironment();
-        auto directory = env.GetDirectoryPath(DirBase::user, DirId::serverLogs);
-        _serverLogPath = BeginLog(directory, ServerName, _serverLogFilenameFormat);
-        _server_log_fs.open(fs::u8path(_serverLogPath), std::ios::out | std::ios::app | std::ios::binary);
-
-        // Log server start event
-        utf8 logMessage[256];
-        if (GetMode() == Mode::client)
-        {
-            FormatStringLegacy(logMessage, sizeof(logMessage), STR_LOG_CLIENT_STARTED, nullptr);
-        }
-        else if (GetMode() == Mode::server)
-        {
-            FormatStringLegacy(logMessage, sizeof(logMessage), STR_LOG_SERVER_STARTED, nullptr);
-        }
-        else
-        {
-            logMessage[0] = '\0';
-            Guard::Assert(false, "Unknown network mode!");
-        }
-        AppendServerLog(logMessage);
+        _logger->AppendChatLog(s);
     }
 
     void NetworkBase::AppendServerLog(const std::string& s)
     {
-        if (Config::Get().network.logServerActions && _server_log_fs.is_open())
-        {
-            AppendLog(_server_log_fs, s);
-        }
-    }
-
-    void NetworkBase::CloseServerLog()
-    {
-        // Log server stopped event
-        char logMessage[256];
-        if (GetMode() == Mode::client)
-        {
-            FormatStringLegacy(logMessage, sizeof(logMessage), STR_LOG_CLIENT_STOPPED, nullptr);
-        }
-        else if (GetMode() == Mode::server)
-        {
-            FormatStringLegacy(logMessage, sizeof(logMessage), STR_LOG_SERVER_STOPPED, nullptr);
-        }
-        else
-        {
-            logMessage[0] = '\0';
-            Guard::Assert(false, "Unknown network mode!");
-        }
-        AppendServerLog(logMessage);
-        _server_log_fs.close();
+        _logger->AppendServerLog(s);
     }
 
     void NetworkBase::Client_Send_RequestGameState(uint32_t tick)
@@ -2193,7 +2052,7 @@ namespace OpenRCT2::Network
             if (GetMode() == Mode::server)
             {
                 // Load keys host may have added manually
-                _userManager.Load();
+                _platform->LoadUserManager(_userManager);
 
                 // Check if the key is registered
                 const User* networkUser = _userManager.GetUserByHash(keyhash);
@@ -2274,24 +2133,9 @@ namespace OpenRCT2::Network
 
     void NetworkBase::Client_Handle_TOKEN(Connection& connection, Packet& packet)
     {
-        auto keyPath = GetPrivateKeyPath(Config::Get().network.playerName);
-        if (!File::Exists(keyPath))
+        if (!_platform->LoadPrivateKey(Config::Get().network.playerName, _key))
         {
-            LOG_ERROR("Key file (%s) was not found. Restart client to re-generate it.", keyPath.c_str());
-            return;
-        }
-
-        try
-        {
-            auto fs = FileStream(keyPath, FileMode::open);
-            if (!_key.LoadPrivate(&fs))
-            {
-                throw std::runtime_error("Failed to load private key.");
-            }
-        }
-        catch (const std::exception&)
-        {
-            LOG_ERROR("Failed to load key %s", keyPath.c_str());
+            LOG_ERROR("Private key was not found. Restart client to re-generate it.");
             connection.SetLastDisconnectReason(STR_MULTIPLAYER_VERIFICATION_FAILURE);
             connection.Disconnect();
             return;
@@ -3613,7 +3457,7 @@ namespace OpenRCT2::Network
                 User* networkUser = userManager.GetOrAddUser(player->KeyHash);
                 networkUser->GroupId = groupId;
                 networkUser->Name = player->Name;
-                userManager.Save();
+                network._platform->SaveUserManager(userManager);
             }
 
             auto* windowMgr = Ui::GetWindowManager();
@@ -3798,9 +3642,9 @@ namespace OpenRCT2::Network
                 network.KickPlayer(playerId);
 
                 UserManager& networkUserManager = network._userManager;
-                networkUserManager.Load();
+                network._platform->LoadUserManager(networkUserManager);
                 networkUserManager.RemoveUser(player->KeyHash);
-                networkUserManager.Save();
+                network._platform->SaveUserManager(networkUserManager);
             }
         }
         return GameActions::Result();
@@ -3974,20 +3818,9 @@ namespace OpenRCT2::Network
     void SendPassword(const std::string& password)
     {
         auto& network = GetContext()->GetNetwork();
-        const auto keyPath = GetPrivateKeyPath(Config::Get().network.playerName);
-        if (!File::Exists(keyPath))
+        if (!network._platform->LoadPrivateKey(Config::Get().network.playerName, network._key))
         {
-            LOG_ERROR("Private key %s missing! Restart the game to generate it.", keyPath.c_str());
-            return;
-        }
-        try
-        {
-            auto fs = FileStream(keyPath, FileMode::open);
-            network._key.LoadPrivate(&fs);
-        }
-        catch (const std::exception&)
-        {
-            LOG_ERROR("Error reading private key from %s.", keyPath.c_str());
+            LOG_ERROR("Private key missing! Restart the game to generate it.");
             return;
         }
         const std::string pubkey = network._key.PublicKeyString();
@@ -4016,23 +3849,6 @@ namespace OpenRCT2::Network
     {
         auto& network = GetContext()->GetNetwork();
         network.AppendServerLog(text);
-    }
-
-    static u8string GetKeysDirectory()
-    {
-        auto& env = GetContext()->GetPlatformEnvironment();
-        return Path::Combine(env.GetDirectoryPath(DirBase::user), u8"keys");
-    }
-
-    static u8string GetPrivateKeyPath(u8string_view playerName)
-    {
-        return Path::Combine(GetKeysDirectory(), u8string(playerName) + u8".privkey");
-    }
-
-    static u8string GetPublicKeyPath(u8string_view playerName, u8string_view hash)
-    {
-        const auto filename = u8string(playerName) + u8"-" + u8string(hash) + u8".pubkey";
-        return Path::Combine(GetKeysDirectory(), filename);
     }
 
     u8string GetServerName()

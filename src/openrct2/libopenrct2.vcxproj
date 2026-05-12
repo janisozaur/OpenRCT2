@@ -328,7 +328,11 @@
     <ClInclude Include="management\NewsItem.h" />
     <ClInclude Include="management\Research.h" />
     <ClInclude Include="math\Trigonometry.hpp" />
+    <ClInclude Include="network\DefaultNetworkLogger.h" />
+    <ClInclude Include="network\DefaultNetworkPlatform.h" />
     <ClInclude Include="network\DiscordService.h" />
+    <ClInclude Include="network\INetworkLogger.h" />
+    <ClInclude Include="network\INetworkPlatform.h" />
     <ClInclude Include="network\Network.h" />
     <ClInclude Include="network\NetworkAction.h" />
     <ClInclude Include="network\NetworkBase.h" />
@@ -939,6 +943,8 @@
     <ClCompile Include="management\Marketing.cpp" />
     <ClCompile Include="management\NewsItem.cpp" />
     <ClCompile Include="management\Research.cpp" />
+    <ClCompile Include="network\DefaultNetworkLogger.cpp" />
+    <ClCompile Include="network\DefaultNetworkPlatform.cpp" />
     <ClCompile Include="network\DiscordService.cpp" />
     <ClCompile Include="network\NetworkAction.cpp" />
     <ClCompile Include="network\NetworkBase.cpp" />

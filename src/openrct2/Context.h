@@ -61,6 +61,8 @@ namespace OpenRCT2
     namespace Network
     {
         class NetworkBase;
+        struct INetworkPlatform;
+        struct INetworkLogger;
     }
 
     namespace Scripting
@@ -150,6 +152,10 @@ namespace OpenRCT2
     [[nodiscard]] std::unique_ptr<IContext> CreateContext(
         std::unique_ptr<IPlatformEnvironment>&& env, std::unique_ptr<Audio::IAudioContext>&& audioContext,
         std::unique_ptr<Ui::IUiContext>&& uiContext);
+    [[nodiscard]] std::unique_ptr<IContext> CreateContext(
+        std::unique_ptr<IPlatformEnvironment>&& env, std::unique_ptr<Audio::IAudioContext>&& audioContext,
+        std::unique_ptr<Ui::IUiContext>&& uiContext, std::unique_ptr<Network::INetworkPlatform>&& networkPlatform,
+        std::unique_ptr<Network::INetworkLogger>&& networkLogger);
     [[nodiscard]] IContext* GetContext();
 
     void ContextInit();

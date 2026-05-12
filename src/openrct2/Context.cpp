@@ -52,6 +52,8 @@
 #include "localisation/Formatter.h"
 #include "localisation/Localisation.Date.h"
 #include "localisation/LocalisationService.h"
+#include "network/DefaultNetworkLogger.h"
+#include "network/DefaultNetworkPlatform.h"
 #include "network/DiscordService.h"
 #include "network/Network.h"
 #include "network/NetworkBase.h"
@@ -170,7 +172,8 @@ namespace OpenRCT2
     public:
         Context(
             std::unique_ptr<IPlatformEnvironment>&& env, std::unique_ptr<IAudioContext>&& audioContext,
-            std::unique_ptr<IUiContext>&& uiContext)
+            std::unique_ptr<IUiContext>&& uiContext, std::unique_ptr<Network::INetworkPlatform>&& networkPlatform,
+            std::unique_ptr<Network::INetworkLogger>&& networkLogger)
             : _env(std::move(env))
             , _audioContext(std::move(audioContext))
             , _uiContext(std::move(uiContext))
@@ -181,7 +184,10 @@ namespace OpenRCT2
             , _scriptEngine(_stdInOutConsole, *_env)
 #endif
 #ifndef DISABLE_NETWORK
-            , _network(*this)
+            , _network(
+                  *this,
+                  networkPlatform ? std::move(networkPlatform) : std::make_unique<Network::DefaultNetworkPlatform>(*this),
+                  networkLogger ? std::move(networkLogger) : std::make_unique<Network::DefaultNetworkLogger>(*this))
 #endif
             , _painter(std::make_unique<Paint::Painter>(*_uiContext))
         {
@@ -1611,7 +1617,17 @@ namespace OpenRCT2
         std::unique_ptr<IPlatformEnvironment>&& env, std::unique_ptr<IAudioContext>&& audioContext,
         std::unique_ptr<IUiContext>&& uiContext)
     {
-        return std::make_unique<Context>(std::move(env), std::move(audioContext), std::move(uiContext));
+        return CreateContext(std::move(env), std::move(audioContext), std::move(uiContext), nullptr, nullptr);
+    }
+
+    std::unique_ptr<IContext> CreateContext(
+        std::unique_ptr<IPlatformEnvironment>&& env, std::unique_ptr<IAudioContext>&& audioContext,
+        std::unique_ptr<IUiContext>&& uiContext, std::unique_ptr<Network::INetworkPlatform>&& networkPlatform,
+        std::unique_ptr<Network::INetworkLogger>&& networkLogger)
+    {
+        return std::make_unique<Context>(
+            std::move(env), std::move(audioContext), std::move(uiContext), std::move(networkPlatform),
+            std::move(networkLogger));
     }
 
     IContext* GetContext()
