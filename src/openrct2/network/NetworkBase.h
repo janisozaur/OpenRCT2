@@ -142,6 +142,7 @@ namespace OpenRCT2::Network
         bool LoadMap(IStream* stream);
         void UpdateClient();
         void TickClient();
+        void SignalVerificationError();
 
         // Packet dispatchers.
         void Client_Send_RequestGameState(uint32_t tick);

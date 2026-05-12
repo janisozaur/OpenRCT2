@@ -291,12 +291,16 @@ namespace OpenRCT2::Network
             if (!_platform->SavePrivateKey(playerName, _key))
             {
                 LOG_ERROR("Unable to save private key.");
+                _key.Unload();
+                Close();
                 return false;
             }
 
             if (!_platform->SavePublicKey(playerName, _key))
             {
                 LOG_ERROR("Unable to save public key.");
+                _key.Unload();
+                Close();
                 return false;
             }
         }
@@ -1076,7 +1080,17 @@ namespace OpenRCT2::Network
         }
 
         // Host group should always contain all permissions.
-        group_list.at(0)->ActionsAllowed.fill(0xFF);
+        NetworkGroup* hostGroup = GetGroupByID(0);
+        if (hostGroup == nullptr)
+        {
+            SetupDefaultGroups();
+            hostGroup = GetGroupByID(0);
+        }
+
+        if (hostGroup != nullptr)
+        {
+            hostGroup->ActionsAllowed.fill(0xFF);
+        }
     }
 
     void NetworkBase::BeginChatLog()
@@ -1490,10 +1504,14 @@ namespace OpenRCT2::Network
     json_t NetworkBase::GetServerInfoAsJson() const
     {
         json_t jsonObj = {
-            { "name", Config::Get().network.serverName },         { "requiresPassword", !_password.empty() },
-            { "version", kStreamID },       { "players", GetNumVisiblePlayers() },
-            { "maxPlayers", Config::Get().network.maxplayers },   { "description", Config::Get().network.serverDescription },
-            { "greeting", Config::Get().network.serverGreeting }, { "dedicated", gOpenRCT2Headless },
+            { "name", Config::Get().network.serverName },
+            { "requiresPassword", !_password.empty() },
+            { "version", kStreamID },
+            { "players", GetNumVisiblePlayers() },
+            { "maxPlayers", Config::Get().network.maxplayers },
+            { "description", Config::Get().network.serverDescription },
+            { "greeting", Config::Get().network.serverGreeting },
+            { "dedicated", gOpenRCT2Headless },
         };
         return jsonObj;
     }
@@ -3765,12 +3783,22 @@ namespace OpenRCT2::Network
         }
     }
 
+    void NetworkBase::SignalVerificationError()
+    {
+        if (_serverConnection != nullptr)
+        {
+            _serverConnection->SetLastDisconnectReason(STR_MULTIPLAYER_VERIFICATION_FAILURE);
+            _serverConnection->Disconnect();
+        }
+    }
+
     void SendPassword(const std::string& password)
     {
         auto& network = GetContext()->GetNetwork();
         if (!network.GetPlatform().LoadPrivateKey(Config::Get().network.playerName, network._key))
         {
             LOG_ERROR("Private key missing! Restart the game to generate it.");
+            network.SignalVerificationError();
             return;
         }
         const std::string pubkey = network._key.PublicKeyString();
