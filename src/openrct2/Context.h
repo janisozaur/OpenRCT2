@@ -61,7 +61,9 @@ namespace OpenRCT2
     namespace Network
     {
         class NetworkBase;
-    }
+        struct INetworkPlatform;
+        struct INetworkLogger;
+    } // namespace Network
 
     namespace Scripting
     {
@@ -127,11 +129,9 @@ namespace OpenRCT2
         virtual void OpenProgress(StringId captionStringId) = 0;
         virtual void SetProgress(uint32_t currentProgress, uint32_t totalCount, StringId format = kStringIdNone) = 0;
         virtual void CloseProgress() = 0;
-
         virtual bool LoadParkFromFile(const u8string& path, bool loadTitleScreenOnFail = false, bool asScenario = false) = 0;
         virtual bool LoadParkFromStream(
-            IStream* stream, const std::string& path, bool loadTitleScreenFirstOnFail = false, bool asScenario = false)
-            = 0;
+            IStream* stream, const std::string& path, bool loadTitleScreenFirstOnFail = false, bool asScenario = false) = 0;
         virtual void WriteLine(const std::string& s) = 0;
         virtual void WriteErrorLine(const std::string& s) = 0;
         virtual void Finish() = 0;
@@ -150,6 +150,10 @@ namespace OpenRCT2
     [[nodiscard]] std::unique_ptr<IContext> CreateContext(
         std::unique_ptr<IPlatformEnvironment>&& env, std::unique_ptr<Audio::IAudioContext>&& audioContext,
         std::unique_ptr<Ui::IUiContext>&& uiContext);
+    [[nodiscard]] std::unique_ptr<IContext> CreateContext(
+        std::unique_ptr<IPlatformEnvironment>&& env, std::unique_ptr<Audio::IAudioContext>&& audioContext,
+        std::unique_ptr<Ui::IUiContext>&& uiContext, std::unique_ptr<Network::INetworkPlatform>&& networkPlatform,
+        std::unique_ptr<Network::INetworkLogger>&& networkLogger);
     [[nodiscard]] IContext* GetContext();
 
     void ContextInit();

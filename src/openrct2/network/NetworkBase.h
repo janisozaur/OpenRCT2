@@ -3,6 +3,8 @@
 #include "../System.hpp"
 #include "../actions/GameAction.hpp"
 #include "../scenario/Scenario.h"
+#include "INetworkLogger.h"
+#include "INetworkPlatform.h"
 #include "NetworkConnection.h"
 #include "NetworkGroup.h"
 #include "NetworkPlayer.h"
@@ -11,7 +13,6 @@
 #include "NetworkUser.h"
 
 #include <chrono>
-#include <fstream>
 #include <list>
 #include <memory>
 
@@ -28,7 +29,12 @@ namespace OpenRCT2::Network
     class NetworkBase : public System
     {
     public:
-        NetworkBase(IContext& context);
+        NetworkBase(IContext& context, std::unique_ptr<INetworkPlatform> platform, std::unique_ptr<INetworkLogger> logger);
+
+        INetworkPlatform& GetPlatform()
+        {
+            return *_platform;
+        }
 
     public: // Uncategorized
         bool BeginServer(uint16_t port, const std::string& address);
@@ -51,11 +57,10 @@ namespace OpenRCT2::Network
         int32_t GetNumVisiblePlayers() const noexcept;
         void SetPassword(u8string_view password);
         uint8_t GetDefaultGroup() const noexcept;
-        std::string BeginLog(const std::string& directory, const std::string& midName, const std::string& filenameFormat);
-        void AppendLog(std::ostream& fs, std::string_view s);
         void BeginChatLog();
         void AppendChatLog(std::string_view s);
         void CloseChatLog();
+        void AppendServerLog(const std::string& s);
         Stats GetStats() const;
         json_t GetServerInfoAsJson() const;
         bool ProcessConnection(Connection& connection);
@@ -73,9 +78,6 @@ namespace OpenRCT2::Network
         void SaveGroups();
         void RemoveGroup(uint8_t id);
         uint8_t GetGroupIDByHash(const std::string& keyhash);
-        void BeginServerLog();
-        void AppendServerLog(const std::string& s);
-        void CloseServerLog();
         void DecayCooldown(Player* player);
         void AddClient(std::unique_ptr<ITcpSocket>&& socket);
         std::string GetMasterServerUrl();
@@ -140,6 +142,7 @@ namespace OpenRCT2::Network
         bool LoadMap(IStream* stream);
         void UpdateClient();
         void TickClient();
+        void SignalVerificationError();
 
         // Packet dispatchers.
         void Client_Send_RequestGameState(uint32_t tick);
@@ -193,7 +196,9 @@ namespace OpenRCT2::Network
     private: // Common Data
         using CommandHandler = void (NetworkBase::*)(Connection& connection, Packet& packet);
 
-        std::ofstream _chat_log_fs;
+        std::unique_ptr<INetworkPlatform> _platform;
+        std::unique_ptr<INetworkLogger> _logger;
+
         uint32_t _lastUpdateTime = 0;
         uint32_t _currentDeltaTime = 0;
         Mode mode = Mode::none;
@@ -206,9 +211,6 @@ namespace OpenRCT2::Network
         std::unique_ptr<ITcpSocket> _listenSocket;
         std::unique_ptr<INetworkServerAdvertiser> _advertiser;
         std::list<std::unique_ptr<Connection>> client_connection_list;
-        std::string _serverLogPath;
-        std::string _serverLogFilenameFormat = "%Y%m%d-%H%M%S.txt";
-        std::ofstream _server_log_fs;
         uint16_t listening_port = 0;
         bool _playerListInvalidated = false;
 
@@ -231,8 +233,6 @@ namespace OpenRCT2::Network
         std::multimap<uint32_t, Player> _pendingPlayerInfo;
         std::map<uint32_t, ServerTickData> _serverTickData;
         std::string _host;
-        std::string _chatLogPath;
-        std::string _chatLogFilenameFormat = "%Y%m%d-%H%M%S.txt";
         std::string _password;
         MemoryStream _serverGameState;
         ServerState _serverState;
