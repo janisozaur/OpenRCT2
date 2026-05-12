@@ -10,6 +10,7 @@
 #include "X8DrawingEngine.h"
 
 #include "../Context.h"
+#include "../platform/Platform.h"
 #include "../config/Config.h"
 #include "../core/Guard.hpp"
 #include "../core/Numerics.hpp"
@@ -525,7 +526,7 @@ void X8DrawingContext::FilterRect(
 
         if (Platform::AVX512Available())
         {
-            FilterRectAvx512(dst, width, height, step, &paletteEntries[0]);
+            FilterRectAvx512(dst, width, height, step, paletteEntries.data());
         }
         else
         {

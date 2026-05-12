@@ -43,9 +43,9 @@
 #include <thread>
 
 #ifdef _WIN32
-static constexpr std::array _prohibitedCharacters = { '<', '>', '*', '\\', ':', '|', '?', '"', '/' };
+static constexpr std::array kProhibitedCharacters = { '<', '>', '*', '\\', ':', '|', '?', '"', '/' };
 #else
-static constexpr std::array _prohibitedCharacters = { '/' };
+static constexpr std::array kProhibitedCharacters = { '/' };
 #endif
 
 namespace OpenRCT2::Platform
@@ -170,7 +170,7 @@ namespace OpenRCT2::Platform
         std::replace_if(
             sanitised.begin(), sanitised.end(),
             [](const std::string::value_type& ch) -> bool {
-                return std::find(_prohibitedCharacters.begin(), _prohibitedCharacters.end(), ch) != _prohibitedCharacters.end();
+                return std::find(kProhibitedCharacters.begin(), kProhibitedCharacters.end(), ch) != kProhibitedCharacters.end();
             },
             '_');
         sanitised = String::trim(sanitised);
@@ -179,7 +179,7 @@ namespace OpenRCT2::Platform
 
     bool IsFilenameValid(u8string_view fileName)
     {
-        return fileName.find_first_of(_prohibitedCharacters.data(), 0, _prohibitedCharacters.size()) == fileName.npos;
+        return fileName.find_first_of(kProhibitedCharacters.data(), 0, kProhibitedCharacters.size()) == fileName.npos;
     }
 
 #ifndef __ANDROID__

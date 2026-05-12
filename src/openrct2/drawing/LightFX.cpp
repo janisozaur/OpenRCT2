@@ -18,6 +18,7 @@
 #include "../interface/Window.h"
 #include "../interface/WindowBase.h"
 #include "../paint/Paint.h"
+#include "../platform/Platform.h"
 #include "../ride/Ride.h"
 #include "../ride/RideData.h"
 #include "../ride/Vehicle.h"

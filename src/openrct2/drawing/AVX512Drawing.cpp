@@ -13,8 +13,7 @@
 
 using OpenRCT2::Drawing::PaletteIndex;
 
-#if defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__) && defined(__AVX512VL__)               \
-    && defined(__AVX512VBMI__)
+#if defined(__AVX512F__) && defined(__AVX512BW__) && defined(__AVX512DQ__) && defined(__AVX512VL__) && defined(__AVX512VBMI__)
 
     #include <immintrin.h>
 
@@ -43,7 +42,7 @@ void FilterRectAvx512(PaletteIndex* dst, int32_t width, int32_t height, int32_t 
             __m512i res34 = _mm512_permutex2var_epi8(map3, indices, map4);
 
             // Select between res12 and res34 based on the 7th bit of indices
-            __mmask64 highBitMask = _mm512_test_epi8_mask(indices, _mm512_set1_epi8(0x80u));
+            __mmask64 highBitMask = _mm512_test_epi8_mask(indices, _mm512_set1_epi8(static_cast<uint8_t>(0x80U)));
             __m512i res = _mm512_mask_blend_epi8(highBitMask, res12, res34);
 
             _mm512_storeu_si512(reinterpret_cast<__m512i*>(d), res);
@@ -52,13 +51,13 @@ void FilterRectAvx512(PaletteIndex* dst, int32_t width, int32_t height, int32_t 
 
         if (ww > 0)
         {
-            const __mmask64 tailMask = _cvtu64_mask64((1ULL << ww) - 1);
+            const __mmask64 tailMask = _cvtu64_mask64((1ULL << ww) - 1ULL);
             __m512i indices = _mm512_maskz_loadu_epi8(tailMask, d);
 
             __m512i res12 = _mm512_permutex2var_epi8(map, indices, map2);
             __m512i res34 = _mm512_permutex2var_epi8(map3, indices, map4);
 
-            __mmask64 highBitMask = _mm512_test_epi8_mask(indices, _mm512_set1_epi8(0x80u));
+            __mmask64 highBitMask = _mm512_test_epi8_mask(indices, _mm512_set1_epi8(static_cast<uint8_t>(0x80U)));
             __m512i res = _mm512_mask_blend_epi8(highBitMask, res12, res34);
 
             _mm512_mask_storeu_epi8(d, tailMask, res);
@@ -67,8 +66,8 @@ void FilterRectAvx512(PaletteIndex* dst, int32_t width, int32_t height, int32_t 
 }
 
 void LightFxRenderToTextureAvx512(
-    void* dstPixels, uint32_t dstPitch, const PaletteIndex* bits, uint32_t width, uint32_t height,
-    const uint32_t* palette, const uint32_t* lightPalette, const uint8_t* lightBits)
+    void* dstPixels, uint32_t dstPitch, const PaletteIndex* bits, uint32_t width, uint32_t height, const uint32_t* palette,
+    const uint32_t* lightPalette, const uint8_t* lightBits)
 {
     const __m512i v6 = _mm512_set1_epi32(6);
     const __m512i v255 = _mm512_set1_epi32(255);
@@ -82,10 +81,10 @@ void LightFxRenderToTextureAvx512(
         const uint8_t* lb = lightBits + yy * width;
 
         int32_t ww = width;
-        for (; ww > 0; )
+        for (; ww > 0;)
         {
             int32_t count = std::min(ww, 16);
-            __mmask16 loadMask = (1U << count) - 1;
+            __mmask16 loadMask = static_cast<__mmask16>((1U << count) - 1U);
 
             __m128i indices8 = _mm_maskz_loadu_epi8(loadMask, b);
             __m512i indices32 = _mm512_cvtepu8_epi32(indices8);
@@ -165,7 +164,7 @@ void MaskAvx512(
 
             if (ww > 0)
             {
-                const __mmask64 tailMask = _cvtu64_mask64((1ULL << ww) - 1);
+                const __mmask64 tailMask = _cvtu64_mask64((1ULL << ww) - 1ULL);
                 const __m512i colour = _mm512_maskz_loadu_epi8(tailMask, c);
                 const __m512i mask = _mm512_maskz_loadu_epi8(tailMask, m);
                 const __m512i dest = _mm512_maskz_loadu_epi8(tailMask, d);
@@ -211,15 +210,14 @@ void MaskAvx512(
         #error You have to compile this file with AVX-512 enabled, when targeting x86!
     #endif
 
-void FilterRectAvx512(
-    PaletteIndex* RESTRICT dst, int32_t width, int32_t height, int32_t stride, const PaletteIndex* paletteMap)
+void FilterRectAvx512(PaletteIndex* RESTRICT dst, int32_t width, int32_t height, int32_t stride, const PaletteIndex* paletteMap)
 {
     OpenRCT2::Guard::Fail("AVX-512 FilterRect function called on a CPU that doesn't support AVX-512");
 }
 
 void LightFxRenderToTextureAvx512(
-    void* dstPixels, uint32_t dstPitch, const PaletteIndex* bits, uint32_t width, uint32_t height,
-    const uint32_t* palette, const uint32_t* lightPalette, const uint8_t* lightBits)
+    void* dstPixels, uint32_t dstPitch, const PaletteIndex* bits, uint32_t width, uint32_t height, const uint32_t* palette,
+    const uint32_t* lightPalette, const uint8_t* lightBits)
 {
     OpenRCT2::Guard::Fail("AVX-512 LightFX function called on a CPU that doesn't support AVX-512");
 }
