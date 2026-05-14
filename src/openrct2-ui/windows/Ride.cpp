@@ -294,9 +294,9 @@ namespace OpenRCT2::Ui::Windows
         makeWidget        ({  7,  50}, {302, 14}, WidgetType::dropdownMenu, WindowColour::secondary                                                          ),
         makeWidget        ({297,  51}, { 11, 12}, WidgetType::button,       WindowColour::secondary, STR_DROPDOWN_GLYPH                                      ),
         makeWidget        ({  7, 137}, {302, 12}, WidgetType::checkbox,     WindowColour::secondary, STR_OPTION_REVERSE_TRAINS, STR_OPTION_REVERSE_TRAINS_TIP),
-        makeWidget        ({  7, 154}, {302, 43}, WidgetType::scroll,       WindowColour::secondary, kStringIdEmpty                                          ),
-        makeHoldableSpinnerWidgets({  7, 203}, {145, 14}, WidgetType::spinner,      WindowColour::secondary, STR_RIDE_VEHICLE_COUNT,    STR_MAX_VEHICLES_TIP         ),
-        makeHoldableSpinnerWidgets({164, 203}, {145, 14}, WidgetType::spinner,      WindowColour::secondary, kStringIdEmpty,            STR_MAX_CARS_PER_TRAIN_TIP   )
+        makeWidget        ({  7, 154}, {302, 100}, WidgetType::scroll,      WindowColour::secondary, kStringIdEmpty                                          ),
+        makeHoldableSpinnerWidgets({  7, 260}, {145, 14}, WidgetType::spinner,      WindowColour::secondary, STR_RIDE_VEHICLE_COUNT,    STR_MAX_VEHICLES_TIP         ),
+        makeHoldableSpinnerWidgets({164, 260}, {145, 14}, WidgetType::spinner,      WindowColour::secondary, kStringIdEmpty,            STR_MAX_CARS_PER_TRAIN_TIP   )
     );
 
     // 0x009ADEFC
@@ -1066,6 +1066,8 @@ namespace OpenRCT2::Ui::Windows
         {
             switch (page)
             {
+                case WINDOW_RIDE_PAGE_VEHICLE:
+                    return VehicleScrollGetSize(scrollIndex);
                 case WINDOW_RIDE_PAGE_GRAPHS:
                     return GraphsScrollGetSize(scrollIndex);
                 case WINDOW_RIDE_PAGE_MUSIC:
@@ -2712,8 +2714,9 @@ namespace OpenRCT2::Ui::Windows
 
         void VehicleResize()
         {
+            flags |= WindowFlag::resizable;
             auto bottom = widgets[WIDX_VEHICLE_TRAINS].bottom + 6 - getTitleBarDiffNormal();
-            WindowSetResize(*this, { kMinimumWindowWidth, bottom }, { kMinimumWindowWidth, bottom });
+            WindowSetResize(*this, { kMinimumWindowWidth, bottom }, { kMaxWindowSize.width, 450 });
         }
 
         void VehicleOnMouseDown(WidgetIndex widgetIndex)
@@ -2775,6 +2778,17 @@ namespace OpenRCT2::Ui::Windows
             currentFrame++;
             onPrepareDraw();
             invalidateWidget(WIDX_TAB_2);
+            widgetScrollUpdateThumbs(*this, WIDX_VEHICLE_TRAINS_PREVIEW);
+        }
+
+        ScreenSize VehicleScrollGetSize(int32_t scrollIndex)
+        {
+            auto ride = GetRide(rideId);
+            if (ride == nullptr)
+                return {};
+
+            return { static_cast<int16_t>(std::max(0, (ride->numTrains - 1) * 36) + 50),
+                     static_cast<int16_t>(widgets[WIDX_VEHICLE_TRAINS_PREVIEW].height() - 3) };
         }
 
         StringWithArgs VehicleTooltip(const WidgetIndex widgetIndex, StringId fallback)
@@ -2896,6 +2910,15 @@ namespace OpenRCT2::Ui::Windows
             auto carsPerTrainStringId = abs(carsPerTrain) == 1 ? STR_1_CAR_PER_TRAIN : STR_X_CARS_PER_TRAIN;
             _spinnerCaption1 = FormatStringID(carsPerTrainStringId, carsPerTrain);
             widgets[WIDX_VEHICLE_CARS_PER_TRAIN].setString(_spinnerCaption1.c_str());
+
+            widgets[WIDX_VEHICLE_TRAINS_PREVIEW].right = width - 7;
+            widgets[WIDX_VEHICLE_TRAINS_PREVIEW].bottom = height - 21;
+            widgets[WIDX_VEHICLE_TRAINS].moveToY(height - 18);
+            widgets[WIDX_VEHICLE_TRAINS_INCREASE].moveToY(height - 17);
+            widgets[WIDX_VEHICLE_TRAINS_DECREASE].moveToY(height - 17);
+            widgets[WIDX_VEHICLE_CARS_PER_TRAIN].moveToY(height - 18);
+            widgets[WIDX_VEHICLE_CARS_PER_TRAIN_INCREASE].moveToY(height - 17);
+            widgets[WIDX_VEHICLE_CARS_PER_TRAIN_DECREASE].moveToY(height - 17);
         }
 
         void VehicleOnDraw(RenderTarget& rt)
@@ -2971,10 +2994,8 @@ namespace OpenRCT2::Ui::Windows
                 height += heightIncrease;
                 resizeFrame();
 
-                for (auto i = EnumValue(WIDX_VEHICLE_TRAINS_PREVIEW); i <= WIDX_VEHICLE_CARS_PER_TRAIN_DECREASE; i++)
-                {
-                    widgets[i].moveDown(heightIncrease);
-                }
+                // Re-prepare to ensure anchoring is applied with new height
+                VehicleOnPrepareDraw();
             }
         }
 
@@ -2997,7 +3018,8 @@ namespace OpenRCT2::Ui::Windows
             Rectangle::fill(rt, { { rt.x, rt.y }, { rt.x + rt.width, rt.y + rt.height } }, PaletteIndex::pi12);
 
             Widget* widget = &widgets[WIDX_VEHICLE_TRAINS_PREVIEW];
-            int32_t startX = std::max(2, (widget->width() - 1 - ((ride->numTrains - 1) * 36)) / 2 - 25);
+            const auto scrollWidth = std::max(0, (ride->numTrains - 1) * 36) + 50;
+            int32_t startX = std::max(2, (scrollWidth - 1 - ((ride->numTrains - 1) * 36)) / 2 - 25);
             int32_t startY = widget->height() - 5;
 
             bool isReversed = ride->flags.has(RideFlag::reversedTrains);
