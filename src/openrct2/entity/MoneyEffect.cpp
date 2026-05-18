@@ -35,9 +35,9 @@ namespace OpenRCT2
     };
 
     template<>
-    bool EntityBase::is<MoneyEffect>() const
+    bool EntityBase::Is<MoneyEffect>() const
     {
-        return type == EntityType::moneyEffect;
+        return Type == EntityType::moneyEffect;
     }
 
     /**
@@ -53,8 +53,8 @@ namespace OpenRCT2
         if (moneyEffect == nullptr)
             return;
 
-        moneyEffect->guestPurchase = (guestPurchase ? 1 : 0);
-        moneyEffect->moveTo(effectPos);
+        moneyEffect->GuestPurchase = (guestPurchase ? 1 : 0);
+        moneyEffect->MoveTo(effectPos);
         moneyEffect->SetValue(value);
     }
 
@@ -94,25 +94,25 @@ namespace OpenRCT2
     /**
      * Set the value of the money effect
      */
-    void MoneyEffect::SetValue(money64 newValue)
+    void MoneyEffect::SetValue(money64 value)
     {
-        value = newValue;
-        spriteData.width = 64;
-        spriteData.heightMin = 20;
-        spriteData.heightMax = 30;
-        moveDelay = 0;
-        numMovements = 0;
+        Value = value;
+        SpriteData.Width = 64;
+        SpriteData.HeightMin = 20;
+        SpriteData.HeightMax = 30;
+        MoveDelay = 0;
+        NumMovements = 0;
 
-        int16_t newOffsetX = 0;
+        int16_t offsetX = 0;
         if (!gOpenRCT2NoGraphics)
         {
-            auto [stringId, pairValue] = GetStringId();
+            auto [stringId, newValue] = GetStringId();
             char buffer[128];
-            FormatStringLegacy(buffer, 128, stringId, &pairValue);
-            newOffsetX = -(Drawing::getStringWidth(buffer, FontStyle::medium) / 2);
+            FormatStringLegacy(buffer, 128, stringId, &newValue);
+            offsetX = -(Drawing::getStringWidth(buffer, FontStyle::medium) / 2);
         }
-        offsetX = newOffsetX;
-        wiggle = 0;
+        OffsetX = offsetX;
+        Wiggle = 0;
     }
 
     /**
@@ -121,14 +121,14 @@ namespace OpenRCT2
      */
     void MoneyEffect::Update()
     {
-        wiggle++;
-        if (wiggle >= 22)
+        Wiggle++;
+        if (Wiggle >= 22)
         {
-            wiggle = 0;
+            Wiggle = 0;
         }
 
-        moveDelay++;
-        if (moveDelay < 2)
+        MoveDelay++;
+        if (MoveDelay < 2)
         {
             return;
         }
@@ -136,19 +136,19 @@ namespace OpenRCT2
         int32_t newX = x;
         int32_t newY = y;
         int32_t newZ = z;
-        moveDelay = 0;
+        MoveDelay = 0;
 
-        if (guestPurchase)
+        if (GuestPurchase)
         {
             newZ += 1;
         }
         newY += kMoneyEffectMoveOffset[GetCurrentRotation()].y;
         newX += kMoneyEffectMoveOffset[GetCurrentRotation()].x;
 
-        moveTo({ newX, newY, newZ });
+        MoveTo({ newX, newY, newZ });
 
-        numMovements++;
-        if (numMovements < 55)
+        NumMovements++;
+        if (NumMovements < 55)
         {
             return;
         }
@@ -158,11 +158,11 @@ namespace OpenRCT2
 
     std::pair<StringId, money64> MoneyEffect::GetStringId() const
     {
-        StringId spentStringId = guestPurchase ? STR_MONEY_EFFECT_SPEND_HIGHP : STR_MONEY_EFFECT_SPEND;
-        StringId receiveStringId = guestPurchase ? STR_MONEY_EFFECT_RECEIVE_HIGHP : STR_MONEY_EFFECT_RECEIVE;
+        StringId spentStringId = GuestPurchase ? STR_MONEY_EFFECT_SPEND_HIGHP : STR_MONEY_EFFECT_SPEND;
+        StringId receiveStringId = GuestPurchase ? STR_MONEY_EFFECT_RECEIVE_HIGHP : STR_MONEY_EFFECT_RECEIVE;
         StringId stringId = receiveStringId;
-        money64 outValue = value;
-        if (value < 0)
+        money64 outValue = Value;
+        if (Value < 0)
         {
             outValue *= -1;
             stringId = spentStringId;
@@ -173,14 +173,14 @@ namespace OpenRCT2
 
     void MoneyEffect::Serialise(DataSerialiser& stream)
     {
-        EntityBase::serialise(stream);
+        EntityBase::Serialise(stream);
         stream << frame;
-        stream << moveDelay;
-        stream << numMovements;
-        stream << guestPurchase;
-        stream << value;
-        stream << offsetX;
-        stream << wiggle;
+        stream << MoveDelay;
+        stream << NumMovements;
+        stream << GuestPurchase;
+        stream << Value;
+        stream << OffsetX;
+        stream << Wiggle;
     }
 
     void MoneyEffect::Paint(PaintSession& session, int32_t imageDirection) const
@@ -193,7 +193,7 @@ namespace OpenRCT2
             return;
         }
 
-        if (guestPurchase && !Config::Get().general.showGuestPurchases)
+        if (GuestPurchase && !Config::Get().general.showGuestPurchases)
         {
             // Don't show the money effect for guest purchases when the option is disabled.
             return;
@@ -211,9 +211,8 @@ namespace OpenRCT2
             0, 1, 2, 2, 3, 3, 3, 3, 2, 2, 1, 0, -1, -2, -2, -3, -3, -3, -3, -2, -2, -1,
         };
 
-        auto [stringId, stringValue] = GetStringId();
+        auto [stringId, value] = GetStringId();
         PaintFloatingMoneyEffect(
-            session, stringValue, stringId, y, z, const_cast<int8_t*>(&waveOffset[wiggle % 22]), offsetX,
-            session.CurrentRotation);
+            session, value, stringId, y, z, const_cast<int8_t*>(&waveOffset[Wiggle % 22]), OffsetX, session.CurrentRotation);
     }
 } // namespace OpenRCT2

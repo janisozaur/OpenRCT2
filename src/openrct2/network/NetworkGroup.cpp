@@ -18,9 +18,9 @@
 
 namespace OpenRCT2::Network
 {
-    NetworkGroup NetworkGroup::fromJson(const json_t& jsonData)
+    NetworkGroup NetworkGroup::FromJson(const json_t& jsonData)
     {
-        Guard::Assert(jsonData.is_object(), "NetworkGroup::fromJson expects parameter jsonData to be object");
+        Guard::Assert(jsonData.is_object(), "NetworkGroup::FromJson expects parameter jsonData to be object");
 
         NetworkGroup group;
         json_t jsonId = jsonData["id"];
@@ -32,101 +32,101 @@ namespace OpenRCT2::Network
             throw std::runtime_error("Missing group data");
         }
 
-        group.id = Json::GetNumber<uint8_t>(jsonId);
+        group.Id = Json::GetNumber<uint8_t>(jsonId);
         group._name = Json::GetString(jsonName);
-        std::fill(group.actionsAllowed.begin(), group.actionsAllowed.end(), 0);
+        std::fill(group.ActionsAllowed.begin(), group.ActionsAllowed.end(), 0);
 
         for (const auto& jsonValue : jsonPermissions)
         {
             const std::string permission = Json::GetString(jsonValue);
 
-            Permission action_id = NetworkActions::findCommandByPermissionName(permission);
+            Permission action_id = NetworkActions::FindCommandByPermissionName(permission);
             if (action_id != Permission::count)
             {
-                group.toggleActionPermission(action_id);
+                group.ToggleActionPermission(action_id);
             }
         }
         return group;
     }
 
-    json_t NetworkGroup::toJson() const
+    json_t NetworkGroup::ToJson() const
     {
         json_t jsonGroup = {
-            { "id", id },
-            { "name", getName() },
+            { "id", Id },
+            { "name", GetName() },
         };
         json_t actionsArray = json_t::array();
-        for (size_t i = 0; i < NetworkActions::kActions.size(); i++)
+        for (size_t i = 0; i < NetworkActions::Actions.size(); i++)
         {
-            if (canPerformAction(static_cast<Permission>(i)))
+            if (CanPerformAction(static_cast<Permission>(i)))
             {
-                actionsArray.emplace_back(NetworkActions::kActions[i].permissionName);
+                actionsArray.emplace_back(NetworkActions::Actions[i].PermissionName);
             }
         }
         jsonGroup["permissions"] = actionsArray;
         return jsonGroup;
     }
 
-    const std::string& NetworkGroup::getName() const noexcept
+    const std::string& NetworkGroup::GetName() const noexcept
     {
         return _name;
     }
 
-    void NetworkGroup::setName(std::string_view name)
+    void NetworkGroup::SetName(std::string_view name)
     {
         _name = name;
     }
 
-    void NetworkGroup::read(Packet& packet)
+    void NetworkGroup::Read(Packet& packet)
     {
-        packet >> id;
-        setName(packet.readString());
-        for (auto& action : actionsAllowed)
+        packet >> Id;
+        SetName(packet.ReadString());
+        for (auto& action : ActionsAllowed)
         {
             packet >> action;
         }
     }
 
-    void NetworkGroup::write(Packet& packet) const
+    void NetworkGroup::Write(Packet& packet) const
     {
-        packet << id;
-        packet.writeString(getName().c_str());
-        for (const auto& action : actionsAllowed)
+        packet << Id;
+        packet.WriteString(GetName().c_str());
+        for (const auto& action : ActionsAllowed)
         {
             packet << action;
         }
     }
 
-    void NetworkGroup::toggleActionPermission(Permission index)
+    void NetworkGroup::ToggleActionPermission(Permission index)
     {
         size_t index_st = static_cast<size_t>(index);
         size_t byte = index_st / 8;
         size_t bit = index_st % 8;
-        if (byte >= actionsAllowed.size())
+        if (byte >= ActionsAllowed.size())
         {
             return;
         }
-        actionsAllowed[byte] ^= (1 << bit);
+        ActionsAllowed[byte] ^= (1 << bit);
     }
 
-    bool NetworkGroup::canPerformAction(Permission index) const noexcept
+    bool NetworkGroup::CanPerformAction(Permission index) const noexcept
     {
         size_t index_st = static_cast<size_t>(index);
         size_t byte = index_st / 8;
         size_t bit = index_st % 8;
-        if (byte >= actionsAllowed.size())
+        if (byte >= ActionsAllowed.size())
         {
             return false;
         }
-        return (actionsAllowed[byte] & (1 << bit)) != 0;
+        return (ActionsAllowed[byte] & (1 << bit)) != 0;
     }
 
-    bool NetworkGroup::canPerformCommand(GameCommand command) const
+    bool NetworkGroup::CanPerformCommand(GameCommand command) const
     {
-        Permission action = NetworkActions::findCommand(command);
+        Permission action = NetworkActions::FindCommand(command);
         if (action != Permission::count)
         {
-            return canPerformAction(action);
+            return CanPerformAction(action);
         }
         return false;
     }

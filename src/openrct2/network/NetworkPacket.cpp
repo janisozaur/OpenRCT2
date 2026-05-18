@@ -18,35 +18,35 @@
 namespace OpenRCT2::Network
 {
     Packet::Packet(Command id) noexcept
-        : header{ PacketHeader::kMagic, PacketHeader::kVersion, 0, id }
+        : Header{ PacketHeader::kMagic, PacketHeader::kVersion, 0, id }
     {
     }
 
-    uint8_t* Packet::getData() noexcept
+    uint8_t* Packet::GetData() noexcept
     {
-        return data.data();
+        return Data.data();
     }
 
-    const uint8_t* Packet::getData() const noexcept
+    const uint8_t* Packet::GetData() const noexcept
     {
-        return data.data();
+        return Data.data();
     }
 
-    Command Packet::getCommand() const noexcept
+    Command Packet::GetCommand() const noexcept
     {
-        return header.id;
+        return Header.id;
     }
 
-    void Packet::clear() noexcept
+    void Packet::Clear() noexcept
     {
-        bytesTransferred = 0;
-        bytesRead = 0;
-        data.clear();
+        BytesTransferred = 0;
+        BytesRead = 0;
+        Data.clear();
     }
 
-    bool Packet::commandRequiresAuth() const noexcept
+    bool Packet::CommandRequiresAuth() const noexcept
     {
-        switch (getCommand())
+        switch (GetCommand())
         {
             case Command::ping:
             case Command::auth:
@@ -63,41 +63,41 @@ namespace OpenRCT2::Network
         }
     }
 
-    void Packet::write(const void* bytes, size_t size)
+    void Packet::Write(const void* bytes, size_t size)
     {
         const uint8_t* src = reinterpret_cast<const uint8_t*>(bytes);
-        data.insert(data.end(), src, src + size);
+        Data.insert(Data.end(), src, src + size);
     }
 
-    void Packet::writeString(std::string_view s)
+    void Packet::WriteString(std::string_view s)
     {
-        write(s.data(), s.size());
-        data.push_back(0);
+        Write(s.data(), s.size());
+        Data.push_back(0);
     }
 
-    const uint8_t* Packet::read(size_t size)
+    const uint8_t* Packet::Read(size_t size)
     {
-        if (bytesRead + size > data.size())
+        if (BytesRead + size > Data.size())
         {
             return nullptr;
         }
 
-        const uint8_t* result = data.data() + bytesRead;
-        bytesRead += size;
-        return result;
+        const uint8_t* data = Data.data() + BytesRead;
+        BytesRead += size;
+        return data;
     }
 
-    std::string_view Packet::readString()
+    std::string_view Packet::ReadString()
     {
-        if (bytesRead >= data.size())
+        if (BytesRead >= Data.size())
             return {};
 
-        const char* str = reinterpret_cast<const char*>(data.data() + bytesRead);
+        const char* str = reinterpret_cast<const char*>(Data.data() + BytesRead);
 
         size_t stringLen = 0;
-        while (bytesRead < data.size() && str[stringLen] != '\0')
+        while (BytesRead < Data.size() && str[stringLen] != '\0')
         {
-            bytesRead++;
+            BytesRead++;
             stringLen++;
         }
 
@@ -105,7 +105,7 @@ namespace OpenRCT2::Network
             return {};
 
         // Skip null terminator.
-        bytesRead++;
+        BytesRead++;
 
         return std::string_view(str, stringLen);
     }

@@ -110,19 +110,19 @@ static RideId BannerGetRideIndexAt(const CoordsXYZ& bannerCoords)
         return resultRideIndex;
     do
     {
-        if (tileElement->getType() != TileElementType::Track)
+        if (tileElement->GetType() != TileElementType::Track)
             continue;
 
-        RideId rideIndex = tileElement->asTrack()->GetRideIndex();
+        RideId rideIndex = tileElement->AsTrack()->GetRideIndex();
         auto ride = GetRide(rideIndex);
         if (ride == nullptr || ride->getRideTypeDescriptor().flags.has(RtdFlag::isShopOrFacility))
             continue;
 
-        if ((tileElement->getClearanceZ()) + (4 * kCoordsZStep) <= bannerCoords.z)
+        if ((tileElement->GetClearanceZ()) + (4 * kCoordsZStep) <= bannerCoords.z)
             continue;
 
         resultRideIndex = rideIndex;
-    } while (!(tileElement++)->isLastForTile());
+    } while (!(tileElement++)->IsLastForTile());
 
     return resultRideIndex;
 }
@@ -171,7 +171,7 @@ TileElement* BannerGetTileElement(BannerIndex bannerIndex)
                 {
                     return tileElement;
                 }
-            } while (!(tileElement++)->isLastForTile());
+            } while (!(tileElement++)->IsLastForTile());
         }
     }
     return nullptr;
@@ -189,7 +189,7 @@ WallElement* BannerGetScrollingWallTileElement(BannerIndex bannerIndex)
 
     do
     {
-        auto wallElement = tileElement->asWall();
+        auto wallElement = tileElement->AsWall();
 
         if (wallElement == nullptr)
             continue;
@@ -200,7 +200,7 @@ WallElement* BannerGetScrollingWallTileElement(BannerIndex bannerIndex)
         if (wallElement->GetBannerIndex() != bannerIndex)
             continue;
         return wallElement;
-    } while (!(tileElement++)->isLastForTile());
+    } while (!(tileElement++)->IsLastForTile());
 
     return nullptr;
 }

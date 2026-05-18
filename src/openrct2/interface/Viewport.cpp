@@ -624,7 +624,7 @@ namespace OpenRCT2
                 ViewportSetUndergroundFlag(underground, window, window->viewport);
             }
 
-            auto centreLoc = centre2dCoordinates(sprite->getLocation(), window->viewport);
+            auto centreLoc = centre2dCoordinates(sprite->GetLocation(), window->viewport);
             if (centreLoc.has_value())
             {
                 window->savedViewPos = *centreLoc;
@@ -636,14 +636,14 @@ namespace OpenRCT2
     void ViewportUpdateSmartFollowEntity(WindowBase* window)
     {
         auto entity = getGameState().entities.TryGetEntity(window->viewportSmartFollowSprite);
-        if (entity == nullptr || entity->type == EntityType::null)
+        if (entity == nullptr || entity->Type == EntityType::null)
         {
             window->viewportSmartFollowSprite = EntityId::GetNull();
             window->viewportTargetSprite = EntityId::GetNull();
             return;
         }
 
-        switch (entity->type)
+        switch (entity->Type)
         {
             case EntityType::vehicle:
                 ViewportUpdateSmartFollowVehicle(window);
@@ -651,7 +651,7 @@ namespace OpenRCT2
 
             case EntityType::guest:
             {
-                auto* guest = entity->as<Guest>();
+                auto* guest = entity->As<Guest>();
                 if (guest == nullptr)
                 {
                     return;
@@ -661,7 +661,7 @@ namespace OpenRCT2
             }
             case EntityType::staff:
             {
-                auto* staff = entity->as<Staff>();
+                auto* staff = entity->As<Staff>();
                 if (staff == nullptr)
                 {
                     return;
@@ -678,8 +678,8 @@ namespace OpenRCT2
 
     void ViewportUpdateSmartFollowGuest(WindowBase* window, const Guest& peep)
     {
-        Focus focus = Focus(peep.id);
-        window->viewportTargetSprite = peep.id;
+        Focus focus = Focus(peep.Id);
+        window->viewportTargetSprite = peep.Id;
 
         if (peep.State == PeepState::picked)
         {
@@ -702,9 +702,9 @@ namespace OpenRCT2
                     const auto car = train->GetCar(peep.CurrentCar);
                     if (car != nullptr)
                     {
-                        focus = Focus(car->id);
+                        focus = Focus(car->Id);
                         overallFocus = false;
-                        window->viewportTargetSprite = car->id;
+                        window->viewportTargetSprite = car->Id;
                     }
                 }
             }
@@ -1305,11 +1305,11 @@ namespace OpenRCT2
 
     static bool IsTileElementVegetation(const TileElement* tileElement)
     {
-        switch (tileElement->getType())
+        switch (tileElement->GetType())
         {
             case TileElementType::SmallScenery:
             {
-                auto sceneryItem = tileElement->asSmallScenery();
+                auto sceneryItem = tileElement->AsSmallScenery();
                 auto sceneryEntry = sceneryItem->GetEntry();
                 if (sceneryEntry != nullptr
                     && (sceneryEntry->flags.has(SmallSceneryFlag::isTree) || IsCursorIdVegetation(sceneryEntry->tool_id)))
@@ -1320,7 +1320,7 @@ namespace OpenRCT2
             }
             case TileElementType::LargeScenery:
             {
-                auto sceneryItem = tileElement->asLargeScenery();
+                auto sceneryItem = tileElement->AsLargeScenery();
                 auto sceneryEntry = sceneryItem->GetEntry();
                 if (sceneryEntry != nullptr && IsCursorIdVegetation(sceneryEntry->tool_id))
                 {
@@ -1330,7 +1330,7 @@ namespace OpenRCT2
             }
             case TileElementType::Wall:
             {
-                auto sceneryItem = tileElement->asWall();
+                auto sceneryItem = tileElement->AsWall();
                 auto sceneryEntry = sceneryItem->GetEntry();
                 if (sceneryEntry != nullptr && IsCursorIdVegetation(sceneryEntry->tool_id))
                 {
@@ -1352,18 +1352,18 @@ namespace OpenRCT2
 
         // the element is above the cut-off height
         auto clipped = cutAwayViewWithTransparency && ps->Element == nullptr && ps->Entity != nullptr
-            && ps->Entity->getLocation().z > (gClipHeight * kCoordsZStep);
+            && ps->Entity->GetLocation().z > (gClipHeight * kCoordsZStep);
 
         // the entity is above the cut-off height
         clipped |= cutAwayViewWithTransparency && ps->Element != nullptr
-            && (ps->Element->getBaseZ() > gClipHeight * kCoordsZStep);
+            && (ps->Element->GetBaseZ() > gClipHeight * kCoordsZStep);
 
         switch (ps->InteractionItem)
         {
             case ViewportInteractionItem::entity:
                 if (ps->Entity != nullptr)
                 {
-                    switch (ps->Entity->type)
+                    switch (ps->Entity->Type)
                     {
                         case EntityType::vehicle:
                         {
@@ -1376,7 +1376,7 @@ namespace OpenRCT2
                             // these should be hidden if 'hide rides' is enabled
                             if (viewFlags & VIEWPORT_FLAG_HIDE_RIDES || clipped)
                             {
-                                auto vehicle = ps->Entity->as<Vehicle>();
+                                auto vehicle = ps->Entity->As<Vehicle>();
                                 if (vehicle == nullptr)
                                     break;
 

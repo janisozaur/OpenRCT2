@@ -93,7 +93,7 @@ namespace OpenRCT2::GameActions
 
         staff->AnimationFrameNum = 0;
         staff->UpdateCurrentAnimationType();
-        staff->invalidate();
+        staff->Invalidate();
 
         auto* windowMgr = Ui::GetWindowManager();
         windowMgr->InvalidateByNumber(WindowClass::peep, _spriteIndex);
@@ -102,7 +102,7 @@ namespace OpenRCT2::GameActions
         ContextBroadcastIntent(&intent);
 
         auto res = Result();
-        res.position = staff->getLocation();
+        res.position = staff->GetLocation();
 
         return res;
     }

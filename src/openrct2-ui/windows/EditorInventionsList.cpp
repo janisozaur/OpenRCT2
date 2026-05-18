@@ -111,7 +111,7 @@ namespace OpenRCT2::Ui::Windows
         RenderTarget& rt, const ResearchItem& researchItem, const int16_t& width, const ScreenCoordsXY& screenCoords,
         StringId format, TextPaint textPaint)
     {
-        const StringId itemNameId = researchItem.getName();
+        const StringId itemNameId = researchItem.GetName();
         int16_t columnSplitOffset = width / 2;
 
         if (researchItem.type == Research::EntryType::ride
@@ -252,7 +252,7 @@ namespace OpenRCT2::Ui::Windows
                 invalidate();
 
                 // Prevent always-researched items from being highlighted when hovered over
-                if (researchItem != nullptr && researchItem->isAlwaysResearched())
+                if (researchItem != nullptr && researchItem->IsAlwaysResearched())
                 {
                     _selectedResearchItem = nullptr;
                 }
@@ -266,7 +266,7 @@ namespace OpenRCT2::Ui::Windows
                 return;
 
             // Disallow picking up always-researched items
-            if (researchItem->isAlwaysResearched())
+            if (researchItem->IsAlwaysResearched())
                 return;
 
             invalidate();
@@ -321,7 +321,7 @@ namespace OpenRCT2::Ui::Windows
                 FontStyle fontStyle = FontStyle::medium;
                 auto darkness = TextDarkness::regular;
 
-                if (researchItem.isAlwaysResearched())
+                if (researchItem.IsAlwaysResearched())
                 {
                     if (_selectedResearchItem == &researchItem && dragItem == nullptr)
                         darkness = TextDarkness::extraDark;
@@ -352,7 +352,7 @@ namespace OpenRCT2::Ui::Windows
 
             // Use the open hand as cursor for items that can be picked up
             auto* researchItem = GetItemFromScrollY(isInvented, screenCoords.y);
-            if (researchItem != nullptr && !researchItem->isAlwaysResearched())
+            if (researchItem != nullptr && !researchItem->IsAlwaysResearched())
             {
                 return CursorID::HandOpen;
             }
@@ -386,10 +386,10 @@ namespace OpenRCT2::Ui::Windows
                 getColourMap(colours[1].colour).darkest);
 
             auto* researchItem = WindowEditorInventionsListDragGetItem();
-            if (researchItem == nullptr || researchItem->isNull())
+            if (researchItem == nullptr || researchItem->IsNull())
                 researchItem = _selectedResearchItem;
             // If the research item is null or a list separator.
-            if (researchItem == nullptr || researchItem->isNull())
+            if (researchItem == nullptr || researchItem->IsNull())
                 return;
 
             // Preview image
@@ -420,7 +420,7 @@ namespace OpenRCT2::Ui::Windows
             const auto itemWidth = width - widgets[WIDX_RESEARCH_ORDER_SCROLL].right - 6;
 
             StringId drawString = STR_WINDOW_COLOUR_2_STRINGID;
-            StringId stringId = researchItem->getName();
+            StringId stringId = researchItem->GetName();
             auto ft = Formatter();
 
             if (researchItem->type == Research::EntryType::ride
@@ -443,7 +443,7 @@ namespace OpenRCT2::Ui::Windows
             // Item category
             screenPos.x = windowPos.x + widgets[WIDX_RESEARCH_ORDER_SCROLL].right + 4;
             ft = Formatter();
-            ft.Add<StringId>(researchItem->getCategoryInventionString());
+            ft.Add<StringId>(researchItem->GetCategoryInventionString());
             drawText(rt, screenPos, STR_INVENTION_RESEARCH_GROUP, ft);
         }
 
@@ -646,7 +646,7 @@ namespace OpenRCT2::Ui::Windows
             {
                 res = inventionListWindow->GetResearchItemAt(newScreenCoords);
                 newScreenCoords.y += kListRowHeight;
-            } while (res.has_value() && res->research != nullptr && res->research->isAlwaysResearched());
+            } while (res.has_value() && res->research != nullptr && res->research->IsAlwaysResearched());
 
             if (res.has_value())
             {

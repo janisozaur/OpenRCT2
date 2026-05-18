@@ -77,8 +77,8 @@ namespace OpenRCT2::GameActions
             return Result(Status::invalidParameters, errorTitle, STR_ERR_BANNER_ELEMENT_NOT_FOUND);
         }
 
-        BannerElement* bannerElement = tileElement->asBanner();
-        CoordsXYZ loc = { banner->position.ToCoordsXY(), bannerElement->getBaseZ() };
+        BannerElement* bannerElement = tileElement->AsBanner();
+        CoordsXYZ loc = { banner->position.ToCoordsXY(), bannerElement->GetBaseZ() };
 
         if (!LocationValid(loc))
         {
@@ -107,7 +107,7 @@ namespace OpenRCT2::GameActions
                 }
                 break;
             case BannerSetStyleType::NoEntry:
-                if (tileElement->asBanner() == nullptr)
+                if (tileElement->AsBanner() == nullptr)
                 {
                     LOG_ERROR("Tile element was not a banner.");
                     return Result(Status::unknown, STR_CANT_RENAME_BANNER, kStringIdNone);
@@ -153,7 +153,7 @@ namespace OpenRCT2::GameActions
                 break;
             case BannerSetStyleType::NoEntry:
             {
-                BannerElement* bannerElement = tileElement->asBanner();
+                BannerElement* bannerElement = tileElement->AsBanner();
                 if (bannerElement == nullptr)
                 {
                     LOG_ERROR("Tile element was not a banner.");

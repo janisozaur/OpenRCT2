@@ -199,13 +199,13 @@ static int32_t GetHighestBaseClearanceZ(const CoordsXY& location, const bool use
     {
         do
         {
-            if (useViewClipping && (element->getBaseZ() > gClipHeight * kCoordsZStep))
+            if (useViewClipping && (element->GetBaseZ() > gClipHeight * kCoordsZStep))
             {
                 continue;
             }
-            z = std::max<int32_t>(z, element->getBaseZ());
-            z = std::max<int32_t>(z, element->getClearanceZ());
-        } while (!(element++)->isLastForTile());
+            z = std::max<int32_t>(z, element->GetBaseZ());
+            z = std::max<int32_t>(z, element->GetClearanceZ());
+        } while (!(element++)->IsLastForTile());
     }
     return z;
 }

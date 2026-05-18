@@ -18,9 +18,9 @@
 namespace OpenRCT2
 {
     template<>
-    bool EntityBase::is<Litter>() const
+    bool EntityBase::Is<Litter>() const
     {
-        return type == EntityType::litter;
+        return Type == EntityType::litter;
     }
 
     static bool IsLocationLitterable(const CoordsXYZ& mapPos)
@@ -33,15 +33,15 @@ namespace OpenRCT2
             return false;
         do
         {
-            if (tileElement->getType() != TileElementType::Path)
+            if (tileElement->GetType() != TileElementType::Path)
                 continue;
 
-            int32_t pathZ = tileElement->getBaseZ();
+            int32_t pathZ = tileElement->GetBaseZ();
             if (pathZ < mapPos.z || pathZ >= mapPos.z + kPathClearance)
                 continue;
 
             return !TileElementIsUnderground(tileElement);
-        } while (!(tileElement++)->isLastForTile());
+        } while (!(tileElement++)->IsLastForTile());
         return false;
     }
 
@@ -77,7 +77,7 @@ namespace OpenRCT2
 
             if (newestLitter != nullptr)
             {
-                newestLitter->invalidate();
+                newestLitter->Invalidate();
                 gameState.entities.EntityRemove(newestLitter);
             }
         }
@@ -86,12 +86,12 @@ namespace OpenRCT2
         if (litter == nullptr)
             return;
 
-        litter->orientation = offsetLitterPos.direction;
-        litter->spriteData.width = 6;
-        litter->spriteData.heightMin = 6;
-        litter->spriteData.heightMax = 3;
+        litter->Orientation = offsetLitterPos.direction;
+        litter->SpriteData.Width = 6;
+        litter->SpriteData.HeightMin = 6;
+        litter->SpriteData.HeightMax = 3;
         litter->SubType = type;
-        litter->moveTo(offsetLitterPos);
+        litter->MoveTo(offsetLitterPos);
         litter->creationTick = gameState.currentTicks;
     }
 
@@ -116,7 +116,7 @@ namespace OpenRCT2
         }
         for (auto* litter : removals)
         {
-            litter->invalidate();
+            litter->Invalidate();
             getGameState().entities.EntityRemove(litter);
         }
     }
@@ -150,9 +150,52 @@ namespace OpenRCT2
 
     void Litter::Serialise(DataSerialiser& stream)
     {
-        EntityBase::serialise(stream);
+        EntityBase::Serialise(stream);
 
         stream << SubType;
         stream << creationTick;
+    }
+
+    struct LitterSprite
+    {
+        uint16_t base_id;
+        uint8_t direction_mask;
+    };
+
+    /** rct2: 0x0097EF6C */
+    static constexpr LitterSprite kLitterSprites[] = {
+        { SPR_LITTER_SICK, 0x1 },
+        { SPR_LITTER_SICK_ALT, 0x1 },
+        { SPR_LITTER_EMPTY_CAN, 0x1 },
+        { SPR_LITTER_RUBBISH, 0x1 },
+        { SPR_LITTER_EMPTY_BURGER_BOX, 0x1 },
+        { SPR_LITTER_EMPTY_CUP, 0x1 },
+        { SPR_LITTER_EMPTY_BOX, 0x1 },
+        { SPR_LITTER_EMPTY_BOTTLE, 0x1 },
+        { SPR_LITTER_EMPTY_BOWL_RED, 0x3 },
+        { SPR_LITTER_EMPTY_DRINK_CART, 0x3 },
+        { SPR_LITTER_EMPTY_JUICE_CUP, 0x3 },
+        { SPR_LITTER_EMPTY_BOWL_BLUE, 0x3 },
+    };
+
+    void Litter::Paint(PaintSession& session, int32_t imageDirection) const
+    {
+        PROFILED_FUNCTION();
+
+        auto& rt = session.rt;
+        if (rt.zoom_level > ZoomLevel{ 0 })
+            return; // If zoomed at all no litter drawn
+
+        // litter has no sprite direction so remove that
+        imageDirection >>= 3;
+        // Some litter types have only 1 direction so remove
+        // anything that isn't required.
+        imageDirection &= kLitterSprites[EnumValue(SubType)].direction_mask;
+
+        uint32_t image_id = imageDirection + kLitterSprites[EnumValue(SubType)].base_id;
+
+        // In the following call to PaintAddImageAsParent, we add 4 (instead of 2) to the
+        // bound_box_offset_z to make sure litter is drawn on top of railways
+        PaintAddImageAsParent(session, ImageId(image_id), { 0, 0, z }, { { -4, -4, z + 4 }, { 5, 5, -1 } });
     }
 } // namespace OpenRCT2

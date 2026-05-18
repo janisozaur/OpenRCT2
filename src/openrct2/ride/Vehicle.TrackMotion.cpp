@@ -237,22 +237,22 @@ void Vehicle::CheckAndApplyBlockSectionStopSite()
                 int32_t zUnused;
                 int32_t direction;
                 if (trackBlockGetNextFromZero(TrackLocation, *curRide, GetTrackDirection(), &track, &zUnused, &direction, false)
-                    && track.element != nullptr && track.element->asTrack()->HasCableLift())
+                    && track.element != nullptr && track.element->AsTrack()->HasCableLift())
                 {
-                    ApplyCableLiftBlockBrake(curRide->isBlockSectioned() && trackElement->asTrack()->IsBrakeClosed());
+                    ApplyCableLiftBlockBrake(curRide->isBlockSectioned() && trackElement->AsTrack()->IsBrakeClosed());
                     break;
                 }
             }
             [[fallthrough]];
         case TrackElemType::diagBlockBrakes:
-            if (curRide->isBlockSectioned() && trackElement->asTrack()->IsBrakeClosed())
+            if (curRide->isBlockSectioned() && trackElement->AsTrack()->IsBrakeClosed())
                 ApplyStopBlockBrake();
             else
                 ApplyNonStopBlockBrake();
 
             break;
         case TrackElemType::endStation:
-            if (trackElement->asTrack()->IsBrakeClosed())
+            if (trackElement->AsTrack()->IsBrakeClosed())
                 _vehicleMotionTrackFlags |= VEHICLE_UPDATE_MOTION_TRACK_FLAG_VEHICLE_AT_BLOCK_BRAKE;
 
             break;
@@ -263,9 +263,9 @@ void Vehicle::CheckAndApplyBlockSectionStopSite()
         case TrackElemType::diagUp60ToFlat:
             if (curRide->isBlockSectioned())
             {
-                if (trackType == TrackElemType::cableLiftHill || trackElement->asTrack()->HasChain())
+                if (trackType == TrackElemType::cableLiftHill || trackElement->AsTrack()->HasChain())
                 {
-                    if (trackElement->asTrack()->IsBrakeClosed())
+                    if (trackElement->AsTrack()->IsBrakeClosed())
                     {
                         ApplyStopBlockBrake();
                     }
@@ -446,7 +446,7 @@ void Vehicle::Sub6DBF3E()
 
     if (_vehicleStationIndex.IsNull())
     {
-        _vehicleStationIndex = tileElement->asTrack()->GetStationIndex();
+        _vehicleStationIndex = tileElement->AsTrack()->GetStationIndex();
     }
 
     if (trackType == TrackElemType::towerBase && this == gCurrentVehicle)
@@ -515,7 +515,7 @@ uint8_t Vehicle::ChooseBrakeSpeed() const
     auto trackElement = MapGetTrackElementAtOfTypeSeq(TrackLocation, GetTrackType(), 0);
     if (trackElement != nullptr)
     {
-        if (trackElement->asTrack()->IsBrakeClosed())
+        if (trackElement->AsTrack()->IsBrakeClosed())
             return brake_speed;
         else
             return std::max<uint8_t>(brake_speed, BlockBrakeSpeed);
@@ -542,12 +542,12 @@ void Vehicle::PopulateBrakeSpeed(const CoordsXYZ& vehicleTrackLocation, TrackEle
     uint16_t timeoutCount = 256;
     do
     {
-        if (trackTypeIsBlockBrakes(output.element->asTrack()->GetTrackType()))
+        if (trackTypeIsBlockBrakes(output.element->AsTrack()->GetTrackType()))
         {
-            BlockBrakeSpeed = output.element->asTrack()->GetBrakeBoosterSpeed();
+            BlockBrakeSpeed = output.element->AsTrack()->GetBrakeBoosterSpeed();
             return;
         }
-        if (!trackTypeIsBrakes(output.element->asTrack()->GetTrackType()))
+        if (!trackTypeIsBrakes(output.element->AsTrack()->GetTrackType()))
         {
             break;
         }
@@ -580,11 +580,11 @@ bool Vehicle::UpdateTrackMotionForwardsGetNewTrack(
         _vehicleMotionTrackFlags |= VEHICLE_UPDATE_MOTION_TRACK_FLAG_11;
     }
 
-    if (tileElement->asTrack()->IsBlockStart())
+    if (tileElement->AsTrack()->IsBlockStart())
     {
         if (next_vehicle_on_train.IsNull())
         {
-            SetBrakeClosedMultiTile(*tileElement->asTrack(), TrackLocation, true);
+            SetBrakeClosedMultiTile(*tileElement->AsTrack(), TrackLocation, true);
             if (trackTypeIsBlockBrakes(trackType) || trackType == TrackElemType::endStation)
             {
                 if (!rideEntry.Cars[0].flags.has(CarEntryFlag::isPowered))
@@ -596,7 +596,7 @@ bool Vehicle::UpdateTrackMotionForwardsGetNewTrack(
             BlockBrakesOpenPreviousSection(curRide, TrackLocation, tileElement);
             if (trackTypeIsBlockBrakes(trackType))
             {
-                BlockBrakeSetLinkedBrakesClosed(TrackLocation, *tileElement->asTrack(), true);
+                BlockBrakeSetLinkedBrakesClosed(TrackLocation, *tileElement->AsTrack(), true);
             }
         }
     }
@@ -650,8 +650,8 @@ bool Vehicle::UpdateTrackMotionForwardsGetNewTrack(
             tileElement = xyElement.element;
             location = { xyElement, curZ, static_cast<Direction>(direction) };
         }
-        if (tileElement->asTrack()->GetTrackType() == TrackElemType::leftReverser
-            || tileElement->asTrack()->GetTrackType() == TrackElemType::rightReverser)
+        if (tileElement->AsTrack()->GetTrackType() == TrackElemType::leftReverser
+            || tileElement->AsTrack()->GetTrackType() == TrackElemType::rightReverser)
         {
             if (IsHead() && velocity <= 3.0_mph)
             {
@@ -668,10 +668,10 @@ bool Vehicle::UpdateTrackMotionForwardsGetNewTrack(
         const auto previousCarIsInverted = flags.has(VehicleFlag::carIsInverted);
         flags.unset(VehicleFlag::carIsInverted);
         {
-            auto rideType = ::GetRide(tileElement->asTrack()->GetRideIndex())->type;
+            auto rideType = ::GetRide(tileElement->AsTrack()->GetRideIndex())->type;
             if (GetRideTypeDescriptor(rideType).flags.has(RtdFlag::hasInvertedVariant))
             {
-                if (tileElement->asTrack()->IsInverted())
+                if (tileElement->AsTrack()->IsInverted())
                 {
                     flags.set(VehicleFlag::carIsInverted);
                 }
@@ -694,14 +694,14 @@ bool Vehicle::UpdateTrackMotionForwardsGetNewTrack(
     }
     if (carEntry->flags.has(CarEntryFlag::isGoKart) && TrackSubposition < VehicleTrackSubposition::GoKartsMovingToRightLane)
     {
-        trackType = tileElement->asTrack()->GetTrackType();
+        trackType = tileElement->AsTrack()->GetTrackType();
         if (trackType == TrackElemType::flat || trackType == TrackElemType::leftQuarterTurn3Tiles
             || trackType == TrackElemType::rightQuarterTurn3Tiles || trackType == TrackElemType::leftQuarterTurn5Tiles
             || trackType == TrackElemType::rightQuarterTurn5Tiles || trackType == TrackElemType::leftEighthToDiag
             || trackType == TrackElemType::rightEighthToDiag || trackType == TrackElemType::leftEighthToOrthogonal
             || trackType == TrackElemType::rightEighthToOrthogonal || trackType == TrackElemType::diagFlat
             || trackType == TrackElemType::sBendLeft || trackType == TrackElemType::sBendRight
-            || (curRide.flags.has(RideFlag::passStationNoStopping) && tileElement->asTrack()->IsStation()))
+            || (curRide.flags.has(RideFlag::passStationNoStopping) && tileElement->AsTrack()->IsStation()))
         {
             UpdateGoKartAttemptSwitchLanes();
         }
@@ -725,26 +725,26 @@ bool Vehicle::UpdateTrackMotionForwardsGetNewTrack(
     // Loc6DB500
     // Update VehicleFlags::OnLiftHill
     flags.unset(VehicleFlag::onLiftHill);
-    if (tileElement->asTrack()->HasChain())
+    if (tileElement->AsTrack()->HasChain())
     {
         flags.set(VehicleFlag::onLiftHill);
     }
 
-    trackType = tileElement->asTrack()->GetTrackType();
+    trackType = tileElement->AsTrack()->GetTrackType();
     if (trackType != TrackElemType::brakes)
     {
-        target_seat_rotation = tileElement->asTrack()->GetSeatRotation();
+        target_seat_rotation = tileElement->AsTrack()->GetSeatRotation();
     }
     SetTrackDirection(location.direction);
     SetTrackType(trackType);
-    PopulateBrakeSpeed(TrackLocation, *tileElement->asTrack());
+    PopulateBrakeSpeed(TrackLocation, *tileElement->AsTrack());
     if (flags.has(VehicleFlag::stoppedOnHoldingBrake) && vertical_drop_countdown <= 0)
     {
         flags.unset(VehicleFlag::stoppedOnHoldingBrake);
     }
     if (trackType == TrackElemType::onRidePhoto)
     {
-        tileElement->asTrack()->SetPhotoTimeout();
+        tileElement->AsTrack()->SetPhotoTimeout();
         MapAnimations::CreateTemporary(TrackLocation, MapAnimations::TemporaryType::onRidePhoto);
     }
     if (trackType == TrackElemType::rotationControlToggle)
@@ -907,7 +907,7 @@ bool Vehicle::UpdateTrackMotionForwards(const CarEntry* carEntry, const Ride& cu
             }
 
             _vehicleCurPosition = nextVehiclePosition;
-            orientation = moveInfo->yaw;
+            Orientation = moveInfo->yaw;
             roll = moveInfo->roll;
             pitch = moveInfo->pitch;
 
@@ -982,7 +982,7 @@ bool Vehicle::UpdateTrackMotionForwards(const CarEntry* carEntry, const Ride& cu
 static PitchAndRoll PitchAndRollEnd(
     const Ride& curRide, bool useInvertedSprites, TrackElemType trackType, TileElement* tileElement)
 {
-    bool isInverted = useInvertedSprites ^ tileElement->asTrack()->IsInverted();
+    bool isInverted = useInvertedSprites ^ tileElement->AsTrack()->IsInverted();
     const auto& ted = GetTrackElementDescriptor(trackType);
     return { ted.definition.pitchEnd, TrackGetActualBank2(curRide.type, isInverted, ted.definition.rollEnd) };
 }
@@ -1034,7 +1034,7 @@ bool Vehicle::UpdateTrackMotionBackwardsGetNewTrack(TrackElemType trackType, con
         }
         tileElement = trackBeginEnd.begin_element;
 
-        trackType = tileElement->asTrack()->GetTrackType();
+        trackType = tileElement->AsTrack()->GetTrackType();
         if (trackType == TrackElemType::leftReverser || trackType == TrackElemType::rightReverser)
         {
             return false;
@@ -1050,7 +1050,7 @@ bool Vehicle::UpdateTrackMotionBackwardsGetNewTrack(TrackElemType trackType, con
         flags.unset(VehicleFlag::carIsInverted);
         if (GetRideTypeDescriptor(curRide.type).flags.has(RtdFlag::hasInvertedVariant))
         {
-            if (tileElement->asTrack()->IsInverted())
+            if (tileElement->AsTrack()->IsInverted())
             {
                 flags.set(VehicleFlag::carIsInverted);
             }
@@ -1099,13 +1099,13 @@ bool Vehicle::UpdateTrackMotionBackwardsGetNewTrack(TrackElemType trackType, con
         }
     }
 
-    if (tileElement->asTrack()->HasChain())
+    if (tileElement->AsTrack()->HasChain())
     {
         if (_vehicleVelocityF64E08 < 0)
         {
             if (next_vehicle_on_train.IsNull())
             {
-                trackType = tileElement->asTrack()->GetTrackType();
+                trackType = tileElement->AsTrack()->GetTrackType();
                 const auto& ted = GetTrackElementDescriptor(trackType);
                 if (!ted.flags.has(TrackElementFlag::down))
                 {
@@ -1130,15 +1130,15 @@ bool Vehicle::UpdateTrackMotionBackwardsGetNewTrack(TrackElemType trackType, con
         }
     }
 
-    trackType = tileElement->asTrack()->GetTrackType();
+    trackType = tileElement->AsTrack()->GetTrackType();
     if (trackType != TrackElemType::brakes)
     {
-        target_seat_rotation = tileElement->asTrack()->GetSeatRotation();
+        target_seat_rotation = tileElement->AsTrack()->GetSeatRotation();
     }
     direction &= 3;
     SetTrackType(trackType);
     SetTrackDirection(direction);
-    PopulateBrakeSpeed(TrackLocation, *tileElement->asTrack());
+    PopulateBrakeSpeed(TrackLocation, *tileElement->AsTrack());
     if (flags.has(VehicleFlag::stoppedOnHoldingBrake) && vertical_drop_countdown <= 0)
     {
         flags.unset(VehicleFlag::stoppedOnHoldingBrake);
@@ -1205,7 +1205,7 @@ bool Vehicle::UpdateTrackMotionBackwards(const CarEntry* carEntry, const Ride& c
             remaining_distance += Geometry::getTranslationDistance(nextVehiclePosition - _vehicleCurPosition, false);
 
             _vehicleCurPosition = nextVehiclePosition;
-            orientation = moveInfo->yaw;
+            Orientation = moveInfo->yaw;
             roll = moveInfo->roll;
             pitch = moveInfo->pitch;
 
@@ -1407,7 +1407,7 @@ void Vehicle::UpdateTrackMotionPreUpdate(
     _vehicleCurPosition.x = car.x;
     _vehicleCurPosition.y = car.y;
     _vehicleCurPosition.z = car.z;
-    car.invalidate();
+    car.Invalidate();
 
     while (true)
     {
@@ -1445,7 +1445,7 @@ void Vehicle::UpdateTrackMotionPreUpdate(
         _vehicleUnkF64E10++;
     }
     // Loc6DBF20
-    car.moveTo(_vehicleCurPosition);
+    car.MoveTo(_vehicleCurPosition);
 }
 
 /**
@@ -1489,7 +1489,7 @@ int32_t Vehicle::UpdateTrackMotion(int32_t* outStation)
     // backwards.
     _vehicleFrontVehicle = vehicle;
 
-    auto spriteId = vehicle->id;
+    auto spriteId = vehicle->Id;
     while (!spriteId.IsNull())
     {
         Vehicle* car = getGameState().entities.GetEntity<Vehicle>(spriteId);

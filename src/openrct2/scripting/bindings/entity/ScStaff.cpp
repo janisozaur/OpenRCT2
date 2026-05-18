@@ -110,7 +110,7 @@ namespace OpenRCT2::Scripting
             // Reset state to walking to prevent invalid actions from carrying over
             peep->Action = PeepActionType::walking;
             peep->AnimationType = peep->NextAnimationType = PeepAnimationType::walking;
-            peep->invalidate();
+            peep->Invalidate();
         }
         return JS_UNDEFINED;
     }
@@ -129,7 +129,7 @@ namespace OpenRCT2::Scripting
         if (peep != nullptr)
         {
             peep->TshirtColour = static_cast<Drawing::Colour>(value);
-            peep->invalidate();
+            peep->Invalidate();
         }
         return JS_UNDEFINED;
     }
@@ -230,7 +230,7 @@ namespace OpenRCT2::Scripting
 
         peep->AnimationObjectIndex = costume->objectId;
         peep->AnimationGroup = costume->group;
-        peep->invalidate();
+        peep->Invalidate();
         return JS_UNDEFINED;
     }
 
@@ -373,9 +373,9 @@ namespace OpenRCT2::Scripting
 
         const auto& animationGroup = animObj->GetPeepAnimation(peep->AnimationGroup, peep->AnimationType);
         peep->AnimationImageIdOffset = animationGroup.frameOffsets[offset];
-        peep->invalidate();
+        peep->Invalidate();
         peep->UpdateSpriteBoundingBox();
-        peep->invalidate();
+        peep->Invalidate();
         return JS_UNDEFINED;
     }
 
@@ -411,9 +411,9 @@ namespace OpenRCT2::Scripting
             peep->AnimationFrameNum = offset;
 
         peep->AnimationImageIdOffset = animationGroup.frameOffsets[offset];
-        peep->invalidate();
+        peep->Invalidate();
         peep->UpdateSpriteBoundingBox();
-        peep->invalidate();
+        peep->Invalidate();
         return JS_UNDEFINED;
     }
 

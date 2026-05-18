@@ -253,18 +253,18 @@ static void FixPeepsWithInvalidRideReference()
             Ride* ride = GetRide(rideIdx);
             if (ride == nullptr)
             {
-                LOG_WARNING("Couldn't find ride %u, resetting ride on peep %u", rideIdx, peep->id);
+                LOG_WARNING("Couldn't find ride %u, resetting ride on peep %u", rideIdx, peep->Id);
                 peep->CurrentRide = RideId::GetNull();
                 continue;
             }
             auto curName = peep->GetName();
             LOG_WARNING(
-                "Peep %u (%s) has invalid ride station = %u for ride %u.", peep->id, curName.c_str(), srcStation.ToUnderlying(),
+                "Peep %u (%s) has invalid ride station = %u for ride %u.", peep->Id, curName.c_str(), srcStation.ToUnderlying(),
                 rideIdx);
             auto station = RideGetFirstValidStationExit(*ride);
             if (station.IsNull())
             {
-                LOG_WARNING("Couldn't find station, removing peep %u", peep->id);
+                LOG_WARNING("Couldn't find station, removing peep %u", peep->Id);
                 peepsToRemove.push_back(peep);
             }
             else
@@ -314,8 +314,8 @@ static void FixInvalidSurfaces()
             auto& gameState = getGameState();
             if (x == 0 || x == gameState.mapSize.x - 1 || y == 0 || y == gameState.mapSize.y - 1)
             {
-                surfaceElement->setBaseZ(kMinimumLandZ);
-                surfaceElement->setClearanceZ(kMinimumLandZ);
+                surfaceElement->SetBaseZ(kMinimumLandZ);
+                surfaceElement->SetClearanceZ(kMinimumLandZ);
                 surfaceElement->SetSlope(0);
                 surfaceElement->SetWaterHeight(0);
             }
@@ -456,9 +456,9 @@ void ResetAllSpriteQuadrantPlacements()
     for (EntityId::UnderlyingType i = 0; i < kMaxEntities; i++)
     {
         auto* spr = getGameState().entities.GetEntity(EntityId::FromUnderlying(i));
-        if (spr != nullptr && spr->type != EntityType::null)
+        if (spr != nullptr && spr->Type != EntityType::null)
         {
-            spr->moveTo(spr->getLocation());
+            spr->MoveTo(spr->GetLocation());
         }
     }
 }

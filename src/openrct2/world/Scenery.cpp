@@ -136,19 +136,19 @@ void SceneryUpdateTile(const CoordsXY& sceneryPos)
         // as that may lead to a desync.
         if (Network::GetMode() != Network::Mode::none)
         {
-            if (tileElement->isGhost())
+            if (tileElement->IsGhost())
                 continue;
         }
 
-        if (tileElement->getType() == TileElementType::SmallScenery)
+        if (tileElement->GetType() == TileElementType::SmallScenery)
         {
-            tileElement->asSmallScenery()->UpdateAge(sceneryPos);
+            tileElement->AsSmallScenery()->UpdateAge(sceneryPos);
         }
-        else if (tileElement->getType() == TileElementType::Path)
+        else if (tileElement->GetType() == TileElementType::Path)
         {
-            if (tileElement->asPath()->HasAddition() && !tileElement->asPath()->AdditionIsGhost())
+            if (tileElement->AsPath()->HasAddition() && !tileElement->AsPath()->AdditionIsGhost())
             {
-                auto* pathAddEntry = tileElement->asPath()->GetAdditionEntry();
+                auto* pathAddEntry = tileElement->AsPath()->GetAdditionEntry();
                 if (pathAddEntry != nullptr)
                 {
                     if (pathAddEntry->flags & PATH_ADDITION_FLAG_JUMPING_FOUNTAIN_WATER)
@@ -162,7 +162,7 @@ void SceneryUpdateTile(const CoordsXY& sceneryPos)
                 }
             }
         }
-    } while (!(tileElement++)->isLastForTile());
+    } while (!(tileElement++)->IsLastForTile());
 }
 
 /**
@@ -192,25 +192,25 @@ void SmallSceneryElement::UpdateAge(const CoordsXY& sceneryPos)
     // Check map elements above, presumably to see if map element is blocked from weather
     TileElement* tileElementAbove = reinterpret_cast<TileElement*>(this);
     // Change from original: RCT2 only checked for the first three quadrants, which was very likely to be a bug.
-    while (!(tileElementAbove->getOccupiedQuadrants()))
+    while (!(tileElementAbove->GetOccupiedQuadrants()))
     {
         tileElementAbove++;
 
         // Ghosts are purely this-client-side and should not cause any interaction,
         // as that may lead to a desync.
-        if (tileElementAbove->isGhost())
+        if (tileElementAbove->IsGhost())
             continue;
 
-        switch (tileElementAbove->getType())
+        switch (tileElementAbove->GetType())
         {
             case TileElementType::LargeScenery:
             case TileElementType::Entrance:
             case TileElementType::Path:
-                MapInvalidateTileZoom1({ sceneryPos, tileElementAbove->getBaseZ(), tileElementAbove->getClearanceZ() });
+                MapInvalidateTileZoom1({ sceneryPos, tileElementAbove->GetBaseZ(), tileElementAbove->GetClearanceZ() });
                 IncreaseAge(sceneryPos);
                 return;
             case TileElementType::SmallScenery:
-                sceneryEntry = tileElementAbove->asSmallScenery()->GetEntry();
+                sceneryEntry = tileElementAbove->AsSmallScenery()->GetEntry();
                 if (sceneryEntry->flags.has(SmallSceneryFlag::vOffsetCentre))
                 {
                     IncreaseAge(sceneryPos);
@@ -224,7 +224,7 @@ void SmallSceneryElement::UpdateAge(const CoordsXY& sceneryPos)
 
     // Reset age / water plant
     SetAge(0);
-    MapInvalidateTileZoom1({ sceneryPos, getBaseZ(), getClearanceZ() });
+    MapInvalidateTileZoom1({ sceneryPos, GetBaseZ(), GetClearanceZ() });
 }
 
 /**
@@ -255,17 +255,17 @@ void SceneryRemoveGhostToolPlacement()
             if (tileElement == nullptr)
                 break;
 
-            if (tileElement->getType() != TileElementType::Path)
+            if (tileElement->GetType() != TileElementType::Path)
                 continue;
 
-            if (tileElement->getBaseZ() != gSceneryGhostPosition.z)
+            if (tileElement->GetBaseZ() != gSceneryGhostPosition.z)
                 continue;
 
             auto footpathAdditionRemoveAction = GameActions::FootpathAdditionRemoveAction(gSceneryGhostPosition);
             footpathAdditionRemoveAction.SetFlags({ CommandFlag::allowDuringPaused, CommandFlag::noSpend, CommandFlag::ghost });
             GameActions::Execute(&footpathAdditionRemoveAction, gameState);
             break;
-        } while (!(tileElement++)->isLastForTile());
+        } while (!(tileElement++)->IsLastForTile());
     }
 
     if (gSceneryGhostType & SCENERY_GHOST_FLAG_2)

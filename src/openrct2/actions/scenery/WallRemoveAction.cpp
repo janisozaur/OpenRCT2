@@ -86,7 +86,7 @@ namespace OpenRCT2::GameActions
         res.position.z = _loc.z;
 
         wallElement->RemoveBannerEntry();
-        MapInvalidateTileZoom1({ _loc, wallElement->getBaseZ(), (wallElement->getBaseZ()) + 72 });
+        MapInvalidateTileZoom1({ _loc, wallElement->GetBaseZ(), (wallElement->GetBaseZ()) + 72 });
         TileElementRemove(wallElement);
 
         return res;
@@ -96,11 +96,11 @@ namespace OpenRCT2::GameActions
     {
         for (auto* wallElement : TileElementsView<WallElement>(location))
         {
-            if (wallElement->getBaseZ() != location.z)
+            if (wallElement->GetBaseZ() != location.z)
                 continue;
-            if (wallElement->getDirection() != location.direction)
+            if (wallElement->GetDirection() != location.direction)
                 continue;
-            if (wallElement->isGhost() != isGhost)
+            if (wallElement->IsGhost() != isGhost)
                 continue;
 
             return wallElement->as<TileElement>();

@@ -106,12 +106,12 @@ namespace OpenRCT2::Ui::Windows
             if (tileElement == nullptr)
                 return false;
 
-            int32_t viewZ = tileElement->getBaseZ();
+            int32_t viewZ = tileElement->GetBaseZ();
             currentFrame = viewZ;
 
             if (_isSmall)
             {
-                auto* wallElement = tileElement->asWall();
+                auto* wallElement = tileElement->AsWall();
                 if (wallElement == nullptr)
                 {
                     return false;
@@ -122,7 +122,7 @@ namespace OpenRCT2::Ui::Windows
             }
             else
             {
-                auto* sceneryElement = tileElement->asLargeScenery();
+                auto* sceneryElement = tileElement->AsLargeScenery();
                 if (sceneryElement == nullptr)
                 {
                     return false;
@@ -171,15 +171,15 @@ namespace OpenRCT2::Ui::Windows
 
                     if (_isSmall)
                     {
-                        CoordsXYZD wallLocation = { bannerCoords, tileElement->getBaseZ(), tileElement->getDirection() };
+                        CoordsXYZD wallLocation = { bannerCoords, tileElement->GetBaseZ(), tileElement->GetDirection() };
                         auto wallRemoveAction = GameActions::WallRemoveAction(wallLocation);
                         GameActions::Execute(&wallRemoveAction, gameState);
                     }
                     else
                     {
                         auto sceneryRemoveAction = GameActions::LargeSceneryRemoveAction(
-                            { bannerCoords, tileElement->getBaseZ(), tileElement->getDirection() },
-                            tileElement->asLargeScenery()->GetSequenceIndex());
+                            { bannerCoords, tileElement->GetBaseZ(), tileElement->GetDirection() },
+                            tileElement->AsLargeScenery()->GetSequenceIndex());
                         GameActions::Execute(&sceneryRemoveAction, gameState);
                     }
                     break;

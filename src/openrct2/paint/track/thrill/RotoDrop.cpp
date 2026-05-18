@@ -131,10 +131,10 @@ static void PaintRotoDropTowerSection(
     // The top segment of the Roto drop is only drawn when there is no tile element right above it
     bool paintTopSegment = true;
     const auto* tileElement = trackElement.as<TileElement>();
-    while (paintTopSegment && !tileElement->isLastForTile())
+    while (paintTopSegment && !tileElement->IsLastForTile())
     {
         tileElement++;
-        paintTopSegment = trackElement.getClearanceZ() != tileElement->getBaseZ();
+        paintTopSegment = trackElement.GetClearanceZ() != tileElement->GetBaseZ();
     }
 
     if (paintTopSegment)

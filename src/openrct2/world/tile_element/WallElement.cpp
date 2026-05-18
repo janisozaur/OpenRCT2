@@ -17,13 +17,13 @@ namespace OpenRCT2
 {
     uint8_t WallElement::GetSlope() const
     {
-        return (type & kTileElementQuadrantMask) >> 6;
+        return (Type & kTileElementQuadrantMask) >> 6;
     }
 
     void WallElement::SetSlope(uint8_t newSlope)
     {
-        type &= ~kTileElementQuadrantMask;
-        type |= (newSlope << 6);
+        Type &= ~kTileElementQuadrantMask;
+        Type |= (newSlope << 6);
     }
 
     Drawing::Colour WallElement::GetPrimaryColour() const

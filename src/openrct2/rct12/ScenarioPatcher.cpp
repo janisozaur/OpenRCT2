@@ -346,15 +346,15 @@ static void ApplyTrackTypeFixes(const json_t& trackTilesFixes)
 
             do
             {
-                if (tileElement->getType() != TileElementType::Track)
+                if (tileElement->GetType() != TileElementType::Track)
                     continue;
 
-                auto* trackElement = tileElement->asTrack();
+                auto* trackElement = tileElement->AsTrack();
                 if (trackElement->GetTrackType() != fromTrackType)
                     continue;
 
                 trackElement->SetTrackType(destinationTrackType);
-            } while (!(tileElement++)->isLastForTile());
+            } while (!(tileElement++)->IsLastForTile());
         }
     }
 }

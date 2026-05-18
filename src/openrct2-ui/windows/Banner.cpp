@@ -117,7 +117,7 @@ namespace OpenRCT2::Ui::Windows
 
             do
             {
-                auto* bannerElement = tileElement->asBanner();
+                auto* bannerElement = tileElement->AsBanner();
                 if (bannerElement == nullptr)
                 {
                     continue;
@@ -126,7 +126,7 @@ namespace OpenRCT2::Ui::Windows
                 {
                     return bannerElement;
                 }
-            } while (!(tileElement++)->isLastForTile());
+            } while (!(tileElement++)->IsLastForTile());
 
             return nullptr;
         }
@@ -147,7 +147,7 @@ namespace OpenRCT2::Ui::Windows
             if (bannerElement == nullptr)
                 return;
 
-            _bannerViewPos = CoordsXYZ{ banner->position.ToCoordsXY().ToTileCentre(), bannerElement->getBaseZ() };
+            _bannerViewPos = CoordsXYZ{ banner->position.ToCoordsXY().ToTileCentre(), bannerElement->GetBaseZ() };
             createViewport();
         }
 
@@ -208,7 +208,7 @@ namespace OpenRCT2::Ui::Windows
                         break;
 
                     auto bannerRemoveAction = GameActions::BannerRemoveAction(
-                        { banner->position.ToCoordsXY(), bannerElement->getBaseZ(), bannerElement->GetPosition() });
+                        { banner->position.ToCoordsXY(), bannerElement->GetBaseZ(), bannerElement->GetPosition() });
                     GameActions::Execute(&bannerRemoveAction, gameState);
                     break;
                 }

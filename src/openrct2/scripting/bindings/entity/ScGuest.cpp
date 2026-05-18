@@ -216,7 +216,7 @@ namespace OpenRCT2::Scripting
         if (peep != nullptr)
         {
             peep->TshirtColour = static_cast<Drawing::Colour>(value);
-            peep->invalidate();
+            peep->Invalidate();
         }
         return JS_UNDEFINED;
     }
@@ -234,7 +234,7 @@ namespace OpenRCT2::Scripting
         if (peep != nullptr)
         {
             peep->TrousersColour = static_cast<Drawing::Colour>(value);
-            peep->invalidate();
+            peep->Invalidate();
         }
         return JS_UNDEFINED;
     }
@@ -252,7 +252,7 @@ namespace OpenRCT2::Scripting
         if (peep != nullptr)
         {
             peep->BalloonColour = static_cast<Drawing::Colour>(value);
-            peep->invalidate();
+            peep->Invalidate();
         }
         return JS_UNDEFINED;
     }
@@ -270,7 +270,7 @@ namespace OpenRCT2::Scripting
         if (peep != nullptr)
         {
             peep->HatColour = static_cast<Drawing::Colour>(value);
-            peep->invalidate();
+            peep->Invalidate();
         }
         return JS_UNDEFINED;
     }
@@ -288,7 +288,7 @@ namespace OpenRCT2::Scripting
         if (peep != nullptr)
         {
             peep->UmbrellaColour = static_cast<Drawing::Colour>(value);
-            peep->invalidate();
+            peep->Invalidate();
         }
         return JS_UNDEFINED;
     }
@@ -607,24 +607,16 @@ namespace OpenRCT2::Scripting
                 if (shopItem == ShopItem::voucher)
                 {
                     // Voucher
-                    auto voucherType = VoucherTypeMap[peep->VoucherType];
-                    if (!voucherType.empty())
+                    JS_SetPropertyStr(ctx, obj, "voucherType", JSFromStdString(ctx, VoucherTypeMap[peep->VoucherType]));
+                    if (peep->VoucherType == VOUCHER_TYPE_RIDE_FREE)
                     {
-                        JS_SetPropertyStr(ctx, obj, "voucherType", JSFromStdString(ctx, voucherType));
-                        if (peep->VoucherType == VOUCHER_TYPE_RIDE_FREE)
-                        {
-                            // RideVoucher
-                            JS_SetPropertyStr(ctx, obj, "rideId", JS_NewUint32(ctx, peep->VoucherRideId.ToUnderlying()));
-                        }
-                        else if (peep->VoucherType == VOUCHER_TYPE_FOOD_OR_DRINK_FREE)
-                        {
-                            // FoodDrinkVoucher
-                            auto voucherItem = ShopItemMap[peep->VoucherShopItem];
-                            if (!voucherItem.empty())
-                            {
-                                JS_SetPropertyStr(ctx, obj, "item", JSFromStdString(ctx, voucherItem));
-                            }
-                        }
+                        // RideVoucher
+                        JS_SetPropertyStr(ctx, obj, "rideId", JS_NewUint32(ctx, peep->VoucherRideId.ToUnderlying()));
+                    }
+                    else if (peep->VoucherType == VOUCHER_TYPE_FOOD_OR_DRINK_FREE)
+                    {
+                        // FoodDrinkVoucher
+                        JS_SetPropertyStr(ctx, obj, "item", JSFromStdString(ctx, ShopItemMap[peep->VoucherShopItem]));
                     }
                 }
                 else if (GetShopItemDescriptor(shopItem).IsPhoto())
@@ -999,9 +991,9 @@ namespace OpenRCT2::Scripting
 
         const auto& animationGroup = animObj->GetPeepAnimation(peep->AnimationGroup, peep->AnimationType);
         peep->AnimationImageIdOffset = animationGroup.frameOffsets[offset];
-        peep->invalidate();
+        peep->Invalidate();
         peep->UpdateSpriteBoundingBox();
-        peep->invalidate();
+        peep->Invalidate();
         return JS_UNDEFINED;
     }
 

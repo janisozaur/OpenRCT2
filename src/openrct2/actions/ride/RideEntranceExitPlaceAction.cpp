@@ -203,20 +203,20 @@ namespace OpenRCT2::GameActions
         auto* entranceElement = TileElementInsert<EntranceElement>(CoordsXYZ{ _loc, z }, 0b1111);
         Guard::Assert(entranceElement != nullptr);
 
-        entranceElement->setDirection(_direction);
-        entranceElement->setClearanceZ(clear_z);
+        entranceElement->SetDirection(_direction);
+        entranceElement->SetClearanceZ(clear_z);
         entranceElement->SetEntranceType(_isExit ? ENTRANCE_TYPE_RIDE_EXIT : ENTRANCE_TYPE_RIDE_ENTRANCE);
         entranceElement->SetStationIndex(_stationNum);
         entranceElement->SetRideIndex(_rideIndex);
-        entranceElement->setGhost(GetFlags().has(CommandFlag::ghost));
+        entranceElement->SetGhost(GetFlags().has(CommandFlag::ghost));
 
         if (_isExit)
         {
-            station.Exit = TileCoordsXYZD(CoordsXYZD{ _loc, z, entranceElement->getDirection() });
+            station.Exit = TileCoordsXYZD(CoordsXYZD{ _loc, z, entranceElement->GetDirection() });
         }
         else
         {
-            station.Entrance = TileCoordsXYZD(CoordsXYZD{ _loc, z, entranceElement->getDirection() });
+            station.Entrance = TileCoordsXYZD(CoordsXYZD{ _loc, z, entranceElement->GetDirection() });
             station.LastPeepInQueue = EntityId::GetNull();
             station.QueueLength = 0;
 

@@ -17,39 +17,39 @@
 
 namespace OpenRCT2::Network
 {
-    void Player::setName(std::string_view newName)
+    void Player::SetName(std::string_view name)
     {
         // 36 == 31 + strlen(" #255");
-        name = newName.substr(0, 36);
+        Name = name.substr(0, 36);
     }
 
-    void Player::read(Packet& packet)
+    void Player::Read(Packet& packet)
     {
-        auto newName = packet.readString();
-        setName(newName);
-        packet >> id >> flags >> group >> lastAction >> lastActionCoord.x >> lastActionCoord.y >> lastActionCoord.z
-            >> moneySpent >> commandsRan;
+        auto name = packet.ReadString();
+        SetName(name);
+        packet >> Id >> Flags >> Group >> LastAction >> LastActionCoord.x >> LastActionCoord.y >> LastActionCoord.z
+            >> MoneySpent >> CommandsRan;
     }
 
-    void Player::write(Packet& packet)
+    void Player::Write(Packet& packet)
     {
-        packet.writeString(name);
-        packet << id << flags << group << lastAction << lastActionCoord.x << lastActionCoord.y << lastActionCoord.z
-               << moneySpent << commandsRan;
+        packet.WriteString(Name);
+        packet << Id << Flags << Group << LastAction << LastActionCoord.x << LastActionCoord.y << LastActionCoord.z
+               << MoneySpent << CommandsRan;
     }
 
-    void Player::incrementNumCommands()
+    void Player::IncrementNumCommands()
     {
-        commandsRan++;
+        CommandsRan++;
         auto* windowMgr = Ui::GetWindowManager();
-        windowMgr->InvalidateByNumber(WindowClass::player, id);
+        windowMgr->InvalidateByNumber(WindowClass::player, Id);
     }
 
-    void Player::addMoneySpent(money64 cost)
+    void Player::AddMoneySpent(money64 cost)
     {
-        moneySpent += cost;
+        MoneySpent += cost;
         auto* windowMgr = Ui::GetWindowManager();
-        windowMgr->InvalidateByNumber(WindowClass::player, id);
+        windowMgr->InvalidateByNumber(WindowClass::player, Id);
     }
 } // namespace OpenRCT2::Network
 

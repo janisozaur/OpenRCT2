@@ -32,7 +32,7 @@ namespace OpenRCT2
                 if (res != nullptr)
                     return res;
 
-                if (element->isLastForTile())
+                if (element->IsLastForTile())
                 {
                     break;
                 }
@@ -58,7 +58,7 @@ namespace OpenRCT2
                 if (element == nullptr)
                     return *this;
 
-                if (element->isLastForTile())
+                if (element->IsLastForTile())
                 {
                     element = nullptr;
                 }

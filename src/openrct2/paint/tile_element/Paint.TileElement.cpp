@@ -193,12 +193,12 @@ static void PaintTileElementBase(PaintSession& session, const CoordsXY& origCoor
         const TileElement* element = tile_element;
         do
         {
-            maxHeight = std::max(maxHeight, static_cast<uint16_t>(element->getClearanceZ()));
-            if (element->getType() == TileElementType::Surface)
+            maxHeight = std::max(maxHeight, static_cast<uint16_t>(element->GetClearanceZ()));
+            if (element->GetType() == TileElementType::Surface)
             {
-                maxHeight = std::max(maxHeight, static_cast<uint16_t>(element->asSurface()->GetWaterHeight()));
+                maxHeight = std::max(maxHeight, static_cast<uint16_t>(element->AsSurface()->GetWaterHeight()));
             }
-        } while (!(element++)->isLastForTile());
+        } while (!(element++)->IsLastForTile());
     }
 
     if (partOfVirtualFloor)
@@ -217,26 +217,26 @@ static void PaintTileElementBase(PaintSession& session, const CoordsXY& origCoor
     int32_t previousBaseZ = 0;
     do
     {
-        if (tile_element->isInvisible())
+        if (tile_element->IsInvisible())
         {
             continue;
         }
 
         // Only paint tile_elements below the clip height.
-        if ((session.ViewFlags & VIEWPORT_FLAG_CLIP_VIEW) && (tile_element->getBaseZ() > gClipHeight * kCoordsZStep))
+        if ((session.ViewFlags & VIEWPORT_FLAG_CLIP_VIEW) && (tile_element->GetBaseZ() > gClipHeight * kCoordsZStep))
         {
             // see-through off: don't paint this tile_element at all
             // see-through on: paint this tile_element as partial or hidden later on
             // note: surface elements are not painted even with see-through turned on
             if ((session.ViewFlags & VIEWPORT_FLAG_CLIP_VIEW_SEE_THROUGH) == 0
-                || tile_element->getType() == TileElementType::Surface)
+                || tile_element->GetType() == TileElementType::Surface)
             {
                 continue;
             }
         }
 
-        Direction direction = tile_element->getDirectionWithOffset(rotation);
-        int32_t baseZ = tile_element->getBaseZ();
+        Direction direction = tile_element->GetDirectionWithOffset(rotation);
+        int32_t baseZ = tile_element->GetBaseZ();
 
         // If we are on a new baseZ level, look through elements on the
         //  same baseZ and store any types might be relevant to others
@@ -246,18 +246,18 @@ static void PaintTileElementBase(PaintSession& session, const CoordsXY& origCoor
             session.PathElementOnSameHeight = nullptr;
             session.TrackElementOnSameHeight = nullptr;
             const TileElement* tile_element_sub_iterator = tile_element;
-            while (!(tile_element_sub_iterator++)->isLastForTile())
+            while (!(tile_element_sub_iterator++)->IsLastForTile())
             {
-                if (tile_element->isInvisible())
+                if (tile_element->IsInvisible())
                 {
                     continue;
                 }
 
-                if (tile_element_sub_iterator->getBaseZ() != tile_element->getBaseZ())
+                if (tile_element_sub_iterator->GetBaseZ() != tile_element->GetBaseZ())
                 {
                     break;
                 }
-                auto type = tile_element_sub_iterator->getType();
+                auto type = tile_element_sub_iterator->GetType();
                 if (type == TileElementType::Path)
                     session.PathElementOnSameHeight = tile_element_sub_iterator;
                 else if (type == TileElementType::Track)
@@ -268,35 +268,35 @@ static void PaintTileElementBase(PaintSession& session, const CoordsXY& origCoor
         CoordsXY mapPosition = session.MapPosition;
         session.CurrentlyDrawnTileElement = tile_element;
         // Setup the painting of for example: the underground, signs, rides, scenery, etc.
-        switch (tile_element->getType())
+        switch (tile_element->GetType())
         {
             case TileElementType::Surface:
-                PaintSurface(session, direction, baseZ, *(tile_element->asSurface()));
+                PaintSurface(session, direction, baseZ, *(tile_element->AsSurface()));
                 break;
             case TileElementType::Path:
-                PaintPath(session, baseZ, *(tile_element->asPath()));
+                PaintPath(session, baseZ, *(tile_element->AsPath()));
                 break;
             case TileElementType::Track:
-                PaintTrack(session, direction, baseZ, *(tile_element->asTrack()));
+                PaintTrack(session, direction, baseZ, *(tile_element->AsTrack()));
                 break;
             case TileElementType::SmallScenery:
-                PaintSmallScenery(session, direction, baseZ, *(tile_element->asSmallScenery()));
+                PaintSmallScenery(session, direction, baseZ, *(tile_element->AsSmallScenery()));
                 break;
             case TileElementType::Entrance:
-                PaintEntrance(session, direction, baseZ, *(tile_element->asEntrance()));
+                PaintEntrance(session, direction, baseZ, *(tile_element->AsEntrance()));
                 break;
             case TileElementType::Wall:
-                PaintWall(session, direction, baseZ, *(tile_element->asWall()));
+                PaintWall(session, direction, baseZ, *(tile_element->AsWall()));
                 break;
             case TileElementType::LargeScenery:
-                PaintLargeScenery(session, direction, baseZ, *(tile_element->asLargeScenery()));
+                PaintLargeScenery(session, direction, baseZ, *(tile_element->AsLargeScenery()));
                 break;
             case TileElementType::Banner:
-                PaintBanner(session, direction, baseZ, *(tile_element->asBanner()));
+                PaintBanner(session, direction, baseZ, *(tile_element->AsBanner()));
                 break;
         }
         session.MapPosition = mapPosition;
-    } while (!(tile_element++)->isLastForTile());
+    } while (!(tile_element++)->IsLastForTile());
 
     if (Config::Get().general.virtualFloorStyle != VirtualFloorStyles::Off && partOfVirtualFloor)
     {
@@ -308,7 +308,7 @@ static void PaintTileElementBase(PaintSession& session, const CoordsXY& origCoor
         return;
     }
 
-    if ((tile_element - 1)->getType() == TileElementType::Surface)
+    if ((tile_element - 1)->GetType() == TileElementType::Surface)
     {
         return;
     }
