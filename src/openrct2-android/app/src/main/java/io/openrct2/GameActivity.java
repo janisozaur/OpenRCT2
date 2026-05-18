@@ -118,7 +118,7 @@ public class GameActivity extends SDLActivity {
         return new String[0];
     }
 
-    public void openURL(String url) {
+    public void launchURL(String url) {
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
             startActivity(intent);
@@ -127,7 +127,7 @@ public class GameActivity extends SDLActivity {
         }
     }
 
-    public void openFolder(String path) {
+    public void launchFolder(String path) {
         try {
             File file = new File(path);
             Intent intent = new Intent(Intent.ACTION_VIEW);

@@ -78,10 +78,10 @@ namespace OpenRCT2::Ui
             JNIEnv* env = static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv());
             jobject activity = static_cast<jobject>(SDL_AndroidGetActivity());
             jclass activityClass = env->GetObjectClass(activity);
-            jmethodID openFolderMethod = env->GetMethodID(activityClass, "openFolder", "(Ljava/lang/String;)V");
+            jmethodID launchFolderMethod = env->GetMethodID(activityClass, "launchFolder", "(Ljava/lang/String;)V");
 
             jstring jPath = env->NewStringUTF(path.c_str());
-            env->CallVoidMethod(activity, openFolderMethod, jPath);
+            env->CallVoidMethod(activity, launchFolderMethod, jPath);
 
             env->DeleteLocalRef(jPath);
             env->DeleteLocalRef(activityClass);
@@ -93,10 +93,10 @@ namespace OpenRCT2::Ui
             JNIEnv* env = static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv());
             jobject activity = static_cast<jobject>(SDL_AndroidGetActivity());
             jclass activityClass = env->GetObjectClass(activity);
-            jmethodID openURLMethod = env->GetMethodID(activityClass, "openURL", "(Ljava/lang/String;)V");
+            jmethodID launchURLMethod = env->GetMethodID(activityClass, "launchURL", "(Ljava/lang/String;)V");
 
             jstring jUrl = env->NewStringUTF(url.c_str());
-            env->CallVoidMethod(activity, openURLMethod, jUrl);
+            env->CallVoidMethod(activity, launchURLMethod, jUrl);
 
             env->DeleteLocalRef(jUrl);
             env->DeleteLocalRef(activityClass);
