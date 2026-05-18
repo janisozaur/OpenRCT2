@@ -3066,7 +3066,7 @@ namespace OpenRCT2::Ui::Windows
                 drawText(rt, screenCoords, stringId, ft);
             }
 
-            const auto minimumPreviewHeight = 43;
+            const auto minimumPreviewHeight = 100;
             if (widgets[WIDX_VEHICLE_TRAINS_PREVIEW].height() < minimumPreviewHeight)
             {
                 auto heightIncrease = minimumPreviewHeight - widgets[WIDX_VEHICLE_TRAINS_PREVIEW].height();
@@ -3102,14 +3102,18 @@ namespace OpenRCT2::Ui::Windows
             const int32_t totalTrainsWidth = std::max(0, (ride->numTrains - 1) * trainSpacing) + vehicleWidth;
             const auto scrollWidth = std::max<int32_t>(totalTrainsWidth + 10, widget->width() - 3);
             int32_t startX = (scrollWidth - totalTrainsWidth) / 2;
-            // Previews for flat rides start at the bottom of the widget
-            int32_t startY = widget->height() - 5;
+
+            // Centering logic: startY is at the middle of the widget.
+            // We then offset it based on the car's tab_height to center it vertically.
+            int32_t startY = (widget->height() / 2) + 5;
 
             bool isReversed = ride->flags.has(RideFlag::reversedTrains);
             int32_t carIndex = (isReversed) ? ride->numCarsPerTrain - 1 : 0;
 
             const auto& firstCarEntry = rideEntry->Cars[RideEntryGetVehicleAtPosition(
                 ride->subtype, ride->numCarsPerTrain, carIndex)];
+
+            // Flat rides use tab_height to offset themselves from the ground.
             startY += firstCarEntry.tab_height;
 
             // For each train
