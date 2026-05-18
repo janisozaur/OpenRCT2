@@ -197,7 +197,7 @@ jobs:
           # Keep win32 on vs2022 for Windows 7 compatibility.
           # See https://github.blog/changelog/2026-02-05-github-actions-early-february-2026-updates/#windows-server-2025-with-visual-studio-2026-image-now-available-for-github-hosted-runners
           - platform: win32
-            runs_on: windows-2025
+            runs_on: windows-2022
           - platform: x64
             runs_on: windows-2025-vs2026
           - platform: arm64
