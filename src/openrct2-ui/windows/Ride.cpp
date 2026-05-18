@@ -685,6 +685,47 @@ namespace OpenRCT2::Ui::Windows
         // Maximum waiting time
         u8string _spinnerCaption4{};
 
+        int32_t getVehiclePageTextHeight(const Ride& ride)
+        {
+            const auto* rideEntry = ride.getRideEntry();
+            if (rideEntry == nullptr)
+                return 0;
+
+            int32_t height = 0;
+
+            // Description
+            auto description = LanguageGetString(rideEntry->naming.Description);
+            int32_t numLines = 0;
+            wrapString(description, 300, FontStyle::medium, nullptr, &numLines);
+            height += (numLines + 1) * FontGetLineHeight(FontStyle::medium);
+            height += 2;
+
+            // Capacity
+            height += 10;
+
+            // Excitement Factor
+            if (rideEntry->excitement_multiplier != 0)
+            {
+                height += kListRowHeight;
+            }
+
+            // Intensity Factor
+            if (rideEntry->intensity_multiplier != 0)
+            {
+                int32_t lineHeight = FontGetLineHeight(FontStyle::medium);
+                if (lineHeight == 10)
+                    height += kListRowHeight;
+            }
+
+            // Nausea Factor
+            if (rideEntry->nausea_multiplier != 0)
+            {
+                height += kListRowHeight;
+            }
+
+            return height;
+        }
+
         uint8_t getNumVisibleCars()
         {
             auto* ride = GetRide(rideId);
@@ -2815,8 +2856,10 @@ namespace OpenRCT2::Ui::Windows
             if (ride == nullptr)
                 return {};
 
-            int32_t contentWidth = std::max(0, (ride->numTrains - 1) * 36) + 50;
-            contentWidth = std::max<int32_t>(contentWidth, widgets[WIDX_VEHICLE_TRAINS_PREVIEW].width() - 3);
+            const int32_t trainSpacing = 36;
+            const int32_t vehicleWidth = 32;
+            const int32_t totalTrainsWidth = std::max(0, (ride->numTrains - 1) * trainSpacing) + vehicleWidth;
+            int32_t contentWidth = std::max<int32_t>(totalTrainsWidth + 10, widgets[WIDX_VEHICLE_TRAINS_PREVIEW].width() - 3);
 
             return { static_cast<int16_t>(contentWidth),
                      static_cast<int16_t>(widgets[WIDX_VEHICLE_TRAINS_PREVIEW].height() - 3) };
@@ -2943,7 +2986,12 @@ namespace OpenRCT2::Ui::Windows
             widgets[WIDX_VEHICLE_CARS_PER_TRAIN].setString(_spinnerCaption1.c_str());
 
             widgets[WIDX_VEHICLE_TRAINS_PREVIEW].right = width - 7;
+
+            // Set the top of the preview to be just below the text.
+            auto textHeight = getVehiclePageTextHeight(*ride);
+            widgets[WIDX_VEHICLE_TRAINS_PREVIEW].top = widgets[WIDX_VEHICLE_TYPE_DROPDOWN].bottom + textHeight + 10;
             widgets[WIDX_VEHICLE_TRAINS_PREVIEW].bottom = height - 21;
+
             widgets[WIDX_VEHICLE_TRAINS].moveToY(height - 18);
             widgets[WIDX_VEHICLE_TRAINS_INCREASE].moveToY(height - 17);
             widgets[WIDX_VEHICLE_TRAINS_DECREASE].moveToY(height - 17);
@@ -3018,18 +3066,15 @@ namespace OpenRCT2::Ui::Windows
                 drawText(rt, screenCoords, stringId, ft);
             }
 
-            const auto minimumPreviewStart = screenCoords.y - windowPos.y + kListRowHeight + 5;
-            if (minimumPreviewStart > widgets[WIDX_VEHICLE_TRAINS_PREVIEW].top)
+            const auto minimumPreviewHeight = 43;
+            if (widgets[WIDX_VEHICLE_TRAINS_PREVIEW].height() < minimumPreviewHeight)
             {
-                auto heightIncrease = minimumPreviewStart - widgets[WIDX_VEHICLE_TRAINS_PREVIEW].top;
-                if (heightIncrease > 0)
-                {
-                    height += heightIncrease;
-                    resizeFrame();
+                auto heightIncrease = minimumPreviewHeight - widgets[WIDX_VEHICLE_TRAINS_PREVIEW].height();
+                height += heightIncrease;
+                resizeFrame();
 
-                    // Re-prepare to ensure anchoring is applied with new height
-                    VehicleOnPrepareDraw();
-                }
+                // Re-prepare to ensure anchoring is applied with new height
+                VehicleOnPrepareDraw();
             }
         }
 
@@ -3052,10 +3097,13 @@ namespace OpenRCT2::Ui::Windows
             Rectangle::fill(rt, { { rt.x, rt.y }, { rt.x + rt.width, rt.y + rt.height } }, PaletteIndex::pi12);
 
             Widget* widget = &widgets[WIDX_VEHICLE_TRAINS_PREVIEW];
-            const auto scrollWidth = std::max<int32_t>(std::max(0, (ride->numTrains - 1) * 36) + 50, widget->width() - 3);
-            int32_t startX = std::max(2, (scrollWidth - 1 - ((ride->numTrains - 1) * 36)) / 2 - 25);
-            // Center the vehicles vertically. Most are ~32-64 pixels high.
-            int32_t startY = widget->height() / 2 + 20;
+            const int32_t trainSpacing = 36;
+            const int32_t vehicleWidth = 32;
+            const int32_t totalTrainsWidth = std::max(0, (ride->numTrains - 1) * trainSpacing) + vehicleWidth;
+            const auto scrollWidth = std::max<int32_t>(totalTrainsWidth + 10, widget->width() - 3);
+            int32_t startX = (scrollWidth - totalTrainsWidth) / 2;
+            // Previews for flat rides start at the bottom of the widget
+            int32_t startY = widget->height() - 5;
 
             bool isReversed = ride->flags.has(RideFlag::reversedTrains);
             int32_t carIndex = (isReversed) ? ride->numCarsPerTrain - 1 : 0;
