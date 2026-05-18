@@ -691,22 +691,22 @@ namespace OpenRCT2::Ui::Windows
             if (rideEntry == nullptr)
                 return 0;
 
-            int32_t height = 0;
+            int32_t textHeight = 0;
 
             // Description
             auto description = LanguageGetString(rideEntry->naming.Description);
             int32_t numLines = 0;
             wrapString(description, 300, FontStyle::medium, nullptr, &numLines);
-            height += (numLines + 1) * FontGetLineHeight(FontStyle::medium);
-            height += 2;
+            textHeight += (numLines + 1) * FontGetLineHeight(FontStyle::medium);
+            textHeight += 2;
 
             // Capacity
-            height += 10;
+            textHeight += 10;
 
             // Excitement Factor
             if (rideEntry->excitement_multiplier != 0)
             {
-                height += kListRowHeight;
+                textHeight += kListRowHeight;
             }
 
             // Intensity Factor
@@ -714,16 +714,16 @@ namespace OpenRCT2::Ui::Windows
             {
                 int32_t lineHeight = FontGetLineHeight(FontStyle::medium);
                 if (lineHeight == 10)
-                    height += kListRowHeight;
+                    textHeight += kListRowHeight;
             }
 
             // Nausea Factor
             if (rideEntry->nausea_multiplier != 0)
             {
-                height += kListRowHeight;
+                textHeight += kListRowHeight;
             }
 
-            return height;
+            return textHeight;
         }
 
         uint8_t getNumVisibleCars()
