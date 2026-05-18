@@ -153,8 +153,8 @@ static void ConsoleCommandRides(InteractiveConsole& console, const arguments_t& 
             {
                 auto name = ride.getName();
                 console.WriteFormatLine(
-                    "ride: %03d type: %02u subtype %03u operating mode: %02u name: %s", ride.id, ride.type, ride.subtype,
-                    ride.mode, name.c_str());
+                    "ride: %03d type: %02u subtype %03u operating mode: %02u name: %s", ride.id.ToUnderlying(), ride.type,
+                    ride.subtype, ride.mode, name.c_str());
             }
         }
         else if (argv[0] == "set")
@@ -466,8 +466,8 @@ static void ConsoleCommandStaff(InteractiveConsole& console, const arguments_t& 
             {
                 auto name = peep->GetName();
                 console.WriteFormatLine(
-                    "staff id %03d type: %02u energy %03u name %s", peep->Id, peep->AssignedStaffType, peep->Energy,
-                    name.c_str());
+                    "staff id %03d type: %02u energy %03u name %s", peep->Id.ToUnderlying(), peep->AssignedStaffType,
+                    peep->Energy, name.c_str());
             }
         }
         else if (argv[0] == "set")
