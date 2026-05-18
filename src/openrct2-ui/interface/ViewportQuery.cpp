@@ -68,8 +68,8 @@ namespace OpenRCT2::Ui
         auto z = 0;
         if (info.interactionType == ViewportInteractionItem::footpath)
         {
-            z = myTileElement->getBaseZ();
-            if (myTileElement->asPath()->IsSloped())
+            z = myTileElement->GetBaseZ();
+            if (myTileElement->AsPath()->IsSloped())
             {
                 z += 8;
             }
@@ -150,13 +150,13 @@ namespace OpenRCT2::Ui
         *tileElement = info.Element;
         if (info.interactionType == ViewportInteractionItem::ride
             && viewport->flags & (VIEWPORT_FLAG_UNDERGROUND_INSIDE | VIEWPORT_FLAG_HIDE_BASE | VIEWPORT_FLAG_HIDE_VERTICAL)
-            && (*tileElement)->getType() == TileElementType::Entrance)
+            && (*tileElement)->GetType() == TileElementType::Entrance)
         {
-            uint32_t directions = (*tileElement)->asEntrance()->GetDirections();
+            uint32_t directions = (*tileElement)->AsEntrance()->GetDirections();
             if (directions & 0x0F)
             {
                 int32_t bx = Numerics::bitScanForward(directions);
-                bx += (*tileElement)->asEntrance()->getDirection();
+                bx += (*tileElement)->AsEntrance()->GetDirection();
                 bx &= 3;
                 if (direction != nullptr)
                     *direction = bx;
@@ -167,12 +167,12 @@ namespace OpenRCT2::Ui
         info = GetMapCoordinatesFromPosWindow(
             window, screenCoords,
             EnumsToFlags(ViewportInteractionItem::terrain, ViewportInteractionItem::footpath, ViewportInteractionItem::ride));
-        if (info.interactionType == ViewportInteractionItem::ride && (*tileElement)->getType() == TileElementType::Entrance)
+        if (info.interactionType == ViewportInteractionItem::ride && (*tileElement)->GetType() == TileElementType::Entrance)
         {
-            uint32_t directions = (*tileElement)->asEntrance()->GetDirections();
+            uint32_t directions = (*tileElement)->AsEntrance()->GetDirections();
             if (directions & 0x0F)
             {
-                int32_t bx = (*tileElement)->getDirectionWithOffset(Numerics::bitScanForward(directions));
+                int32_t bx = (*tileElement)->GetDirectionWithOffset(Numerics::bitScanForward(directions));
                 if (direction != nullptr)
                     *direction = bx;
                 return info.Loc;

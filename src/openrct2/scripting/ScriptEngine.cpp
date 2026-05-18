@@ -490,7 +490,8 @@ void ScriptEngine::Initialise()
     #endif
     }
 
-    JS_SetMaxStackSize(_runtime, kJsStackSize);
+    // Disable maximum stack size limit for the JS engine.
+    JS_SetMaxStackSize(_runtime, 0);
 
     _replContext = JS_NewContext(_runtime);
     if (!_replContext)
@@ -2113,17 +2114,14 @@ void ScriptEngine::UpdateSockets()
 void ScriptEngine::RemoveSockets(const std::shared_ptr<Plugin>& plugin)
 {
     #ifndef DISABLE_NETWORK
-    // Remove sockets from the _plugins vector by first moving them, then clearing the vector
-    std::vector<std::shared_ptr<SocketDataBase>> removed;
-    for (auto& data : _sockets)
-    {
-        if (data != nullptr && data->_plugin == plugin)
-            removed.push_back(std::move(data));
-    }
-    std::erase_if(_sockets, [](const std::shared_ptr<SocketDataBase>& data) { return data == nullptr; });
-    // Dispose of the moved sockets safely
-    for (const auto& data : removed)
-        data->Dispose();
+    std::erase_if(_sockets, [plugin](const std::shared_ptr<SocketDataBase>& data) {
+        if (data->_plugin == plugin)
+        {
+            data->Dispose();
+            return true;
+        }
+        return false;
+    });
     #endif
 }
 

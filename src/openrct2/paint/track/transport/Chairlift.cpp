@@ -134,15 +134,15 @@ static const TrackElement* ChairliftPaintUtilMapGetTrackElementAtFromRideFuzzy(
 
     do
     {
-        if (tileElement->getType() != TileElementType::Track)
+        if (tileElement->GetType() != TileElementType::Track)
             continue;
         if (tileElement->GetRideIndex() != ride.id)
             continue;
-        if (tileElement->baseHeight != z && tileElement->baseHeight != z - 1)
+        if (tileElement->BaseHeight != z && tileElement->BaseHeight != z - 1)
             continue;
 
-        return tileElement->asTrack();
-    } while (!(tileElement++)->isLastForTile());
+        return tileElement->AsTrack();
+    } while (!(tileElement++)->IsLastForTile());
 
     return nullptr;
 }
@@ -155,14 +155,14 @@ static bool ChairliftPaintUtilIsFirstTrack(
         return false;
     }
 
-    CoordsXY delta = CoordsDirectionDelta[trackElement.getDirection()];
+    CoordsXY delta = CoordsDirectionDelta[trackElement.GetDirection()];
     CoordsXY newPos = {
         static_cast<int32_t>(pos.x - delta.x),
         static_cast<int32_t>(pos.y - delta.y),
     };
 
     const TrackElement* nextTrack = ChairliftPaintUtilMapGetTrackElementAtFromRideFuzzy(
-        newPos.x, newPos.y, trackElement.baseHeight, ride);
+        newPos.x, newPos.y, trackElement.BaseHeight, ride);
 
     return nextTrack == nullptr;
 }
@@ -175,14 +175,14 @@ static bool ChairliftPaintUtilIsLastTrack(
         return false;
     }
 
-    CoordsXY delta = CoordsDirectionDelta[trackElement.getDirection()];
+    CoordsXY delta = CoordsDirectionDelta[trackElement.GetDirection()];
     CoordsXY newPos = {
         static_cast<int32_t>(pos.x + delta.x),
         static_cast<int32_t>(pos.y + delta.y),
     };
 
     const TrackElement* nextTrack = ChairliftPaintUtilMapGetTrackElementAtFromRideFuzzy(
-        newPos.x, newPos.y, trackElement.baseHeight, ride);
+        newPos.x, newPos.y, trackElement.BaseHeight, ride);
 
     return nextTrack == nullptr;
 }

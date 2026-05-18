@@ -21,10 +21,10 @@ namespace OpenRCT2::Network
     class User final
     {
     public:
-        std::string hash;
-        std::string name;
-        std::optional<uint8_t> groupId;
-        bool remove;
+        std::string Hash;
+        std::string Name;
+        std::optional<uint8_t> GroupId;
+        bool Remove;
 
         /**
          * Creates a User object from a JSON object
@@ -32,39 +32,39 @@ namespace OpenRCT2::Network
          * @return Pointer to a new User object
          * @note jsonData is deliberately left non-const: json_t behaviour changes when const
          */
-        static std::unique_ptr<User> fromJson(const json_t& jsonData);
+        static std::unique_ptr<User> FromJson(const json_t& jsonData);
 
         /**
          * Serialise a User object into a JSON object
          *
          * @return JSON representation of the User object
          */
-        json_t toJson() const;
+        json_t ToJson() const;
     };
 
     class UserManager final
     {
     public:
-        void load();
+        void Load();
 
         /**
-         * @brief UserManager::save
+         * @brief UserManager::Save
          * Reads mappings from JSON, updates them in-place and saves JSON.
          *
          * Useful for retaining custom entries in JSON file.
          */
-        void save();
+        void Save();
 
-        void unsetUsersOfGroup(uint8_t groupId);
-        void removeUser(const std::string& hash);
+        void UnsetUsersOfGroup(uint8_t groupId);
+        void RemoveUser(const std::string& hash);
 
-        const User* getUserByHash(const std::string& hash) const;
-        const User* getUserByName(const std::string& name) const;
-        User* getOrAddUser(const std::string& hash);
+        const User* GetUserByHash(const std::string& hash) const;
+        const User* GetUserByName(const std::string& name) const;
+        User* GetOrAddUser(const std::string& hash);
 
     private:
         std::unordered_map<std::string, std::unique_ptr<User>> _usersByHash;
 
-        static u8string getStorePath();
+        static u8string GetStorePath();
     };
 } // namespace OpenRCT2::Network

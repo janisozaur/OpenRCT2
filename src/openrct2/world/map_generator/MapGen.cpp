@@ -74,8 +74,8 @@ namespace OpenRCT2::World::MapGenerator
                 {
                     surfaceElement->SetSurfaceObjectIndex(surfaceTextureId);
                     surfaceElement->SetEdgeObjectIndex(edgeTextureId);
-                    surfaceElement->baseHeight = settings->heightmapLow;
-                    surfaceElement->clearanceHeight = settings->heightmapLow;
+                    surfaceElement->BaseHeight = settings->heightmapLow;
+                    surfaceElement->ClearanceHeight = settings->heightmapLow;
                 }
             }
         }
@@ -101,7 +101,7 @@ namespace OpenRCT2::World::MapGenerator
             {
                 auto surfaceElement = MapGetSurfaceElementAt(TileCoordsXY{ x, y });
 
-                if (surfaceElement != nullptr && surfaceElement->baseHeight < settings->waterLevel + 6)
+                if (surfaceElement != nullptr && surfaceElement->BaseHeight < settings->waterLevel + 6)
                     surfaceElement->SetSurfaceObjectIndex(beachTextureId);
             }
         }
@@ -118,7 +118,7 @@ namespace OpenRCT2::World::MapGenerator
             for (int32_t x = 1; x < gameState.mapSize.x - 1; x++)
             {
                 auto surfaceElement = MapGetSurfaceElementAt(TileCoordsXY{ x, y });
-                if (surfaceElement != nullptr && surfaceElement->baseHeight < waterLevel)
+                if (surfaceElement != nullptr && surfaceElement->BaseHeight < waterLevel)
                     surfaceElement->SetWaterHeight(waterLevel * kCoordsZStep);
             }
         }
@@ -146,13 +146,13 @@ namespace OpenRCT2::World::MapGenerator
                 auto surfaceElement = MapGetSurfaceElementAt(TileCoordsXY{ x, y });
                 if (surfaceElement == nullptr)
                     continue;
-                surfaceElement->baseHeight = std::max(2, baseHeight * 2);
+                surfaceElement->BaseHeight = std::max(2, baseHeight * 2);
 
                 // If base height is below water level, lower it to create more natural shorelines
-                if (surfaceElement->baseHeight >= 4 && surfaceElement->baseHeight <= settings->waterLevel)
-                    surfaceElement->baseHeight -= 2;
+                if (surfaceElement->BaseHeight >= 4 && surfaceElement->BaseHeight <= settings->waterLevel)
+                    surfaceElement->BaseHeight -= 2;
 
-                surfaceElement->clearanceHeight = surfaceElement->baseHeight;
+                surfaceElement->ClearanceHeight = surfaceElement->BaseHeight;
 
                 uint8_t currentSlope = surfaceElement->GetSlope();
 

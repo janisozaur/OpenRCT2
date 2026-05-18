@@ -29,26 +29,26 @@ namespace OpenRCT2
     struct EntitySpriteData
     {
         // Width from centre of sprite to edge
-        uint8_t width;
+        uint8_t Width;
         // Height from centre of sprite to bottom
-        uint8_t heightMin;
+        uint8_t HeightMin;
         // Height from centre of sprite to top
-        uint8_t heightMax;
+        uint8_t HeightMax;
         // Screen Coordinates of sprite
-        ScreenRect spriteRect;
+        ScreenRect SpriteRect;
     };
 
     struct EntityBase
     {
-        EntityType type;
-        EntityId id;
+        EntityType Type;
+        EntityId Id;
         int32_t x;
         int32_t y;
         int32_t z;
-        EntitySpriteData spriteData;
+        EntitySpriteData SpriteData;
         // Used as direction or rotation depending on the entity.
-        uint8_t orientation;
-        uint32_t spatialIndex;
+        uint8_t Orientation;
+        uint32_t SpatialIndex;
 
         /**
          * Moves a sprite to a new location, invalidates the current position if valid
@@ -56,32 +56,32 @@ namespace OpenRCT2
          *
          *  rct2: 0x0069E9D3
          */
-        void moveTo(const CoordsXYZ& newLocation);
+        void MoveTo(const CoordsXYZ& newLocation);
 
-        void moveToAndUpdateSpatialIndex(const CoordsXYZ& newLocation);
+        void MoveToAndUpdateSpatialIndex(const CoordsXYZ& newLocation);
 
         /**
          * Sets the entity location without screen invalidation.
          */
-        void setLocation(const CoordsXYZ& newLocation);
+        void SetLocation(const CoordsXYZ& newLocation);
 
         /**
          * Gets the entity current location.
          */
-        CoordsXYZ getLocation() const;
+        CoordsXYZ GetLocation() const;
 
-        void invalidate();
+        void Invalidate();
         template<typename T>
-        bool is() const;
+        bool Is() const;
         template<typename T>
-        T* as()
+        T* As()
         {
-            return is<T>() ? reinterpret_cast<T*>(this) : nullptr;
+            return Is<T>() ? reinterpret_cast<T*>(this) : nullptr;
         }
         template<typename T>
-        const T* as() const
+        const T* As() const
         {
-            return is<T>() ? reinterpret_cast<const T*>(this) : nullptr;
+            return Is<T>() ? reinterpret_cast<const T*>(this) : nullptr;
         }
 
         template<typename T>
@@ -96,8 +96,8 @@ namespace OpenRCT2
             return reinterpret_cast<const T*>(this);
         }
 
-        void serialise(class DataSerialiser& stream);
+        void Serialise(class DataSerialiser& stream);
 
-        void paint() const;
+        void Paint() const;
     };
 } // namespace OpenRCT2

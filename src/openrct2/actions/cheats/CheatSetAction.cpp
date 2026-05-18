@@ -463,9 +463,9 @@ namespace OpenRCT2::GameActions
         TileElementIteratorBegin(&it);
         do
         {
-            if (it.element->getType() == TileElementType::SmallScenery)
+            if (it.element->GetType() == TileElementType::SmallScenery)
             {
-                it.element->asSmallScenery()->SetAge(0);
+                it.element->AsSmallScenery()->SetAge(0);
             }
         } while (TileElementIteratorNext(&it));
 
@@ -479,13 +479,13 @@ namespace OpenRCT2::GameActions
         TileElementIteratorBegin(&it);
         do
         {
-            if (it.element->getType() != TileElementType::Path)
+            if (it.element->GetType() != TileElementType::Path)
                 continue;
 
-            if (!(it.element)->asPath()->HasAddition())
+            if (!(it.element)->AsPath()->HasAddition())
                 continue;
 
-            it.element->asPath()->SetIsBroken(false);
+            it.element->AsPath()->SetIsBroken(false);
         } while (TileElementIteratorNext(&it));
 
         GfxInvalidateScreen();
@@ -502,10 +502,10 @@ namespace OpenRCT2::GameActions
         TileElementIteratorBegin(&it);
         do
         {
-            if (it.element->getType() != TileElementType::Path)
+            if (it.element->GetType() != TileElementType::Path)
                 continue;
 
-            auto* path = it.element->asPath();
+            auto* path = it.element->AsPath();
             if (!path->HasAddition())
                 continue;
 
@@ -798,7 +798,7 @@ namespace OpenRCT2::GameActions
                 if (surfaceElement->GetOwnership() & OWNERSHIP_OWNED)
                     continue;
 
-                int32_t baseZ = surfaceElement->getBaseZ();
+                int32_t baseZ = surfaceElement->GetBaseZ();
                 int32_t destOwnership = CheckMaxAllowableLandRightsForTile({ coords, baseZ });
 
                 // only own tiles that were not set to 0
@@ -819,7 +819,7 @@ namespace OpenRCT2::GameActions
             {
                 surfaceElement->SetOwnership(OWNERSHIP_UNOWNED);
                 Park::UpdateFencesAroundTile(spawn);
-                uint16_t baseZ = surfaceElement->getBaseZ();
+                uint16_t baseZ = surfaceElement->GetBaseZ();
                 MapInvalidateTile({ spawn, baseZ, baseZ + 16 });
             }
         }
@@ -852,10 +852,10 @@ namespace OpenRCT2::GameActions
         TileElementIteratorBegin(&it);
         do
         {
-            if (it.element->getType() == TileElementType::Surface)
+            if (it.element->GetType() == TileElementType::Surface)
             {
                 // Remove all park fence flags
-                it.element->asSurface()->SetParkFences(0);
+                it.element->AsSurface()->SetParkFences(0);
             }
         } while (TileElementIteratorNext(&it));
 

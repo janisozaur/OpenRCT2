@@ -214,15 +214,15 @@ namespace OpenRCT2::GameActions
                     if (tileElement == nullptr)
                         break;
 
-                    lastForTileReached = tileElement->isLastForTile();
-                    if (tileElement->getType() != TileElementType::Track)
+                    lastForTileReached = tileElement->IsLastForTile();
+                    if (tileElement->GetType() != TileElementType::Track)
                         continue;
 
-                    auto* trackElement = tileElement->asTrack();
+                    auto* trackElement = tileElement->AsTrack();
                     if (trackElement->GetRideIndex() != _rideIndex)
                         continue;
 
-                    const auto location = CoordsXYZD(tileCoords, trackElement->getBaseZ(), trackElement->getDirection());
+                    const auto location = CoordsXYZD(tileCoords, trackElement->GetBaseZ(), trackElement->GetDirection());
                     const auto type = trackElement->GetTrackType();
 
                     if (type != TrackElemType::maze)

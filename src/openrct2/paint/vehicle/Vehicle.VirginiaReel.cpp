@@ -57,13 +57,13 @@ namespace OpenRCT2
 
         baseImage_id += carEntry->base_image_id;
         auto image_id = ImageId(baseImage_id, vehicle->colours.Body, vehicle->colours.Trim);
-        if (vehicle->isGhost())
+        if (vehicle->IsGhost())
         {
             image_id = ConstructionMarker.WithIndex(image_id.GetIndex());
         }
         PaintAddImageAsParent(session, image_id, { 0, 0, z }, bb);
 
-        if (session.rt.zoom_level < ZoomLevel{ 2 } && vehicle->num_peeps > 0 && !vehicle->isGhost())
+        if (session.rt.zoom_level < ZoomLevel{ 2 } && vehicle->num_peeps > 0 && !vehicle->IsGhost())
         {
             Drawing::Colour riding_peep_sprites[4] = { Drawing::kColourNull, Drawing::kColourNull, Drawing::kColourNull,
                                                        Drawing::kColourNull };

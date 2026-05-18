@@ -1040,14 +1040,14 @@ namespace OpenRCT2::RCT2
 
                         do
                         {
-                            if (tileElement->getType() != TileElementType::Wall || tileElement->baseHeight != tileCoords.z)
+                            if (tileElement->GetType() != TileElementType::Wall || tileElement->BaseHeight != tileCoords.z)
                             {
                                 continue;
                             }
 
-                            tileElement->asWall()->SetIsAnimating(true);
+                            tileElement->AsWall()->SetIsAnimating(true);
                             MapAnimations::MarkTileForUpdate(tileCoords);
-                        } while (!(tileElement++)->isLastForTile());
+                        } while (!(tileElement++)->IsLastForTile());
                         break;
                     }
                 }
@@ -1267,12 +1267,12 @@ namespace OpenRCT2::RCT2
                         {
                             do
                             {
-                                if (srcElement->baseHeight == Limits::kMaxElementHeight)
+                                if (srcElement->BaseHeight == Limits::kMaxElementHeight)
                                 {
                                     continue;
                                 }
 
-                                auto tileElementType = srcElement->getType();
+                                auto tileElementType = srcElement->GetType();
                                 if (tileElementType == RCT12TileElementType::corrupt)
                                 {
                                     // One property of corrupt elements was to hide tops of tower tracks, and to avoid the next
@@ -1293,7 +1293,7 @@ namespace OpenRCT2::RCT2
                                 ImportTileElement(&dstElement, srcElement, nextElementInvisible || restOfTileInvisible);
                                 nextElementInvisible = false;
                                 tileAdded = true;
-                            } while (!(srcElement++)->isLastForTile());
+                            } while (!(srcElement++)->IsLastForTile());
                         }
                     }
 
@@ -1302,13 +1302,13 @@ namespace OpenRCT2::RCT2
                         // Add a default surface element, we always need at least one element per tile
                         auto& dstElement = tileElements.emplace_back();
                         dstElement.ClearAs(TileElementType::Surface);
-                        dstElement.setLastForTile(true);
+                        dstElement.SetLastForTile(true);
                     }
 
                     // Set last element flag in case the original last element was never added
                     if (!tileElements.empty())
                     {
-                        tileElements.back().setLastForTile(true);
+                        tileElements.back().SetLastForTile(true);
                     }
                 }
             }
@@ -1317,24 +1317,24 @@ namespace OpenRCT2::RCT2
 
         void ImportTileElement(TileElement* dst, const RCT12TileElement* src, bool invisible)
         {
-            const auto rct12Type = src->getType();
+            const auto rct12Type = src->GetType();
             dst->ClearAs(ToOpenRCT2TileElementType(rct12Type));
-            dst->setDirection(src->getDirection());
-            dst->setBaseZ(src->baseHeight * kCoordsZStep);
-            dst->setClearanceZ(src->clearanceHeight * kCoordsZStep);
+            dst->SetDirection(src->GetDirection());
+            dst->SetBaseZ(src->BaseHeight * kCoordsZStep);
+            dst->SetClearanceZ(src->ClearanceHeight * kCoordsZStep);
 
             // All saved in "flags"
-            dst->setOccupiedQuadrants(src->getOccupiedQuadrants());
-            dst->setGhost(src->isGhost());
-            dst->setLastForTile(src->isLastForTile());
-            dst->setInvisible(invisible);
+            dst->SetOccupiedQuadrants(src->GetOccupiedQuadrants());
+            dst->SetGhost(src->IsGhost());
+            dst->SetLastForTile(src->IsLastForTile());
+            dst->SetInvisible(invisible);
 
             switch (rct12Type)
             {
                 case RCT12TileElementType::surface:
                 {
-                    auto dst2 = dst->asSurface();
-                    auto src2 = src->asSurface();
+                    auto dst2 = dst->AsSurface();
+                    auto src2 = src->AsSurface();
 
                     dst2->SetSlope(src2->GetSlope());
 
@@ -1351,8 +1351,8 @@ namespace OpenRCT2::RCT2
                 }
                 case RCT12TileElementType::path:
                 {
-                    auto dst2 = dst->asPath();
-                    auto src2 = src->asPath();
+                    auto dst2 = dst->AsPath();
+                    auto src2 = src->AsPath();
 
                     auto pathEntryIndex = src2->GetEntryIndex();
                     auto surfaceEntry = src2->IsQueue() ? _pathToQueueSurfaceMap[pathEntryIndex]
@@ -1389,8 +1389,8 @@ namespace OpenRCT2::RCT2
                 }
                 case RCT12TileElementType::track:
                 {
-                    auto dst2 = dst->asTrack();
-                    auto src2 = src->asTrack();
+                    auto dst2 = dst->AsTrack();
+                    auto src2 = src->AsTrack();
 
                     auto rideType = _s6.Rides[src2->GetRideIndex()].type;
                     auto oldTrackType = src2->GetTrackType();
@@ -1443,15 +1443,15 @@ namespace OpenRCT2::RCT2
 
                     if (TrackTypeMustBeMadeInvisible(*dst2))
                     {
-                        dst->setInvisible(true);
+                        dst->SetInvisible(true);
                     }
 
                     break;
                 }
                 case RCT12TileElementType::smallScenery:
                 {
-                    auto dst2 = dst->asSmallScenery();
-                    auto src2 = src->asSmallScenery();
+                    auto dst2 = dst->AsSmallScenery();
+                    auto src2 = src->AsSmallScenery();
 
                     dst2->SetEntryIndex(src2->GetEntryIndex());
                     dst2->SetAge(src2->GetAge());
@@ -1465,8 +1465,8 @@ namespace OpenRCT2::RCT2
                 }
                 case RCT12TileElementType::entrance:
                 {
-                    auto dst2 = dst->asEntrance();
-                    auto src2 = src->asEntrance();
+                    auto dst2 = dst->AsEntrance();
+                    auto src2 = src->AsEntrance();
 
                     dst2->SetEntranceType(src2->GetEntranceType());
                     dst2->SetRideIndex(RCT12RideIdToOpenRCT2RideId(src2->GetRideIndex()));
@@ -1496,8 +1496,8 @@ namespace OpenRCT2::RCT2
                 }
                 case RCT12TileElementType::wall:
                 {
-                    auto dst2 = dst->asWall();
-                    auto src2 = src->asWall();
+                    auto dst2 = dst->AsWall();
+                    auto src2 = src->AsWall();
 
                     dst2->SetEntryIndex(src2->GetEntryIndex());
                     dst2->SetSlope(src2->GetSlope());
@@ -1533,8 +1533,8 @@ namespace OpenRCT2::RCT2
                 }
                 case RCT12TileElementType::largeScenery:
                 {
-                    auto dst2 = dst->asLargeScenery();
-                    auto src2 = src->asLargeScenery();
+                    auto dst2 = dst->AsLargeScenery();
+                    auto src2 = src->AsLargeScenery();
 
                     dst2->SetEntryIndex(src2->GetEntryIndex());
                     dst2->SetSequenceIndex(src2->GetSequenceIndex());
@@ -1566,8 +1566,8 @@ namespace OpenRCT2::RCT2
                 }
                 case RCT12TileElementType::banner:
                 {
-                    auto dst2 = dst->asBanner();
-                    auto src2 = src->asBanner();
+                    auto dst2 = dst->AsBanner();
+                    auto src2 = src->AsBanner();
 
                     dst2->SetPosition(src2->GetPosition());
                     dst2->SetAllowedEdges(src2->GetAllowedEdges());
@@ -1605,19 +1605,19 @@ namespace OpenRCT2::RCT2
                 if (_s6.CampaignWeeksLeft[i] & CAMPAIGN_ACTIVE_FLAG)
                 {
                     MarketingCampaign campaign{};
-                    campaign.type = static_cast<uint8_t>(i);
-                    campaign.weeksLeft = _s6.CampaignWeeksLeft[i] & ~(CAMPAIGN_ACTIVE_FLAG | CAMPAIGN_FIRST_WEEK_FLAG);
+                    campaign.Type = static_cast<uint8_t>(i);
+                    campaign.WeeksLeft = _s6.CampaignWeeksLeft[i] & ~(CAMPAIGN_ACTIVE_FLAG | CAMPAIGN_FIRST_WEEK_FLAG);
                     if ((_s6.CampaignWeeksLeft[i] & CAMPAIGN_FIRST_WEEK_FLAG) != 0)
                     {
                         campaign.flags.set(MarketingCampaignFlag::firstWeek);
                     }
-                    if (campaign.type == ADVERTISING_CAMPAIGN_RIDE_FREE || campaign.type == ADVERTISING_CAMPAIGN_RIDE)
+                    if (campaign.Type == ADVERTISING_CAMPAIGN_RIDE_FREE || campaign.Type == ADVERTISING_CAMPAIGN_RIDE)
                     {
-                        campaign.rideId = RCT12RideIdToOpenRCT2RideId(_s6.CampaignRideIndex[i]);
+                        campaign.RideId = RCT12RideIdToOpenRCT2RideId(_s6.CampaignRideIndex[i]);
                     }
-                    else if (campaign.type == ADVERTISING_CAMPAIGN_FOOD_OR_DRINK_FREE)
+                    else if (campaign.Type == ADVERTISING_CAMPAIGN_FOOD_OR_DRINK_FREE)
                     {
-                        campaign.shopItemType = ShopItem(_s6.CampaignRideIndex[i]);
+                        campaign.ShopItemType = ShopItem(_s6.CampaignRideIndex[i]);
                     }
                     park.marketingCampaigns.push_back(campaign);
                 }
@@ -1820,16 +1820,16 @@ namespace OpenRCT2::RCT2
 
         void ImportEntityCommonProperties(EntityBase* dst, const RCT12EntityBase* src)
         {
-            dst->type = GetEntityTypeFromRCT2Sprite(src);
-            dst->id = EntityId::FromUnderlying(src->EntityIndex);
+            dst->Type = GetEntityTypeFromRCT2Sprite(src);
+            dst->Id = EntityId::FromUnderlying(src->EntityIndex);
             dst->x = src->x;
             dst->y = src->y;
             dst->z = src->z;
-            dst->spriteData.width = src->SpriteWidth;
-            dst->spriteData.heightMin = src->SpriteHeightNegative;
-            dst->spriteData.heightMax = src->SpriteHeightPositive;
-            dst->spriteData.spriteRect = ScreenRect(src->SpriteLeft, src->SpriteTop, src->SpriteRight, src->SpriteBottom);
-            dst->orientation = src->EntityDirection;
+            dst->SpriteData.Width = src->SpriteWidth;
+            dst->SpriteData.HeightMin = src->SpriteHeightNegative;
+            dst->SpriteData.HeightMax = src->SpriteHeightPositive;
+            dst->SpriteData.SpriteRect = ScreenRect(src->SpriteLeft, src->SpriteTop, src->SpriteRight, src->SpriteBottom);
+            dst->Orientation = src->EntityDirection;
         }
 
         void ImportEntity(GameState_t& gameState, const RCT12EntityBase& src);
@@ -1914,7 +1914,7 @@ namespace OpenRCT2::RCT2
             // Find if any rct1 terrain surfaces or edges have been used
             const bool hasRCT1Terrain = std::any_of(
                 std::begin(_s6.TileElements), std::end(_s6.TileElements), [](RCT12TileElement& tile) {
-                    auto* surface = tile.asSurface();
+                    auto* surface = tile.AsSurface();
                     if (surface == nullptr)
                     {
                         return false;
@@ -2126,8 +2126,8 @@ namespace OpenRCT2::RCT2
         dst->NauseaTolerance = static_cast<PeepNauseaTolerance>(src->NauseaTolerance);
         dst->PaidOnDrink = src->PaidOnDrink;
 
-        RideUse::GetHistory().Set(dst->id, RCT12GetRidesBeenOn(src));
-        RideUse::GetTypeHistory().Set(dst->id, RCT12GetRideTypesBeenOn(src));
+        RideUse::GetHistory().Set(dst->Id, RCT12GetRidesBeenOn(src));
+        RideUse::GetTypeHistory().Set(dst->Id, RCT12GetRideTypesBeenOn(src));
 
         dst->SetItemFlags(src->GetItemFlags());
         dst->Photo1RideRef = RCT12RideIdToOpenRCT2RideId(src->Photo1RideRef);
@@ -2217,12 +2217,12 @@ namespace OpenRCT2::RCT2
         auto dst = getGameState().entities.CreateEntityAt<::MoneyEffect>(EntityId::FromUnderlying(baseSrc.EntityIndex));
         auto src = static_cast<const RCT12EntityMoneyEffect*>(&baseSrc);
         ImportEntityCommonProperties(dst, src);
-        dst->moveDelay = src->MoveDelay;
-        dst->numMovements = src->NumMovements;
-        dst->guestPurchase = src->Vertical;
-        dst->value = src->Value;
-        dst->offsetX = src->OffsetX;
-        dst->wiggle = src->Wiggle;
+        dst->MoveDelay = src->MoveDelay;
+        dst->NumMovements = src->NumMovements;
+        dst->GuestPurchase = src->Vertical;
+        dst->Value = src->Value;
+        dst->OffsetX = src->OffsetX;
+        dst->Wiggle = src->Wiggle;
     }
 
     template<>

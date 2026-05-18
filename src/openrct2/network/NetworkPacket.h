@@ -21,8 +21,8 @@ namespace OpenRCT2::Network
 #pragma pack(push, 1)
     struct PacketLegacyHeader
     {
-        uint16_t size = 0;
-        Command id = Command::invalid;
+        uint16_t Size = 0;
+        Command Id = Command::invalid;
     };
     static_assert(sizeof(PacketLegacyHeader) == 6);
 
@@ -43,33 +43,33 @@ namespace OpenRCT2::Network
         Packet() noexcept = default;
         Packet(Command id) noexcept;
 
-        uint8_t* getData() noexcept;
-        const uint8_t* getData() const noexcept;
+        uint8_t* GetData() noexcept;
+        const uint8_t* GetData() const noexcept;
 
-        Command getCommand() const noexcept;
+        Command GetCommand() const noexcept;
 
-        void clear() noexcept;
-        bool commandRequiresAuth() const noexcept;
+        void Clear() noexcept;
+        bool CommandRequiresAuth() const noexcept;
 
-        const uint8_t* read(size_t size);
-        std::string_view readString();
+        const uint8_t* Read(size_t size);
+        std::string_view ReadString();
 
-        void write(const void* bytes, size_t size);
-        void writeString(std::string_view s);
+        void Write(const void* bytes, size_t size);
+        void WriteString(std::string_view s);
 
         template<typename T>
         Packet& operator>>(T& value)
         {
-            if (bytesRead + sizeof(value) > header.size)
+            if (BytesRead + sizeof(value) > Header.size)
             {
                 value = T{};
             }
             else
             {
                 T local;
-                std::memcpy(&local, &getData()[bytesRead], sizeof(local));
+                std::memcpy(&local, &GetData()[BytesRead], sizeof(local));
                 value = ByteSwapBE(local);
-                bytesRead += sizeof(value);
+                BytesRead += sizeof(value);
             }
             return *this;
         }
@@ -78,20 +78,20 @@ namespace OpenRCT2::Network
         Packet& operator<<(T value)
         {
             T swapped = ByteSwapBE(value);
-            write(&swapped, sizeof(T));
+            Write(&swapped, sizeof(T));
             return *this;
         }
 
-        Packet& operator<<(DataSerialiser& serialiser)
+        Packet& operator<<(DataSerialiser& data)
         {
-            write(static_cast<const uint8_t*>(serialiser.GetStream().GetData()), serialiser.GetStream().GetLength());
+            Write(static_cast<const uint8_t*>(data.GetStream().GetData()), data.GetStream().GetLength());
             return *this;
         }
 
     public:
-        PacketHeader header{};
-        sfl::small_vector<uint8_t, 512> data;
-        size_t bytesTransferred = 0;
-        size_t bytesRead = 0;
+        PacketHeader Header{};
+        sfl::small_vector<uint8_t, 512> Data;
+        size_t BytesTransferred = 0;
+        size_t BytesRead = 0;
     };
 } // namespace OpenRCT2::Network

@@ -619,7 +619,7 @@ namespace OpenRCT2::Ui::Windows
                         continue;
 
                     auto& item = _guestList.emplace_back();
-                    item.Id = peep->id;
+                    item.Id = peep->Id;
 
                     Formatter ft;
                     peep->FormatNameTo(ft);
@@ -927,9 +927,9 @@ namespace OpenRCT2::Ui::Windows
             if (peepA != nullptr && peepB != nullptr)
             {
                 // Compare types
-                if (peepA->type != peepB->type)
+                if (peepA->Type != peepB->Type)
                 {
-                    return static_cast<int32_t>(peepA->type) < static_cast<int32_t>(peepB->type);
+                    return static_cast<int32_t>(peepA->Type) < static_cast<int32_t>(peepB->Type);
                 }
 
                 // Compare name

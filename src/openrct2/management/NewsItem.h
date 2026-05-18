@@ -146,12 +146,12 @@ namespace OpenRCT2::News
 
         ItemQueue()
         {
-            std::get<0>(_queue).type = ItemType::null;
+            std::get<0>(Queue).type = ItemType::null;
         }
 
         constexpr iterator begin() noexcept
         {
-            return std::begin(_queue);
+            return std::begin(Queue);
         }
         constexpr const_iterator begin() const noexcept
         {
@@ -159,11 +159,11 @@ namespace OpenRCT2::News
         }
         constexpr const_iterator cbegin() const noexcept
         {
-            return std::cbegin(_queue);
+            return std::cbegin(Queue);
         }
         iterator end() noexcept
         {
-            return std::find_if(std::begin(_queue), std::end(_queue), [](const_reference item) { return item.isEmpty(); });
+            return std::find_if(std::begin(Queue), std::end(Queue), [](const_reference item) { return item.isEmpty(); });
         }
         const_iterator end() const noexcept
         {
@@ -171,12 +171,12 @@ namespace OpenRCT2::News
         }
         const_iterator cend() const noexcept
         {
-            return std::find_if(std::cbegin(_queue), std::cend(_queue), [](const_reference item) { return item.isEmpty(); });
+            return std::find_if(std::cbegin(Queue), std::cend(Queue), [](const_reference item) { return item.isEmpty(); });
         }
 
         constexpr bool empty() const noexcept
         {
-            return std::get<0>(_queue).isEmpty();
+            return std::get<0>(Queue).isEmpty();
         }
 
         size_type size() const noexcept
@@ -203,35 +203,35 @@ namespace OpenRCT2::News
 
         void pop_front()
         {
-            std::move(std::begin(_queue) + 1, std::end(_queue), std::begin(_queue));
-            _queue[N - 1].type = ItemType::null;
+            std::move(std::begin(Queue) + 1, std::end(Queue), std::begin(Queue));
+            Queue[N - 1].type = ItemType::null;
         }
 
         void push_back(const_reference item)
         {
             auto it = end();
-            if (!std::distance(it, std::end(_queue)))
+            if (!std::distance(it, std::end(Queue)))
             {
                 // Reached queue max size, need to free some space
                 pop_front();
-                _queue[N - 1] = item;
+                Queue[N - 1] = item;
             }
             else
             {
                 *it = item;
                 ++it;
-                if (std::distance(it, std::end(_queue)))
+                if (std::distance(it, std::end(Queue)))
                     it->type = ItemType::null;
             }
         }
 
         reference operator[](size_type n) noexcept
         {
-            return _queue[n];
+            return Queue[n];
         }
         const_reference operator[](size_type n) const noexcept
         {
-            return _queue[n];
+            return Queue[n];
         }
 
         constexpr size_type capacity() const noexcept
@@ -241,59 +241,59 @@ namespace OpenRCT2::News
 
         void clear() noexcept
         {
-            std::fill(_queue.begin(), _queue.end(), Item{});
+            std::fill(Queue.begin(), Queue.end(), Item{});
         }
 
     private:
-        std::array<Item, N> _queue;
+        std::array<Item, N> Queue;
     };
 
     struct ItemQueues
     {
         Item& operator[](size_t index);
         const Item& operator[](size_t index) const;
-        Item* at(int32_t index);
-        const Item* at(int32_t index) const;
-        bool isEmpty() const;
-        void clear();
-        uint16_t incrementTicks();
-        Item& current();
-        const Item& current() const;
-        bool currentShouldBeArchived() const;
-        void archiveCurrent();
-        Item* firstOpenOrNewSlot();
-        const auto& getRecent() const
+        Item* At(int32_t index);
+        const Item* At(int32_t index) const;
+        bool IsEmpty() const;
+        void Clear();
+        uint16_t IncrementTicks();
+        Item& Current();
+        const Item& Current() const;
+        bool CurrentShouldBeArchived() const;
+        void ArchiveCurrent();
+        Item* FirstOpenOrNewSlot();
+        const auto& GetRecent() const
         {
-            return _recent;
+            return Recent;
         }
-        const auto& getArchived() const
+        const auto& GetArchived() const
         {
-            return _archived;
+            return Archived;
         }
 
         template<typename Predicate>
-        void foreachRecentNews(Predicate&& p)
+        void ForeachRecentNews(Predicate&& p)
         {
-            for (auto& newsItem : _recent)
+            for (auto& newsItem : Recent)
             {
                 p(newsItem);
             }
         }
 
         template<typename Predicate>
-        void foreachArchivedNews(Predicate&& p)
+        void ForeachArchivedNews(Predicate&& p)
         {
-            for (auto& newsItem : _archived)
+            for (auto& newsItem : Archived)
             {
                 p(newsItem);
             }
         }
 
     private:
-        int32_t removeTime() const;
+        int32_t RemoveTime() const;
 
-        ItemQueue<ItemHistoryStart> _recent;
-        ItemQueue<MaxItemsArchive> _archived;
+        ItemQueue<ItemHistoryStart> Recent;
+        ItemQueue<MaxItemsArchive> Archived;
     };
 
     void InitQueue(GameState_t& gameState);

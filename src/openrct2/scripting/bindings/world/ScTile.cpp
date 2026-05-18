@@ -116,14 +116,14 @@ namespace OpenRCT2::Scripting
                     {
                         std::memcpy(first, array, currentNumElements * sizeof(TileElement));
                         // Safely force last tile flag for last element to avoid read overrun
-                        first[numElements - 1].setLastForTile(true);
+                        first[numElements - 1].SetLastForTile(true);
                     }
                 }
                 else
                 {
                     std::memcpy(first, array, numElements * sizeof(TileElement));
                     // Safely force last tile flag for last element to avoid read overrun
-                    first[numElements - 1].setLastForTile(true);
+                    first[numElements - 1].SetLastForTile(true);
                 }
             }
             MapInvalidateTileFull(coords);
@@ -178,9 +178,9 @@ namespace OpenRCT2::Scripting
             }
             for (size_t i = 0; i < origNumElements; i++)
             {
-                first[i].setLastForTile(false);
+                first[i].SetLastForTile(false);
             }
-            first[origNumElements].setLastForTile(true);
+            first[origNumElements].SetLastForTile(true);
             MapInvalidateTileFull(coords);
             return gScTileElement.New(ctx, &first[index], coords);
         }
@@ -200,9 +200,9 @@ namespace OpenRCT2::Scripting
         if (index < GetNumElements(first))
         {
             auto element = &first[index];
-            if (element->getType() != TileElementType::LargeScenery
-                || element->asLargeScenery()->GetEntry()->scrolling_mode == kScrollingModeNone
-                || ScTileElement::GetOtherLargeSceneryElement(coords, element->asLargeScenery()) == nullptr)
+            if (element->GetType() != TileElementType::LargeScenery
+                || element->AsLargeScenery()->GetEntry()->scrolling_mode == kScrollingModeNone
+                || ScTileElement::GetOtherLargeSceneryElement(coords, element->AsLargeScenery()) == nullptr)
             {
                 element->RemoveBannerEntry();
             }
@@ -232,7 +232,7 @@ namespace OpenRCT2::Scripting
             do
             {
                 count++;
-            } while (!(element++)->isLastForTile());
+            } while (!(element++)->IsLastForTile());
         }
         return count;
     }

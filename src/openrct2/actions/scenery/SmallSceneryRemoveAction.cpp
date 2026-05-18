@@ -139,13 +139,13 @@ namespace OpenRCT2::GameActions
         for (auto* sceneryElement : TileElementsView<SmallSceneryElement>(_loc))
         {
             // If we are removing ghost elements
-            if (isGhost && sceneryElement->isGhost() == false)
+            if (isGhost && sceneryElement->IsGhost() == false)
                 continue;
 
             if (sceneryElement->GetSceneryQuadrant() != _quadrant)
                 continue;
 
-            if (sceneryElement->getBaseZ() != _loc.z)
+            if (sceneryElement->GetBaseZ() != _loc.z)
                 continue;
 
             if (sceneryElement->GetEntryIndex() != _sceneryType)

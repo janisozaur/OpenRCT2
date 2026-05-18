@@ -70,7 +70,7 @@ void Vehicle::UpdateSwinging()
         {
             // Used to know which sprite to draw
             flatRideAnimationFrame = static_cast<uint8_t>(spriteType);
-            invalidate();
+            Invalidate();
         }
         return;
     }
@@ -156,7 +156,7 @@ void Vehicle::UpdateFerrisWheelRotating()
     if (rotation == sub_state)
         NumRotations++;
 
-    invalidate();
+    Invalidate();
 
     uint8_t subState = sub_state;
     if (curRide->mode == RideMode::forwardRotation)
@@ -217,7 +217,7 @@ void Vehicle::UpdateSimulatorOperating()
         if (al == flatRideAnimationFrame)
             return;
         flatRideAnimationFrame = al;
-        invalidate();
+        Invalidate();
         return;
     }
 
@@ -290,7 +290,7 @@ void Vehicle::UpdateRotating()
         if (sprite == flatRideAnimationFrame)
             return;
         flatRideAnimationFrame = sprite;
-        invalidate();
+        Invalidate();
         return;
     }
 
@@ -343,7 +343,7 @@ void Vehicle::UpdateSpaceRingsOperating()
         if (spriteType != flatRideAnimationFrame)
         {
             flatRideAnimationFrame = spriteType;
-            invalidate();
+            Invalidate();
         }
     }
     else
@@ -367,7 +367,7 @@ void Vehicle::UpdateHauntedHouseOperating()
         if (getGameState().currentTicks & 1)
         {
             flatRideAnimationFrame++;
-            invalidate();
+            Invalidate();
 
             if (flatRideAnimationFrame == 19)
                 flatRideAnimationFrame = 0;
@@ -385,24 +385,24 @@ void Vehicle::UpdateHauntedHouseOperating()
     switch (current_time)
     {
         case 45:
-            Play3D(SoundId::hauntedHouseScare, getLocation());
+            Play3D(SoundId::hauntedHouseScare, GetLocation());
             break;
         case 75:
             flatRideAnimationFrame = 1;
-            invalidate();
+            Invalidate();
             break;
         case 400:
-            Play3D(SoundId::hauntedHouseScream1, getLocation());
+            Play3D(SoundId::hauntedHouseScream1, GetLocation());
             break;
         case 745:
-            Play3D(SoundId::hauntedHouseScare, getLocation());
+            Play3D(SoundId::hauntedHouseScare, GetLocation());
             break;
         case 775:
             flatRideAnimationFrame = 1;
-            invalidate();
+            Invalidate();
             break;
         case 1100:
-            Play3D(SoundId::hauntedHouseScream2, getLocation());
+            Play3D(SoundId::hauntedHouseScream2, GetLocation());
             break;
     }
 }
@@ -444,13 +444,13 @@ void Vehicle::UpdateTopSpinOperating()
         if (rotation != flatRideAnimationFrame)
         {
             flatRideAnimationFrame = rotation;
-            invalidate();
+            Invalidate();
         }
         rotation = sprite_map[current_time].bank_rotation;
         if (rotation != flatRideSecondaryAnimationFrame)
         {
             flatRideSecondaryAnimationFrame = rotation;
-            invalidate();
+            Invalidate();
         }
         return;
     }
@@ -745,7 +745,7 @@ void Vehicle::UpdateSwingingCar()
     if (swingSprite != SwingSprite)
     {
         SwingSprite = swingSprite;
-        invalidate();
+        Invalidate();
     }
 }
 
@@ -782,7 +782,7 @@ void Vehicle::UpdateSpinningCar()
             spinningInertia += 6;
             spinSpeed = dword_F64E08 >> spinningInertia;
             // Alternate the spin direction (roughly). Perhaps in future save a value to the track
-            if (id.ToUnderlying() & 1)
+            if (Id.ToUnderlying() & 1)
             {
                 spin_speed -= spinSpeed;
             }
@@ -863,7 +863,7 @@ void Vehicle::UpdateSpinningCar()
     spin_sprite += spinSpeed >> 8;
     // Note this actually increases the spin speed if going right!
     spin_speed -= spinSpeed >> carEntry->spinning_friction;
-    invalidate();
+    Invalidate();
 }
 
 void Vehicle::UpdateAnimationAnimalFlying()
@@ -878,19 +878,19 @@ void Vehicle::UpdateAnimationAnimalFlying()
     {
         auto trackType = GetTrackType();
         TileElement* trackElement = MapGetTrackElementAtOfTypeSeq(TrackLocation, trackType, 0);
-        if (trackElement != nullptr && trackElement->asTrack()->HasChain())
+        if (trackElement != nullptr && trackElement->AsTrack()->HasChain())
         {
             // start flapping, bird
             animation_frame = 1;
             animationState = 5;
-            invalidate();
+            Invalidate();
         }
     }
     else
     {
         // continue flapping until reaching frame 0
         animation_frame = (animation_frame + 1) % 4;
-        invalidate();
+        Invalidate();
     }
     // number of frames to skip before updating again
     constexpr std::array frameWaitTimes = { 5, 3, 5, 3 };
@@ -953,7 +953,7 @@ static void AnimateSimpleVehicle(Vehicle& vehicle, const CarEntry& carEntry)
     if (vehicle.animation_frame != targetFrame)
     {
         vehicle.animation_frame = targetFrame;
-        vehicle.invalidate();
+        vehicle.Invalidate();
     }
 }
 
@@ -976,12 +976,12 @@ static void AnimateSteamLocomotive(Vehicle& vehicle, const CarEntry& carEntry)
                     || (vehicle.status != Vehicle::Status::movingToEndOfStation && vehicle.status != Vehicle::Status::arriving))
                 {
                     CoordsXYZ steamOffset = ComputeSteamOffset(
-                        carEntry.SteamEffect.Vertical, carEntry.SteamEffect.Longitudinal, vehicle.pitch, vehicle.orientation);
+                        carEntry.SteamEffect.Vertical, carEntry.SteamEffect.Longitudinal, vehicle.pitch, vehicle.Orientation);
                     SteamParticle::Create(CoordsXYZ(vehicle.x, vehicle.y, vehicle.z) + steamOffset);
                 }
             }
         }
-        vehicle.invalidate();
+        vehicle.Invalidate();
     }
 }
 
@@ -997,7 +997,7 @@ static void AnimateSwanBoat(Vehicle& vehicle, const CarEntry& carEntry)
     if (vehicle.animation_frame != targetFrame)
     {
         vehicle.animation_frame = targetFrame;
-        vehicle.invalidate();
+        vehicle.Invalidate();
     }
 }
 
@@ -1026,7 +1026,7 @@ static void AnimateObservationTower(Vehicle& vehicle, const CarEntry& carEntry)
         vehicle.animationState = 0;
         vehicle.animation_frame += 1;
         vehicle.animation_frame %= carEntry.AnimationFrames;
-        vehicle.invalidate();
+        vehicle.Invalidate();
     }
 }
 /**
@@ -1062,7 +1062,7 @@ static void AnimateMultiDimension(Vehicle& vehicle, const CarEntry& carEntry)
             if (targetSeatRotation != vehicle.animation_frame)
             {
                 vehicle.animation_frame = targetSeatRotation;
-                vehicle.invalidate();
+                vehicle.Invalidate();
             }
         }
     }

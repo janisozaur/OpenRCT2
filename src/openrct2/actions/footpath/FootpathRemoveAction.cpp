@@ -131,10 +131,10 @@ namespace OpenRCT2::GameActions
 
         for (auto* pathElement : TileElementsView<PathElement>(_loc))
         {
-            if (pathElement->isGhost() != getGhostPath)
+            if (pathElement->IsGhost() != getGhostPath)
                 continue;
 
-            if (pathElement->getBaseZ() != _loc.z)
+            if (pathElement->GetBaseZ() != _loc.z)
                 continue;
 
             return reinterpret_cast<TileElement*>(pathElement);
@@ -157,17 +157,17 @@ namespace OpenRCT2::GameActions
         GameState_t& gameState, const CoordsXY& loc, TileElement* tileElement) const
     {
         auto result = Result();
-        while (!(tileElement++)->isLastForTile())
+        while (!(tileElement++)->IsLastForTile())
         {
-            if (tileElement->getType() == TileElementType::Path)
+            if (tileElement->GetType() == TileElementType::Path)
                 return result;
 
-            if (tileElement->getType() != TileElementType::Banner)
+            if (tileElement->GetType() != TileElementType::Banner)
                 continue;
 
             auto bannerRemoveAction = BannerRemoveAction(
-                { loc, tileElement->getBaseZ(), tileElement->asBanner()->GetPosition() });
-            bool isGhost = tileElement->isGhost();
+                { loc, tileElement->GetBaseZ(), tileElement->AsBanner()->GetPosition() });
+            bool isGhost = tileElement->IsGhost();
             auto bannerFlags = GetFlags();
             if (isGhost)
                 bannerFlags.set(CommandFlag::ghost);

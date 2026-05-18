@@ -50,9 +50,9 @@
 namespace OpenRCT2
 {
     template<>
-    bool EntityBase::is<Staff>() const
+    bool EntityBase::Is<Staff>() const
     {
-        return type == EntityType::staff;
+        return Type == EntityType::staff;
     }
 
     /**
@@ -135,14 +135,14 @@ namespace OpenRCT2
             total++;
 
             /* Check if path has an edge in adjac_dir */
-            if (!(path->asPath()->GetEdges() & (1u << adjac_dir)))
+            if (!(path->AsPath()->GetEdges() & (1u << adjac_dir)))
             {
                 continue;
             }
 
-            if (path->asPath()->IsSloped())
+            if (path->AsPath()->IsSloped())
             {
-                if (path->asPath()->GetSlopeDirection() == adjac_dir)
+                if (path->AsPath()->GetSlopeDirection() == adjac_dir)
                 {
                     adjacPos.z += kPathHeightStep;
                 }
@@ -156,13 +156,13 @@ namespace OpenRCT2
             bool widefound = false;
             do
             {
-                if (test_element->getType() != TileElementType::Path)
+                if (test_element->GetType() != TileElementType::Path)
                 {
                     continue;
                 }
 
                 /* test_element is a path */
-                const auto* adjacentPathElement = test_element->asPath();
+                const auto* adjacentPathElement = test_element->AsPath();
                 if (!FootpathIsZAndDirectionValid(*adjacentPathElement, adjacPos.z / kCoordsZStep, adjac_dir))
                     continue;
 
@@ -181,7 +181,7 @@ namespace OpenRCT2
                         widecount++;
                     }
                 }
-            } while (!(test_element++)->isLastForTile());
+            } while (!(test_element++)->IsLastForTile());
         }
 
         switch (total)
@@ -360,13 +360,13 @@ namespace OpenRCT2
             return kInvalidDirection;
         do
         {
-            if (tileElement->baseHeight != nextZ)
+            if (tileElement->BaseHeight != nextZ)
                 continue;
-            if (tileElement->getType() == TileElementType::Entrance || tileElement->getType() == TileElementType::Track)
+            if (tileElement->GetType() == TileElementType::Entrance || tileElement->GetType() == TileElementType::Track)
             {
                 return kInvalidDirection;
             }
-        } while (!(tileElement++)->isLastForTile());
+        } while (!(tileElement++)->IsLastForTile());
 
         nextTile = CoordsXY(x, y).ToTileStart() + CoordsDirectionDelta[nextDirection];
 
@@ -376,13 +376,13 @@ namespace OpenRCT2
 
         do
         {
-            if (tileElement->baseHeight != nextZ)
+            if (tileElement->BaseHeight != nextZ)
                 continue;
-            if (tileElement->getType() == TileElementType::Entrance || tileElement->getType() == TileElementType::Track)
+            if (tileElement->GetType() == TileElementType::Entrance || tileElement->GetType() == TileElementType::Track)
             {
                 return kInvalidDirection;
             }
-        } while (!(tileElement++)->isLastForTile());
+        } while (!(tileElement++)->IsLastForTile());
 
         return nextDirection;
     }
@@ -399,7 +399,7 @@ namespace OpenRCT2
             if (surfaceElement == nullptr)
                 return kInvalidDirection;
 
-            if (NextLoc.z != surfaceElement->getBaseZ())
+            if (NextLoc.z != surfaceElement->GetBaseZ())
                 return kInvalidDirection;
 
             if (GetNextIsSloped())
@@ -429,7 +429,7 @@ namespace OpenRCT2
             auto surfaceElement = MapGetSurfaceElementAt(chosenTile);
             if (surfaceElement != nullptr)
             {
-                if (std::abs(surfaceElement->getBaseZ() - NextLoc.z) <= 2 * kCoordsZStep)
+                if (std::abs(surfaceElement->GetBaseZ() - NextLoc.z) <= 2 * kCoordsZStep)
                 {
                     if (surfaceElement->CanGrassGrow() && (surfaceElement->GetGrassLength() & 0x7) >= GRASS_LENGTH_CLEAR_1)
                     {
@@ -479,7 +479,7 @@ namespace OpenRCT2
         Direction litterDirection = kInvalidDirection;
         uint8_t validDirections = GetValidPatrolDirections(NextLoc);
 
-        if ((StaffOrders & STAFF_ORDERS_SWEEPING) && ((getGameState().currentTicks + id.ToUnderlying()) & 0xFFF) > 110)
+        if ((StaffOrders & STAFF_ORDERS_SWEEPING) && ((getGameState().currentTicks + Id.ToUnderlying()) & 0xFFF) > 110)
         {
             litterDirection = HandymanDirectionToNearestLitter();
         }
@@ -1024,7 +1024,7 @@ namespace OpenRCT2
             if (auto loc = UpdateAction(); loc.has_value())
             {
                 int16_t checkZ = TileElementHeight(*loc);
-                moveTo({ loc.value(), checkZ });
+                MoveTo({ loc.value(), checkZ });
                 return;
             }
 
@@ -1051,7 +1051,7 @@ namespace OpenRCT2
             if (surfaceElement != nullptr && surfaceElement->CanGrassGrow())
             {
                 surfaceElement->SetGrassLength(GRASS_LENGTH_MOWED);
-                MapInvalidateTileZoom0({ NextLoc, surfaceElement->getBaseZ(), surfaceElement->getBaseZ() + 16 });
+                MapInvalidateTileZoom0({ NextLoc, surfaceElement->GetBaseZ(), surfaceElement->GetBaseZ() + 16 });
             }
             StaffLawnsMown = AddClamp(StaffLawnsMown, 1u);
             WindowInvalidateFlags |= PEEP_INVALIDATE_STAFF_STATS;
@@ -1074,7 +1074,7 @@ namespace OpenRCT2
             if (!(pathingResult & PATHING_DESTINATION_REACHED))
                 return;
 
-            orientation = (Var37 & 3) << 3;
+            Orientation = (Var37 & 3) << 3;
             Action = PeepActionType::staffWatering;
             AnimationFrameNum = 0;
             AnimationImageIdOffset = 0;
@@ -1087,7 +1087,7 @@ namespace OpenRCT2
             if (!IsActionWalking())
             {
                 UpdateAction();
-                invalidate();
+                Invalidate();
                 return;
             }
 
@@ -1099,22 +1099,22 @@ namespace OpenRCT2
 
             do
             {
-                if (tile_element->getType() != TileElementType::SmallScenery)
+                if (tile_element->GetType() != TileElementType::SmallScenery)
                     continue;
 
-                if (abs(NextLoc.z - tile_element->getBaseZ()) > 4 * kCoordsZStep)
+                if (abs(NextLoc.z - tile_element->GetBaseZ()) > 4 * kCoordsZStep)
                     continue;
 
-                const auto* sceneryEntry = tile_element->asSmallScenery()->GetEntry();
+                const auto* sceneryEntry = tile_element->AsSmallScenery()->GetEntry();
 
                 if (sceneryEntry == nullptr || !sceneryEntry->flags.has(SmallSceneryFlag::canBeWatered))
                     continue;
 
-                tile_element->asSmallScenery()->SetAge(0);
-                MapInvalidateTileZoom0({ actionLoc, tile_element->getBaseZ(), tile_element->getClearanceZ() });
+                tile_element->AsSmallScenery()->SetAge(0);
+                MapInvalidateTileZoom0({ actionLoc, tile_element->GetBaseZ(), tile_element->GetClearanceZ() });
                 StaffGardensWatered = AddClamp(StaffGardensWatered, 1u);
                 WindowInvalidateFlags |= PEEP_INVALIDATE_STAFF_STATS;
-            } while (!(tile_element++)->isLastForTile());
+            } while (!(tile_element++)->IsLastForTile());
 
             StateReset();
         }
@@ -1137,7 +1137,7 @@ namespace OpenRCT2
             if (!(pathingResult & PATHING_DESTINATION_REACHED))
                 return;
 
-            orientation = (Var37 & 3) << 3;
+            Orientation = (Var37 & 3) << 3;
             Action = PeepActionType::staffEmptyBin;
             AnimationFrameNum = 0;
             AnimationImageIdOffset = 0;
@@ -1154,7 +1154,7 @@ namespace OpenRCT2
             }
 
             UpdateAction();
-            invalidate();
+            Invalidate();
 
             if (AnimationFrameNum != 11)
                 return;
@@ -1165,36 +1165,36 @@ namespace OpenRCT2
 
             for (;; tile_element++)
             {
-                if (tile_element->getType() == TileElementType::Path)
+                if (tile_element->GetType() == TileElementType::Path)
                 {
-                    if (NextLoc.z == tile_element->getBaseZ())
+                    if (NextLoc.z == tile_element->GetBaseZ())
                         break;
                 }
-                if ((tile_element)->isLastForTile())
+                if ((tile_element)->IsLastForTile())
                 {
                     StateReset();
                     return;
                 }
             }
 
-            if (!tile_element->asPath()->HasAddition())
+            if (!tile_element->AsPath()->HasAddition())
             {
                 StateReset();
                 return;
             }
 
-            auto* pathAddEntry = tile_element->asPath()->GetAdditionEntry();
-            if (!(pathAddEntry->flags & PATH_ADDITION_FLAG_IS_BIN) || tile_element->asPath()->IsBroken()
-                || tile_element->asPath()->AdditionIsGhost())
+            auto* pathAddEntry = tile_element->AsPath()->GetAdditionEntry();
+            if (!(pathAddEntry->flags & PATH_ADDITION_FLAG_IS_BIN) || tile_element->AsPath()->IsBroken()
+                || tile_element->AsPath()->AdditionIsGhost())
             {
                 StateReset();
                 return;
             }
 
-            uint8_t additionStatus = tile_element->asPath()->GetAdditionStatus() | ((3 << Var37) << Var37);
-            tile_element->asPath()->SetAdditionStatus(additionStatus);
+            uint8_t additionStatus = tile_element->AsPath()->GetAdditionStatus() | ((3 << Var37) << Var37);
+            tile_element->AsPath()->SetAdditionStatus(additionStatus);
 
-            MapInvalidateTileZoom0({ NextLoc, tile_element->getBaseZ(), tile_element->getClearanceZ() });
+            MapInvalidateTileZoom0({ NextLoc, tile_element->GetBaseZ(), tile_element->GetClearanceZ() });
             StaffBinsEmptied = AddClamp(StaffBinsEmptied, 1u);
             WindowInvalidateFlags |= PEEP_INVALIDATE_STAFF_STATS;
         }
@@ -1213,14 +1213,14 @@ namespace OpenRCT2
         if (Action == PeepActionType::staffSweep && AnimationFrameNum == 8)
         {
             // Remove sick at this location
-            Litter::RemoveAt(getLocation());
+            Litter::RemoveAt(GetLocation());
             StaffLitterSwept = AddClamp(StaffLitterSwept, 1u);
             WindowInvalidateFlags |= PEEP_INVALIDATE_STAFF_STATS;
         }
         if (auto loc = UpdateAction(); loc.has_value())
         {
             int16_t actionZ = GetZOnSlope(loc->x, loc->y);
-            moveTo({ loc.value(), actionZ });
+            MoveTo({ loc.value(), actionZ });
             return;
         }
 
@@ -1294,10 +1294,10 @@ namespace OpenRCT2
                 return;
             }
 
-            if (CurrentRide != rideEntranceExitElement->asEntrance()->GetRideIndex())
+            if (CurrentRide != rideEntranceExitElement->AsEntrance()->GetRideIndex())
                 return;
 
-            StationIndex exitIndex = rideEntranceExitElement->asEntrance()->GetStationIndex();
+            StationIndex exitIndex = rideEntranceExitElement->AsEntrance()->GetStationIndex();
             if (CurrentRideStation != exitIndex)
                 return;
 
@@ -1309,18 +1309,18 @@ namespace OpenRCT2
                 }
             }
 
-            PeepDirection = rideEntranceExitElement->getDirection();
+            PeepDirection = rideEntranceExitElement->GetDirection();
 
             auto newDestination = CoordsXY{ 16, 16 } + NextLoc + (DirectionOffsets[PeepDirection] * 53);
             SetDestination(newDestination, 2);
-            orientation = PeepDirection << 3;
+            Orientation = PeepDirection << 3;
 
-            z = rideEntranceExitElement->baseHeight * 4;
+            z = rideEntranceExitElement->BaseHeight * 4;
             SubState = 4;
             // Falls through into SubState 4
         }
 
-        int16_t delta_y = abs(getLocation().y - GetDestination().y);
+        int16_t delta_y = abs(GetLocation().y - GetDestination().y);
         if (auto loc = UpdateAction(); loc.has_value())
         {
             auto newZ = ride->getStation(CurrentRideStation).GetBaseZ();
@@ -1329,7 +1329,7 @@ namespace OpenRCT2
                 newZ += ride->getRideTypeDescriptor().Heights.PlatformHeight;
             }
 
-            moveTo({ loc.value(), newZ });
+            MoveTo({ loc.value(), newZ });
             return;
         }
 
@@ -1373,7 +1373,7 @@ namespace OpenRCT2
                 return;
             }
             UpdateAction();
-            invalidate();
+            Invalidate();
             return;
         }
         if (SubState <= 3)
@@ -1399,10 +1399,10 @@ namespace OpenRCT2
                 return;
             }
 
-            if (CurrentRide != rideEntranceExitElement->asEntrance()->GetRideIndex())
+            if (CurrentRide != rideEntranceExitElement->AsEntrance()->GetRideIndex())
                 return;
 
-            StationIndex exitIndex = rideEntranceExitElement->asEntrance()->GetStationIndex();
+            StationIndex exitIndex = rideEntranceExitElement->AsEntrance()->GetStationIndex();
             if (CurrentRideStation != exitIndex)
                 return;
 
@@ -1414,15 +1414,15 @@ namespace OpenRCT2
                 }
             }
 
-            PeepDirection = rideEntranceExitElement->getDirection();
+            PeepDirection = rideEntranceExitElement->GetDirection();
 
             int32_t destX = NextLoc.x + 16 + DirectionOffsets[PeepDirection].x * 53;
             int32_t destY = NextLoc.y + 16 + DirectionOffsets[PeepDirection].y * 53;
 
             SetDestination({ destX, destY }, 2);
-            orientation = PeepDirection << 3;
+            Orientation = PeepDirection << 3;
 
-            z = rideEntranceExitElement->baseHeight * 4;
+            z = rideEntranceExitElement->BaseHeight * 4;
             SubState = 4;
             // Falls through into SubState 4
         }
@@ -1436,7 +1436,7 @@ namespace OpenRCT2
                 newZ += ride->getRideTypeDescriptor().Heights.PlatformHeight;
             }
 
-            moveTo({ loc.value(), newZ });
+            MoveTo({ loc.value(), newZ });
             return;
         }
 
@@ -1475,33 +1475,33 @@ namespace OpenRCT2
 
             do
             {
-                if (tile_element->getType() != TileElementType::SmallScenery)
+                if (tile_element->GetType() != TileElementType::SmallScenery)
                 {
                     continue;
                 }
 
-                auto z_diff = abs(NextLoc.z - tile_element->getBaseZ());
+                auto z_diff = abs(NextLoc.z - tile_element->GetBaseZ());
 
                 if (z_diff >= 4 * kCoordsZStep)
                 {
                     continue;
                 }
 
-                auto* sceneryEntry = tile_element->asSmallScenery()->GetEntry();
+                auto* sceneryEntry = tile_element->AsSmallScenery()->GetEntry();
 
                 if (sceneryEntry == nullptr || !sceneryEntry->flags.has(SmallSceneryFlag::canBeWatered))
                 {
                     continue;
                 }
 
-                if (tile_element->asSmallScenery()->GetAge() < kSceneryWitherAgeThreshold2)
+                if (tile_element->AsSmallScenery()->GetAge() < kSceneryWitherAgeThreshold2)
                 {
                     if (chosen_position >= 4)
                     {
                         continue;
                     }
 
-                    if (tile_element->asSmallScenery()->GetAge() < kSceneryWitherAgeThreshold1)
+                    if (tile_element->AsSmallScenery()->GetAge() < kSceneryWitherAgeThreshold1)
                     {
                         continue;
                     }
@@ -1511,11 +1511,11 @@ namespace OpenRCT2
                 Var37 = chosen_position;
 
                 SubState = 0;
-                auto destination = kWateringUseOffsets[chosen_position] + getLocation().ToTileStart();
+                auto destination = kWateringUseOffsets[chosen_position] + GetLocation().ToTileStart();
                 SetDestination(destination, 3);
 
                 return true;
-            } while (!(tile_element++)->isLastForTile());
+            } while (!(tile_element++)->IsLastForTile());
         }
         return false;
     }
@@ -1538,30 +1538,30 @@ namespace OpenRCT2
 
         for (;; tileElement++)
         {
-            if (tileElement->getType() == TileElementType::Path && (tileElement->getBaseZ() == NextLoc.z))
+            if (tileElement->GetType() == TileElementType::Path && (tileElement->GetBaseZ() == NextLoc.z))
                 break;
 
-            if (tileElement->isLastForTile())
+            if (tileElement->IsLastForTile())
                 return false;
         }
 
-        if (!tileElement->asPath()->HasAddition())
+        if (!tileElement->AsPath()->HasAddition())
             return false;
-        auto* pathAddEntry = tileElement->asPath()->GetAdditionEntry();
+        auto* pathAddEntry = tileElement->AsPath()->GetAdditionEntry();
         if (pathAddEntry == nullptr)
             return false;
 
         if (!(pathAddEntry->flags & PATH_ADDITION_FLAG_IS_BIN))
             return false;
 
-        if (tileElement->asPath()->IsBroken())
+        if (tileElement->AsPath()->IsBroken())
             return false;
 
-        if (tileElement->asPath()->AdditionIsGhost())
+        if (tileElement->AsPath()->AdditionIsGhost())
             return false;
 
-        uint8_t bin_positions = tileElement->asPath()->GetEdges();
-        uint8_t bin_quantity = tileElement->asPath()->GetAdditionStatus();
+        uint8_t bin_positions = tileElement->AsPath()->GetEdges();
+        uint8_t bin_quantity = tileElement->AsPath()->GetAdditionStatus();
         uint8_t chosen_position = 0;
 
         for (; chosen_position < 4; ++chosen_position)
@@ -1579,7 +1579,7 @@ namespace OpenRCT2
         SetState(PeepState::emptyingBin);
 
         SubState = 0;
-        auto destination = BinUseOffsets[chosen_position] + getLocation().ToTileStart();
+        auto destination = BinUseOffsets[chosen_position] + GetLocation().ToTileStart();
         SetDestination(destination, 3);
         return true;
     }
@@ -1635,7 +1635,7 @@ namespace OpenRCT2
             SetState(PeepState::sweeping);
 
             Var37 = 0;
-            SetDestination(litter->getLocation(), 5);
+            SetDestination(litter->GetLocation(), 5);
             return true;
         }
 
@@ -1741,7 +1741,7 @@ namespace OpenRCT2
                         UpdateWalkingAnimation();
                     else
                         UpdateActionAnimation();
-                    invalidate();
+                    Invalidate();
                 }
             }
             return;
@@ -1843,7 +1843,7 @@ namespace OpenRCT2
                 int32_t water_height = surfaceElement->GetWaterHeight();
                 if (water_height > 0)
                 {
-                    moveTo({ x, y, water_height });
+                    MoveTo({ x, y, water_height });
                     SetState(PeepState::falling);
                     return;
                 }
@@ -2122,13 +2122,13 @@ namespace OpenRCT2
             }
 
             CoordsXY offset = DirectionOffsets[PeepDirection];
-            auto destination = (offset * -12) + vehicle->getLocation();
+            auto destination = (offset * -12) + vehicle->GetLocation();
             SetDestination(destination, 2);
         }
 
         if (auto loc = UpdateAction(); loc.has_value())
         {
-            moveTo({ loc.value(), z });
+            MoveTo({ loc.value(), z });
             return false;
         }
 
@@ -2148,7 +2148,7 @@ namespace OpenRCT2
     {
         if (!firstRun)
         {
-            orientation = PeepDirection << 3;
+            Orientation = PeepDirection << 3;
 
             Action = (ScenarioRand() & 1) ? PeepActionType::staffFix2 : PeepActionType::staffFix;
             AnimationImageIdOffset = 0;
@@ -2162,7 +2162,7 @@ namespace OpenRCT2
         }
 
         UpdateAction();
-        invalidate();
+        Invalidate();
 
         uint8_t actionFrame = (Action == PeepActionType::staffFix) ? 0x25 : 0x50;
         if (AnimationFrameNum != actionFrame)
@@ -2190,7 +2190,7 @@ namespace OpenRCT2
     {
         if (!firstRun)
         {
-            orientation = PeepDirection << 3;
+            Orientation = PeepDirection << 3;
             Action = PeepActionType::staffFix3;
             AnimationImageIdOffset = 0;
             AnimationFrameNum = 0;
@@ -2204,7 +2204,7 @@ namespace OpenRCT2
         }
 
         UpdateAction();
-        invalidate();
+        Invalidate();
 
         if (AnimationFrameNum != 0x65)
         {
@@ -2259,7 +2259,7 @@ namespace OpenRCT2
                 return false;
             }
 
-            int32_t trackDirection = tileElement->getDirection();
+            int32_t trackDirection = tileElement->GetDirection();
             CoordsXY offset = kStationFixingOffsets[trackDirection];
 
             stationPos.x += 16 + offset.x;
@@ -2279,7 +2279,7 @@ namespace OpenRCT2
 
         if (auto loc = UpdateAction(); loc.has_value())
         {
-            moveTo({ loc.value(), z });
+            MoveTo({ loc.value(), z });
             return false;
         }
 
@@ -2296,7 +2296,7 @@ namespace OpenRCT2
     {
         if (!firstRun)
         {
-            orientation = PeepDirection << 3;
+            Orientation = PeepDirection << 3;
             Action = PeepActionType::staffCheckBoard;
             AnimationFrameNum = 0;
             AnimationImageIdOffset = 0;
@@ -2310,7 +2310,7 @@ namespace OpenRCT2
         }
 
         UpdateAction();
-        invalidate();
+        Invalidate();
 
         return false;
     }
@@ -2352,13 +2352,13 @@ namespace OpenRCT2
             TrackBeginEnd trackBeginEnd;
             while (trackBlockGetPrevious(input, &trackBeginEnd))
             {
-                if (trackBeginEnd.begin_element->asTrack()->IsStation())
+                if (trackBeginEnd.begin_element->AsTrack()->IsStation())
                 {
                     input.x = trackBeginEnd.begin_x;
                     input.y = trackBeginEnd.begin_y;
                     input.element = trackBeginEnd.begin_element;
 
-                    stationDirection = trackBeginEnd.begin_element->getDirection();
+                    stationDirection = trackBeginEnd.begin_element->GetDirection();
                     continue;
                 }
 
@@ -2386,7 +2386,7 @@ namespace OpenRCT2
 
         if (auto loc = UpdateAction(); loc.has_value())
         {
-            moveTo({ loc.value(), z });
+            MoveTo({ loc.value(), z });
             return false;
         }
 
@@ -2410,7 +2410,7 @@ namespace OpenRCT2
                 return true;
             }
 
-            orientation = PeepDirection << 3;
+            Orientation = PeepDirection << 3;
 
             Action = PeepActionType::staffFix;
             AnimationFrameNum = 0;
@@ -2438,7 +2438,7 @@ namespace OpenRCT2
     {
         if (!firstRun)
         {
-            orientation = PeepDirection << 3;
+            Orientation = PeepDirection << 3;
 
             Action = PeepActionType::staffFixGround;
             AnimationFrameNum = 0;
@@ -2453,7 +2453,7 @@ namespace OpenRCT2
         }
 
         UpdateAction();
-        invalidate();
+        Invalidate();
 
         if (AnimationFrameNum == 0x28)
         {
@@ -2464,7 +2464,7 @@ namespace OpenRCT2
         if (AnimationFrameNum == 0x13 || AnimationFrameNum == 0x19 || AnimationFrameNum == 0x1F || AnimationFrameNum == 0x25
             || AnimationFrameNum == 0x2B)
         {
-            Audio::Play3D(Audio::SoundId::mechanicFix, getLocation());
+            Audio::Play3D(Audio::SoundId::mechanicFix, GetLocation());
         }
 
         return false;
@@ -2501,7 +2501,7 @@ namespace OpenRCT2
 
         if (auto loc = UpdateAction(); loc.has_value())
         {
-            moveTo({ loc.value(), z });
+            MoveTo({ loc.value(), z });
             return false;
         }
 
@@ -2530,7 +2530,7 @@ namespace OpenRCT2
             StaffRidesFixed = AddClamp(StaffRidesFixed, 1u);
             WindowInvalidateFlags |= PEEP_INVALIDATE_STAFF_STATS;
 
-            orientation = PeepDirection << 3;
+            Orientation = PeepDirection << 3;
             Action = PeepActionType::staffAnswerCall2;
             AnimationFrameNum = 0;
             AnimationImageIdOffset = 0;
@@ -2541,7 +2541,7 @@ namespace OpenRCT2
         if (!IsActionWalking())
         {
             UpdateAction();
-            invalidate();
+            Invalidate();
             return false;
         }
 
@@ -2589,7 +2589,7 @@ namespace OpenRCT2
                 stationHeight += ride.getRideTypeDescriptor().Heights.PlatformHeight;
             }
 
-            moveTo({ loc.value(), stationHeight });
+            MoveTo({ loc.value(), stationHeight });
             return false;
         }
         SetState(PeepState::falling);

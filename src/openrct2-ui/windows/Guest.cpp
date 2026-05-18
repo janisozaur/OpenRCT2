@@ -574,7 +574,7 @@ namespace OpenRCT2::Ui::Windows
             auto spriteId = ImageId(animationFrame, peep->TshirtColour, peep->TrousersColour);
             GfxDrawSprite(clipRT, spriteId, screenCoords);
 
-            auto* guest = peep->as<Guest>();
+            auto* guest = peep->As<Guest>();
             if (guest == nullptr)
                 return;
 
@@ -928,7 +928,7 @@ namespace OpenRCT2::Ui::Windows
                 }
             }
 
-            const std::optional<Focus> currentFocus = peep->State != PeepState::picked ? std::optional(Focus(peep->id))
+            const std::optional<Focus> currentFocus = peep->State != PeepState::picked ? std::optional(Focus(peep->Id))
                                                                                        : std::nullopt;
             // Check if guest is in a vehicle (on ride, entering, or leaving but still on vehicle)
             auto isGuestInVehicle = [&peep]() {
@@ -1018,7 +1018,7 @@ namespace OpenRCT2::Ui::Windows
 
             GameActions::PeepPickupAction pickupAction{ GameActions::PeepPickupType::Place,
                                                         EntityId::FromUnderlying(number),
-                                                        { destCoords, tileElement->getBaseZ() },
+                                                        { destCoords, tileElement->GetBaseZ() },
                                                         Network::GetCurrentPlayerId() };
             pickupAction.SetCallback([](const GameActions::GameAction* ga, const GameActions::Result* result) {
                 if (result->error != GameActions::Status::ok)
@@ -1825,7 +1825,7 @@ namespace OpenRCT2::Ui::Windows
                 + ScreenCoordsXY{ widgets[WIDX_PAGE_BACKGROUND].left + 4, widgets[WIDX_PAGE_BACKGROUND].top + 4 };
             {
                 auto ft = Formatter();
-                ft.Add<uint32_t>(peep->id);
+                ft.Add<uint32_t>(peep->Id);
                 drawText(rt, screenCoords, STR_PEEP_DEBUG_SPRITE_INDEX, ft);
             }
             screenCoords.y += kListRowHeight;
@@ -1905,13 +1905,13 @@ namespace OpenRCT2::Ui::Windows
         {
             return nullptr;
         }
-        if (peep->is<Staff>())
+        if (peep->Is<Staff>())
         {
             return StaffOpen(peep);
         }
 
         auto* windowMgr = GetWindowManager();
-        auto* window = static_cast<GuestWindow*>(windowMgr->BringToFrontByNumber(WindowClass::peep, peep->id.ToUnderlying()));
+        auto* window = static_cast<GuestWindow*>(windowMgr->BringToFrontByNumber(WindowClass::peep, peep->Id.ToUnderlying()));
         if (window == nullptr)
         {
             auto windowSize = kWindowSize;
@@ -1925,7 +1925,7 @@ namespace OpenRCT2::Ui::Windows
             }
         }
 
-        window->init(peep->id);
+        window->init(peep->Id);
 
         return window;
     }

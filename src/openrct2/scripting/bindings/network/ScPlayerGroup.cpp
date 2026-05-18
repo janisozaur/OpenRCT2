@@ -94,11 +94,11 @@ namespace OpenRCT2::Scripting
 
         auto permissionIndex = 0;
         int64_t resultIdx = 0;
-        for (const auto& action : Network::NetworkActions::kActions)
+        for (const auto& action : Network::NetworkActions::Actions)
         {
             if (Network::CanPerformAction(index, static_cast<Network::Permission>(permissionIndex)))
             {
-                JS_SetPropertyInt64(ctx, result, resultIdx++, TransformPermissionKeyToJS(ctx, action.permissionName));
+                JS_SetPropertyInt64(ctx, result, resultIdx++, TransformPermissionKeyToJS(ctx, action.PermissionName));
             }
             permissionIndex++;
         }
@@ -122,14 +122,14 @@ namespace OpenRCT2::Scripting
         GameActions::Execute(&networkAction, getGameState());
 
         // Don't use vector<bool> since the weird bitpacking specialisation does not work with the lambda (on some compilers)
-        std::vector<uint8_t> enabledPermissions(Network::NetworkActions::kActions.size());
+        std::vector<uint8_t> enabledPermissions(Network::NetworkActions::Actions.size());
         JSIterateArray(ctx, array, [&enabledPermissions](JSContext* ctx2, JSValue x) {
             auto permissionName = TransformPermissionKeyToInternal(ctx2, x);
 
             auto permissionIndex = 0;
-            for (const auto& action : Network::NetworkActions::kActions)
+            for (const auto& action : Network::NetworkActions::Actions)
             {
-                if (action.permissionName == permissionName)
+                if (action.PermissionName == permissionName)
                 {
                     enabledPermissions[permissionIndex] = true;
                 }

@@ -107,7 +107,7 @@ namespace OpenRCT2
             return;
         }
 
-        int32_t z = getBaseZ();
+        int32_t z = GetBaseZ();
         MapInvalidateTile({ coords, z, z + 16 });
     }
 
@@ -124,7 +124,7 @@ namespace OpenRCT2
         uint8_t grassLengthTmp = GrassLength & 7;
 
         // Check if grass is underwater or outside park
-        if (GetWaterHeight() > getBaseZ() || !MapIsLocationInPark(coords))
+        if (GetWaterHeight() > GetBaseZ() || !MapIsLocationInPark(coords))
         {
             if (grassLengthTmp != GRASS_LENGTH_CLEAR_0)
                 SetGrassLengthAndInvalidate(GRASS_LENGTH_CLEAR_0, coords);
@@ -135,8 +135,8 @@ namespace OpenRCT2
         // Grass can't grow any further than CLUMPS_2 but this code also cuts grass
         // if there is an object placed on top of it.
 
-        int32_t baseZ = getBaseZ();
-        int32_t clearZ = getBaseZ() + kLandHeightStep;
+        int32_t baseZ = GetBaseZ();
+        int32_t clearZ = GetBaseZ() + kLandHeightStep;
         if (Slope & kTileSlopeDiagonalFlag)
             clearZ += kLandHeightStep;
 
@@ -144,7 +144,7 @@ namespace OpenRCT2
         TileElement* tileElementAbove = reinterpret_cast<TileElement*>(this);
         for (;;)
         {
-            if (tileElementAbove->isLastForTile())
+            if (tileElementAbove->IsLastForTile())
             {
                 // Grow grass
 
@@ -175,14 +175,14 @@ namespace OpenRCT2
             else
             {
                 tileElementAbove++;
-                if (tileElementAbove->getType() == TileElementType::Wall)
+                if (tileElementAbove->GetType() == TileElementType::Wall)
                     continue;
                 // Grass should not be affected by ghost elements.
-                if (tileElementAbove->isGhost())
+                if (tileElementAbove->IsGhost())
                     continue;
-                if (baseZ >= tileElementAbove->getClearanceZ())
+                if (baseZ >= tileElementAbove->GetClearanceZ())
                     continue;
-                if (clearZ < tileElementAbove->getBaseZ())
+                if (clearZ < tileElementAbove->GetBaseZ())
                     continue;
 
                 if (grassLengthTmp != GRASS_LENGTH_CLEAR_0)
@@ -226,13 +226,13 @@ namespace OpenRCT2
 
     bool SurfaceElement::HasTrackThatNeedsWater() const
     {
-        return (type & SURFACE_ELEMENT_HAS_TRACK_THAT_NEEDS_WATER) != 0;
+        return (Type & SURFACE_ELEMENT_HAS_TRACK_THAT_NEEDS_WATER) != 0;
     }
 
     void SurfaceElement::SetHasTrackThatNeedsWater(bool on)
     {
-        type &= ~SURFACE_ELEMENT_HAS_TRACK_THAT_NEEDS_WATER;
+        Type &= ~SURFACE_ELEMENT_HAS_TRACK_THAT_NEEDS_WATER;
         if (on)
-            type |= SURFACE_ELEMENT_HAS_TRACK_THAT_NEEDS_WATER;
+            Type |= SURFACE_ELEMENT_HAS_TRACK_THAT_NEEDS_WATER;
     }
 } // namespace OpenRCT2

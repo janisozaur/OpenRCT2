@@ -363,12 +363,12 @@ namespace OpenRCT2::Ui::Windows
             _pressedNewsItemIndex = -1;
             auto& gameState = getGameState();
 
-            if (j >= gameState.newsItems.getArchived().size())
+            if (j >= gameState.newsItems.GetArchived().size())
             {
                 return;
             }
 
-            const auto& newsItem = gameState.newsItems.getArchived()[j];
+            const auto& newsItem = gameState.newsItems.GetArchived()[j];
             if (newsItem.hasButton())
             {
                 return;
@@ -410,7 +410,7 @@ namespace OpenRCT2::Ui::Windows
 
         ScreenSize onScrollGetSize(int32_t scrollIndex) override
         {
-            int32_t scrollHeight = static_cast<int32_t>(getGameState().newsItems.getArchived().size())
+            int32_t scrollHeight = static_cast<int32_t>(getGameState().newsItems.GetArchived().size())
                     * CalculateNewsItemHeight()
                 - kItemSeparatorHeight;
             return { kWindowSize.width, scrollHeight };
@@ -422,7 +422,7 @@ namespace OpenRCT2::Ui::Windows
             int32_t i = 0;
             int32_t buttonIndex = 0;
             auto mutableScreenCoords = screenCoords;
-            for (const auto& newsItem : getGameState().newsItems.getArchived())
+            for (const auto& newsItem : getGameState().newsItems.GetArchived())
             {
                 if (mutableScreenCoords.y < itemHeight)
                 {
@@ -469,7 +469,7 @@ namespace OpenRCT2::Ui::Windows
             const bool scrollbarVisible = scrolls[0].contentHeight > widgets[WIDX_SCROLL].height() - 1;
             const auto scrollbarFill = scrollbarVisible ? 0 : kScrollBarWidth;
 
-            for (const auto& newsItem : getGameState().newsItems.getArchived())
+            for (const auto& newsItem : getGameState().newsItems.GetArchived())
             {
                 if (y >= rt.y + rt.height)
                     break;
@@ -544,7 +544,7 @@ namespace OpenRCT2::Ui::Windows
                             // If normal peep set sprite to normal (no food)
                             // If staff set sprite to staff sprite
                             auto spriteType = PeepAnimationGroup::normal;
-                            if (auto* staff = peep->as<Staff>(); staff != nullptr)
+                            if (auto* staff = peep->As<Staff>(); staff != nullptr)
                             {
                                 spriteType = staff->AnimationGroup;
                                 if (staff->isEntertainer())

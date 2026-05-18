@@ -98,7 +98,7 @@ namespace OpenRCT2::Ui::Windows
         auto* windowMgr = GetWindowManager();
         auto* window = windowMgr->FocusOrCreate<StaffFirePromptWindow>(
             WindowClass::firePrompt, kWindowSize, { WindowFlag::centreScreen, WindowFlag::transparent });
-        window->setWindowNumber(peep->id.ToUnderlying());
+        window->setWindowNumber(peep->Id.ToUnderlying());
         return window;
     }
 } // namespace OpenRCT2::Ui::Windows

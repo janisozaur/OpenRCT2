@@ -235,39 +235,39 @@ static void VirtualFloorGetTileProperties(
     //  * Ghost objects, which are displayed as lit squares
     for (auto* tileElement : TileElementsView(loc))
     {
-        const auto elementType = tileElement->getType();
+        const auto elementType = tileElement->GetType();
 
         if (elementType == TileElementType::Surface)
         {
-            if (height < tileElement->getClearanceZ())
+            if (height < tileElement->GetClearanceZ())
             {
                 *outBelowGround = true;
             }
-            else if (height < (tileElement->getBaseZ() + kLandHeightStep) && tileElement->asSurface()->GetSlope() != 0)
+            else if (height < (tileElement->GetBaseZ() + kLandHeightStep) && tileElement->AsSurface()->GetSlope() != 0)
             {
                 *outBelowGround = true;
                 *outOccupied = true;
             }
-            if (height > tileElement->getBaseZ())
+            if (height > tileElement->GetBaseZ())
             {
                 *aboveGround = true;
             }
             continue;
         }
 
-        if (height >= tileElement->getClearanceZ() || height < tileElement->getBaseZ())
+        if (height >= tileElement->GetClearanceZ() || height < tileElement->GetBaseZ())
         {
             continue;
         }
 
         if (elementType == TileElementType::Wall || elementType == TileElementType::Banner)
         {
-            int32_t direction = tileElement->getDirection();
+            int32_t direction = tileElement->GetDirection();
             *outOccupiedEdges |= 1 << direction;
             continue;
         }
 
-        if (tileElement->isGhost())
+        if (tileElement->IsGhost())
         {
             *outLit = true;
             continue;

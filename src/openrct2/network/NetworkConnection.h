@@ -32,22 +32,22 @@ namespace OpenRCT2::Network
     class Connection final
     {
     public:
-        std::unique_ptr<ITcpSocket> socket = nullptr;
-        Packet inboundPacket;
-        Auth authStatus = Auth::none;
+        std::unique_ptr<ITcpSocket> Socket = nullptr;
+        Packet InboundPacket;
+        Auth AuthStatus = Auth::none;
         Stats stats = {};
         Player* player = nullptr;
-        uint32_t pingTime = 0;
+        uint32_t PingTime = 0;
         Key key;
-        std::vector<uint8_t> challenge;
-        std::vector<const ObjectRepositoryItem*> requestedObjects;
-        bool shouldDisconnect = false;
+        std::vector<uint8_t> Challenge;
+        std::vector<const ObjectRepositoryItem*> RequestedObjects;
+        bool ShouldDisconnect = false;
 
         Connection() noexcept;
 
         void update();
         ReadPacket readPacket();
-        void queuePacket(const Packet& packet, bool front = false);
+        void QueuePacket(const Packet& packet, bool front = false);
 
         Command getPendingPacketCommand() const noexcept;
         size_t getPendingPacketSize() const noexcept;
@@ -55,15 +55,15 @@ namespace OpenRCT2::Network
 
         // This will not immediately disconnect the client. The disconnect
         // will happen post-tick.
-        void disconnect() noexcept;
+        void Disconnect() noexcept;
 
-        bool isValid() const;
-        void sendQueuedData();
-        bool receivedDataRecently() const noexcept;
+        bool IsValid() const;
+        void SendQueuedData();
+        bool ReceivedDataRecently() const noexcept;
 
-        const utf8* getLastDisconnectReason() const noexcept;
-        void setLastDisconnectReason(std::string_view src);
-        void setLastDisconnectReason(StringId string_id, void* args = nullptr);
+        const utf8* GetLastDisconnectReason() const noexcept;
+        void SetLastDisconnectReason(std::string_view src);
+        void SetLastDisconnectReason(StringId string_id, void* args = nullptr);
 
     private:
         std::vector<uint8_t> _inboundBuffer;
@@ -72,7 +72,7 @@ namespace OpenRCT2::Network
         std::string _lastDisconnectReason;
         bool _isLegacyProtocol = false;
 
-        void recordPacketStats(const Packet& packet, bool sending);
+        void RecordPacketStats(const Packet& packet, bool sending);
         void receiveData();
     };
 } // namespace OpenRCT2::Network

@@ -14,6 +14,7 @@
 #include "../entity/Duck.h"
 #include "../entity/EntityList.h"
 #include "../entity/Fountain.h"
+#include "../entity/Litter.h"
 #include "../entity/MoneyEffect.h"
 #include "../entity/Particle.h"
 #include "../entity/Staff.h"
@@ -27,9 +28,7 @@
 #include "../world/Weather.h"
 #include "Paint.h"
 #include "entity/Paint.Balloon.h"
-#include "entity/Paint.Duck.h"
 #include "entity/Paint.Guest.h"
-#include "entity/Paint.Litter.h"
 #include "entity/Paint.Staff.h"
 #include "vehicle/VehiclePaint.h"
 
@@ -66,7 +65,7 @@ void EntityPaintSetup(PaintSession& session, const CoordsXY& pos)
     {
         if (highlightPathIssues)
         {
-            const auto staff = entity->as<Staff>();
+            const auto staff = entity->As<Staff>();
             if (staff != nullptr)
             {
                 if (staff->AssignedStaffType != StaffType::handyman)
@@ -74,13 +73,13 @@ void EntityPaintSetup(PaintSession& session, const CoordsXY& pos)
                     continue;
                 }
             }
-            else if (entity->type != EntityType::litter)
+            else if (entity->Type != EntityType::litter)
             {
                 continue;
             }
         }
 
-        const auto entityPos = entity->getLocation();
+        const auto entityPos = entity->GetLocation();
 
         // Only paint sprites that are below the clip height and inside the clip selection.
         // Here converting from land/path/etc height scale to pixel height scale.
@@ -107,10 +106,10 @@ void EntityPaintSetup(PaintSession& session, const CoordsXY& pos)
             }
         }
 
-        auto screenCoords = Translate3DTo2DWithZ(session.CurrentRotation, entity->getLocation());
+        auto screenCoords = Translate3DTo2DWithZ(session.CurrentRotation, entity->GetLocation());
         auto spriteRect = ScreenRect(
-            screenCoords - ScreenCoordsXY{ entity->spriteData.width, entity->spriteData.heightMin },
-            screenCoords + ScreenCoordsXY{ entity->spriteData.width, entity->spriteData.heightMax });
+            screenCoords - ScreenCoordsXY{ entity->SpriteData.Width, entity->SpriteData.HeightMin },
+            screenCoords + ScreenCoordsXY{ entity->SpriteData.Width, entity->SpriteData.HeightMax });
 
         const ZoomLevel zoom = session.rt.zoom_level;
         if (session.rt.y + session.rt.height <= zoom.ApplyInversedTo(spriteRect.GetTop())
@@ -123,7 +122,7 @@ void EntityPaintSetup(PaintSession& session, const CoordsXY& pos)
 
         int32_t image_direction = session.CurrentRotation;
         image_direction <<= 3;
-        image_direction += entity->orientation;
+        image_direction += entity->Orientation;
         image_direction &= 0x1F;
 
         session.CurrentlyDrawnEntity = entity;
@@ -131,7 +130,7 @@ void EntityPaintSetup(PaintSession& session, const CoordsXY& pos)
         session.SpritePosition.y = entityPos.y;
         session.InteractionType = ViewportInteractionItem::entity;
 
-        switch (entity->type)
+        switch (entity->Type)
         {
             case EntityType::vehicle:
                 entity->cast<Vehicle>()->Paint(session, image_direction);
@@ -171,10 +170,10 @@ void EntityPaintSetup(PaintSession& session, const CoordsXY& pos)
                 PaintBalloon(session, *entity->cast<Balloon>(), image_direction);
                 break;
             case EntityType::duck:
-                PaintDuck(session, *entity->cast<Duck>(), image_direction);
+                entity->cast<Duck>()->Paint(session, image_direction);
                 break;
             case EntityType::litter:
-                PaintLitter(session, *entity->cast<Litter>(), image_direction);
+                entity->cast<Litter>()->Paint(session, image_direction);
                 break;
             default:
                 assert(false);
