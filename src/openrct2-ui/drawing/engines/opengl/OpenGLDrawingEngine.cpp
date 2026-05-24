@@ -86,6 +86,9 @@ private:
         RectCommandBatch transparent;
     } _commandBuffers;
 
+    mutable PaletteIndex* _clipCacheBits = nullptr;
+    mutable ScreenRect _clipCacheRect = {};
+
     static uint8_t ComputeOutCode(ScreenCoordsXY, ScreenCoordsXY, ScreenCoordsXY);
     static bool CohenSutherlandLineClip(ScreenLine&, const RenderTarget&);
     [[nodiscard]] ScreenRect CalculateClipping(const RenderTarget& rt) const;
@@ -668,6 +671,7 @@ void OpenGLDrawingContext::StartNewDraw()
     Guard::Assert(_inDraw == false);
 
     _drawCount = 0;
+    _clipCacheBits = nullptr;
     _swapFramebuffer->Clear();
     _inDraw = true;
 }
@@ -710,7 +714,6 @@ void OpenGLDrawingContext::FillRect(
     command.bounds = { left, top, right + 1, bottom + 1 };
     command.flags = DrawRectCommand::FLAG_NO_TEXTURE;
     command.depth = _drawCount++;
-    command.zoom = 1.0f;
 
     if (crossHatch)
     {
@@ -743,7 +746,6 @@ void OpenGLDrawingContext::FilterRect(
     command.bounds = { left, top, right + 1, bottom + 1 };
     command.flags = DrawRectCommand::FLAG_NO_TEXTURE;
     command.depth = _drawCount++;
-    command.zoom = 1.0f;
 }
 
 // Compute the bit code for a point p relative to the clip rectangle defined by topLeft and bottomRight
@@ -924,9 +926,6 @@ void OpenGLDrawingContext::DrawSprite(RenderTarget& rt, const ImageId imageId, c
     right += clip.GetLeft() - rt.x;
     bottom += clip.GetTop() - rt.y;
 
-    const float zoom = rt.zoom_level >= ZoomLevel{ 0 } ? static_cast<float>(rt.zoom_level.ApplyTo(1))
-                                                       : 1.0f / static_cast<float>(rt.zoom_level.ApplyInversedTo(1));
-
     int paletteCount;
     ivec3 palettes{};
     bool special = false;
@@ -959,21 +958,30 @@ void OpenGLDrawingContext::DrawSprite(RenderTarget& rt, const ImageId imageId, c
         paletteCount = 0;
     }
 
+    const float x2 = texture.coords.x + (g1Element->width + widthModifier);
+    const float y2 = texture.coords.y + (g1Element->height + yModifier);
+
+    vec4 texColourBounds = {
+        texture.coords.x / texture.coords.z,
+        texture.coords.y / texture.coords.w,
+        x2 / texture.coords.z,
+        y2 / texture.coords.w,
+    };
+
     if (special || imageId.IsBlended())
     {
         DrawRectCommand& command = _commandBuffers.transparent.allocate();
 
         command.clip = { clip.GetLeft(), clip.GetTop(), clip.GetRight(), clip.GetBottom() };
         command.texColourAtlas = texture.index;
-        command.texColourBounds = texture.coords;
+        command.texColourBounds = texColourBounds;
         command.texMaskAtlas = texture.index;
-        command.texMaskBounds = texture.coords;
+        command.texMaskBounds = texColourBounds;
         command.palettes = palettes;
         command.colour = palettes.x - (special ? 1 : 0);
         command.bounds = { left, top, right, bottom };
         command.flags = special ? 0 : DrawRectCommand::FLAG_NO_TEXTURE | DrawRectCommand::FLAG_MASK;
         command.depth = _drawCount++;
-        command.zoom = zoom;
     }
     else
     {
@@ -981,15 +989,14 @@ void OpenGLDrawingContext::DrawSprite(RenderTarget& rt, const ImageId imageId, c
 
         command.clip = { clip.GetLeft(), clip.GetTop(), clip.GetRight(), clip.GetBottom() };
         command.texColourAtlas = texture.index;
-        command.texColourBounds = texture.coords;
+        command.texColourBounds = texColourBounds;
         command.texMaskAtlas = 0;
-        command.texMaskBounds = { 0.0f, 0.0f, texture.coords.z, texture.coords.w };
+        command.texMaskBounds = { 0.0f, 0.0f, 1.0f / texture.coords.z, 1.0f / texture.coords.w };
         command.palettes = palettes;
         command.colour = 0;
         command.bounds = { left, top, right, bottom };
         command.flags = paletteCount;
         command.depth = _drawCount++;
-        command.zoom = zoom;
     }
 }
 
@@ -1038,22 +1045,28 @@ void OpenGLDrawingContext::DrawSpriteRawMasked(
     right += clip.GetLeft() - rt.x;
     bottom += clip.GetTop() - rt.y;
 
-    const float zoom = rt.zoom_level >= ZoomLevel{ 0 } ? static_cast<float>(rt.zoom_level.ApplyTo(1))
-                                                       : 1.0f / static_cast<float>(rt.zoom_level.ApplyInversedTo(1));
-
     DrawRectCommand& command = _commandBuffers.rects.allocate();
 
     command.clip = { clip.GetLeft(), clip.GetTop(), clip.GetRight(), clip.GetBottom() };
     command.texColourAtlas = textureColour.index;
-    command.texColourBounds = textureColour.coords;
+    command.texColourBounds = {
+        textureColour.coords.x / textureColour.coords.z,
+        textureColour.coords.y / textureColour.coords.w,
+        (textureColour.coords.x + drawWidth) / textureColour.coords.z,
+        (textureColour.coords.y + drawHeight) / textureColour.coords.w,
+    };
     command.texMaskAtlas = textureMask.index;
-    command.texMaskBounds = textureMask.coords;
+    command.texMaskBounds = {
+        textureMask.coords.x / textureMask.coords.z,
+        textureMask.coords.y / textureMask.coords.w,
+        (textureMask.coords.x + drawWidth) / textureMask.coords.z,
+        (textureMask.coords.y + drawHeight) / textureMask.coords.w,
+    };
     command.palettes = { 0, 0, 0 };
     command.flags = DrawRectCommand::FLAG_MASK;
     command.colour = 0;
     command.bounds = { left, top, right, bottom };
     command.depth = _drawCount++;
-    command.zoom = zoom;
 }
 
 void OpenGLDrawingContext::DrawSpriteSolid(RenderTarget& rt, const ImageId image, int32_t x, int32_t y, PaletteIndex colour)
@@ -1099,13 +1112,17 @@ void OpenGLDrawingContext::DrawSpriteSolid(RenderTarget& rt, const ImageId image
     command.texColourAtlas = 0;
     command.texColourBounds = { 0.0f, 0.0f, 0.0f, 0.0f };
     command.texMaskAtlas = texture.index;
-    command.texMaskBounds = texture.coords;
+    command.texMaskBounds = {
+        texture.coords.x / texture.coords.z,
+        texture.coords.y / texture.coords.w,
+        (texture.coords.x + drawWidth) / texture.coords.z,
+        (texture.coords.y + drawHeight) / texture.coords.w,
+    };
     command.palettes = { 0, 0, 0 };
     command.flags = DrawRectCommand::FLAG_NO_TEXTURE | DrawRectCommand::FLAG_MASK;
     command.colour = static_cast<GLuint>(colour);
     command.bounds = { left, top, right, bottom };
     command.depth = _drawCount++;
-    command.zoom = 1.0f;
 }
 
 void OpenGLDrawingContext::DrawGlyph(RenderTarget& rt, const ImageId image, int32_t x, int32_t y, const PaletteMap& palette)
@@ -1145,14 +1162,16 @@ void OpenGLDrawingContext::DrawGlyph(RenderTarget& rt, const ImageId image, int3
     right += clip.GetLeft() - rt.x;
     bottom += clip.GetTop() - rt.y;
 
-    const float zoom = rt.zoom_level >= ZoomLevel{ 0 } ? static_cast<float>(rt.zoom_level.ApplyTo(1))
-                                                       : 1.0f / static_cast<float>(rt.zoom_level.ApplyInversedTo(1));
-
     DrawRectCommand& command = _commandBuffers.rects.allocate();
 
     command.clip = { clip.GetLeft(), clip.GetTop(), clip.GetRight(), clip.GetBottom() };
     command.texColourAtlas = texture.index;
-    command.texColourBounds = texture.coords;
+    command.texColourBounds = {
+        texture.coords.x / texture.coords.z,
+        texture.coords.y / texture.coords.w,
+        (texture.coords.x + g1Element->width) / texture.coords.z,
+        (texture.coords.y + g1Element->height) / texture.coords.w,
+    };
     command.texMaskAtlas = 0;
     command.texMaskBounds = { 0.0f, 0.0f, 0.0f, 0.0f };
     command.palettes = { 0, 0, 0 };
@@ -1160,7 +1179,6 @@ void OpenGLDrawingContext::DrawGlyph(RenderTarget& rt, const ImageId image, int3
     command.colour = 0;
     command.bounds = { left, top, right, bottom };
     command.depth = _drawCount++;
-    command.zoom = zoom;
 }
 
 void OpenGLDrawingContext::DrawTTFBitmap(
@@ -1217,7 +1235,12 @@ void OpenGLDrawingContext::DrawTTFBitmap(
             DrawRectCommand& command = _commandBuffers.rects.allocate();
             command.clip = { clip.GetLeft(), clip.GetTop(), clip.GetRight(), clip.GetBottom() };
             command.texColourAtlas = texture.index;
-            command.texColourBounds = texture.coords;
+            command.texColourBounds = {
+                texture.coords.x / texture.coords.z,
+                texture.coords.y / texture.coords.w,
+                (texture.coords.x + surface->w) / texture.coords.z,
+                (texture.coords.y + surface->h) / texture.coords.w,
+            };
             command.texMaskAtlas = 0;
             command.texMaskBounds = { 0.0f, 0.0f, 0.0f, 0.0f };
             command.palettes = { 0, 0, 0 };
@@ -1225,7 +1248,6 @@ void OpenGLDrawingContext::DrawTTFBitmap(
             command.colour = static_cast<GLuint>(info.palette.shadowOutline);
             command.bounds = b;
             command.depth = _drawCount++;
-            command.zoom = 1.0f;
         }
     }
     if (info.colourFlags.has(ColourFlag::inset))
@@ -1233,7 +1255,12 @@ void OpenGLDrawingContext::DrawTTFBitmap(
         DrawRectCommand& command = _commandBuffers.rects.allocate();
         command.clip = { clip.GetLeft(), clip.GetTop(), clip.GetRight(), clip.GetBottom() };
         command.texColourAtlas = texture.index;
-        command.texColourBounds = texture.coords;
+        command.texColourBounds = {
+            texture.coords.x / texture.coords.z,
+            texture.coords.y / texture.coords.w,
+            (texture.coords.x + surface->w) / texture.coords.z,
+            (texture.coords.y + surface->h) / texture.coords.w,
+        };
         command.texMaskAtlas = 0;
         command.texMaskBounds = { 0.0f, 0.0f, 0.0f, 0.0f };
         command.palettes = { 0, 0, 0 };
@@ -1241,13 +1268,17 @@ void OpenGLDrawingContext::DrawTTFBitmap(
         command.colour = static_cast<GLuint>(info.palette.shadowOutline);
         command.bounds = { left + 1, top + 1, right + 1, bottom + 1 };
         command.depth = _drawCount++;
-        command.zoom = 1.0f;
     }
     auto& cmdBuf = hintingThreshold > 0 ? _commandBuffers.transparent : _commandBuffers.rects;
     DrawRectCommand& command = cmdBuf.allocate();
     command.clip = { clip.GetLeft(), clip.GetTop(), clip.GetRight(), clip.GetBottom() };
     command.texColourAtlas = texture.index;
-    command.texColourBounds = texture.coords;
+    command.texColourBounds = {
+        texture.coords.x / texture.coords.z,
+        texture.coords.y / texture.coords.w,
+        (texture.coords.x + surface->w) / texture.coords.z,
+        (texture.coords.y + surface->h) / texture.coords.w,
+    };
     command.texMaskAtlas = 0;
     command.texMaskBounds = { 0.0f, 0.0f, 0.0f, 0.0f };
     command.palettes = { 0, 0, 0 };
@@ -1255,7 +1286,6 @@ void OpenGLDrawingContext::DrawTTFBitmap(
     command.colour = static_cast<GLuint>(info.palette.fill);
     command.bounds = { left, top, right, bottom };
     command.depth = _drawCount++;
-    command.zoom = 1.0f;
     #endif // DISABLE_TTF
 }
 
@@ -1312,7 +1342,9 @@ void OpenGLDrawingContext::HandleTransparency()
     _drawRectShader->Use();
     _drawRectShader->SetInstances(_commandBuffers.transparent);
 
+    constexpr int32_t kMaxTransparencyPasses = 8;
     int32_t max_depth = MaxTransparencyDepth(_commandBuffers.transparent);
+    max_depth = std::min(max_depth, kMaxTransparencyPasses);
     for (int32_t i = 0; i < max_depth; ++i)
     {
         _swapFramebuffer->BindTransparent();
@@ -1340,22 +1372,28 @@ void OpenGLDrawingContext::HandleTransparency()
 
 ScreenRect OpenGLDrawingContext::CalculateClipping(const RenderTarget& rt) const
 {
+    if (_clipCacheBits == rt.bits)
+    {
+        return { _clipCacheRect.TopLeft, { _clipCacheRect.GetLeft() + rt.width, _clipCacheRect.GetTop() + rt.height } };
+    }
+
     // mber: Calculating the screen coordinates by dividing the difference between pointers like this is a dirty hack.
     //       It's also quite slow. In future the drawing code needs to be refactored to avoid this somehow.
     const RenderTarget* mainRT = _engine.getRT();
     const int32_t bytesPerRow = mainRT->LineStride();
     const int32_t bitsOffset = static_cast<int32_t>(rt.bits - mainRT->bits);
-    #ifndef NDEBUG
+#ifndef NDEBUG
     const ptrdiff_t bitsSize = static_cast<ptrdiff_t>(mainRT->height) * static_cast<ptrdiff_t>(bytesPerRow);
     assert(static_cast<ptrdiff_t>(bitsOffset) < bitsSize && static_cast<ptrdiff_t>(bitsOffset) >= 0);
-    #endif
+#endif
 
     const int32_t left = bitsOffset % bytesPerRow;
     const int32_t top = bitsOffset / bytesPerRow;
-    const int32_t right = left + rt.width;
-    const int32_t bottom = top + rt.height;
 
-    return { { left, top }, { right, bottom } };
+    _clipCacheBits = rt.bits;
+    _clipCacheRect = { { left, top }, { left + rt.width, top + rt.height } };
+
+    return _clipCacheRect;
 }
 
 #endif /* DISABLE_OPENGL */

@@ -104,15 +104,14 @@ namespace OpenRCT2::Ui
     {
         ivec4 clip;
         GLint texColourAtlas;
-        vec4 texColourBounds;
+        vec4 texColourBounds; // normalized UV coordinates: x1, y1, x2, y2
         GLint texMaskAtlas;
-        vec4 texMaskBounds;
+        vec4 texMaskBounds; // normalized UV coordinates: x1, y1, x2, y2
         ivec3 palettes;
         GLint flags;
         GLuint colour;
         ivec4 bounds;
         GLint depth;
-        GLfloat zoom;
 
         enum
         {
