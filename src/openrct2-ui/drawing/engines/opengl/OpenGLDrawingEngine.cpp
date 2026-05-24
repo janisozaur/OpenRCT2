@@ -1382,10 +1382,10 @@ ScreenRect OpenGLDrawingContext::CalculateClipping(const RenderTarget& rt) const
     const RenderTarget* mainRT = _engine.getRT();
     const int32_t bytesPerRow = mainRT->LineStride();
     const int32_t bitsOffset = static_cast<int32_t>(rt.bits - mainRT->bits);
-#ifndef NDEBUG
+    #ifndef NDEBUG
     const ptrdiff_t bitsSize = static_cast<ptrdiff_t>(mainRT->height) * static_cast<ptrdiff_t>(bytesPerRow);
     assert(static_cast<ptrdiff_t>(bitsOffset) < bitsSize && static_cast<ptrdiff_t>(bitsOffset) >= 0);
-#endif
+    #endif
 
     const int32_t left = bitsOffset % bytesPerRow;
     const int32_t top = bitsOffset / bytesPerRow;
