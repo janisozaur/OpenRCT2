@@ -156,7 +156,7 @@ public:
     {
     }
 
-    virtual void Draw(
+    void Draw(
         RenderTarget& rt, int32_t x, int32_t y, int32_t width, int32_t height, int32_t xStart, int32_t yStart,
         const uint8_t* weatherpattern) override
     {
@@ -1374,7 +1374,7 @@ ScreenRect OpenGLDrawingContext::CalculateClipping(const RenderTarget& rt) const
 {
     if (_clipCacheBits == rt.bits)
     {
-        return { _clipCacheRect.TopLeft, { _clipCacheRect.GetLeft() + rt.width, _clipCacheRect.GetTop() + rt.height } };
+        return { _clipCacheRect.Point1, { _clipCacheRect.GetLeft() + rt.width, _clipCacheRect.GetTop() + rt.height } };
     }
 
     // mber: Calculating the screen coordinates by dividing the difference between pointers like this is a dirty hack.

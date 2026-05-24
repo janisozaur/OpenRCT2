@@ -39,7 +39,6 @@ namespace OpenRCT2::Ui
         GLint vColour{ -1 };
         GLint vBounds{ -1 };
         GLint vDepth{ -1 };
-        GLint vZoom{ -1 };
 
         GLuint _vbo{ 0 };
         GLuint _vboInstances{ 0 };
