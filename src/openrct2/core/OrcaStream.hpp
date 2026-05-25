@@ -206,14 +206,18 @@ namespace OpenRCT2
                             }
                             else
                             {
-                                LOG_ERROR("OrcaStream: Compression verification failed (checksum mismatch), storing uncompressed data instead.");
+                                LOG_ERROR(
+                                    "OrcaStream: Compression verification failed (checksum mismatch), storing uncompressed "
+                                    "data instead.");
                                 _header.compression = CompressionType::none;
                                 _header.compressedSize = _header.uncompressedSize;
                             }
                         }
                         else
                         {
-                            LOG_ERROR("OrcaStream: Compression verification failed (decompression error), storing uncompressed data instead.");
+                            LOG_ERROR(
+                                "OrcaStream: Compression verification failed (decompression error), storing uncompressed data "
+                                "instead.");
                             _header.compression = CompressionType::none;
                             _header.compressedSize = _header.uncompressedSize;
                         }
