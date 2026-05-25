@@ -128,7 +128,7 @@ namespace OpenRCT2
                 // with a verison number of 0 may be one of these, and don't check their hashes.
                 if (_header.targetVersion > 0)
                 {
-                    auto checksum = Crypt::FNV1a(_buffer.GetData(), _buffer.GetLength());
+                    auto checksum = Crypt::FNV1a(_buffer.GetData(), static_cast<size_t>(_buffer.GetLength()));
                     if (checksum != _header.fnv1a)
                         throw IOException("Checksum is not valid!");
                 }
@@ -151,7 +151,7 @@ namespace OpenRCT2
                 _header.numChunks = static_cast<uint32_t>(_chunks.size());
                 _header.uncompressedSize = _buffer.GetLength();
                 _header.compressedSize = _buffer.GetLength();
-                _header.fnv1a = Crypt::FNV1a(_buffer.GetData(), _buffer.GetLength());
+                _header.fnv1a = Crypt::FNV1a(_buffer.GetData(), static_cast<size_t>(_buffer.GetLength()));
 
                 if (_compressionLevel == Compression::kNoCompressionLevel)
                     _header.compression = CompressionType::none;
@@ -198,7 +198,8 @@ namespace OpenRCT2
 
                         if (decompressStatus && decompressed.GetLength() == _header.uncompressedSize)
                         {
-                            auto verifyChecksum = Crypt::FNV1a(decompressed.GetData(), decompressed.GetLength());
+                            auto verifyChecksum = Crypt::FNV1a(
+                                decompressed.GetData(), static_cast<size_t>(decompressed.GetLength()));
                             if (verifyChecksum == _header.fnv1a)
                             {
                                 _buffer = std::move(compressed);

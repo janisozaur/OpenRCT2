@@ -210,8 +210,9 @@ namespace OpenRCT2
             ReadWritePackedObjectsChunk(os);
 
             LOG_INFO(
-                "Park saved: uncompressed=%llu, compressed=%llu, type=%u", header.uncompressedSize, header.compressedSize,
-                static_cast<uint32_t>(header.compression));
+                "Park saved: uncompressed=%llu, compressed=%llu, type=%u",
+                static_cast<unsigned long long>(header.uncompressedSize),
+                static_cast<unsigned long long>(header.compressedSize), static_cast<uint32_t>(header.compression));
         }
 
         void Save(GameState_t& gameState, const std::string_view path, int16_t compressionLevel)
