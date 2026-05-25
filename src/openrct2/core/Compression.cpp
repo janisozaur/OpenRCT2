@@ -210,7 +210,9 @@ namespace OpenRCT2::Compression
                 ret = ZSTD_compressStream2(ctx.get(), &output, &input, sourceBuf ? ZSTD_e_continue : ZSTD_e_end);
                 if (ZSTD_isError(ret))
                 {
-                    LOG_ERROR("Failed to compress data with error: %s", ZSTD_getErrorName(ret));
+                    LOG_ERROR(
+                        "Failed to compress data with error: %s (in_pos=%zu, in_size=%zu, out_pos=%zu, out_size=%zu)",
+                        ZSTD_getErrorName(ret), input.pos, input.size, output.pos, output.size);
                     return false;
                 }
 
@@ -257,7 +259,9 @@ namespace OpenRCT2::Compression
                 ret = ZSTD_decompressStream(ctx.get(), &output, &input);
                 if (ZSTD_isError(ret))
                 {
-                    LOG_ERROR("Failed to compress data with error: %s", ZSTD_getErrorName(ret));
+                    LOG_ERROR(
+                        "Failed to decompress data with error: %s (in_pos=%zu, in_size=%zu, out_pos=%zu, out_size=%zu)",
+                        ZSTD_getErrorName(ret), input.pos, input.size, output.pos, output.size);
                     return false;
                 }
 

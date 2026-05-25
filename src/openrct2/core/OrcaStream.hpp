@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "../Diagnostic.h"
 #include "../core/Compression.h"
 #include "../world/Location.hpp"
 #include "Crypt.h"
@@ -179,8 +180,43 @@ namespace OpenRCT2
 
                     if (compressStatus && compressed.GetLength() < _buffer.GetLength())
                     {
-                        _buffer = std::move(compressed);
-                        _header.compressedSize = _buffer.GetLength();
+                        // Verify compressed data
+                        MemoryStream decompressed;
+                        bool decompressStatus = false;
+                        compressed.SetPosition(0);
+                        if (_header.compression == CompressionType::gzip)
+                        {
+                            decompressStatus = Compression::zlibDecompress(
+                                compressed, compressed.GetLength(), decompressed, _header.uncompressedSize,
+                                Compression::ZlibHeaderType::gzip);
+                        }
+                        else if (_header.compression == CompressionType::zstd)
+                        {
+                            decompressStatus = Compression::zstdDecompress(
+                                compressed, compressed.GetLength(), decompressed, _header.uncompressedSize);
+                        }
+
+                        if (decompressStatus && decompressed.GetLength() == _header.uncompressedSize)
+                        {
+                            auto verifyChecksum = Crypt::FNV1a(decompressed.GetData(), decompressed.GetLength());
+                            if (verifyChecksum == _header.fnv1a)
+                            {
+                                _buffer = std::move(compressed);
+                                _header.compressedSize = _buffer.GetLength();
+                            }
+                            else
+                            {
+                                LOG_ERROR("OrcaStream: Compression verification failed (checksum mismatch), storing uncompressed data instead.");
+                                _header.compression = CompressionType::none;
+                                _header.compressedSize = _header.uncompressedSize;
+                            }
+                        }
+                        else
+                        {
+                            LOG_ERROR("OrcaStream: Compression verification failed (decompression error), storing uncompressed data instead.");
+                            _header.compression = CompressionType::none;
+                            _header.compressedSize = _header.uncompressedSize;
+                        }
                     }
                     else
                     {
