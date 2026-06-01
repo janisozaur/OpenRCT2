@@ -22,11 +22,11 @@ import cpp
 class NonDeterministicFunction extends Function {
   NonDeterministicFunction() {
     this.getName() = ["UtilRand", "UtilRandNormalDistributed", "rand"] or
-    this.hasQualifiedName("std", "rand") or
+    this.getQualifiedName().matches("%::rand") or
     // random_device::operator()
     exists(MemberFunction m |
       m = this and
-      m.getDeclaringType().hasQualifiedName("std", "random_device") and
+      m.getDeclaringType().getName() = "random_device" and
       m.getName() = "operator()"
     )
   }
@@ -38,7 +38,11 @@ class NonDeterministicFunction extends Function {
  */
 class GameActionMethod extends MemberFunction {
   GameActionMethod() {
-    this.getAnOverriddenFunction*().hasQualifiedName("OpenRCT2", "GameActions", "GameAction", ["Execute", "Query"])
+    exists(MemberFunction base |
+      base = this.getAnOverriddenFunction*() and
+      base.getDeclaringType().getName() = "GameAction" and
+      base.getName() = ["Execute", "Query"]
+    )
   }
 }
 
@@ -49,17 +53,17 @@ class GameActionMethod extends MemberFunction {
  * a side effect like closing a window).
  */
 predicate isBarrier(Function f) {
-  f.hasQualifiedName("OpenRCT2", "Audio", _, _) or
-  f.hasQualifiedName("OpenRCT2", "Ui", _, _) or
-  f.hasQualifiedName("OpenRCT2", "Audio", _) or
-  f.hasQualifiedName("OpenRCT2", "Ui", _) or
+  f.getQualifiedName().matches("OpenRCT2::Audio::%") or
+  f.getQualifiedName().matches("OpenRCT2::Ui::%") or
   f.getName() = [
     "GetTitleMusicDescriptor", "ApplyStyle", "Load", "onClose", "onMouseUp",
     "onMouseDown", "onMouseEnter", "onMouseLeave", "onMouseMove", "onMouseWheel",
-    "onDraw", "onUpdate", "onPrepareDraw", "onPeriodicUpdate"
+    "onDraw", "onUpdate", "onPrepareDraw", "onPeriodicUpdate", "ShowError",
+    "PlayTitleMusic", "GameLoadOrQuitNoSavePrompt", "SetActiveScene", "TitleInitialise",
+    "Resume", "ErrorOpen", "ResetObjects"
   ] or
   exists(Type t | t = f.(MemberFunction).getDeclaringType() |
-    t.getName() = ["TitleScene", "WindowManager", "ProgressWindow"]
+    t.getName() = ["TitleScene", "WindowManager", "ProgressWindow", "WindowBase", "Scene", "Audio"]
   ) or
   // Exclude common UI/Local-only paths
   f.getFile().getRelativePath().matches("src/openrct2-ui/%")
@@ -85,9 +89,13 @@ module CallGraphPath {
           m = call.getTarget() and
           callee.(MemberFunction).getAnOverriddenFunction+() = m and
           // Avoid noise from broad interfaces that would connect unrelated actions
-          not m.hasQualifiedName("OpenRCT2", "GameActions", "GameAction", ["Execute", "Query"])
+          not (
+            m.getDeclaringType().getName() = "GameAction" and
+            m.getName() = ["Execute", "Query"]
+          )
         )
-      )
+      ) and
+      not isBarrier(callee)
     )
   }
 
@@ -98,8 +106,6 @@ module CallGraphPath {
 
 import CallGraphPath
 
-from GameActionMethod source, NonDeterministicFunction sink, Call call
-where
-  CallGraphPath::edges*(source, call.getEnclosingFunction()) and
-  call.getTarget() = sink
-select call, source, sink, "Non-deterministic call to " + sink.getName() + " reachable from game action method " + source.getQualifiedName() + "."
+from GameActionMethod source, NonDeterministicFunction sink
+where CallGraphPath::edges*(source, sink)
+select sink, source, sink, "Non-deterministic call to " + sink.getName() + " reachable from game action method " + source.getQualifiedName() + "."
