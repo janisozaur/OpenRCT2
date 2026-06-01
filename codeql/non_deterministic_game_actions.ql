@@ -4,7 +4,7 @@
  *              random functions like UtilRand or UtilRandNormalDistributed from a GameAction's
  *              Execute or Query method (or any function they call) can lead to state
  *              desyncs in multiplayer.
- * @kind problem
+ * @kind path-problem
  * @problem.severity error
  * @precision high
  * @id cpp/openrct2/non-deterministic-game-action
@@ -51,27 +51,33 @@ class GameActionMethod extends MemberFunction {
 }
 
 /**
- * Predicate to follow the call graph, including virtual calls.
+ * A module for tracing call paths.
  */
-predicate calls(Function caller, Function callee) {
-  exists(Call call |
-    call.getEnclosingFunction() = caller and
-    (
-      // Static/Direct call
-      callee = call.getTarget()
-      or
-      // Virtual call: if we call a method, any of its overrides could be the actual callee.
-      exists(MemberFunction m |
-        m = call.getTarget() and
-        callee.(MemberFunction).getAnOverriddenFunction+() = m
+module CallGraphPath {
+  /**
+   * Predicate to follow the call graph, including virtual calls.
+   */
+  query predicate edges(Function caller, Function callee) {
+    exists(Call call |
+      call.getEnclosingFunction() = caller and
+      (
+        // Static/Direct call
+        callee = call.getTarget()
+        or
+        // Virtual call: if we call a method, any of its overrides could be the actual callee.
+        exists(MemberFunction m |
+          m = call.getTarget() and
+          callee.(MemberFunction).getAnOverriddenFunction+() = m
+        )
       )
     )
-  )
+  }
+
+  class Node = Function;
 }
 
-from GameActionMethod entry, NonDeterministicFunction target, Call call
-where
-  // Transitive closure of the calls predicate to find any path from entry to the call.
-  calls*(entry, call.getEnclosingFunction()) and
-  call.getTarget() = target
-select call, "This call to " + target.getName() + " is reachable from game action method " + entry.getQualifiedName() + "."
+import CallGraphPath
+
+from GameActionMethod source, NonDeterministicFunction sink
+where CallGraphPath::edges*(source, sink)
+select sink, source, sink, "Non-deterministic call to " + sink.getName() + " reachable from game action method " + source.getQualifiedName() + "."
