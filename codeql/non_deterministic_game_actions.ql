@@ -1,0 +1,76 @@
+/**
+ * @name Call to non-deterministic random function from game action
+ * @description GameActions must be deterministic across all clients. Calling non-deterministic
+ *              random functions like UtilRand or UtilRandNormalDistributed from a GameAction's
+ *              Execute or Query method (or any function they call) can lead to state
+ *              desyncs in multiplayer.
+ * @kind problem
+ * @problem.severity error
+ * @precision high
+ * @id cpp/openrct2/non-deterministic-game-action
+ * @tags reliability
+ *       security
+ *       external/openrct2
+ */
+
+import cpp
+
+/**
+ * A function that is considered non-deterministic for OpenRCT2 game state.
+ * These functions use local entropy or unseeded PRNGs that differ between clients.
+ */
+class NonDeterministicFunction extends Function {
+  NonDeterministicFunction() {
+    this.hasGlobalName("UtilRand") or
+    this.hasGlobalName("UtilRandNormalDistributed") or
+    this.hasGlobalName("rand") or
+    this.hasQualifiedName("std", "rand") or
+    // random_device::operator()
+    exists(Method m |
+      m = this and
+      m.getDeclaringClass().hasQualifiedName("std", "random_device") and
+      m.getName() = "operator()"
+    )
+  }
+}
+
+/**
+ * The Execute or Query methods of a GameAction.
+ * These are the entry points for game state changes or queries that must be deterministic.
+ */
+class GameActionMethod extends Method {
+  GameActionMethod() {
+    exists(Method base |
+      // GameAction is in OpenRCT2::GameActions namespace as per file content
+      base.getDeclaringClass().hasQualifiedName("OpenRCT2::GameActions", "GameAction") and
+      (base.getName() = "Execute" or base.getName() = "Query") and
+      this.getAnOverriddenMethod*() = base
+    )
+  }
+}
+
+/**
+ * Predicate to follow the call graph, including virtual calls.
+ */
+predicate calls(Function caller, Function callee) {
+  exists(Call call |
+    call.getEnclosingFunction() = caller and
+    (
+      // Static/Direct call
+      callee = call.getTarget()
+      or
+      // Virtual call: if we call a method, any of its overrides could be the actual callee.
+      exists(Method m |
+        m = call.getTarget() and
+        callee.(Method).getAnOverriddenMethod+() = m
+      )
+    )
+  )
+}
+
+from GameActionMethod entry, NonDeterministicFunction target, Call call
+where
+  // Transitive closure of the calls predicate to find any path from entry to the call.
+  calls*(entry, call.getEnclosingFunction()) and
+  call.getTarget() = target
+select call, "This call to " + target.getName() + " is reachable from game action method " + entry.getQualifiedName() + "."
