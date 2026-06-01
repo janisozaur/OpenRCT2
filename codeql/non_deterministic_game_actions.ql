@@ -38,12 +38,31 @@ class NonDeterministicFunction extends Function {
  */
 class GameActionMethod extends MemberFunction {
   GameActionMethod() {
-    exists(MemberFunction base |
-      base.getDeclaringType().hasQualifiedName("OpenRCT2::GameActions", "GameAction") and
-      (base.getName() = "Execute" or base.getName() = "Query") and
-      this.getAnOverriddenFunction*() = base
-    )
+    this.getAnOverriddenFunction*().hasQualifiedName("OpenRCT2", "GameActions", "GameAction", ["Execute", "Query"])
   }
+}
+
+/**
+ * Functions that are considered "barriers" because they only affect local client state
+ * or are part of the UI/Audio systems which are inherently non-deterministic but
+ * shouldn't be reached from deterministic game logic (if they are, it's usually
+ * a side effect like closing a window).
+ */
+predicate isBarrier(Function f) {
+  f.hasQualifiedName("OpenRCT2", "Audio", _, _) or
+  f.hasQualifiedName("OpenRCT2", "Ui", _, _) or
+  f.hasQualifiedName("OpenRCT2", "Audio", _) or
+  f.hasQualifiedName("OpenRCT2", "Ui", _) or
+  f.getName() = [
+    "GetTitleMusicDescriptor", "ApplyStyle", "Load", "onClose", "onMouseUp",
+    "onMouseDown", "onMouseEnter", "onMouseLeave", "onMouseMove", "onMouseWheel",
+    "onDraw", "onUpdate", "onPrepareDraw", "onPeriodicUpdate"
+  ] or
+  exists(Type t | t = f.(MemberFunction).getDeclaringType() |
+    t.getName() = ["TitleScene", "WindowManager", "ProgressWindow"]
+  ) or
+  // Exclude common UI/Local-only paths
+  f.getFile().getRelativePath().matches("src/openrct2-ui/%")
 }
 
 /**
@@ -56,6 +75,7 @@ module CallGraphPath {
   query predicate edges(Function caller, Function callee) {
     exists(Call call |
       call.getEnclosingFunction() = caller and
+      not isBarrier(caller) and
       (
         // Static/Direct call
         callee = call.getTarget()
@@ -64,12 +84,14 @@ module CallGraphPath {
         exists(MemberFunction m |
           m = call.getTarget() and
           callee.(MemberFunction).getAnOverriddenFunction+() = m and
-          // Avoid noise from broad interfaces
-          not m.getDeclaringType().hasQualifiedName("OpenRCT2::GameActions", "GameAction")
+          // Avoid noise from broad interfaces that would connect unrelated actions
+          not m.hasQualifiedName("OpenRCT2", "GameActions", "GameAction", ["Execute", "Query"])
         )
       )
     )
   }
+
+  query predicate nodes(Function f) { any() }
 
   class Node = Function;
 }
