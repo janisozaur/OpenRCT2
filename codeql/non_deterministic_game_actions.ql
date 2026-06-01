@@ -22,7 +22,7 @@ import cpp
 class NonDeterministicFunction extends Function {
   NonDeterministicFunction() {
     this.getName() = ["UtilRand", "UtilRandNormalDistributed", "rand"] or
-    this.getQualifiedName().matches("%::rand") or
+    this.getQualifiedName() = "std::rand" or
     // random_device::operator()
     exists(MemberFunction m |
       m = this and
@@ -38,35 +38,38 @@ class NonDeterministicFunction extends Function {
  */
 class GameActionMethod extends MemberFunction {
   GameActionMethod() {
-    exists(MemberFunction base |
-      base = this.getAnOverriddenFunction*() and
-      base.getDeclaringType().getName() = "GameAction" and
-      base.getName() = ["Execute", "Query"]
+    (this.getName() = "Execute" or this.getName() = "Query") and
+    exists(Class c |
+      c = this.getDeclaringType() and
+      (
+        c.getName() = "GameAction" or
+        c.getABaseClass+().getName() = "GameAction"
+      )
     )
   }
 }
 
 /**
  * Functions that are considered "barriers" because they only affect local client state
- * or are part of the UI/Audio systems which are inherently non-deterministic but
- * shouldn't be reached from deterministic game logic (if they are, it's usually
- * a side effect like closing a window).
+ * or are part of the UI/Audio systems which are inherently non-deterministic.
  */
 predicate isBarrier(Function f) {
-  f.getQualifiedName().matches("OpenRCT2::Audio::%") or
-  f.getQualifiedName().matches("OpenRCT2::Ui::%") or
+  f.getQualifiedName().matches("%Audio::%") or
+  f.getQualifiedName().matches("%Ui::%") or
   f.getName() = [
     "GetTitleMusicDescriptor", "ApplyStyle", "Load", "onClose", "onMouseUp",
     "onMouseDown", "onMouseEnter", "onMouseLeave", "onMouseMove", "onMouseWheel",
     "onDraw", "onUpdate", "onPrepareDraw", "onPeriodicUpdate", "ShowError",
     "PlayTitleMusic", "GameLoadOrQuitNoSavePrompt", "SetActiveScene", "TitleInitialise",
-    "Resume", "ErrorOpen", "ResetObjects"
+    "Resume", "ErrorOpen", "ResetObjects", "InvalidateByNumber", "CloseByNumber",
+    "CloseByCondition", "CloseByClass", "onPrepareDraw", "onUpdate"
   ] or
   exists(Type t | t = f.(MemberFunction).getDeclaringType() |
-    t.getName() = ["TitleScene", "WindowManager", "ProgressWindow", "WindowBase", "Scene", "Audio"]
+    t.getName().matches("%Scene") or
+    t.getName() = ["WindowManager", "ProgressWindow", "WindowBase", "Audio"]
   ) or
   // Exclude common UI/Local-only paths
-  f.getFile().getRelativePath().matches("src/openrct2-ui/%")
+  f.getFile().getRelativePath().matches("%openrct2-ui/%")
 }
 
 /**
@@ -89,10 +92,7 @@ module CallGraphPath {
           m = call.getTarget() and
           callee.(MemberFunction).getAnOverriddenFunction+() = m and
           // Avoid noise from broad interfaces that would connect unrelated actions
-          not (
-            m.getDeclaringType().getName() = "GameAction" and
-            m.getName() = ["Execute", "Query"]
-          )
+          not m.getDeclaringType().getName() = "GameAction"
         )
       ) and
       not isBarrier(callee)
