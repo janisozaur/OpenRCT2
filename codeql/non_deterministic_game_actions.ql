@@ -21,11 +21,7 @@ import cpp
  */
 class NonDeterministicFunction extends Function {
   NonDeterministicFunction() {
-    (
-      this.getName() = "UtilRand" or
-      this.getName() = "UtilRandNormalDistributed"
-    ) or
-    this.hasGlobalName("rand") or
+    this.getName() = ["UtilRand", "UtilRandNormalDistributed", "rand"] or
     this.hasQualifiedName("std", "rand") or
     // random_device::operator()
     exists(MemberFunction m |
@@ -64,10 +60,12 @@ module CallGraphPath {
         // Static/Direct call
         callee = call.getTarget()
         or
-        // Virtual call: if we call a method, any of its overrides could be the actual callee.
+        // Virtual call: follow overrides, but avoid the generic dispatch noise through GameAction base
         exists(MemberFunction m |
           m = call.getTarget() and
-          callee.(MemberFunction).getAnOverriddenFunction+() = m
+          callee.(MemberFunction).getAnOverriddenFunction+() = m and
+          // Avoid noise from broad interfaces
+          not m.getDeclaringType().hasQualifiedName("OpenRCT2::GameActions", "GameAction")
         )
       )
     )
@@ -78,6 +76,8 @@ module CallGraphPath {
 
 import CallGraphPath
 
-from GameActionMethod source, NonDeterministicFunction sink
-where CallGraphPath::edges*(source, sink)
-select sink, source, sink, "Non-deterministic call to " + sink.getName() + " reachable from game action method " + source.getQualifiedName() + "."
+from GameActionMethod source, NonDeterministicFunction sink, Call call
+where
+  CallGraphPath::edges*(source, call.getEnclosingFunction()) and
+  call.getTarget() = sink
+select call, source, sink, "Non-deterministic call to " + sink.getName() + " reachable from game action method " + source.getQualifiedName() + "."
