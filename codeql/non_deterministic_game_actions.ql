@@ -22,11 +22,16 @@ import cpp
 class NonDeterministicFunction extends Function {
   NonDeterministicFunction() {
     this.getName() = ["UtilRand", "UtilRandNormalDistributed", "rand"] or
-    this.getQualifiedName() = "std::rand" or
-    // random_device::operator()
+    this.getQualifiedName().matches("%::rand") or
+    // Catch C++ standard library random number generators
     exists(MemberFunction m |
       m = this and
-      m.getDeclaringType().getName() = "random_device" and
+      m.getDeclaringType().getName().matches("%random_device%") and
+      m.getName() = "operator()"
+    ) or
+    exists(MemberFunction m |
+      m = this and
+      m.getDeclaringType().getName().matches("%mersenne_twister_engine%") and
       m.getName() = "operator()"
     )
   }
@@ -41,10 +46,7 @@ class GameActionMethod extends MemberFunction {
     (this.getName() = "Execute" or this.getName() = "Query") and
     exists(Class c |
       c = this.getDeclaringType() and
-      (
-        c.getName() = "GameAction" or
-        c.getABaseClass+().getName() = "GameAction"
-      )
+      (c.getName() = "GameAction" or c.getABaseClass+().getName() = "GameAction")
     )
   }
 }
@@ -57,55 +59,55 @@ predicate isBarrier(Function f) {
   f.getQualifiedName().matches("%Audio::%") or
   f.getQualifiedName().matches("%Ui::%") or
   f.getName() = [
-    "GetTitleMusicDescriptor", "ApplyStyle", "Load", "onClose", "onMouseUp",
-    "onMouseDown", "onMouseEnter", "onMouseLeave", "onMouseMove", "onMouseWheel",
-    "onDraw", "onUpdate", "onPrepareDraw", "onPeriodicUpdate", "ShowError",
-    "PlayTitleMusic", "GameLoadOrQuitNoSavePrompt", "SetActiveScene", "TitleInitialise",
-    "Resume", "ErrorOpen", "ResetObjects", "InvalidateByNumber", "CloseByNumber",
-    "CloseByCondition", "CloseByClass", "onPrepareDraw", "onUpdate"
+    "GetTitleMusicDescriptor", "PlayTitleMusic", "Load", "onClose",
+    "GameLoadOrQuitNoSavePrompt", "SetActiveScene", "TitleInitialise",
+    "ShowError", "ErrorOpen", "ResetObjects", "InvalidateByNumber",
+    "CloseByNumber", "CloseByCondition", "CloseByClass", "onPrepareDraw", "onUpdate"
   ] or
-  exists(Type t | t = f.(MemberFunction).getDeclaringType() |
-    t.getName().matches("%Scene") or
-    t.getName() = ["WindowManager", "ProgressWindow", "WindowBase", "Audio"]
-  ) or
-  // Exclude common UI/Local-only paths
+  // Exclude everything in openrct2-ui directory
   f.getFile().getRelativePath().matches("%openrct2-ui/%")
 }
 
 /**
- * A module for tracing call paths.
+ * Predicate representing an edge in the call graph.
  */
-module CallGraphPath {
-  /**
-   * Predicate to follow the call graph, including virtual calls.
-   */
-  query predicate edges(Function caller, Function callee) {
-    exists(Call call |
-      call.getEnclosingFunction() = caller and
-      not isBarrier(caller) and
-      (
-        // Static/Direct call
-        callee = call.getTarget()
-        or
-        // Virtual call: follow overrides, but avoid the generic dispatch noise through GameAction base
-        exists(MemberFunction m |
-          m = call.getTarget() and
-          callee.(MemberFunction).getAnOverriddenFunction+() = m and
-          // Avoid noise from broad interfaces that would connect unrelated actions
-          not m.getDeclaringType().getName() = "GameAction"
-        )
-      ) and
-      not isBarrier(callee)
+predicate callEdge(Function a, Function b) {
+  exists(Call c |
+    c.getEnclosingFunction() = a and
+    (
+      b = c.getTarget() or
+      b = c.getTarget().(MemberFunction).getAnOverriddenFunction+()
+    ) and
+    // Block virtual dispatch noise through the base GameAction class.
+    // This prevents jumping between unrelated actions via central dispatchers.
+    not (
+      c.getTarget().getName() = ["Execute", "Query"] and
+      c.getTarget().(MemberFunction).getDeclaringType().getName() = "GameAction"
     )
-  }
-
-  query predicate nodes(Function f) { any() }
-
-  class Node = Function;
+  )
 }
 
-import CallGraphPath
+/**
+ * Module required for path-problem queries.
+ */
+module GameActionPathGraph {
+  /**
+   * Predicate for edges in the path.
+   */
+  query predicate edges(Function a, Function b) {
+    callEdge(a, b) and
+    not isBarrier(a) and
+    not isBarrier(b)
+  }
+
+  /**
+   * Predicate for nodes in the path.
+   */
+  query predicate nodes(Function f) { any() }
+}
+
+import GameActionPathGraph
 
 from GameActionMethod source, NonDeterministicFunction sink
-where CallGraphPath::edges*(source, sink)
-select sink, source, sink, "Non-deterministic call to " + sink.getName() + " reachable from game action method " + source.getQualifiedName() + "."
+where edges*(source, sink)
+select sink, source, sink, "Non-deterministic call to " + sink.getName() + " reachable from " + source.getQualifiedName() + "."
