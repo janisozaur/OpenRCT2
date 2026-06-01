@@ -21,14 +21,16 @@ import cpp
  */
 class NonDeterministicFunction extends Function {
   NonDeterministicFunction() {
-    this.hasGlobalName("UtilRand") or
-    this.hasGlobalName("UtilRandNormalDistributed") or
+    (
+      this.getName() = "UtilRand" or
+      this.getName() = "UtilRandNormalDistributed"
+    ) or
     this.hasGlobalName("rand") or
     this.hasQualifiedName("std", "rand") or
     // random_device::operator()
-    exists(Method m |
+    exists(MemberFunction m |
       m = this and
-      m.getDeclaringClass().hasQualifiedName("std", "random_device") and
+      m.getDeclaringType().hasQualifiedName("std", "random_device") and
       m.getName() = "operator()"
     )
   }
@@ -38,13 +40,12 @@ class NonDeterministicFunction extends Function {
  * The Execute or Query methods of a GameAction.
  * These are the entry points for game state changes or queries that must be deterministic.
  */
-class GameActionMethod extends Method {
+class GameActionMethod extends MemberFunction {
   GameActionMethod() {
-    exists(Method base |
-      // GameAction is in OpenRCT2::GameActions namespace as per file content
-      base.getDeclaringClass().hasQualifiedName("OpenRCT2::GameActions", "GameAction") and
+    exists(MemberFunction base |
+      base.getDeclaringType().hasQualifiedName("OpenRCT2::GameActions", "GameAction") and
       (base.getName() = "Execute" or base.getName() = "Query") and
-      this.getAnOverriddenMethod*() = base
+      this.getAnOverriddenFunction*() = base
     )
   }
 }
@@ -60,9 +61,9 @@ predicate calls(Function caller, Function callee) {
       callee = call.getTarget()
       or
       // Virtual call: if we call a method, any of its overrides could be the actual callee.
-      exists(Method m |
+      exists(MemberFunction m |
         m = call.getTarget() and
-        callee.(Method).getAnOverriddenMethod+() = m
+        callee.(MemberFunction).getAnOverriddenFunction+() = m
       )
     )
   )
