@@ -15,6 +15,7 @@
 #include "../../config/Config.h"
 #include "../../core/Numerics.hpp"
 #include "../../interface/Viewport.h"
+#define PROFILING_CATEGORY rendering
 #include "../../profiling/Profiling.h"
 #include "../../ride/RideData.h"
 #include "../../ride/TrackData.h"

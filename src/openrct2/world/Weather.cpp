@@ -22,6 +22,7 @@
 #include "../drawing/Drawing.h"
 #include "../object/ClimateObject.h"
 #include "../object/ObjectManager.h"
+#define PROFILING_CATEGORY world
 #include "../profiling/Profiling.h"
 #include "../scenario/Scenario.h"
 #include "../util/Util.h"

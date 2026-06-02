@@ -41,6 +41,7 @@
 #include "../object/ObjectManager.h"
 #include "../object/PeepAnimationsObject.h"
 #include "../peep/GuestPathfinding.h"
+#define PROFILING_CATEGORY peep
 #include "../profiling/Profiling.h"
 #include "../ride/Ride.h"
 #include "../ride/RideData.h"

@@ -19,6 +19,13 @@ if (ENABLE_SCRIPTING)
     endif ()
 endif ()
 
+set(OPENRCT2_PERFETTO_SOURCES "${CMAKE_CURRENT_LIST_DIR}/../thirdparty/perfetto/perfetto.cpp")
+if (MSVC)
+    set_source_files_properties(${OPENRCT2_PERFETTO_SOURCES} PROPERTIES COMPILE_FLAGS "/w")
+else ()
+    set_source_files_properties(${OPENRCT2_PERFETTO_SOURCES} PROPERTIES COMPILE_FLAGS "-w")
+endif ()
+
 # On macOS the compiler computes typeids to different values in shared library and in the executable.
 # This causes issues with RTTI and results in "bad any cast" exception getting thrown at runtime.
 # It should be possible to expose relevant types with visibility default attribute, but we can make the whole issue go away by
@@ -28,7 +35,7 @@ set(LIBOPENRCT2_LINKAGE)
 if (APPLE)
     set(LIBOPENRCT2_LINKAGE STATIC)
 endif()
-add_library(libopenrct2 ${LIBOPENRCT2_LINKAGE} ${OPENRCT2_QUICKJS_NG_SOURCES} ${OPENRCT2_CORE_SOURCES} ${OPENRCT2_CORE_MM_SOURCES})
+add_library(libopenrct2 ${LIBOPENRCT2_LINKAGE} ${OPENRCT2_QUICKJS_NG_SOURCES} ${OPENRCT2_PERFETTO_SOURCES} ${OPENRCT2_CORE_SOURCES} ${OPENRCT2_CORE_MM_SOURCES})
 add_library(OpenRCT2::libopenrct2 ALIAS libopenrct2)
 
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "13")

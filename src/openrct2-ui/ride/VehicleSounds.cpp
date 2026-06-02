@@ -1,3 +1,4 @@
+#define PROFILING_CATEGORY game
 #include "VehicleSounds.h"
 
 #include "../interface/Viewport.h"

@@ -28,6 +28,7 @@
 #include "../object/SmallSceneryEntry.h"
 #include "../object/WallSceneryEntry.h"
 #include "../paint/Paint.h"
+#define PROFILING_CATEGORY rendering
 #include "../profiling/Profiling.h"
 #include "../ride/Ride.h"
 #include "../ride/RideData.h"

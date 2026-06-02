@@ -12,6 +12,7 @@
 #include "../../SpriteIds.h"
 #include "../../entity/Litter.h"
 #include "../../paint/Paint.h"
+#define PROFILING_CATEGORY rendering
 #include "../../profiling/Profiling.h"
 
 namespace OpenRCT2

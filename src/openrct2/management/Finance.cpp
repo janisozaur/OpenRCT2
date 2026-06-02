@@ -17,6 +17,7 @@
 #include "../entity/EntityList.h"
 #include "../entity/Peep.h"
 #include "../entity/Staff.h"
+#define PROFILING_CATEGORY management
 #include "../profiling/Profiling.h"
 #include "../ride/Ride.h"
 #include "../ride/RideManager.hpp"

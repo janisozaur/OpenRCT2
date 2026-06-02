@@ -14,6 +14,7 @@
 #include "../entity/EntityList.h"
 #include "../entity/Guest.h"
 #include "../localisation/Formatter.h"
+#define PROFILING_CATEGORY management
 #include "../profiling/Profiling.h"
 #include "../ride/Ride.h"
 #include "../ride/RideData.h"

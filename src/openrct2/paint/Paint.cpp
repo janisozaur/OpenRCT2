@@ -23,6 +23,7 @@
 #include "../localisation/LocalisationService.h"
 #include "../localisation/StringIdType.h"
 #include "../paint/Painter.h"
+#define PROFILING_CATEGORY rendering
 #include "../profiling/Profiling.h"
 #include "Boundbox.h"
 #include "Paint.Entity.h"

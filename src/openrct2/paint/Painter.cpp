@@ -22,6 +22,7 @@
 #include "../localisation/Formatting.h"
 #include "../paint/Paint.h"
 #include "../paint/VirtualFloor.h"
+#define PROFILING_CATEGORY rendering
 #include "../profiling/Profiling.h"
 #include "../scenes/intro/IntroScene.h"
 #include "../ui/UiContext.h"

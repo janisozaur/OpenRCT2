@@ -23,6 +23,7 @@
 #include "../../object/EntranceObject.h"
 #include "../../object/ObjectManager.h"
 #include "../../object/StationObject.h"
+#define PROFILING_CATEGORY rendering
 #include "../../profiling/Profiling.h"
 #include "../../ride/RideData.h"
 #include "../../ride/TrackDesign.h"

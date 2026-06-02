@@ -32,11 +32,11 @@
 #include "core/Console.hpp"
 #include "core/File.h"
 #include "core/FileScanner.h"
+#include "core/Path.hpp"
 #include "core/FileStream.h"
 #include "core/Guard.hpp"
 #include "core/Http.h"
 #include "core/MemoryStream.h"
-#include "core/Path.hpp"
 #include "core/String.hpp"
 #include "core/Timer.hpp"
 #include "drawing/ColourMap.h"
@@ -61,6 +61,8 @@
 #include "park/ParkFile.h"
 #include "platform/Crash.h"
 #include "platform/Platform.h"
+#include "core/Tracing.h"
+#define PROFILING_CATEGORY game
 #include "profiling/Profiling.h"
 #include "rct2/RCT2.h"
 #include "ride/TrackDesignRepository.h"
@@ -80,6 +82,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <fstream>
 #include <exception>
 #include <future>
 #include <iterator>
@@ -160,6 +163,8 @@ namespace OpenRCT2
         Timer _forcedUpdateTimer;
 
         BackgroundWorker _backgroundWorker;
+
+        std::unique_ptr<perfetto::TracingSession> _tracingSession;
 
     public:
         // Singleton of Context.
@@ -407,6 +412,15 @@ namespace OpenRCT2
                 throw std::runtime_error("Context already initialised.");
             }
             _initialised = true;
+
+            perfetto::TracingInitArgs args;
+            args.backends = perfetto::kInProcessBackend;
+            // To enable system-wide tracing (e.g. on Linux/Android/Windows),
+            // change this to: args.backends = perfetto::kInProcessBackend | perfetto::kSystemBackend;
+            // and ensure a 'traced' daemon is running on your system.
+            // You can then use the 'perfetto' command line tool to capture traces.
+            perfetto::Tracing::Initialize(args);
+            perfetto::TrackEvent::Register();
 
             CrashInit();
 
@@ -754,7 +768,7 @@ namespace OpenRCT2
 
             try
             {
-                if (String::iequals(Path::GetExtension(path), ".sea"))
+                if (String::iequals(::OpenRCT2::Path::GetExtension(path), ".sea"))
                 {
                     auto data = DecryptSea(fs::u8path(path));
                     auto ms = MemoryStream(data.data(), data.size(), MemoryAccess::read);
@@ -1297,6 +1311,7 @@ namespace OpenRCT2
 
         void RunFrame()
         {
+            UpdateTracing();
             PROFILED_FUNCTION();
 
             const auto deltaTime = _timer.GetElapsedTimeAndRestart().count();
@@ -1468,7 +1483,7 @@ namespace OpenRCT2
                 DirBase::user,
                 {
                     DirId::objects,
-                    DirId::saves,
+                    DirId::traces,
                     DirId::scenarios,
                     DirId::trackDesigns,
                     DirId::landscapes,
@@ -1487,7 +1502,7 @@ namespace OpenRCT2
             for (const auto& dirId : dirIds)
             {
                 auto path = _env->GetDirectoryPath(dirBase, dirId);
-                if (!Path::CreateDirectory(path))
+                if (!::OpenRCT2::Path::CreateDirectory(path))
                     LOG_ERROR("Unable to create directory '%s'.", path.c_str());
             }
         }
@@ -1497,7 +1512,7 @@ namespace OpenRCT2
          */
         void CopyOriginalUserFilesOver()
         {
-            CopyOriginalUserFilesOver(DirId::saves, "*.sv6");
+            CopyOriginalUserFilesOver(DirId::traces, "*.sv6");
             CopyOriginalUserFilesOver(DirId::landscapes, "*.sc6");
         }
 
@@ -1512,16 +1527,16 @@ namespace OpenRCT2
         {
             LOG_VERBOSE("CopyOriginalUserFilesOver('%s', '%s', '%s')", srcRoot.c_str(), dstRoot.c_str(), pattern.c_str());
 
-            auto scanPattern = Path::Combine(srcRoot, pattern);
-            auto scanner = Path::ScanDirectory(scanPattern, true);
+            auto scanPattern = ::OpenRCT2::Path::Combine(srcRoot, pattern);
+            auto scanner = ::OpenRCT2::Path::ScanDirectory(scanPattern, true);
             while (scanner->Next())
             {
                 auto src = std::string(scanner->GetPath());
-                auto dst = Path::Combine(dstRoot, scanner->GetPathRelative());
-                auto dstDirectory = Path::GetDirectory(dst);
+                auto dst = ::OpenRCT2::Path::Combine(dstRoot, scanner->GetPathRelative());
+                auto dstDirectory = ::OpenRCT2::Path::GetDirectory(dst);
 
                 // Create the directory if necessary
-                if (!Path::CreateDirectory(dstDirectory))
+                if (!::OpenRCT2::Path::CreateDirectory(dstDirectory))
                 {
                     Console::Error::WriteLine("Could not create directory %s.", dstDirectory.c_str());
                     break;
@@ -1590,6 +1605,39 @@ namespace OpenRCT2
         BackgroundWorker& GetBackgroundWorker() override
         {
             return _backgroundWorker;
+        }
+
+        void UpdateTracing()
+        {
+            const bool profilingEnabled = Profiling::isEnabled();
+            if (profilingEnabled && !_tracingSession)
+            {
+                perfetto::TraceConfig cfg;
+                cfg.add_buffers()->set_size_kb(64 * 1024); // 64MB buffer
+                auto* ds_cfg = cfg.add_data_sources()->mutable_config();
+                ds_cfg->set_name("track_event");
+
+                _tracingSession = perfetto::Tracing::NewTrace();
+                _tracingSession->Setup(cfg);
+                _tracingSession->StartBlocking();
+            }
+            else if (!profilingEnabled && _tracingSession)
+            {
+                _tracingSession->StopBlocking();
+
+                std::vector<char> trace_data = _tracingSession->ReadTraceBlocking();
+
+                auto path = _env->GetDirectoryPath(DirBase::user, DirId::traces);
+                path = ::OpenRCT2::Path::Combine(path, "openrct2.pftrace");
+
+                std::ofstream output(path, std::ios::binary);
+                output.write(trace_data.data(), trace_data.size());
+                output.close();
+
+                _tracingSession.reset();
+
+                LOG_INFO("Trace saved to %s", path.c_str());
+            }
         }
     };
 

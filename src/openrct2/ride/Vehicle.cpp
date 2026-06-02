@@ -31,6 +31,7 @@
 #include "../math/Trigonometry.hpp"
 #include "../object/SmallSceneryEntry.h"
 #include "../paint/vehicle/Vehicle.MiniGolf.h"
+#define PROFILING_CATEGORY game
 #include "../profiling/Profiling.h"
 #include "../rct12/RCT12.h"
 #include "../scenario/Scenario.h"
