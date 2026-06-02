@@ -12,6 +12,7 @@
 #include "../../OpenRCT2.h"
 #include "../../config/Config.h"
 #include "../../entity/MoneyEffect.h"
+#define PROFILING_CATEGORY rendering
 #include "../../profiling/Profiling.h"
 #include "../Paint.h"
 

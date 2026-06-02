@@ -20,6 +20,7 @@
 #include "../localisation/Formatter.h"
 #include "../localisation/Formatting.h"
 #include "../management/Research.h"
+#define PROFILING_CATEGORY management
 #include "../profiling/Profiling.h"
 #include "../ride/Ride.h"
 #include "../ride/Vehicle.h"

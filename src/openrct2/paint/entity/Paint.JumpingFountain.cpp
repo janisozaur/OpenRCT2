@@ -11,6 +11,7 @@
 
 #include "../../SpriteIds.h"
 #include "../../entity/JumpingFountain.h"
+#define PROFILING_CATEGORY rendering
 #include "../../profiling/Profiling.h"
 #include "../Paint.h"
 

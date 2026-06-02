@@ -28,6 +28,7 @@
 #include "../object/ObjectList.h"
 #include "../object/RideObject.h"
 #include "../object/SceneryGroupEntry.h"
+#define PROFILING_CATEGORY management
 #include "../profiling/Profiling.h"
 #include "../ride/Ride.h"
 #include "../ride/RideData.h"

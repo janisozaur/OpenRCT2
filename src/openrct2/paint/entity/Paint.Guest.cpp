@@ -12,6 +12,7 @@
 #include "../../drawing/ImageId.hpp"
 #include "../../entity/Guest.h"
 #include "../../peep/PeepSpriteIds.h"
+#define PROFILING_CATEGORY rendering
 #include "../../profiling/Profiling.h"
 #include "../../profiling/ProfilingMacros.hpp"
 #include "../Paint.h"

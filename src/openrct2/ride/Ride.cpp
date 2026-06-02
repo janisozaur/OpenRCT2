@@ -43,6 +43,7 @@
 #include "../object/ObjectManager.h"
 #include "../object/RideObject.h"
 #include "../object/StationObject.h"
+#define PROFILING_CATEGORY game
 #include "../profiling/Profiling.h"
 #include "../rct1/RCT1.h"
 #include "../scenario/Scenario.h"

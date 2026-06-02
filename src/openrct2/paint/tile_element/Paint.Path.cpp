@@ -21,6 +21,7 @@
 #include "../../object/FootpathRailingsObject.h"
 #include "../../object/FootpathSurfaceObject.h"
 #include "../../object/PathAdditionEntry.h"
+#define PROFILING_CATEGORY rendering
 #include "../../profiling/Profiling.h"
 #include "../../ride/Ride.h"
 #include "../../ride/TrackDesign.h"

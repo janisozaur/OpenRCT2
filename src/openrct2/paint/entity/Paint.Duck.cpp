@@ -11,6 +11,7 @@
 
 #include "../../entity/Duck.h"
 #include "../../paint/Paint.h"
+#define PROFILING_CATEGORY rendering
 #include "../../profiling/Profiling.h"
 
 namespace OpenRCT2

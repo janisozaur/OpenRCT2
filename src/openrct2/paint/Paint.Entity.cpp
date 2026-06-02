@@ -18,6 +18,7 @@
 #include "../entity/Particle.h"
 #include "../entity/Staff.h"
 #include "../interface/Viewport.h"
+#define PROFILING_CATEGORY rendering
 #include "../profiling/Profiling.h"
 #include "../ride/RideData.h"
 #include "../ride/TrackDesign.h"

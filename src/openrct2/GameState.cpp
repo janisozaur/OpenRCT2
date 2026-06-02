@@ -21,6 +21,7 @@
 #include "entity/PatrolArea.h"
 #include "interface/Screenshot.h"
 #include "platform/Platform.h"
+#define PROFILING_CATEGORY game
 #include "profiling/Profiling.h"
 #include "ride/Vehicle.h"
 #include "scenario/Scenario.h"

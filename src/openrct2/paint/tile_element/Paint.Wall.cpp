@@ -20,6 +20,7 @@
 #include "../../localisation/Formatting.h"
 #include "../../localisation/StringIds.h"
 #include "../../object/WallSceneryEntry.h"
+#define PROFILING_CATEGORY rendering
 #include "../../profiling/Profiling.h"
 #include "../../ride/TrackDesign.h"
 #include "../../world/Scenery.h"

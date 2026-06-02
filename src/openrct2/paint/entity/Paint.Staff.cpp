@@ -11,6 +11,7 @@
 
 #include "../../drawing/LightFX.h"
 #include "../../entity/Staff.h"
+#define PROFILING_CATEGORY rendering
 #include "../../profiling/Profiling.h"
 #include "../../profiling/ProfilingMacros.hpp"
 #include "../Paint.h"

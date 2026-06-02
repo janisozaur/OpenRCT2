@@ -45,6 +45,7 @@
 #include "../object/ScenarioMetaObject.h"
 #include "../object/WaterEntry.h"
 #include "../platform/Platform.h"
+#define PROFILING_CATEGORY game
 #include "../profiling/Profiling.h"
 #include "../rct1/RCT1.h"
 #include "../rct12/RCT12.h"

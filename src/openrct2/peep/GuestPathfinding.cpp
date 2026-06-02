@@ -14,6 +14,7 @@
 #include "../core/Guard.hpp"
 #include "../entity/Guest.h"
 #include "../entity/Staff.h"
+#define PROFILING_CATEGORY peep
 #include "../profiling/Profiling.h"
 #include "../ride/RideData.h"
 #include "../ride/Station.h"

@@ -21,6 +21,7 @@
 #include "../object/SmallSceneryEntry.h"
 #include "../object/StationObject.h"
 #include "../object/WallSceneryEntry.h"
+#define PROFILING_CATEGORY world
 #include "../profiling/Profiling.h"
 #include "../ride/Ride.h"
 #include "../ride/RideData.h"

@@ -24,6 +24,7 @@
 #include "../../localisation/Formatting.h"
 #include "../../localisation/StringIds.h"
 #include "../../object/LargeSceneryEntry.h"
+#define PROFILING_CATEGORY rendering
 #include "../../profiling/Profiling.h"
 #include "../../ride/Ride.h"
 #include "../../ride/TrackDesign.h"

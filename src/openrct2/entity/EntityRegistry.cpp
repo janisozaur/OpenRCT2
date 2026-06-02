@@ -24,6 +24,7 @@
 #include "../entity/Staff.h"
 #include "../interface/Viewport.h"
 #include "../peep/RideUseSystem.h"
+#define PROFILING_CATEGORY game
 #include "../profiling/Profiling.h"
 #include "../ride/Vehicle.h"
 #include "../world/Map.h"

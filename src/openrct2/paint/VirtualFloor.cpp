@@ -16,6 +16,7 @@
 #include "../SpriteIds.h"
 #include "../config/Config.h"
 #include "../interface/Viewport.h"
+#define PROFILING_CATEGORY rendering
 #include "../profiling/Profiling.h"
 #include "../world/Location.hpp"
 #include "../world/Map.h"

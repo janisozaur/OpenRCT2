@@ -14,6 +14,7 @@
 #include "../../core/EnumUtils.hpp"
 #include "../../interface/Viewport.h"
 #include "../../object/SmallSceneryEntry.h"
+#define PROFILING_CATEGORY rendering
 #include "../../profiling/Profiling.h"
 #include "../../ride/TrackDesign.h"
 #include "../../world/Scenery.h"

@@ -8,6 +8,11 @@
  *****************************************************************************/
 #pragma once
 
+#include "../core/Tracing.h"
+
+#define PROFILING_STR(x) #x
+#define PROFILING_STRINGIFY(x) PROFILING_STR(x)
+
 namespace OpenRCT2::Profiling
 {
 #if defined(__clang__) || defined(__GNUC__)
@@ -18,25 +23,15 @@ namespace OpenRCT2::Profiling
     #error "Unsupported compiler"
 #endif
 
-#define PROFILED_FUNCTION_NAME(func)                                                                                           \
-    static constexpr auto _profiling_func_name = func;                                                                         \
-    struct Profiler_FunctionLiteral                                                                                            \
-    {                                                                                                                          \
-        static constexpr const char* str()                                                                                     \
-        {                                                                                                                      \
-            return _profiling_func_name;                                                                                       \
-        }                                                                                                                      \
-    };
-
 #if defined(__clang_major__) && __clang_major__ <= 5
     // Clang 5 crashes using the profiler, we need to disable it.
     #define PROFILED_FUNCTION()
 #else
+    #ifndef PROFILING_CATEGORY
+        #define PROFILING_CATEGORY game
+    #endif
 
-    #define PROFILED_FUNCTION()                                                                                                \
-        PROFILED_FUNCTION_NAME(PROFILING_FUNC_NAME)                                                                            \
-        static auto& _profiling_func = ::OpenRCT2::Profiling::Detail::Storage<Profiler_FunctionLiteral>::Data;                 \
-        ::OpenRCT2::Profiling::ScopedProfiling<decltype(_profiling_func)> _profiling_scope(_profiling_func);
+    #define PROFILED_FUNCTION() TRACE_EVENT(PROFILING_STRINGIFY(PROFILING_CATEGORY), PROFILING_FUNC_NAME)
 #endif
 
 } // namespace OpenRCT2::Profiling

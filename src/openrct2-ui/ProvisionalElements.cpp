@@ -1,3 +1,4 @@
+#define PROFILING_CATEGORY game
 /*****************************************************************************
  * Copyright (c) 2014-2026 OpenRCT2 developers
  *

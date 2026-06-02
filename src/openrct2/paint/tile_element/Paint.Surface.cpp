@@ -23,6 +23,7 @@
 #include "../../object/TerrainEdgeObject.h"
 #include "../../object/TerrainSurfaceObject.h"
 #include "../../paint/Paint.h"
+#define PROFILING_CATEGORY rendering
 #include "../../profiling/Profiling.h"
 #include "../../ride/TrackDesign.h"
 #include "../../world/Map.h"

@@ -27,6 +27,7 @@
 #include "../management/Marketing.h"
 #include "../management/Research.h"
 #include "../network/Network.h"
+#define PROFILING_CATEGORY world
 #include "../profiling/Profiling.h"
 #include "../ride/Ride.h"
 #include "../ride/RideData.h"

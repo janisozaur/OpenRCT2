@@ -16,6 +16,7 @@
 #include "../core/Guard.hpp"
 #include "../core/Money.hpp"
 #include "../core/UnitConversion.h"
+#define PROFILING_CATEGORY game
 #include "../profiling/Profiling.h"
 #include "../scripting/ScriptEngine.h"
 #include "../ui/WindowManager.h"
