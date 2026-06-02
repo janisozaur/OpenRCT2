@@ -17,5 +17,4 @@ PERFETTO_DEFINE_CATEGORIES(
     perfetto::Category("world").SetDescription("World and map processing"),
     perfetto::Category("peep").SetDescription("Peep and guest logic"),
     perfetto::Category("scripting").SetDescription("Scripting engine events"),
-    perfetto::Category("management").SetDescription("Park management, finance, research")
-);
+    perfetto::Category("management").SetDescription("Park management, finance, research"));

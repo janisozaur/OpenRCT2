@@ -29,7 +29,7 @@
     #include "../interface/InteractiveConsole.h"
     #include "../platform/Platform.h"
     #define PROFILING_CATEGORY scripting
-#include "../profiling/Profiling.h"
+    #include "../profiling/Profiling.h"
     #include "../ride/ted/PitchAndRoll.h"
     #include "bindings/entity/ScBalloon.hpp"
     #include "bindings/entity/ScEntity.hpp"

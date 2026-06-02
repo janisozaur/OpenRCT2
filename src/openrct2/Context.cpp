@@ -32,13 +32,14 @@
 #include "core/Console.hpp"
 #include "core/File.h"
 #include "core/FileScanner.h"
-#include "core/Path.hpp"
 #include "core/FileStream.h"
 #include "core/Guard.hpp"
 #include "core/Http.h"
 #include "core/MemoryStream.h"
+#include "core/Path.hpp"
 #include "core/String.hpp"
 #include "core/Timer.hpp"
+#include "core/Tracing.h"
 #include "drawing/ColourMap.h"
 #include "drawing/Drawing.h"
 #include "drawing/IDrawingEngine.h"
@@ -61,7 +62,7 @@
 #include "park/ParkFile.h"
 #include "platform/Crash.h"
 #include "platform/Platform.h"
-#include "core/Tracing.h"
+
 #define PROFILING_CATEGORY game
 #include "profiling/Profiling.h"
 #include "rct2/RCT2.h"
@@ -82,8 +83,8 @@
 
 #include <chrono>
 #include <cmath>
-#include <fstream>
 #include <exception>
+#include <fstream>
 #include <future>
 #include <iterator>
 #include <memory>
@@ -414,11 +415,11 @@ namespace OpenRCT2
             _initialised = true;
 
             perfetto::TracingInitArgs args;
-            args.backends = perfetto::kInProcessBackend;
             // To enable system-wide tracing (e.g. on Linux/Android/Windows),
             // change this to: args.backends = perfetto::kInProcessBackend | perfetto::kSystemBackend;
             // and ensure a 'traced' daemon is running on your system.
             // You can then use the 'perfetto' command line tool to capture traces.
+            args.backends = perfetto::kInProcessBackend;
             perfetto::Tracing::Initialize(args);
             perfetto::TrackEvent::Register();
 
@@ -1483,7 +1484,7 @@ namespace OpenRCT2
                 DirBase::user,
                 {
                     DirId::objects,
-                    DirId::traces,
+                    DirId::saves,
                     DirId::scenarios,
                     DirId::trackDesigns,
                     DirId::landscapes,
@@ -1494,6 +1495,7 @@ namespace OpenRCT2
                     DirId::replayRecordings,
                     DirId::desyncLogs,
                     DirId::crashDumps,
+                    DirId::traces,
                 });
         }
 
@@ -1512,7 +1514,7 @@ namespace OpenRCT2
          */
         void CopyOriginalUserFilesOver()
         {
-            CopyOriginalUserFilesOver(DirId::traces, "*.sv6");
+            CopyOriginalUserFilesOver(DirId::saves, "*.sv6");
             CopyOriginalUserFilesOver(DirId::landscapes, "*.sc6");
         }
 
