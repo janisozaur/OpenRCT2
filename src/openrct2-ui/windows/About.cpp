@@ -66,7 +66,7 @@ namespace OpenRCT2::Ui::Windows
         makeRemapWidget({ 94, 17         }, { 91,                kTabHeight - 16                 }, WidgetType::tab,   WindowColour::secondary, SPR_TAB_LARGE)
     );
 
-    static constexpr auto _windowAboutOpenRCT2Widgets = makeWidgets(
+    static constexpr auto kWindowAboutOpenRct2Widgets = makeWidgets(
         kMainWidgets,
         makeWidget({10, 60},        {kWindowSize.width - 20, 20}, WidgetType::labelCentred, WindowColour::secondary, STR_ABOUT_OPENRCT2_DESCRIPTION           ), // Introduction
         makeWidget({30, 90},        {128, 128},                   WidgetType::placeholder,  WindowColour::secondary, kStringIdNone                            ), // OpenRCT2 Logo
@@ -79,15 +79,15 @@ namespace OpenRCT2::Ui::Windows
     );
     // clang-format on
 
-    static constexpr auto _windowAboutRCT2Widgets = makeWidgets(kMainWidgets);
+    static constexpr auto kWindowAboutRct2Widgets = makeWidgets(kMainWidgets);
 
-    static constexpr std::span<const Widget> _windowAboutPageWidgets[] = {
-        _windowAboutOpenRCT2Widgets,
-        _windowAboutRCT2Widgets,
+    static constexpr std::span<const Widget> kWindowAboutPageWidgets[] = {
+        kWindowAboutOpenRct2Widgets,
+        kWindowAboutRct2Widgets,
     };
 
     // clang-format off
-    static const StringId _OpenRCT2InfoStrings[] = {
+    static constexpr StringId kOpenRct2InfoStrings[] = {
         STR_ABOUT_OPENRCT2_DESCRIPTION_2,
         STR_ABOUT_OPENRCT2_DESCRIPTION_3,
         STR_ABOUT_OPENRCT2_TITLE,
@@ -97,7 +97,7 @@ namespace OpenRCT2::Ui::Windows
     };
     // clang-format on
 
-    static const StringId _RCT2InfoStrings[] = {
+    static constexpr StringId kRct2InfoStrings[] = {
         STR_COPYRIGHT_CS,
         STR_DESIGNED_AND_PROGRAMMED_BY_CS,
         STR_GRAPHICS_BY_SF,
@@ -207,7 +207,7 @@ namespace OpenRCT2::Ui::Windows
             currentFrame = 0;
 
             WindowSetResize(*this, kWindowSize, kWindowSize);
-            setWidgets(_windowAboutPageWidgets[p]);
+            setWidgets(kWindowAboutPageWidgets[p]);
 
             WidgetIndex pressedTab = WIDX_TAB_ABOUT_OPENRCT2;
             switch (p)
@@ -248,7 +248,7 @@ namespace OpenRCT2::Ui::Windows
             TextPaint tp{ colours[1], TextAlignment::centre };
             auto textCoords = windowPos + ScreenCoordsXY((width / 2) - 1, 240);
             auto textWidth = kWindowSize.width - (kPadding * 2);
-            for (auto stringId : _OpenRCT2InfoStrings)
+            for (auto stringId : kOpenRct2InfoStrings)
                 textCoords.y += drawTextWrapped(rt, textCoords, textWidth, stringId, tp) + 5;
 
             return textCoords.y - windowPos.y;
@@ -262,7 +262,7 @@ namespace OpenRCT2::Ui::Windows
             TextPaint tp{ colours[1], TextAlignment::centre };
 
             // Draw credits
-            for (auto stringId : _RCT2InfoStrings)
+            for (auto stringId : kRct2InfoStrings)
             {
                 if (stringId == kStringIdEmpty)
                 {
