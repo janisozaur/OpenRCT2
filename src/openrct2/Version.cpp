@@ -56,19 +56,21 @@ const char gVersionInfoFull[] = OPENRCT2_NAME ", "
     ;
 
 const char gCompilerInfo[] =
-#ifdef OPENRCT2_COMPILER_INFO
-    OPENRCT2_COMPILER_INFO ""
+#if defined(OPENRCT2_COMPILER_ID_STR) && defined(OPENRCT2_COMPILER_VERSION_STR)
+    OPENRCT2_COMPILER_ID_STR " " OPENRCT2_COMPILER_VERSION_STR
+#elif defined(OPENRCT2_COMPILER_INFO)
+    OPENRCT2_COMPILER_INFO
 #elif defined(__clang__)
     #ifdef __EMSCRIPTEN__
-    "Emscripten " __clang_version__
+    "Emscripten " __VERSION__
     #elif defined(_MSC_VER)
-    "Clang-CL " __clang_version__
+    "Clang-CL " __VERSION__
     #else
-    "Clang " __clang_version__
+    "Clang " __VERSION__
     #endif
 #elif defined(_MSC_VER)
     #define STR_HELPER(x) #x
-    #define STR(x) STR_HELPER(x)
+    #define STR(x) STR_HELPER(x) // NOLINT(cppcoreguidelines-macro-usage)
     "MSVC " STR(_MSC_VER)
     #undef STR
     #undef STR_HELPER
