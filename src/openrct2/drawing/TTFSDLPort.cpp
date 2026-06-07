@@ -77,8 +77,17 @@ in the result FT_Bitmap after the FT_Render_Glyph() call. */
 #    define NUM_GRAYS 256
 
 /* Handy routines for converting from fixed point */
-#    define FT_FLOOR(X) (((X) & -64) / 64)
-#    define FT_CEIL(X) ((((X) + 63) & -64) / 64)
+template<typename T>
+static constexpr T FT_FLOOR(T x)
+{
+    return (x >> 6);
+}
+
+template<typename T>
+static constexpr T FT_CEIL(T x)
+{
+    return ((x + 63) >> 6);
+}
 
 #    define CACHED_METRICS 0x10
 #    define CACHED_BITMAP 0x01
@@ -97,7 +106,7 @@ struct c_glyph
     int maxy;
     int yoffset;
     int advance;
-    uint16_t cached;
+    uint32_t cached;
 };
 
 /* The structure used to hold internal font information */
@@ -575,7 +584,7 @@ static void Flush_Cache(TTF_Font* font)
     }
 }
 
-static FT_Error Load_Glyph(TTF_Font* font, uint16_t ch, c_glyph* cached, int want)
+static FT_Error Load_Glyph(TTF_Font* font, uint32_t ch, c_glyph* cached, int want)
 {
     FT_Face face;
     FT_Error error;
@@ -965,12 +974,12 @@ static FT_Error Load_Glyph(TTF_Font* font, uint16_t ch, c_glyph* cached, int wan
     return 0;
 }
 
-static FT_Error Find_Glyph(TTF_Font* font, uint16_t ch, int want)
+static FT_Error Find_Glyph(TTF_Font* font, uint32_t ch, int want)
 {
     int retval = 0;
     int hsize = sizeof(font->cache) / sizeof(font->cache[0]);
 
-    int h = ch % hsize;
+    uint32_t h = ch % hsize;
     font->current = &font->cache[h];
 
     if (font->current->cached != ch)
@@ -1158,7 +1167,7 @@ int TTF_SizeUTF8(TTF_Font* font, const char* text, int* w, int* h)
     x = 0;
     while (textlen > 0)
     {
-        uint16_t c = UTF8_getch(&text, &textlen);
+        uint32_t c = UTF8_getch(&text, &textlen);
         if (c == UNICODE_BOM_NATIVE || c == UNICODE_BOM_SWAPPED)
         {
             continue;
@@ -1312,7 +1321,7 @@ TTFSurface* TTF_RenderUTF8(TTF_Font* font, const char* text, bool shaded)
     xstart = 0;
     while (textlen > 0)
     {
-        uint16_t c = UTF8_getch(&text, &textlen);
+        uint32_t c = UTF8_getch(&text, &textlen);
         if (c == UNICODE_BOM_NATIVE || c == UNICODE_BOM_SWAPPED)
         {
             continue;
