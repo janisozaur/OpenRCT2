@@ -1,6 +1,8 @@
 // Adapted from freetype.h in order to avoid C-style casts.
 // clang-format off
 
+// g++ src/openrct2/drawing/TTFSDLPort.cpp src/openrct2/drawing/TTF.cpp  -I/home/janisozaur/workspace/openrct2/libopenrct2 -isystem /usr/include/freetype2 -isystem /home/janisozaur/workspace/openrct2/src/openrct2/../thirdparty  -lfreetype -std=c++20 -fno-char8_t -g
+
 #define FT_LOAD_TARGET_ALT(x) (static_cast<FT_Int32>((x)&15) << 16)
 
 /**
@@ -31,8 +33,6 @@ appreciated but is not required.
 misrepresented as being the original software.
 3. This notice may not be removed or altered from any source distribution.
 */
-
-#    include "../Diagnostic.h"
 
 #    include <cmath>
 #    include <cstring>
@@ -84,6 +84,48 @@ in the result FT_Bitmap after the FT_Render_Glyph() call. */
 #    define CACHED_BITMAP 0x01
 #    define CACHED_PIXMAP 0x02
 
+
+int main()
+{
+    const char* fontPath = "gulim.ttc";
+    int init = TTF_Init();
+    if (init != 0)
+    {
+        printf("Failed to initialize TTF: %d\n", init);
+        return 1;
+    }
+    TTF_Font* font = TTF_OpenFont(fontPath, 12);
+    if (!font)
+    {
+        printf("Failed to load font %s\n", fontPath);
+        return 1;
+    }
+    TTFSurface* s = TTF_RenderUTF8(font, "ssss미니 서스펜디드 롤러코스터!", true);
+    if (!s)
+    {
+        printf("Failed to render text\n");
+        return 1;
+    }
+    FILE* f = fopen("output.pgm", "wb");
+    if (!f)    {
+        printf("Failed to open output file\n");
+        return 1;
+    }
+    
+    fprintf(f, "P5\n%d %d\n255\n", s->w, s->h);
+    size_t written = fwrite(s->pixels, 1, s->w * s->h, f);
+
+    if (written != s->w * s->h)
+    {
+        printf("Failed to write all pixels to output file\n");
+        return 1;
+    }
+    printf("Successfully wrote %zu pixels %dx%d to output file\n", written, s->w, s->h);
+    TTFFreeSurface(s);
+    TTF_CloseFont(font);
+    fclose(f);
+    return 0;
+}
 /* Cached glyph information */
 struct c_glyph
 {
@@ -157,17 +199,17 @@ struct InternalTTFFont
 static FT_Library library;
 static int TTF_initialized = 0;
 
-#    define TTF_SetError LOG_ERROR
+#    define TTF_SetError printf
 
 #    define TTF_CHECKPOINTER(p, errval)                                                                                        \
         if (!TTF_initialized)                                                                                                  \
         {                                                                                                                      \
-            TTF_SetError("Library not initialized");                                                                           \
+            TTF_SetError("Library not initialized\n");                                                                           \
             return errval;                                                                                                     \
         }                                                                                                                      \
         if (!(p))                                                                                                              \
         {                                                                                                                      \
-            TTF_SetError("Passed a NULL pointer");                                                                             \
+            TTF_SetError("Passed a NULL pointer\n");                                                                             \
             return errval;                                                                                                     \
         }
 
@@ -301,7 +343,7 @@ static void TTF_SetFTError(const char* msg, [[maybe_unused]] FT_Error error)
     }
     TTF_SetError("%s: %s", msg, err_msg);
 #    else
-    TTF_SetError("%s", msg);
+    TTF_SetError("%s\n", msg);
 #    endif /* USE_FREETYPE_ERRORS */
 }
 
@@ -360,7 +402,7 @@ static TTF_Font* TTF_OpenFontIndexRW(FILE* src, int freesrc, int ptsize, long in
 
     if (!TTF_initialized)
     {
-        TTF_SetError("Library not initialized");
+        TTF_SetError("Library not initialized\n");
         if (src && freesrc)
         {
             fclose(src);
@@ -370,7 +412,7 @@ static TTF_Font* TTF_OpenFontIndexRW(FILE* src, int freesrc, int ptsize, long in
 
     if (!src)
     {
-        TTF_SetError("Passed a NULL font source");
+        TTF_SetError("Passed a NULL font source\n");
         return NULL;
     }
 
@@ -378,7 +420,7 @@ static TTF_Font* TTF_OpenFontIndexRW(FILE* src, int freesrc, int ptsize, long in
     position = ftell(src);
     if (position < 0)
     {
-        TTF_SetError("Can't seek in stream");
+        TTF_SetError("Can't seek in stream\n");
         if (freesrc)
         {
             fclose(src);
@@ -389,7 +431,7 @@ static TTF_Font* TTF_OpenFontIndexRW(FILE* src, int freesrc, int ptsize, long in
     font = static_cast<TTF_Font*>(malloc(sizeof *font));
     if (font == NULL)
     {
-        TTF_SetError("Out of memory");
+        TTF_SetError("Out of memory\n");
         if (freesrc)
         {
             fclose(src);
@@ -404,7 +446,7 @@ static TTF_Font* TTF_OpenFontIndexRW(FILE* src, int freesrc, int ptsize, long in
     stream = static_cast<FT_Stream>(malloc(sizeof(*stream)));
     if (stream == NULL)
     {
-        TTF_SetError("Out of memory");
+        TTF_SetError("Out of memory\n");
         TTF_CloseFont(font);
         return NULL;
     }
@@ -421,6 +463,7 @@ static TTF_Font* TTF_OpenFontIndexRW(FILE* src, int freesrc, int ptsize, long in
     error = FT_Open_Face(library, &font->args, index, &font->face);
     if (error)
     {
+        TTF_SetError("Couldn't open font face %d 0x%x\n", error, error);
         TTF_SetFTError("Couldn't load font file", error);
         TTF_CloseFont(font);
         return NULL;
@@ -534,6 +577,7 @@ static TTF_Font* TTF_OpenFontIndex(const char* file, int ptsize, long index)
     FILE* rw = fopen(file, "rb");
     if (rw == NULL)
     {
+        TTF_SetError("Couldn't open font file %s\n", file);
         return NULL;
     }
     return TTF_OpenFontIndexRW(rw, 1, ptsize, index);
@@ -1285,7 +1329,7 @@ TTFSurface* TTF_RenderUTF8(TTF_Font* font, const char* text, bool shaded)
     /* Get the dimensions of the text surface */
     if ((TTF_SizeUTF8(font, text, &width, &height) < 0) || !width)
     {
-        TTF_SetError("Text has zero width");
+        TTF_SetError("Text has zero width\n");
         return NULL;
     }
 
@@ -1293,11 +1337,18 @@ TTFSurface* TTF_RenderUTF8(TTF_Font* font, const char* text, bool shaded)
     textbuf = static_cast<TTFSurface*>(calloc(1, sizeof(TTFSurface)));
     if (textbuf == NULL)
     {
+        TTF_SetError("Out of memory\n");
         return NULL;
     }
     textbuf->w = width;
     textbuf->h = height;
     textbuf->pixels = calloc(1, width * height);
+    if (textbuf->pixels == NULL)
+    {
+        TTF_SetError("Out of memory\n");
+        free(textbuf);
+        return NULL;
+    }
 
     /* Adding bound checking to avoid all kinds of memory corruption errors
     that may occur. */

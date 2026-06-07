@@ -9,8 +9,6 @@
 
 #ifndef DISABLE_TTF
 
-    #include "../Diagnostic.h"
-
     #include <mutex>
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wdocumentation"
@@ -69,92 +67,7 @@ static void TTFSurfaceCacheDispose(ttf_cache_entry* entry);
 static void TTFSurfaceCacheDisposeAll();
 static void TTFGetWidthCacheDisposeAll();
 static bool TTFGetSize(TTF_Font* font, std::string_view text, int32_t* outWidth, int32_t* outHeight);
-static void TTFToggleHinting(bool);
 static TTFSurface* TTFRender(TTF_Font* font, std::string_view text);
-
-static void TTFToggleHinting(bool)
-{
-    if (!LocalisationService_UseTrueTypeFont())
-    {
-        return;
-    }
-
-    for (int32_t i = 0; i < FontStyleCount; i++)
-    {
-        TTFFontDescriptor* fontDesc = &(gCurrentTTFFontSet->size[i]);
-        bool use_hinting = Config::Get().fonts.enableHinting && fontDesc->hinting_threshold;
-        TTF_SetFontHinting(fontDesc->font, use_hinting ? 1 : 0);
-    }
-
-    if (_ttfSurfaceCacheCount)
-    {
-        TTFSurfaceCacheDisposeAll();
-    }
-}
-
-bool TTFInitialise()
-{
-    DrawingUniqueLock<std::mutex> lock(_mutex);
-
-    if (_ttfInitialised)
-        return true;
-
-    if (TTF_Init() != 0)
-    {
-        LOG_ERROR("Couldn't initialise FreeType engine");
-        return false;
-    }
-
-    for (int32_t i = 0; i < FontStyleCount; i++)
-    {
-        TTFFontDescriptor* fontDesc = &(gCurrentTTFFontSet->size[i]);
-
-        auto fontPath = Platform::GetFontPath(*fontDesc);
-        if (fontPath.empty())
-        {
-            LOG_VERBOSE("Unable to load font '%s'", fontDesc->font_name);
-            return false;
-        }
-
-        fontDesc->font = TTFOpenFont(fontPath.c_str(), fontDesc->ptSize);
-        if (fontDesc->font == nullptr)
-        {
-            LOG_VERBOSE("Unable to load '%s'", fontPath.c_str());
-            return false;
-        }
-    }
-
-    TTFToggleHinting(true);
-
-    _ttfInitialised = true;
-
-    return true;
-}
-
-void TTFDispose()
-{
-    DrawingUniqueLock<std::mutex> lock(_mutex);
-
-    if (!_ttfInitialised)
-        return;
-
-    TTFSurfaceCacheDisposeAll();
-    TTFGetWidthCacheDisposeAll();
-
-    for (int32_t i = 0; i < FontStyleCount; i++)
-    {
-        TTFFontDescriptor* fontDesc = &(gCurrentTTFFontSet->size[i]);
-        if (fontDesc->font != nullptr)
-        {
-            TTFCloseFont(fontDesc->font);
-            fontDesc->font = nullptr;
-        }
-    }
-
-    TTF_Quit();
-
-    _ttfInitialised = false;
-}
 
 static TTF_Font* TTFOpenFont(const utf8* fontPath, int32_t ptSize)
 {
@@ -196,67 +109,6 @@ static void TTFSurfaceCacheDisposeAll()
     }
 }
 
-void TTFToggleHinting()
-{
-    DrawingUniqueLock<std::mutex> lock(_mutex);
-    TTFToggleHinting(true);
-}
-
-TTFSurface* TTFSurfaceCacheGetOrAdd(TTF_Font* font, std::string_view text)
-{
-    ttf_cache_entry* entry;
-
-    uint32_t hash = TTFSurfaceCacheHash(font, text);
-    int32_t index = hash % kTTFSurfaceCacheSize;
-
-    DrawingUniqueLock<std::mutex> lock(_mutex);
-
-    for (int32_t i = 0; i < kTTFSurfaceCacheSize; i++)
-    {
-        entry = &_ttfSurfaceCache[index];
-
-        // Check if entry is a hit
-        if (entry->surface == nullptr)
-            break;
-        if (entry->font == font && String::equals(entry->text, text))
-        {
-            _ttfSurfaceCacheHitCount++;
-            entry->lastUseTick = gCurrentDrawCount;
-            return entry->surface;
-        }
-
-        // If entry hasn't been used for a while, replace it
-        if (entry->lastUseTick < gCurrentDrawCount - 64)
-        {
-            break;
-        }
-
-        // Check if next entry is a hit
-        if (++index >= kTTFSurfaceCacheSize)
-            index = 0;
-    }
-
-    // Cache miss, replace entry with new surface
-    entry = &_ttfSurfaceCache[index];
-    TTFSurfaceCacheDispose(entry);
-
-    TTFSurface* surface = TTFRender(font, text);
-    if (surface == nullptr)
-    {
-        return nullptr;
-    }
-
-    _ttfSurfaceCacheMissCount++;
-    // printf("CACHE HITS: %d   MISSES: %d)\n", _ttfSurfaceCacheHitCount, _ttfSurfaceCacheMissCount);
-
-    _ttfSurfaceCacheCount++;
-    entry->surface = surface;
-    entry->font = font;
-    entry->text = text;
-    entry->lastUseTick = gCurrentDrawCount;
-    return entry->surface;
-}
-
 static void TTFGetWidthCacheDispose(ttf_getwidth_cache_entry* entry)
 {
     if (entry->text.empty())
@@ -274,63 +126,6 @@ static void TTFGetWidthCacheDisposeAll()
         TTFGetWidthCacheDispose(&_ttfGetWidthCache[i]);
         _ttfGetWidthCacheCount--;
     }
-}
-
-uint32_t TTFGetWidthCacheGetOrAdd(TTF_Font* font, std::string_view text)
-{
-    ttf_getwidth_cache_entry* entry;
-
-    uint32_t hash = TTFSurfaceCacheHash(font, text);
-    int32_t index = hash % kTTFGetWidthCacheSize;
-
-    DrawingUniqueLock<std::mutex> lock(_mutex);
-
-    for (int32_t i = 0; i < kTTFGetWidthCacheSize; i++)
-    {
-        entry = &_ttfGetWidthCache[index];
-
-        // Check if entry is a hit
-        if (entry->text.empty())
-            break;
-        if (entry->font == font && String::equals(entry->text, text))
-        {
-            _ttfGetWidthCacheHitCount++;
-            entry->lastUseTick = gCurrentDrawCount;
-            return entry->width;
-        }
-
-        // If entry hasn't been used for a while, replace it
-        if (entry->lastUseTick < gCurrentDrawCount - 64)
-        {
-            break;
-        }
-
-        // Check if next entry is a hit
-        if (++index >= kTTFGetWidthCacheSize)
-            index = 0;
-    }
-
-    // Cache miss, replace entry with new width
-    entry = &_ttfGetWidthCache[index];
-    TTFGetWidthCacheDispose(entry);
-
-    int32_t width, height;
-    TTFGetSize(font, text, &width, &height);
-
-    _ttfGetWidthCacheMissCount++;
-
-    _ttfGetWidthCacheCount++;
-    entry->width = width;
-    entry->font = font;
-    entry->text = text;
-    entry->lastUseTick = gCurrentDrawCount;
-    return entry->width;
-}
-
-TTFFontDescriptor* TTFGetFontFromSpriteBase(FontStyle fontStyle)
-{
-    DrawingUniqueLock<std::mutex> lock(_mutex);
-    return &gCurrentTTFFontSet->size[EnumValue(fontStyle)];
 }
 
 bool TTFProvidesGlyph(const TTF_Font* font, codepoint_t codepoint)
