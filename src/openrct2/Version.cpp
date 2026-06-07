@@ -55,26 +55,25 @@ const char gVersionInfoFull[] = OPENRCT2_NAME ", "
 #endif
     ;
 
-#define STR_HELPER(x) #x
-#define STR(x) STR_HELPER(x)
-
 const char gCompilerInfo[] =
 #ifdef OPENRCT2_COMPILER_INFO
-    OPENRCT2_COMPILER_INFO
+    OPENRCT2_COMPILER_INFO ""
 #elif defined(__clang__)
-    #ifdef _MSC_VER
+    #ifdef __EMSCRIPTEN__
+    "Emscripten " __clang_version__
+    #elif defined(_MSC_VER)
     "Clang-CL " __clang_version__
     #else
     "Clang " __clang_version__
     #endif
-#elif defined(__GNUC__)
-    #ifdef __MINGW32__
-    "MinGW-w64 GCC " STR(__GNUC__) "." STR(__GNUC_MINOR__) "." STR(__GNUC_PATCHLEVEL__)
-    #else
-    "GCC " STR(__GNUC__) "." STR(__GNUC_MINOR__) "." STR(__GNUC_PATCHLEVEL__)
-    #endif
 #elif defined(_MSC_VER)
+    #define STR_HELPER(x) #x
+    #define STR(x) STR_HELPER(x)
     "MSVC " STR(_MSC_VER)
+    #undef STR
+    #undef STR_HELPER
+#elif defined(__GNUC__)
+    "GCC " __VERSION__
 #else
     "Unknown compiler"
 #endif

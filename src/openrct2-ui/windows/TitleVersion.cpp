@@ -33,9 +33,9 @@ namespace OpenRCT2::Ui::Windows
             width = Drawing::getStringWidth(gVersionInfoFull, FontStyle::medium);
 
             // Write platform information
-            constexpr const char platformInfo[] = OPENRCT2_PLATFORM " (" OPENRCT2_ARCHITECTURE ")";
-            drawText(rt, windowPos + ScreenCoordsXY(0, kListRowHeight), platformInfo, { whiteOutline });
-            width = std::max<int16_t>(width, Drawing::getStringWidth(platformInfo, FontStyle::medium));
+            constexpr const char kPlatformInfo[] = OPENRCT2_PLATFORM " (" OPENRCT2_ARCHITECTURE ")";
+            drawText(rt, windowPos + ScreenCoordsXY(0, kListRowHeight), kPlatformInfo, { whiteOutline });
+            width = std::max<int16_t>(width, Drawing::getStringWidth(kPlatformInfo, FontStyle::medium));
 
             drawText(rt, windowPos + ScreenCoordsXY(0, kListRowHeight * 2), gCompilerInfo, { whiteOutline });
             width = std::max<int16_t>(width, Drawing::getStringWidth(gCompilerInfo, FontStyle::medium)) + kTextOffset;
