@@ -77,8 +77,17 @@ in the result FT_Bitmap after the FT_Render_Glyph() call. */
 #    define NUM_GRAYS 256
 
 /* Handy routines for converting from fixed point */
-#    define FT_FLOOR(X) ((X) >> 6)
-#    define FT_CEIL(X) (((X) + 63) >> 6)
+template<typename T>
+static constexpr T FT_FLOOR(T x)
+{
+    return (x >> 6);
+}
+
+template<typename T>
+static constexpr T FT_CEIL(T x)
+{
+    return ((x + 63) >> 6);
+}
 
 #    define CACHED_METRICS 0x10
 #    define CACHED_BITMAP 0x01
