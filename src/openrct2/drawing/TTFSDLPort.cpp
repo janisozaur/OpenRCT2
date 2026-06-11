@@ -578,7 +578,7 @@ static void Flush_Cache(TTF_Font* font)
 #if defined(_MSC_VER) && _MSC_VER == 1951
 // MSVC bug in 19.51, using different optimization setting fixes the codegen
 // see https://github.com/OpenRCT2/OpenRCT2/issues/26637
-#pragma optimize("s", on)
+#pragma optimize("t", on)
 #endif
 static FT_Error Load_Glyph(TTF_Font* font, uint16_t ch, c_glyph* cached, int want)
 {
