@@ -15,9 +15,9 @@
 #include <openrct2/ride/RideManager.hpp>
 #include <openrct2/ride/Station.h>
 #include <openrct2/ride/ted/TrackElemType.h>
+#include <openrct2/world/tile_element/TileElement.h>
 #include <openrct2/world/Map.h>
 #include <openrct2/world/MapLimits.h>
-#include <openrct2/world/tile_element/TileElement.h>
 #include <openrct2/world/tile_element/TrackElement.h>
 
 using namespace OpenRCT2;
@@ -37,7 +37,7 @@ TEST(StationCrashTests, ValidateStationsInfiniteLoop)
 
     // Station Piece A at (32, 32), Direction 2 (East)
     // Back of A is at (32-1, 32) = (31, 32)
-    auto* trackA = TileElementInsert<TrackElement>({ 32 * kCoordsXYStep, 32 * kCoordsXYStep, 32 }, 0xFF);
+    auto* trackA = TileElementInsert<TrackElement>(CoordsXYZ(32 * kCoordsXYStep, 32 * kCoordsXYStep, 32), 0xFF);
     trackA->SetRideIndex(rideId);
     trackA->SetTrackType(TrackElemType::endStation);
     trackA->setDirection(2);
@@ -45,14 +45,14 @@ TEST(StationCrashTests, ValidateStationsInfiniteLoop)
 
     // Station Piece B at (31, 32), Direction 0 (West)
     // Back of B is at (31+1, 32) = (32, 32)
-    auto* trackB = TileElementInsert<TrackElement>({ 31 * kCoordsXYStep, 32 * kCoordsXYStep, 32 }, 0xFF);
+    auto* trackB = TileElementInsert<TrackElement>(CoordsXYZ(31 * kCoordsXYStep, 32 * kCoordsXYStep, 32), 0xFF);
     trackB->SetRideIndex(rideId);
     trackB->SetTrackType(TrackElemType::endStation);
     trackB->setDirection(0);
     trackB->baseHeight = 32;
 
     // Set station start at Piece A
-    ride->getStation(StationIndex::FromUnderlying(0)).Start = CoordsXY{ 32 * kCoordsXYStep, 32 * kCoordsXYStep };
+    ride->getStation(StationIndex::FromUnderlying(0)).Start = CoordsXY(32 * kCoordsXYStep, 32 * kCoordsXYStep);
 
     // This should NOT crash/hang
     // In the buggy version, it will infinite loop here
