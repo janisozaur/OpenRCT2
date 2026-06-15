@@ -10,9 +10,13 @@
 #include <gtest/gtest.h>
 #include <openrct2/Context.h>
 #include <openrct2/GameState.h>
+#include <openrct2/OpenRCT2.h>
 #include <openrct2/ride/Ride.h>
 #include <openrct2/ride/RideManager.hpp>
+#include <openrct2/ride/Station.h>
+#include <openrct2/ride/ted/TrackElemType.h>
 #include <openrct2/world/Map.h>
+#include <openrct2/world/tile_element/TileElement.h>
 #include <openrct2/world/tile_element/TrackElement.h>
 
 using namespace OpenRCT2;
@@ -47,7 +51,7 @@ TEST(StationCrashTests, ValidateStationsInfiniteLoop)
     trackB->baseHeight = 32;
 
     // Set station start at Piece A
-    ride->stations[0].Start = { 32 * 32, 32 * 32, 32 };
+    ride->getStation(StationIndex::FromUnderlying(0)).Start = TileCoordsXY{ 32, 32 };
 
     // This should NOT crash/hang
     // In the buggy version, it will infinite loop here
