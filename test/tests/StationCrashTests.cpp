@@ -15,9 +15,9 @@
 #include <openrct2/ride/RideManager.hpp>
 #include <openrct2/ride/Station.h>
 #include <openrct2/ride/ted/TrackElemType.h>
-#include <openrct2/world/tile_element/TileElement.h>
 #include <openrct2/world/Map.h>
 #include <openrct2/world/MapLimits.h>
+#include <openrct2/world/tile_element/TileElement.h>
 #include <openrct2/world/tile_element/TrackElement.h>
 
 using namespace OpenRCT2;
@@ -29,7 +29,7 @@ TEST(StationCrashTests, ValidateStationsInfiniteLoop)
     auto context = CreateContext();
     ASSERT_TRUE(context->Initialise());
 
-    MapInit({ 64, 64 });
+    MapInit(TileCoordsXY(64, 64));
 
     RideId rideId = GetNextFreeRideId();
     Ride* ride = RideAllocateAtIndex(rideId);
