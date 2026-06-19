@@ -735,6 +735,16 @@
     <Image Include="..\..\resources\logo\icon.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\thirdparty\quickjs-ng\quickjs-amalgam.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <LanguageStandard_C>stdc11</LanguageStandard_C>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <ForcedIncludeFiles>
+      </ForcedIncludeFiles>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <SDLCheck>false</SDLCheck>
+      <AdditionalOptions>/experimental:c11atomics %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="actions\cheats\CheatSetAction.cpp" />
     <ClCompile Include="actions\footpath\FootpathAdditionPlaceAction.cpp" />
     <ClCompile Include="actions\footpath\FootpathAdditionRemoveAction.cpp" />
@@ -1290,16 +1300,6 @@
     <ClCompile Include="world\tile_element\TrackElement.cpp" />
     <ClCompile Include="world\tile_element\WallElement.cpp" />
     <ClCompile Include="world\Wall.cpp" />
-    <ClCompile Include="..\thirdparty\quickjs-ng\quickjs-amalgam.c">
-      <CompileAs>CompileAsC</CompileAs>
-      <LanguageStandard_C>stdc11</LanguageStandard_C>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <ForcedIncludeFiles>
-      </ForcedIncludeFiles>
-      <WarningLevel>TurnOffAllWarnings</WarningLevel>
-      <SDLCheck>false</SDLCheck>
-      <AdditionalOptions>/experimental:c11atomics %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\openrct2-deps\openrct2-deps.vcxproj">
