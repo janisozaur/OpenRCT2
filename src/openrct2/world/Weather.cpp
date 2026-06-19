@@ -218,7 +218,7 @@ namespace OpenRCT2::Weather
                 return;
             // Create new thunder and lightning. Their amount is scaled inversely proportional
             // to the game speed, otherwise they become annoying at very high speeds
-            if (uint32_t randomNumber = UtilRand(); (randomNumber & 0xFFFF) <= (thunderChance >> (gGameSpeed - 1)))
+            if (uint32_t randomNumber = ScenarioRand(); (randomNumber & 0xFFFF) <= (thunderChance >> (gGameSpeed - 1)))
             {
                 randomNumber >>= 16;
                 _thunderTimer = 43 + (randomNumber % 64);
@@ -456,7 +456,7 @@ namespace OpenRCT2::Weather
         _lightningTimer--;
         if (gLightningFlash == 0)
         {
-            if ((UtilRand() & 0xFFFF) <= 0x2000)
+            if ((ScenarioRand() & 0xFFFF) <= 0x2000)
             {
                 gLightningFlash = 1;
             }
@@ -468,7 +468,7 @@ namespace OpenRCT2::Weather
         _thunderTimer--;
         if (_thunderTimer == 0)
         {
-            uint32_t randomNumber = UtilRand();
+            uint32_t randomNumber = ScenarioRand();
             if (randomNumber & 0x10000)
             {
                 if (_thunderStatus[0] == ThunderStatus::none && _thunderStatus[1] == ThunderStatus::none)

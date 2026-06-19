@@ -607,15 +607,11 @@ ResultWithMessage ScenarioPrepareForSave(GameState_t& gameState)
  */
 bool AllowEarlyCompletion()
 {
-    switch (Network::GetMode())
+    if (Network::GetMode() == Network::Mode::none)
     {
-        case Network::Mode::client:
-            return gAllowEarlyCompletionInNetworkPlay;
-        case Network::Mode::none:
-        case Network::Mode::server:
-        default:
-            return Config::Get().general.allowEarlyCompletion;
+        return Config::Get().general.allowEarlyCompletion;
     }
+    return gAllowEarlyCompletionInNetworkPlay;
 }
 
 static void ScenarioCheckObjective(GameState_t& gameState)
