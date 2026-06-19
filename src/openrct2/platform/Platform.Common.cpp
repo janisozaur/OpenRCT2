@@ -18,11 +18,15 @@
 
 #if defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
     #include <cpuid.h>
+    #include <immintrin.h>
     #define OpenRCT2_CPUID_GNUC_X86
+    #define OPENRCT2_X86
 #elif defined(_MSC_VER) && (_MSC_VER >= 1500) && (defined(_M_X64) || defined(_M_IX86)) // VS2008
+    #include <immintrin.h>
     #include <intrin.h>
     #include <nmmintrin.h>
     #define OpenRCT2_CPUID_MSVC_X86
+    #define OPENRCT2_X86
 #endif
 
 #include "../Context.h"
@@ -41,9 +45,9 @@
 #include <thread>
 
 #ifdef _WIN32
-static constexpr std::array _prohibitedCharacters = { '<', '>', '*', '\\', ':', '|', '?', '"', '/' };
+static constexpr std::array kProhibitedCharacters = { '<', '>', '*', '\\', ':', '|', '?', '"', '/' };
 #else
-static constexpr std::array _prohibitedCharacters = { '/' };
+static constexpr std::array kProhibitedCharacters = { '/' };
 #endif
 
 namespace OpenRCT2::Platform
@@ -168,7 +172,7 @@ namespace OpenRCT2::Platform
         std::replace_if(
             sanitised.begin(), sanitised.end(),
             [](const std::string::value_type& ch) -> bool {
-                return std::find(_prohibitedCharacters.begin(), _prohibitedCharacters.end(), ch) != _prohibitedCharacters.end();
+                return std::find(kProhibitedCharacters.begin(), kProhibitedCharacters.end(), ch) != kProhibitedCharacters.end();
             },
             '_');
         sanitised = String::trim(sanitised);
@@ -177,7 +181,7 @@ namespace OpenRCT2::Platform
 
     bool IsFilenameValid(u8string_view fileName)
     {
-        return fileName.find_first_of(_prohibitedCharacters.data(), 0, _prohibitedCharacters.size()) == fileName.npos;
+        return fileName.find_first_of(kProhibitedCharacters.data(), 0, kProhibitedCharacters.size()) == fileName.npos;
     }
 
 #ifndef __ANDROID__
@@ -251,6 +255,36 @@ namespace OpenRCT2::Platform
                 avxCPUSupport = (xcrFeatureMask & 0x6) || false;
             }
             return avxCPUSupport;
+        }
+    #endif
+#endif
+        return false;
+    }
+
+    bool AVX512Available()
+    {
+#ifdef OPENRCT2_X86
+    #if defined(OpenRCT2_CPUID_GNUC_X86) && (!defined(__FreeBSD__) || (__FreeBSD__ > 10))
+        return __builtin_cpu_supports("avx512f") && __builtin_cpu_supports("avx512bw") && __builtin_cpu_supports("avx512dq")
+            && __builtin_cpu_supports("avx512vl") && __builtin_cpu_supports("avx512vbmi");
+    #else
+        // AVX-512 Foundation support is declared as the 16th bit of EBX with CPUID(EAX = 7, ECX = 0).
+        uint32_t regs[4] = { 0 };
+        if (CPUIDX86(regs, 7))
+        {
+            // EBX: 16: AVX512F, 17: AVX512DQ, 30: AVX512BW, 31: AVX512VL
+            // ECX: 1: AVX512VBMI
+            constexpr uint32_t avx512MaskEBX = (1 << 16) | (1 << 17) | (1 << 30) | (1 << 31);
+            constexpr uint32_t avx512MaskECX = (1 << 1);
+            bool avx512CPUSupport = (regs[1] & avx512MaskEBX) == avx512MaskEBX && (regs[2] & avx512MaskECX) == avx512MaskECX;
+            if (avx512CPUSupport)
+            {
+                // Need to check if OS also supports the registers.
+                // For AVX-512 we need XMM (bit 1), YMM (bit 2), Opmask (bit 5), ZMM_Hi256 (bit 6), and Hi16_ZMM (bit 7).
+                uint64_t xcrFeatureMask = _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
+                avx512CPUSupport = (xcrFeatureMask & 0xE6) == 0xE6;
+            }
+            return avx512CPUSupport;
         }
     #endif
 #endif

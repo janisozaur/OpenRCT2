@@ -239,6 +239,7 @@ file(GLOB_RECURSE OPENRCT2_GUI_SOURCES
 if(X86 OR X86_64)
     set_source_files_properties(${ORCT2_ROOT}/src/openrct2/drawing/SSE41Drawing.cpp PROPERTIES COMPILE_FLAGS -msse4.1)
     set_source_files_properties(${ORCT2_ROOT}/src/openrct2/drawing/AVX2Drawing.cpp PROPERTIES COMPILE_FLAGS -mavx2)
+    set_source_files_properties(${ORCT2_ROOT}/src/openrct2/drawing/AVX512Drawing.cpp PROPERTIES COMPILE_FLAGS "-mavx512f -mavx512bw -mavx512dq -mavx512vl -mavx512vbmi")
 endif()
 
 file(GLOB_RECURSE OPENRCT2_CLI_SOURCES

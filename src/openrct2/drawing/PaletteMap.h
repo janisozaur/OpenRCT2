@@ -55,6 +55,11 @@ namespace OpenRCT2::Drawing
         PaletteIndex& operator[](size_t index);
         PaletteIndex operator[](size_t index) const;
 
+        const PaletteIndex* data() const
+        {
+            return _data.data();
+        }
+
         PaletteIndex Blend(PaletteIndex src, PaletteIndex dst) const;
         void Copy(PaletteIndex dstIndex, const PaletteMap& src, PaletteIndex srcIndex, size_t length);
     };

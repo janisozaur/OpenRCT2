@@ -16,6 +16,7 @@
 #include "../interface/Screenshot.h"
 #include "../interface/Viewport.h"
 #include "../interface/Window.h"
+#include "../platform/Platform.h"
 #include "../scenes/intro/IntroScene.h"
 #include "../ui/UiContext.h"
 #include "BlendColourMap.h"
@@ -521,18 +522,23 @@ void X8DrawingContext::FilterRect(
     if (paletteMap.has_value())
     {
         const auto& paletteEntries = paletteMap.value();
-        const int32_t scaled_width = width;
         const int32_t step = rt.LineStride();
 
-        // Fill the rectangle with the colours from the colour table
-        auto c = height;
-        for (int32_t i = 0; i < c; i++)
+        if (Platform::AVX512Available())
         {
-            PaletteIndex* nextdst = dst + step * i;
-            for (int32_t j = 0; j < scaled_width; j++)
+            FilterRectAvx512(dst, width, height, step, paletteEntries.data());
+        }
+        else
+        {
+            // Fill the rectangle with the colours from the colour table
+            for (int32_t i = 0; i < height; i++)
             {
-                auto index = *(nextdst + j);
-                *(nextdst + j) = paletteEntries[EnumValue(index)];
+                PaletteIndex* nextdst = dst + step * i;
+                for (int32_t j = 0; j < width; j++)
+                {
+                    auto index = *(nextdst + j);
+                    *(nextdst + j) = paletteEntries[EnumValue(index)];
+                }
             }
         }
     }
@@ -580,7 +586,7 @@ void X8DrawingContext::DrawGlyph(RenderTarget& rt, const ImageId image, int32_t 
 }
 
 #ifndef DISABLE_TTF
-template<bool TUseHinting>
+template <bool TUseHinting>
 static void DrawTTFBitmapInternal(
     RenderTarget& rt, PaletteIndex colour, TTFSurface* surface, int32_t x, int32_t y, uint8_t hintingThreshold)
 {
@@ -649,7 +655,7 @@ static void DrawTTFBitmapInternal(
         dst += dstScanSkip;
     }
 }
-#endif // DISABLE_TTF
+#endif // DISABLE_TTT
 
 void X8DrawingContext::DrawTTFBitmap(
     RenderTarget& rt, const TextDrawInfo& info, TTFSurface* surface, int32_t x, int32_t y, uint8_t hintingThreshold)

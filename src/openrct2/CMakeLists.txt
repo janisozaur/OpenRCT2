@@ -275,6 +275,7 @@ endif()
 if((X86 OR X86_64) AND NOT MSVC AND NOT EMSCRIPTEN)
     set_source_files_properties(${CMAKE_CURRENT_LIST_DIR}/drawing/SSE41Drawing.cpp PROPERTIES COMPILE_FLAGS -msse4.1)
     set_source_files_properties(${CMAKE_CURRENT_LIST_DIR}/drawing/AVX2Drawing.cpp PROPERTIES COMPILE_FLAGS -mavx2)
+    set_source_files_properties(${CMAKE_CURRENT_LIST_DIR}/drawing/AVX512Drawing.cpp PROPERTIES COMPILE_FLAGS "-mavx512f -mavx512bw -mavx512dq -mavx512vl -mavx512vbmi")
 endif()
 
 # Add headers check to verify all headers carry their dependencies.
