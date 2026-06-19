@@ -462,6 +462,11 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [check-code-formatting, build_variables]
     container: ${{ matrix.image }}
+    steps:
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y libuv1-dev
     strategy:
       fail-fast: false
       matrix:
@@ -572,6 +577,10 @@ jobs:
     needs: [check-code-formatting, build_variables]
     container: ghcr.io/openrct2/openrct2-build:26-noble
     steps:
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y libuv1-dev
       - name: Checkout
         uses: actions/checkout@v6
       - name: ccache
@@ -588,6 +597,10 @@ jobs:
     needs: [check-code-formatting, build_variables]
     container: ghcr.io/openrct2/openrct2-build:26-noble
     steps:
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y libuv1-dev
       - name: Checkout
         uses: actions/checkout@v6
       - name: ccache

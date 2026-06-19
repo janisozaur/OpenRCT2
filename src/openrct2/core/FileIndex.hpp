@@ -20,6 +20,10 @@
 #include "Numerics.hpp"
 #include "Path.hpp"
 
+#ifdef USE_LIBUV
+    #include "../platform/LibuvLoop.h"
+#endif
+
 #include <chrono>
 #include <list>
 #include <string>
@@ -180,6 +184,68 @@ private:
         const size_t totalCount = scanResult.Files.size();
         if (totalCount > 0)
         {
+#ifdef USE_LIBUV
+            std::mutex mtx;
+            std::atomic<size_t> processed{ 0 };
+
+            struct WorkData
+            {
+                const FileIndex* This;
+                int32_t Language;
+                std::string FilePath;
+                std::optional<TItem> Item;
+                std::atomic<size_t>* Processed;
+                std::vector<TItem>* AllItems;
+                std::mutex* Mtx;
+                size_t TotalCount;
+            };
+
+            for (const auto& filePath : scanResult.Files)
+            {
+                OpenRCT2::Platform::ReadAllBytesAsync(filePath, [&](std::vector<uint8_t> data, int err) {
+                    if (err == 0)
+                    {
+                        // Use libuv thread pool for heavy parsing
+                        uv_work_t* work = new uv_work_t;
+                        WorkData* wd = new WorkData{ this,       language,  filePath, std::nullopt,
+                                                     &processed, &allItems, &mtx,     totalCount };
+                        work->data = wd;
+
+                        uv_queue_work(
+                            OpenRCT2::Platform::LibuvLoop::Get().GetLoop(), work,
+                            [](uv_work_t* req) {
+                                WorkData* wd_inner = static_cast<WorkData*>(req->data);
+                                wd_inner->Item = wd_inner->This->Create(wd_inner->Language, wd_inner->FilePath);
+                            },
+                            [](uv_work_t* req, int status) {
+                                WorkData* wd_inner = static_cast<WorkData*>(req->data);
+                                if (wd_inner->Item.has_value())
+                                {
+                                    std::lock_guard lock(*wd_inner->Mtx);
+                                    wd_inner->AllItems->push_back(std::move(wd_inner->Item.value()));
+                                }
+                                (*wd_inner->Processed)++;
+                                OpenRCT2::GetContext()->SetProgress(
+                                    static_cast<uint32_t>(wd_inner->Processed->load()),
+                                    static_cast<uint32_t>(wd_inner->TotalCount));
+                                delete wd_inner;
+                                delete req;
+                            });
+                    }
+                    else
+                    {
+                        processed++;
+                        OpenRCT2::GetContext()->SetProgress(
+                            static_cast<uint32_t>(processed.load()), static_cast<uint32_t>(totalCount));
+                    }
+                });
+            }
+
+            while (processed < totalCount)
+            {
+                OpenRCT2::Platform::LibuvLoop::Get().Run(UV_RUN_ONCE);
+            }
+#else
             JobPool jobPool;
             std::mutex mtx;
             std::atomic<size_t> processed{ 0 };
@@ -202,6 +268,7 @@ private:
             jobPool.Join([&]() {
                 OpenRCT2::GetContext()->SetProgress(static_cast<uint32_t>(processed.load()), static_cast<uint32_t>(totalCount));
             });
+#endif
         }
 
         WriteIndexFile(language, scanResult.Stats, allItems);

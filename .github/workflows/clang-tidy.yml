@@ -15,6 +15,10 @@ jobs:
     container: openrct2/openrct2-build:20-noble
     steps:
     - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        apt-get update
+        apt-get install -y libuv1-dev
     - uses: ZehMatt/clang-tidy-annotations@v1
       with:
         build_dir: 'build'
