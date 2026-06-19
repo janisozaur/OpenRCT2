@@ -173,8 +173,8 @@ namespace OpenRCT2
         std::string _identifier;
         ObjectVersion _version;
         ObjectEntryDescriptor _descriptor{};
-        StringTable _stringTable;
-        ImageTable _imageTable;
+        StringTable _stringTable{};
+        ImageTable _imageTable{};
         std::vector<ObjectSourceGame> _sourceGames;
         std::vector<std::string> _authors;
         ObjectGeneration _generation{};
@@ -205,7 +205,7 @@ namespace OpenRCT2
         std::string GetString(int32_t language, ObjectStringID index) const;
 
     public:
-        virtual ~Object() = default;
+        virtual ~Object();
 
         std::string_view GetIdentifier() const
         {

@@ -146,6 +146,11 @@ namespace OpenRCT2
         return !(*this == rhs);
     }
 
+    Object::~Object()
+    {
+        UnloadImages();
+    }
+
     void* Object::GetLegacyData()
     {
         throw std::runtime_error("Not supported.");
