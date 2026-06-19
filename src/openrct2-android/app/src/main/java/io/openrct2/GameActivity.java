@@ -1,14 +1,18 @@
 package io.openrct2;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.icu.util.Currency;
 import android.icu.util.LocaleData;
 import android.icu.util.ULocale;
+import android.net.Uri;
 import android.os.Build;
+import android.util.Log;
 import android.view.View;
 
 import org.libsdl.app.SDLActivity;
 
+import java.io.File;
 import java.util.Locale;
 
 public class GameActivity extends SDLActivity {
@@ -112,5 +116,30 @@ public class GameActivity extends SDLActivity {
             return getIntent().getStringArrayExtra("commandLineArgs");
         }
         return new String[0];
+    }
+
+    public void launchURL(String url) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(intent);
+        } catch (Exception e) {
+            Log.e("OpenRCT2", "Failed to open URL: " + url, e);
+        }
+    }
+
+    public void launchFolder(String path) {
+        try {
+            File file = new File(path);
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            Uri uri = Uri.fromFile(file);
+            intent.setDataAndType(uri, "resource/folder");
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+            } else {
+                Log.w("OpenRCT2", "No activity found to open folder: " + path);
+            }
+        } catch (Exception e) {
+            Log.e("OpenRCT2", "Failed to open folder: " + path, e);
+        }
     }
 }
