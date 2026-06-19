@@ -12,6 +12,7 @@
 #include "../../../Context.h"
 #include "../../../ride/Ride.h"
 #include "../../ScriptEngine.h"
+#include "../ScShopItem.hpp"
 #include "../object/ScObject.hpp"
 #include "ScRideStation.hpp"
 
@@ -123,6 +124,10 @@ namespace OpenRCT2::Scripting
         static JSValue runningCost_set(JSContext* ctx, JSValue thisVal, JSValue value);
         static JSValue totalProfit_get(JSContext* ctx, JSValue thisVal);
         static JSValue totalProfit_set(JSContext* ctx, JSValue thisVal, JSValue value);
+        static JSValue numPrimaryItemsSold_get(JSContext* ctx, JSValue thisVal);
+        static JSValue numSecondaryItemsSold_get(JSContext* ctx, JSValue thisVal);
+        static JSValue primaryItem_get(JSContext* ctx, JSValue thisVal);
+        static JSValue secondaryItem_get(JSContext* ctx, JSValue thisVal);
         static JSValue inspectionInterval_get(JSContext* ctx, JSValue thisVal);
         static JSValue inspectionInterval_set(JSContext* ctx, JSValue thisVal, JSValue value);
         static JSValue value_get(JSContext* ctx, JSValue thisVal);

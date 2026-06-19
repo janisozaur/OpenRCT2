@@ -73,4 +73,81 @@ TEST_F(ScriptingTests, MultipleSubscribersToSameEventShouldNotCrash)
     hookEngine.Call(HookType::intervalTick, arg, false);
 }
 
+TEST_F(ScriptingTests, RideItemsSoldProperties)
+{
+    auto& scriptEngine = static_cast<ScriptEngine&>(_context->GetScriptEngine());
+
+    // Allocate a ride
+    RideId rideId = RideId::FromUnderlying(0);
+    Ride* ride = RideAllocateAtIndex(rideId);
+    ASSERT_NE(ride, nullptr);
+
+    ride->type = 28; // Food stall
+    ride->numPrimaryItemsSold = 123;
+    ride->numSecondaryItemsSold = 456;
+
+    // We don't have objects loaded, so primaryItem/secondaryItem might be "none" or null.
+    // That's okay, we just want to see if the properties exist and return something sensible.
+
+    const char* pluginCode = R"(
+        registerPlugin({
+            name: 'test-plugin-ride-stats',
+            version: '1.0.0',
+            authors: ['openrct2-test'],
+            type: 'remote',
+            licence: 'MIT',
+            minApiVersion: 110,
+            targetApiVersion: 110,
+            main: function () {
+                var ride = map.getRide(0);
+                context.sharedStorage.set('test.numPrimary', ride.numPrimaryItemsSold);
+                context.sharedStorage.set('test.numSecondary', ride.numSecondaryItemsSold);
+                context.sharedStorage.set('test.primaryItem', ride.primaryItem);
+                context.sharedStorage.set('test.secondaryItem', ride.secondaryItem);
+            }
+        });
+    )";
+
+    scriptEngine.AddNetworkPlugin(pluginCode);
+    scriptEngine.LoadTransientPlugins();
+    scriptEngine.Tick();
+
+    JSContext* ctx = scriptEngine.GetContext();
+    auto getSharedStorage = [&](const char* key) -> JSValue {
+        JSValue global = JS_GetGlobalObject(ctx);
+        JSValue sharedStorage = JS_GetPropertyStr(ctx, global, "context");
+        JSValue sharedStorageObj = JS_GetPropertyStr(ctx, sharedStorage, "sharedStorage");
+        JSValue getFunc = JS_GetPropertyStr(ctx, sharedStorageObj, "get");
+        JSValue keyVal = JS_NewString(ctx, key);
+        JSValue result = JS_Call(ctx, getFunc, sharedStorageObj, 1, &keyVal);
+        JS_FreeValue(ctx, keyVal);
+        JS_FreeValue(ctx, getFunc);
+        JS_FreeValue(ctx, sharedStorageObj);
+        JS_FreeValue(ctx, sharedStorage);
+        JS_FreeValue(ctx, global);
+        return result;
+    };
+
+    JSValue numPrimary = getSharedStorage("test.numPrimary");
+    JSValue numSecondary = getSharedStorage("test.numSecondary");
+    JSValue primaryItem = getSharedStorage("test.primaryItem");
+    JSValue secondaryItem = getSharedStorage("test.secondaryItem");
+
+    int32_t valPrimary;
+    JS_ToInt32(ctx, &valPrimary, numPrimary);
+    EXPECT_EQ(valPrimary, 123);
+
+    int32_t valSecondary;
+    JS_ToInt32(ctx, &valSecondary, numSecondary);
+    EXPECT_EQ(valSecondary, 456);
+
+    EXPECT_TRUE(JS_IsNull(primaryItem) || JS_IsString(primaryItem));
+    EXPECT_TRUE(JS_IsNull(secondaryItem) || JS_IsString(secondaryItem));
+
+    JS_FreeValue(ctx, numPrimary);
+    JS_FreeValue(ctx, numSecondary);
+    JS_FreeValue(ctx, primaryItem);
+    JS_FreeValue(ctx, secondaryItem);
+}
+
 #endif

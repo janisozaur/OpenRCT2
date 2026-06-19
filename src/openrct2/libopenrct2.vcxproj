@@ -650,6 +650,7 @@
     <ClInclude Include="scripting\bindings\game\ScDisposable.hpp" />
     <ClInclude Include="scripting\bindings\game\ScPlugin.hpp" />
     <ClInclude Include="scripting\bindings\game\ScProfiler.hpp" />
+    <ClInclude Include="scripting\bindings\ScShopItem.hpp" />
     <ClInclude Include="scripting\bindings\network\ScNetwork.hpp" />
     <ClInclude Include="scripting\bindings\network\ScPlayer.hpp" />
     <ClInclude Include="scripting\bindings\network\ScPlayerGroup.hpp" />
