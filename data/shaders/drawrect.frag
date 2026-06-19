@@ -15,18 +15,16 @@ uniform bool            uPeeling;
 
 in vec4 gl_FragCoord;
 
+in vec2                 vTexColourCoord;
+in vec2                 vTexMaskCoord;
+in vec2                 vPosition;
 flat in int             fFlags;
 flat in uint            fColour;
-flat in vec4            fTexColour;
-flat in vec4            fTexMask;
 flat in vec3            fPalettes;
 
-flat in vec2            fPosition;
 in vec3                 fPeelPos;
-flat in float           fZoom;
 flat in int             fTexColourAtlas;
 flat in int             fTexMaskAtlas;
-flat in int             fScreenHeight;
 // clang-format on
 
 out uint oColour;
@@ -42,15 +40,10 @@ void main()
         }
     }
 
-    vec2 fragCoord = vec2(floor(gl_FragCoord.x), fScreenHeight - floor(gl_FragCoord.y) - 1);
-    vec2 position = (fragCoord - fPosition) * fZoom;
-
     uint texel;
     if ((fFlags & FLAG_NO_TEXTURE) == 0)
     {
-        float colourU = (fTexColour.x + position.x) / fTexColour.z;
-        float colourV = (fTexColour.y + position.y) / fTexColour.w;
-        texel = texture(uTexture, vec3(colourU, colourV, fTexColourAtlas)).r;
+        texel = texture(uTexture, vec3(vTexColourCoord, fTexColourAtlas)).r;
         if (texel == 0u)
         {
             discard;
@@ -104,8 +97,7 @@ void main()
 
     if ((fFlags & FLAG_CROSS_HATCH) != 0)
     {
-        int posSum = int(position.x) + int(position.y);
-        if ((posSum % 2) != 0)
+        if ((int(vPosition.x) + int(vPosition.y)) % 2 != 0)
         {
             discard;
         }
@@ -113,9 +105,7 @@ void main()
 
     if ((fFlags & FLAG_MASK) != 0)
     {
-        float maskU = (fTexMask.x + position.x) / fTexMask.z;
-        float maskV = (fTexMask.y + position.y) / fTexMask.w;
-        uint mask = texture(uTexture, vec3(maskU, maskV, fTexMaskAtlas)).r;
+        uint mask = texture(uTexture, vec3(vTexMaskCoord, fTexMaskAtlas)).r;
         if (mask == 0u)
         {
             discard;

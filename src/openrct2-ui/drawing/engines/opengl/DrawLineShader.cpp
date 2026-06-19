@@ -107,7 +107,17 @@ void DrawLineShader::DrawInstances(const LineCommandBatch& instances)
     glCall(glBindVertexArray, _vao);
 
     glCall(glBindBuffer, GL_ARRAY_BUFFER, _vboInstances);
-    glCall(glBufferData, GL_ARRAY_BUFFER, sizeof(DrawLineCommand) * instances.size(), instances.data(), GL_STREAM_DRAW);
+    if (instances.size() > _maxInstancesBufferSize)
+    {
+        glCall(glBufferData, GL_ARRAY_BUFFER, sizeof(DrawLineCommand) * instances.size(), instances.data(), GL_STREAM_DRAW);
+        _maxInstancesBufferSize = instances.size();
+    }
+    else
+    {
+        // Orphan the buffer to avoid synchronization stalls
+        glCall(glBufferData, GL_ARRAY_BUFFER, sizeof(DrawLineCommand) * _maxInstancesBufferSize, nullptr, GL_STREAM_DRAW);
+        glCall(glBufferSubData, GL_ARRAY_BUFFER, 0, sizeof(DrawLineCommand) * instances.size(), instances.data());
+    }
 
     glCall(glDrawArraysInstanced, GL_LINES, 0, 2, static_cast<GLsizei>(instances.size()));
 }

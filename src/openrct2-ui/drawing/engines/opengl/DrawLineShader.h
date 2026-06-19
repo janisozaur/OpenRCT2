@@ -28,6 +28,7 @@ namespace OpenRCT2::Ui
         GLuint _vbo{};
         GLuint _vboInstances{};
         GLuint _vao{};
+        size_t _maxInstancesBufferSize = 0;
 
     public:
         DrawLineShader();
