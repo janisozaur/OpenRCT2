@@ -55,6 +55,32 @@ const char gVersionInfoFull[] = OPENRCT2_NAME ", "
 #endif
     ;
 
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x) // NOLINT(cppcoreguidelines-macro-usage)
+
+const char gCompilerInfo[] =
+#if defined(OPENRCT2_COMPILER_INFO)
+    OPENRCT2_COMPILER_INFO
+#elif defined(__clang__)
+#    ifdef __EMSCRIPTEN__
+    "Emscripten " __VERSION__
+#    elif defined(_MSC_VER)
+    "Clang-CL " __VERSION__
+#    else
+    "Clang " __VERSION__
+#    endif
+#elif defined(__GNUC__)
+    "GCC " __VERSION__
+#elif defined(_MSC_VER)
+    "MSVC " STR(_MSC_VER)
+#else
+    "Unknown compiler"
+#endif
+    ;
+
+#undef STR
+#undef STR_HELPER
+
 #ifdef __EMSCRIPTEN__
     // This must be wrapped in extern "C", according to the emscripten docs, "to prevent C++ name mangling"
     // Ignore -Wmissing-prototypes here, see https://github.com/llvm/llvm-project/issues/94138

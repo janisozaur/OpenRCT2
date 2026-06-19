@@ -19,7 +19,7 @@
 
 namespace OpenRCT2::Ui::Windows
 {
-    static constexpr ScreenSize kWindowSize = { 500, 30 };
+    static constexpr ScreenSize kWindowSize = { 500, 42 };
 
     static constexpr uint8_t kTextOffset = 8;
 
@@ -33,9 +33,12 @@ namespace OpenRCT2::Ui::Windows
             width = Drawing::getStringWidth(gVersionInfoFull, FontStyle::medium);
 
             // Write platform information
-            constexpr const char platformInfo[] = OPENRCT2_PLATFORM " (" OPENRCT2_ARCHITECTURE ")";
-            drawText(rt, windowPos + ScreenCoordsXY(0, kListRowHeight), platformInfo, { whiteOutline });
-            width = std::max<int16_t>(width, Drawing::getStringWidth(platformInfo, FontStyle::medium)) + kTextOffset;
+            constexpr const char kPlatformInfo[] = OPENRCT2_PLATFORM " (" OPENRCT2_ARCHITECTURE ")";
+            drawText(rt, windowPos + ScreenCoordsXY(0, kListRowHeight), kPlatformInfo, { whiteOutline });
+            width = std::max<int16_t>(width, Drawing::getStringWidth(kPlatformInfo, FontStyle::medium));
+
+            drawText(rt, windowPos + ScreenCoordsXY(0, kListRowHeight * 2), gCompilerInfo, { whiteOutline });
+            width = std::max<int16_t>(width, Drawing::getStringWidth(gCompilerInfo, FontStyle::medium)) + kTextOffset;
         }
     };
 
@@ -46,7 +49,7 @@ namespace OpenRCT2::Ui::Windows
         if (window == nullptr)
         {
             window = windowMgr->Create<TitleVersionWindow>(
-                WindowClass::titleVersion, ScreenCoordsXY(kTextOffset, ContextGetHeight() - 30), kWindowSize,
+                WindowClass::titleVersion, ScreenCoordsXY(kTextOffset, ContextGetHeight() - kWindowSize.height), kWindowSize,
                 { WindowFlag::stickToBack, WindowFlag::transparent, WindowFlag::noTitleBar });
         }
         return window;
