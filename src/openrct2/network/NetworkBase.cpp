@@ -2882,6 +2882,37 @@ namespace OpenRCT2::Network
         catch (const std::exception& e)
         {
             Console::Error::WriteLine("Unable to read map from server: %s", e.what());
+
+            // Save the corrupted map data for debugging.
+            if (stream != nullptr)
+            {
+                try
+                {
+                    std::string outputPath = GetContext().GetPlatformEnvironment().GetDirectoryPath(
+                        DirBase::user, DirId::desyncLogs);
+
+                    Path::CreateDirectory(outputPath);
+
+                    char uniqueFileName[128] = {};
+                    snprintf(
+                        uniqueFileName, sizeof(uniqueFileName), "map_corruption_%llu.bin",
+                        static_cast<long long unsigned>(Platform::GetDatetimeNowUTC()));
+
+                    std::string outputFile = Path::Combine(outputPath, uniqueFileName);
+
+                    auto fs = FileStream(outputFile, FileMode::write);
+                    auto pos = stream->GetPosition();
+                    stream->SetPosition(0);
+                    fs.CopyFromStream(*stream, stream->GetLength());
+                    stream->SetPosition(pos);
+
+                    LOG_INFO("Wrote corrupted map data to '%s'", outputFile.c_str());
+                }
+                catch (const std::exception& ex)
+                {
+                    LOG_ERROR("Failed to write corrupted map data: %s", ex.what());
+                }
+            }
         }
         return result;
     }
