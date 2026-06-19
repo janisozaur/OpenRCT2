@@ -16,6 +16,8 @@
 #include "../platform/Platform.h"
 #include "../scripting/ScriptEngine.h"
 
+#include <atomic>
+#include <csignal>
 #include <cstdlib>
 #include <linenoise.hpp>
 
@@ -24,6 +26,20 @@ using namespace OpenRCT2;
 // Ignore isatty warning on WIN32
 #ifdef _MSC_VER
     #pragma warning(disable : 4996)
+#endif
+
+#ifndef _WIN32
+static volatile sig_atomic_t _terminalNeedsRestoration = 0;
+static void HandleSignal(int signal)
+{
+    if (_terminalNeedsRestoration)
+    {
+        _terminalNeedsRestoration = 0;
+        // Note: linenoiseAtExit is not strictly async-signal-safe, but common for terminal apps
+        linenoise::linenoiseAtExit();
+    }
+    std::raise(signal);
+}
 #endif
 
 void StdInOutConsole::Start()
@@ -40,9 +56,51 @@ void StdInOutConsole::Start()
         return;
     }
 
+#ifndef _WIN32
+    struct sigaction sa{};
+    sa.sa_handler = HandleSignal;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESETHAND;
+    sigaction(SIGINT, &sa, nullptr);
+    sigaction(SIGTERM, &sa, nullptr);
+    sigaction(SIGHUP, &sa, nullptr);
+    sigaction(SIGQUIT, &sa, nullptr);
+    sigaction(SIGSEGV, &sa, nullptr);
+    sigaction(SIGILL, &sa, nullptr);
+    sigaction(SIGFPE, &sa, nullptr);
+    sigaction(SIGABRT, &sa, nullptr);
+#endif
+
     std::thread replThread([this]() -> void {
         linenoise::SetMultiLine(true);
         linenoise::SetHistoryMaxLen(32);
+
+        _commands = GetCommandNames();
+        _variables = GetVariableNames();
+
+        linenoise::SetCompletionCallback([this](const char* buf, std::vector<std::string>& completions) {
+            std::string input(buf);
+            for (const auto& cmd : _commands)
+            {
+                if (cmd.find(input) == 0)
+                {
+                    completions.push_back(cmd);
+                }
+            }
+
+            if (input.find("get ") == 0 || input.find("set ") == 0)
+            {
+                std::string prefix = input.substr(0, 4);
+                std::string varPart = input.substr(4);
+                for (const auto& var : _variables)
+                {
+                    if (var.find(varPart) == 0)
+                    {
+                        completions.push_back(prefix + var);
+                    }
+                }
+            }
+        });
 
         std::string prompt = "\033[32mopenrct2 $\x1b[0m ";
         bool lastPromptQuit = false;
@@ -51,7 +109,13 @@ void StdInOutConsole::Start()
             std::string line;
             std::string left = prompt;
             _isPromptShowing = true;
+#ifndef _WIN32
+            _terminalNeedsRestoration = 1;
+#endif
             auto quit = linenoise::Readline(left.c_str(), line);
+#ifndef _WIN32
+            _terminalNeedsRestoration = 0;
+#endif
             _isPromptShowing = false;
             if (quit)
             {

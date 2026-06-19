@@ -12,6 +12,7 @@
 #include <atomic>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 enum class ConsoleInput : uint8_t
 {
@@ -55,6 +56,9 @@ public:
     void EndAsyncExecution();
 
     bool IsExecuting();
+
+    std::vector<std::string> GetCommandNames() const;
+    std::vector<std::string> GetVariableNames() const;
 
     virtual void Clear() = 0;
     virtual void Close() = 0;

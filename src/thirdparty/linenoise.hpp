@@ -1768,12 +1768,14 @@ inline void linenoiseBeep(void) {
  *
  * The state of the editing is encapsulated into the pointed linenoiseState
  * structure as described in the structure definition. */
-inline int completeLine(struct linenoiseState *ls, char *cbuf, int *c) {
+inline int completeLine(struct linenoiseState *ls, char *cbuf, int *c, std::unique_lock<std::mutex>& lock) {
     std::vector<std::string> lc;
     int nread = 0, nwritten;
     *c = 0;
 
+    lock.unlock();
     completionCallback(ls->buf,lc);
+    lock.lock();
     if (lc.empty()) {
         linenoiseBeep();
     } else {
@@ -1795,6 +1797,7 @@ inline int completeLine(struct linenoiseState *ls, char *cbuf, int *c) {
             }
 
             //nread = read(ls->ifd,&c,1);
+            lock.unlock();
 #ifdef _WIN32
             nread = win32read(c);
             if (nread == 1) {
@@ -1803,6 +1806,7 @@ inline int completeLine(struct linenoiseState *ls, char *cbuf, int *c) {
 #else
             nread = unicodeReadUTF8Char(ls->ifd,cbuf,c);
 #endif
+            lock.lock();
             if (nread <= 0) {
                 *c = -1;
                 return nread;
@@ -2094,7 +2098,7 @@ inline void linenoiseEditDeletePrevWord(struct linenoiseState *l) {
 
 inline void linenoiseEditRefreshLine()
 {
-    std::lock_guard lock(lnstate_mutex);
+    std::lock_guard<std::mutex> lock(lnstate_mutex);
     refreshLine(&lnstate);
 }
 
@@ -2108,7 +2112,7 @@ inline void linenoiseEditRefreshLine()
  * The function returns the length of the current buffer. */
 inline int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, int buflen, const char *prompt)
 {
-    std::lock_guard lock(lnstate_mutex);
+    std::unique_lock<std::mutex> lock(lnstate_mutex);
     auto& l = lnstate;
 
     /* Populate the linenoise state that we pass to functions implementing
@@ -2143,7 +2147,7 @@ inline int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, int buflen, con
         [[maybe_unused]] auto ifd = l.ifd;
 
         // Release the lock such that others can still write while we await input
-        lnstate_mutex.unlock();
+        lock.unlock();
 #ifdef _WIN32
         nread = win32read(&c);
         if (nread == 1) {
@@ -2153,14 +2157,14 @@ inline int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, int buflen, con
         nread = unicodeReadUTF8Char(ifd,cbuf,&c);
 #endif
         // Take back ownership of the lock, since we are going to modify the state now
-        lnstate_mutex.lock();
+        lock.lock();
         if (nread <= 0) return (int)l.len;
 
         /* Only autocomplete when the callback is set. It returns < 0 when
          * there was an error reading from fd. Otherwise it will return the
          * character that should be handled next. */
         if (c == 9 && completionCallback != NULL) {
-            nread = completeLine(&l,cbuf,&c);
+            nread = completeLine(&l,cbuf,&c,lock);
             /* Return on errors */
             if (c < 0) return l.len;
             /* Read next character when 0 */
@@ -2213,14 +2217,27 @@ inline int linenoiseEdit(int stdin_fd, int stdout_fd, char *buf, int buflen, con
             /* Read the next two bytes representing the escape sequence.
              * Use two calls to handle slow terminals returning the two
              * chars at different times. */
-            if (read(l.ifd,seq,1) == -1) break;
-            if (read(l.ifd,seq+1,1) == -1) break;
+            lock.unlock();
+            if (read(l.ifd,seq,1) == -1) {
+                lock.lock();
+                break;
+            }
+            if (read(l.ifd,seq+1,1) == -1) {
+                lock.lock();
+                break;
+            }
+            lock.lock();
 
             /* ESC [ sequences. */
             if (seq[0] == '[') {
                 if (seq[1] >= '0' && seq[1] <= '9') {
                     /* Extended escape, read additional byte. */
-                    if (read(l.ifd,seq+2,1) == -1) break;
+                    lock.unlock();
+                    if (read(l.ifd,seq+2,1) == -1) {
+                        lock.lock();
+                        break;
+                    }
+                    lock.lock();
                     if (seq[2] == '~') {
                         switch(seq[1]) {
                         case '3': /* Delete key. */

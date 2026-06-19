@@ -20,6 +20,8 @@ class StdInOutConsole final : public InteractiveConsole
 private:
     std::queue<std::tuple<std::promise<void>, std::string>> _evalQueue;
     std::atomic<bool> _isPromptShowing{};
+    std::vector<std::string> _commands;
+    std::vector<std::string> _variables;
 
 public:
     void Start();
