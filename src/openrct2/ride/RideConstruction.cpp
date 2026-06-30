@@ -1431,6 +1431,9 @@ void Ride::validateStations()
                     if (!ted.sequenceData.sequences[0].flags.has(SequenceFlag::trackOrigin))
                         continue;
 
+                    if (direction != kInvalidDirection && tileElement->getDirection() != direction)
+                        continue;
+
                     trackFound = true;
                     break;
                 } while (!(tileElement++)->isLastForTile());
