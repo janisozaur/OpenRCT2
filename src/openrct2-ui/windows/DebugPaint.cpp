@@ -19,8 +19,13 @@
 #include <openrct2/interface/ColourWithFlags.h>
 #include <openrct2/localisation/Language.h>
 #include <openrct2/localisation/LocalisationService.h>
+#include <openrct2-ui/interface/Widget.h>
+#include <openrct2/drawing/Drawing.String.h>
+#include <openrct2/drawing/Foveation.h>
+#include <openrct2/drawing/Text.h>
 #include <openrct2/paint/Paint.h>
 #include <openrct2/paint/tile_element/Paint.TileElement.h>
+#include <openrct2/ui/UiContext.h>
 #include <openrct2/ui/WindowManager.h>
 
 namespace OpenRCT2::Ui::Windows
@@ -35,9 +40,11 @@ namespace OpenRCT2::Ui::Windows
         WIDX_TOGGLE_SHOW_DIRTY_VISUALS,
         WIDX_TOGGLE_STABLE_PAINT_SORT,
         WIDX_TOGGLE_FORCE_REDRAW,
+        WIDX_TOGGLE_FOVEATION,
+        WIDX_TOGGLE_FOVEATION_CURSOR,
     };
 
-    static constexpr ScreenSize kWindowSize = { 200, 8 + (15 * 7) + 8 };
+    static constexpr ScreenSize kWindowSize = { 200, 8 + (15 * 9) + 8 };
 
     // clang-format off
     static constexpr Widget window_debug_paint_widgets[] = {
@@ -49,6 +56,8 @@ namespace OpenRCT2::Ui::Windows
         makeWidget({8, 8 + 15 * 4}, {         185,            12}, WidgetType::checkbox, WindowColour::secondary, STR_DEBUG_PAINT_SHOW_DIRTY_VISUALS  ),
         makeWidget({8, 8 + 15 * 5}, {         185,            12}, WidgetType::checkbox, WindowColour::secondary, STR_DEBUG_PAINT_STABLE_SORT  ),
         makeWidget({8, 8 + 15 * 6}, {         185,            12}, WidgetType::checkbox, WindowColour::secondary, STR_DEBUG_PAINT_FORCE_REDRAW  ),
+        makeWidget({8, 8 + 15 * 7}, {         185,            12}, WidgetType::checkbox, WindowColour::secondary                                       ),
+        makeWidget({8, 8 + 15 * 8}, {         185,            12}, WidgetType::checkbox, WindowColour::secondary                                       ),
     };
     // clang-format on
 
@@ -109,6 +118,32 @@ namespace OpenRCT2::Ui::Windows
                     gPaintForceRedraw = !gPaintForceRedraw;
                     Drawing::GfxInvalidateScreen();
                     break;
+
+                case WIDX_TOGGLE_FOVEATION:
+                    Drawing::gFoveatedRenderingSettings.enabled = !Drawing::gFoveatedRenderingSettings.enabled;
+                    Drawing::GfxInvalidateScreen();
+                    break;
+
+                case WIDX_TOGGLE_FOVEATION_CURSOR:
+                    Drawing::gFoveationFollowsCursor = !Drawing::gFoveationFollowsCursor;
+                    Drawing::GfxInvalidateScreen();
+                    break;
+            }
+        }
+
+        void onUpdate() override
+        {
+            if (Drawing::gFoveationFollowsCursor && Drawing::gFoveatedRenderingSettings.enabled)
+            {
+                auto cursor = GetContext()->GetUiContext().GetCursorPosition();
+                int32_t screenW = ContextGetWidth();
+                int32_t screenH = ContextGetHeight();
+                if (screenW > 0 && screenH > 0)
+                {
+                    Drawing::gFoveatedRenderingSettings.focalCenterX = static_cast<float>(cursor.x) / screenW;
+                    Drawing::gFoveatedRenderingSettings.focalCenterY = static_cast<float>(cursor.y) / screenH;
+                    Drawing::GfxInvalidateScreen();
+                }
             }
         }
 
@@ -156,11 +191,19 @@ namespace OpenRCT2::Ui::Windows
             setCheckboxValue(WIDX_TOGGLE_SHOW_DIRTY_VISUALS, gShowDirtyVisuals);
             setCheckboxValue(WIDX_TOGGLE_STABLE_PAINT_SORT, gPaintStableSort);
             setCheckboxValue(WIDX_TOGGLE_FORCE_REDRAW, gPaintForceRedraw);
+            setCheckboxValue(WIDX_TOGGLE_FOVEATION, Drawing::gFoveatedRenderingSettings.enabled);
+            setCheckboxValue(WIDX_TOGGLE_FOVEATION_CURSOR, Drawing::gFoveationFollowsCursor);
         }
 
         void onDraw(Drawing::RenderTarget& rt) override
         {
             drawWidgets(rt);
+
+            auto screenCoords = windowPos + ScreenCoordsXY{ widgets[WIDX_TOGGLE_FOVEATION].left + 15, widgets[WIDX_TOGGLE_FOVEATION].top };
+            drawText(rt, screenCoords, "Enable foveated rendering");
+
+            screenCoords = windowPos + ScreenCoordsXY{ widgets[WIDX_TOGGLE_FOVEATION_CURSOR].left + 15, widgets[WIDX_TOGGLE_FOVEATION_CURSOR].top };
+            drawText(rt, screenCoords, "Foveation follows cursor");
         }
     };
 

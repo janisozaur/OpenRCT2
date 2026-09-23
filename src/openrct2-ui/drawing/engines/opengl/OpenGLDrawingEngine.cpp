@@ -30,6 +30,7 @@
     #include <openrct2/config/Config.h>
     #include <openrct2/drawing/Drawing.Sprite.h>
     #include <openrct2/drawing/Drawing.String.h>
+#include <openrct2/drawing/Foveation.h>
     #include <openrct2/drawing/Drawing.h>
     #include <openrct2/drawing/IDrawingContext.h>
     #include <openrct2/drawing/IDrawingEngine.h>
@@ -927,8 +928,26 @@ void OpenGLDrawingContext::DrawSprite(RenderTarget& rt, const ImageId imageId, c
     right += clip.getLeft() - rt.x;
     bottom += clip.getTop() - rt.y;
 
-    const float zoom = rt.zoom_level >= ZoomLevel{ 0 } ? static_cast<float>(rt.zoom_level.ApplyTo(1))
-                                                       : 1.0f / static_cast<float>(rt.zoom_level.ApplyInversedTo(1));
+    ZoomLevel activeZoom = rt.zoom_level;
+    const auto& foveation = Drawing::gFoveatedRenderingSettings;
+    if (foveation.enabled)
+    {
+        float spriteScreenX = clip.getLeft() + (left + right) / 2.0f;
+        float spriteScreenY = clip.getTop() + (top + bottom) / 2.0f;
+        float focalPxX = _engine.getRT()->width * foveation.focalCenterX;
+        float focalPxY = _engine.getRT()->height * foveation.focalCenterY;
+        float dx = (spriteScreenX - focalPxX) * foveation.gainX;
+        float dy = (spriteScreenY - focalPxY) * foveation.gainY;
+        float dist = std::sqrt(dx * dx + dy * dy);
+
+        if (dist > foveation.innerRadius)
+        {
+            activeZoom = foveation.GetPeripheralZoomLevel(activeZoom);
+        }
+    }
+
+    const float zoom = activeZoom >= ZoomLevel{ 0 } ? static_cast<float>(activeZoom.ApplyTo(1))
+                                                    : 1.0f / static_cast<float>(activeZoom.ApplyInversedTo(1));
 
     int paletteCount;
     ivec3 palettes{};

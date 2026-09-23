@@ -21,6 +21,7 @@
 #include "../drawing/Drawing.Sprite.h"
 #include "../drawing/Drawing.h"
 #include "../drawing/IDrawingEngine.h"
+#include "../drawing/Foveation.h"
 #include "../drawing/NewDrawing.h"
 #include "../drawing/Rectangle.h"
 #include "../entity/Guest.h"
@@ -926,6 +927,11 @@ namespace OpenRCT2
         const int32_t rightBorder = worldRT.x + worldRT.width;
         const int32_t alignedX = floor2(worldRT.x, columnWidth);
 
+        // Check for foveated rendering settings
+        const auto& foveation = Drawing::gFoveatedRenderingSettings;
+        float focalPxX = ContextGetWidth() * foveation.focalCenterX;
+        float focalPxY = ContextGetHeight() * foveation.focalCenterY;
+
         // Generate and sort columns.
         for (int32_t x = alignedX; x < rightBorder; x += columnWidth)
         {
@@ -950,6 +956,21 @@ namespace OpenRCT2
                 columnRT.pitch += rightPitch;
             }
             columnRT.width = paintRight - columnRT.x;
+
+            // Determine if column is outside inner focal region for foveated zoom detail adjustment
+            if (foveation.enabled)
+            {
+                float columnScreenX = viewport->pos.x + viewport->zoom.ApplyInversedTo(columnRT.x - viewport->viewPos.x) + (columnRT.width / 2.0f);
+                float columnScreenY = viewport->pos.y + viewport->zoom.ApplyInversedTo(columnRT.y - viewport->viewPos.y) + (columnRT.height / 2.0f);
+                float dx = (columnScreenX - focalPxX) * foveation.gainX;
+                float dy = (columnScreenY - focalPxY) * foveation.gainY;
+                float dist = std::sqrt(dx * dx + dy * dy);
+
+                if (dist > foveation.innerRadius)
+                {
+                    columnRT.zoom_level = foveation.GetPeripheralZoomLevel(viewport->zoom);
+                }
+            }
 
             // culling sprites outside the clipped column causes sorting differences between invalidation blocks
             // not culling sprites outside the full column width also causes a different kind of glitching
