@@ -16,13 +16,11 @@
 #include <openrct2/drawing/Drawing.String.h>
 #include <openrct2/drawing/Drawing.h>
 #include <openrct2/drawing/Font.h>
+#include <openrct2/drawing/Foveation.h>
+#include <openrct2/drawing/Text.h>
 #include <openrct2/interface/ColourWithFlags.h>
 #include <openrct2/localisation/Language.h>
 #include <openrct2/localisation/LocalisationService.h>
-#include <openrct2-ui/interface/Widget.h>
-#include <openrct2/drawing/Drawing.String.h>
-#include <openrct2/drawing/Foveation.h>
-#include <openrct2/drawing/Text.h>
 #include <openrct2/paint/Paint.h>
 #include <openrct2/paint/tile_element/Paint.TileElement.h>
 #include <openrct2/ui/UiContext.h>
@@ -199,10 +197,12 @@ namespace OpenRCT2::Ui::Windows
         {
             drawWidgets(rt);
 
-            auto screenCoords = windowPos + ScreenCoordsXY{ widgets[WIDX_TOGGLE_FOVEATION].left + 15, widgets[WIDX_TOGGLE_FOVEATION].top };
+            auto screenCoords = windowPos
+                + ScreenCoordsXY{ widgets[WIDX_TOGGLE_FOVEATION].left + 15, widgets[WIDX_TOGGLE_FOVEATION].top };
             drawText(rt, screenCoords, "Enable foveated rendering");
 
-            screenCoords = windowPos + ScreenCoordsXY{ widgets[WIDX_TOGGLE_FOVEATION_CURSOR].left + 15, widgets[WIDX_TOGGLE_FOVEATION_CURSOR].top };
+            screenCoords = windowPos
+                + ScreenCoordsXY{ widgets[WIDX_TOGGLE_FOVEATION_CURSOR].left + 15, widgets[WIDX_TOGGLE_FOVEATION_CURSOR].top };
             drawText(rt, screenCoords, "Foveation follows cursor");
         }
     };

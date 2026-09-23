@@ -30,8 +30,8 @@
     #include <openrct2/config/Config.h>
     #include <openrct2/drawing/Drawing.Sprite.h>
     #include <openrct2/drawing/Drawing.String.h>
-#include <openrct2/drawing/Foveation.h>
     #include <openrct2/drawing/Drawing.h>
+    #include <openrct2/drawing/Foveation.h>
     #include <openrct2/drawing/IDrawingContext.h>
     #include <openrct2/drawing/IDrawingEngine.h>
     #include <openrct2/drawing/InvalidationGrid.h>

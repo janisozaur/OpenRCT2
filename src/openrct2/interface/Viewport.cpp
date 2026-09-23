@@ -20,8 +20,8 @@
 #include "../drawing/Drawing.Screen.h"
 #include "../drawing/Drawing.Sprite.h"
 #include "../drawing/Drawing.h"
-#include "../drawing/IDrawingEngine.h"
 #include "../drawing/Foveation.h"
+#include "../drawing/IDrawingEngine.h"
 #include "../drawing/NewDrawing.h"
 #include "../drawing/Rectangle.h"
 #include "../entity/Guest.h"
@@ -960,8 +960,10 @@ namespace OpenRCT2
             // Determine if column is outside inner focal region for foveated zoom detail adjustment
             if (foveation.enabled)
             {
-                float columnScreenX = viewport->pos.x + viewport->zoom.ApplyInversedTo(columnRT.x - viewport->viewPos.x) + (columnRT.width / 2.0f);
-                float columnScreenY = viewport->pos.y + viewport->zoom.ApplyInversedTo(columnRT.y - viewport->viewPos.y) + (columnRT.height / 2.0f);
+                float columnScreenX = viewport->pos.x + viewport->zoom.ApplyInversedTo(columnRT.x - viewport->viewPos.x)
+                    + (columnRT.width / 2.0f);
+                float columnScreenY = viewport->pos.y + viewport->zoom.ApplyInversedTo(columnRT.y - viewport->viewPos.y)
+                    + (columnRT.height / 2.0f);
                 float dx = (columnScreenX - focalPxX) * foveation.gainX;
                 float dy = (columnScreenY - focalPxY) * foveation.gainY;
                 float dist = std::sqrt(dx * dx + dy * dy);
