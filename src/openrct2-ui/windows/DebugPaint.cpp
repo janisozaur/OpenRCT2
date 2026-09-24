@@ -11,6 +11,7 @@
 #include <openrct2-ui/interface/Window.h>
 #include <openrct2-ui/windows/Windows.h>
 #include <openrct2/Context.h>
+#include <openrct2/config/Config.h>
 #include <openrct2/core/Guard.hpp>
 #include <openrct2/drawing/Drawing.Screen.h>
 #include <openrct2/drawing/Drawing.String.h>
@@ -134,13 +135,24 @@ namespace OpenRCT2::Ui::Windows
             if (Drawing::gFoveationFollowsCursor && Drawing::gFoveatedRenderingSettings.enabled)
             {
                 auto cursor = GetContext()->GetUiContext().GetCursorPosition();
+                float scale = Config::Get().general.windowScale;
+                if (scale <= 0.0f)
+                    scale = 1.0f;
+
                 int32_t screenW = ContextGetWidth();
                 int32_t screenH = ContextGetHeight();
                 if (screenW > 0 && screenH > 0)
                 {
-                    Drawing::gFoveatedRenderingSettings.focalCenterX = static_cast<float>(cursor.x) / screenW;
-                    Drawing::gFoveatedRenderingSettings.focalCenterY = static_cast<float>(cursor.y) / screenH;
-                    Drawing::GfxInvalidateScreen();
+                    float newCenterX = (static_cast<float>(cursor.x) / scale) / screenW;
+                    float newCenterY = (static_cast<float>(cursor.y) / scale) / screenH;
+
+                    if (std::abs(Drawing::gFoveatedRenderingSettings.focalCenterX - newCenterX) > 0.0001f
+                        || std::abs(Drawing::gFoveatedRenderingSettings.focalCenterY - newCenterY) > 0.0001f)
+                    {
+                        Drawing::gFoveatedRenderingSettings.focalCenterX = newCenterX;
+                        Drawing::gFoveatedRenderingSettings.focalCenterY = newCenterY;
+                        Drawing::GfxInvalidateScreen();
+                    }
                 }
             }
         }
