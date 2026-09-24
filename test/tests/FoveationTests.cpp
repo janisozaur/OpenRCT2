@@ -12,6 +12,17 @@
 
 using namespace OpenRCT2::Drawing;
 
+TEST(FoveationTests, DefaultSettings)
+{
+    FoveatedRenderingSettings settings;
+    EXPECT_FALSE(settings.enabled);
+    EXPECT_FLOAT_EQ(settings.focalCenterX, 0.5f);
+    EXPECT_FLOAT_EQ(settings.focalCenterY, 0.5f);
+    EXPECT_FLOAT_EQ(settings.innerRadius, 200.0f);
+    EXPECT_FLOAT_EQ(settings.outerRadius, 400.0f);
+    EXPECT_EQ(settings.peripheralZoomOffset, 1);
+}
+
 TEST(FoveationTests, GetPeripheralZoomLevel)
 {
     FoveatedRenderingSettings settings;
@@ -22,6 +33,10 @@ TEST(FoveationTests, GetPeripheralZoomLevel)
 
     ZoomLevel maxZoom = ZoomLevel::max();
     EXPECT_EQ(settings.GetPeripheralZoomLevel(maxZoom), ZoomLevel::max());
+
+    ZoomLevel minZoom = ZoomLevel::min();
+    settings.peripheralZoomOffset = -5;
+    EXPECT_EQ(settings.GetPeripheralZoomLevel(minZoom), ZoomLevel::min());
 
     settings.peripheralZoomOffset = 2;
     EXPECT_EQ(settings.GetPeripheralZoomLevel(ZoomLevel{ 0 }), ZoomLevel{ 2 });

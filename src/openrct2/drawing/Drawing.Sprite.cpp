@@ -24,10 +24,12 @@
 #include "../rct1/Csg.h"
 #include "../ui/UiContext.h"
 #include "Drawing.h"
+#include "Foveation.h"
 #include "RenderTarget.h"
 #include "ScrollingText.h"
 
 #include <cassert>
+#include <cmath>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -805,11 +807,47 @@ void FASTCALL GfxDrawSpriteSoftware(RenderTarget& rt, const ImageId imageId, con
  * y (dx)
  */
 void FASTCALL GfxDrawSpritePaletteSetSoftware(
-    RenderTarget& rt, const ImageId imageId, const ScreenCoordsXY& coords, const PaletteMap& paletteMap)
+    RenderTarget& rt, ImageId imageId, const ScreenCoordsXY& coords, const PaletteMap& paletteMap)
 {
     const auto zoomLevel = rt.zoom_level;
     int32_t x = coords.x;
     int32_t y = coords.y;
+
+    const auto& foveation = Drawing::gFoveatedRenderingSettings;
+    if (foveation.enabled)
+    {
+        float focalPxX = ContextGetWidth() * foveation.focalCenterX;
+        float focalPxY = ContextGetHeight() * foveation.focalCenterY;
+        float screenX = static_cast<float>(rt.x + coords.x);
+        float screenY = static_cast<float>(rt.y + coords.y);
+        float dx = (screenX - focalPxX) * foveation.gainX;
+        float dy = (screenY - focalPxY) * foveation.gainY;
+        float dist = std::sqrt(dx * dx + dy * dy);
+
+        if (dist > foveation.innerRadius)
+        {
+            ZoomLevel targetZoom = foveation.GetPeripheralZoomLevel(zoomLevel);
+            ZoomLevel curZoom = zoomLevel;
+            const auto* g1Elem = GfxGetG1Element(imageId);
+            while (g1Elem != nullptr && targetZoom > curZoom)
+            {
+                if (g1Elem->flags.has(G1Flag::hasZoomSprite))
+                {
+                    imageId = imageId.WithIndex(imageId.GetIndex() - g1Elem->zoomedOffset);
+                    g1Elem = GfxGetG1Element(imageId);
+                }
+                else
+                {
+                    break;
+                }
+                curZoom = curZoom + 1;
+            }
+            if (g1Elem != nullptr && g1Elem->flags.has(G1Flag::noZoomDraw) && targetZoom > curZoom)
+            {
+                return;
+            }
+        }
+    }
 
     const auto* g1 = GfxGetG1Element(imageId);
     if (g1 == nullptr)

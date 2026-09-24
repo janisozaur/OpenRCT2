@@ -132,29 +132,6 @@ namespace OpenRCT2::Ui::Windows
 
         void onUpdate() override
         {
-            if (Drawing::gFoveationFollowsCursor && Drawing::gFoveatedRenderingSettings.enabled)
-            {
-                auto cursor = GetContext()->GetUiContext().GetCursorPosition();
-                float scale = Config::Get().general.windowScale;
-                if (scale <= 0.0f)
-                    scale = 1.0f;
-
-                int32_t screenW = ContextGetWidth();
-                int32_t screenH = ContextGetHeight();
-                if (screenW > 0 && screenH > 0)
-                {
-                    float newCenterX = (static_cast<float>(cursor.x) / scale) / screenW;
-                    float newCenterY = (static_cast<float>(cursor.y) / scale) / screenH;
-
-                    if (std::abs(Drawing::gFoveatedRenderingSettings.focalCenterX - newCenterX) > 0.0001f
-                        || std::abs(Drawing::gFoveatedRenderingSettings.focalCenterY - newCenterY) > 0.0001f)
-                    {
-                        Drawing::gFoveatedRenderingSettings.focalCenterX = newCenterX;
-                        Drawing::gFoveatedRenderingSettings.focalCenterY = newCenterY;
-                        Drawing::GfxInvalidateScreen();
-                    }
-                }
-            }
         }
 
         void onPrepareDraw() override
