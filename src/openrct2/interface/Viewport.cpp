@@ -960,10 +960,10 @@ namespace OpenRCT2
             // Determine if column is outside inner focal region for foveated zoom detail adjustment
             if (foveation.enabled)
             {
-                float columnScreenX = viewport->pos.x + viewport->zoom.ApplyInversedTo(columnRT.x) - viewport->zoom.ApplyInversedTo(viewport->viewPos.x)
-                    + (columnRT.width / 2.0f);
-                float columnScreenY = viewport->pos.y + viewport->zoom.ApplyInversedTo(columnRT.y) - viewport->zoom.ApplyInversedTo(viewport->viewPos.y)
-                    + (columnRT.height / 2.0f);
+                float columnScreenX = viewport->pos.x + viewport->zoom.ApplyInversedTo(columnRT.x)
+                    - viewport->zoom.ApplyInversedTo(viewport->viewPos.x) + (columnRT.width / 2.0f);
+                float columnScreenY = viewport->pos.y + viewport->zoom.ApplyInversedTo(columnRT.y)
+                    - viewport->zoom.ApplyInversedTo(viewport->viewPos.y) + (columnRT.height / 2.0f);
                 float dx = (columnScreenX - focalPxX) * foveation.gainX;
                 float dy = (columnScreenY - focalPxY) * foveation.gainY;
                 float dist = std::sqrt(dx * dx + dy * dy);
