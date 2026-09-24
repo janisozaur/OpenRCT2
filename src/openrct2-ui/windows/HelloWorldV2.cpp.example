@@ -1,0 +1,87 @@
+/*****************************************************************************
+ * Example implementation of a UI v2 Window using Facebook Yoga and Fluent API.
+ * This is a prototype for the proposed UI rework.
+ *****************************************************************************/
+
+#include <openrct2-ui/interface/FlexWindow.h>
+#include <openrct2-ui/widgets/FlexButton.h>
+#include <openrct2-ui/widgets/FlexColumn.h>
+#include <openrct2-ui/widgets/FlexText.h>
+#include <openrct2/localisation/StringIds.h>
+#include <openrct2/ui/WindowManager.h>
+
+namespace OpenRCT2::Ui::Windows
+{
+    /**
+     * A prototype window demonstrating the UI v2 architecture.
+     * Inherits from FlexWindow, which manages the Yoga layout and RGBA rendering.
+     */
+    class HelloWorldWindow final : public FlexWindow
+    {
+    public:
+        HelloWorldWindow()
+            : FlexWindow(WindowClass::about)
+        {
+            // Initial window properties (logical units)
+            SetTitle("UI v2 Prototype");
+            SetMinSize({ 300, 200 });
+
+            // Construct the UI tree using the Fluent API.
+            // This tree automatically creates corresponding YGNodeRefs.
+            SetRoot(
+                FlexColumn::Create()
+                    .SetPadding(15)
+                    .SetJustifyContent(YGJustifyCenter)
+                    .SetAlignItems(YGAlignCenter)
+                    .SetBackgroundColor({ 255, 255, 255, 200 }) // Semi-transparent white
+                    .AddChildren({
+                        // Text with antialiasing and independent scaling
+                        FlexText::Create("Hello World from UI v2!")
+                            .SetFontSize(20)
+                            .SetFontWeight(FontWeight::Bold)
+                            .SetColor({ 0, 0, 0, 255 })
+                            .SetMarginBottom(20),
+
+                        FlexText::Create("This layout is powered by Yoga (Flexbox)")
+                            .SetFontSize(14)
+                            .SetColor({ 50, 50, 50, 255 })
+                            .SetMarginBottom(30),
+
+                        // A modern button with a callback
+                        FlexButton::Create(STR_CLOSE, [this]() { Close(); })
+                            .SetPadding({ 10, 20 })
+                            .SetBackgroundColor({ 0, 120, 215, 255 }) // "Windows Blue"
+                            .SetHoverColor({ 0, 140, 230, 255 })
+                            .SetTextColor({ 255, 255, 255, 255 })
+                            .SetBorderRadius(4)
+                    })
+            );
+        }
+
+        /**
+         * The layout is automatically recalculated by FlexWindow base class
+         * whenever logical dimensions or UI scale changes.
+         *
+         * The IDrawingContext provides an abstraction over the RGBA32 buffer,
+         * handling the mapping from logical units to physical pixels.
+         */
+        void OnDraw(IDrawingContext& ctx) override
+        {
+            // Base class draws the Yoga-managed widgets into the RGBA32 overlay
+            FlexWindow::OnDraw(ctx);
+
+            // Example of custom drawing using logical units.
+            // If ctx.GetScale() is 2.0, this 2-unit line will be 4 physical pixels thick.
+            ctx.DrawLine({0, 50}, {100, 50}, {0, 0, 0, 255}, 2.0f);
+        }
+    };
+
+    /**
+     * Function to open the prototype window.
+     */
+    void HelloWorldV2Open()
+    {
+        auto* windowMgr = GetWindowManager();
+        windowMgr->Create<HelloWorldWindow>();
+    }
+}
