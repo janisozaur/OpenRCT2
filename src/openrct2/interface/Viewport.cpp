@@ -959,37 +959,51 @@ namespace OpenRCT2
             columnRT.cullingY = -cullingY;
             columnRT.cullingWidth = columnWidth;
             columnRT.cullingHeight = cullingY * 2;
+        }
 
-            if (useMultithreading)
-            {
-                _paintJobs->AddTask([session]() -> void { ViewportFillColumn(*session); });
-            }
-            else
-            {
-                ViewportFillColumn(*session);
-            }
+        // If there are only a few columns, it is faster to paint them serially
+        // than to deal with the overhead of the job pool.
+        constexpr size_t kMultithreadingThreshold = 4;
+        if (_paintColumns.size() <= kMultithreadingThreshold)
+        {
+            useMultithreading = false;
+            useParallelDrawing = false;
         }
 
         if (useMultithreading)
         {
-            _paintJobs->Join();
-        }
-
-        // Paint columns.
-        for (auto* session : _paintColumns)
-        {
             if (useParallelDrawing)
             {
-                _paintJobs->AddTask([session]() -> void { ViewportPaintColumn(*session); });
+                for (auto* session : _paintColumns)
+                {
+                    _paintJobs->AddTask([session]() -> void {
+                        ViewportFillColumn(*session);
+                        ViewportPaintColumn(*session);
+                    });
+                }
+                _paintJobs->Join();
             }
             else
             {
-                ViewportPaintColumn(*session);
+                for (auto* session : _paintColumns)
+                {
+                    _paintJobs->AddTask([session]() -> void { ViewportFillColumn(*session); });
+                }
+                _paintJobs->Join();
+
+                for (auto* session : _paintColumns)
+                {
+                    ViewportPaintColumn(*session);
+                }
             }
         }
-        if (useParallelDrawing)
+        else
         {
-            _paintJobs->Join();
+            for (auto* session : _paintColumns)
+            {
+                ViewportFillColumn(*session);
+                ViewportPaintColumn(*session);
+            }
         }
 
         // Release resources.
