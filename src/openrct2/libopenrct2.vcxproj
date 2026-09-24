@@ -257,6 +257,7 @@
     <ClInclude Include="drawing\Drawing.String.h" />
     <ClInclude Include="drawing\FilterPaletteIds.h" />
     <ClInclude Include="drawing\Font.h" />
+    <ClInclude Include="drawing\Foveation.h" />
     <ClInclude Include="drawing\G1Element.h" />
     <ClInclude Include="drawing\IDrawingContext.h" />
     <ClInclude Include="drawing\IDrawingEngine.h" />
@@ -909,6 +910,7 @@
     <ClCompile Include="drawing\Drawing.Sprite.RLE.cpp" />
     <ClCompile Include="drawing\Drawing.String.cpp" />
     <ClCompile Include="drawing\Font.cpp" />
+    <ClCompile Include="drawing\Foveation.cpp" />
     <ClCompile Include="drawing\Image.cpp" />
     <ClCompile Include="drawing\ImageId.cpp" />
     <ClCompile Include="drawing\ImageImporter.cpp" />

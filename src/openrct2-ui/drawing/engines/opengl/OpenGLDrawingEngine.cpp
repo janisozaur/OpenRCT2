@@ -31,6 +31,7 @@
     #include <openrct2/drawing/Drawing.Sprite.h>
     #include <openrct2/drawing/Drawing.String.h>
     #include <openrct2/drawing/Drawing.h>
+    #include <openrct2/drawing/Foveation.h>
     #include <openrct2/drawing/IDrawingContext.h>
     #include <openrct2/drawing/IDrawingEngine.h>
     #include <openrct2/drawing/InvalidationGrid.h>
@@ -372,7 +373,7 @@ public:
 
     void PaintWindows() override
     {
-        if (Weather::hasWeatherEffect() || gPaintForceRedraw)
+        if (Weather::hasWeatherEffect() || gPaintForceRedraw || gFoveatedRenderingSettings.enabled)
         {
             WindowUpdateAllViewports();
             // OpenGL doesn't support restoring pixels, always redraw.
@@ -862,7 +863,7 @@ static auto EuclideanRemainder(const auto a, const auto b)
     return r >= 0 ? r : r + b;
 };
 
-void OpenGLDrawingContext::DrawSprite(RenderTarget& rt, const ImageId imageId, const int32_t x, const int32_t y)
+void OpenGLDrawingContext::DrawSprite(RenderTarget& rt, ImageId imageId, const int32_t x, const int32_t y)
 {
     Guard::Assert(_inDraw == true);
 
@@ -870,6 +871,47 @@ void OpenGLDrawingContext::DrawSprite(RenderTarget& rt, const ImageId imageId, c
     if (g1Element == nullptr)
     {
         return;
+    }
+
+    const auto& foveation = Drawing::gFoveatedRenderingSettings;
+    if (foveation.enabled)
+    {
+        float focalPxX = ContextGetWidth() * foveation.focalCenterX;
+        float focalPxY = ContextGetHeight() * foveation.focalCenterY;
+        int32_t sprLeft = x + g1Element->xOffset;
+        int32_t sprTop = y + g1Element->yOffset;
+        float spriteCenterX = static_cast<float>(rt.x + sprLeft + g1Element->width / 2);
+        float spriteCenterY = static_cast<float>(rt.y + sprTop + g1Element->height / 2);
+        float dx = (spriteCenterX - focalPxX) * foveation.gainX;
+        float dy = (spriteCenterY - focalPxY) * foveation.gainY;
+        float dist = std::sqrt(dx * dx + dy * dy);
+
+        if (dist > foveation.innerRadius)
+        {
+            ZoomLevel targetZoom = foveation.GetPeripheralZoomLevel(rt.zoom_level);
+            ZoomLevel curZoom = rt.zoom_level;
+            while (g1Element != nullptr && targetZoom > curZoom)
+            {
+                if (g1Element->flags.has(G1Flag::hasZoomSprite))
+                {
+                    imageId = imageId.WithIndex(imageId.GetIndex() - g1Element->zoomedOffset);
+                    g1Element = GfxGetG1Element(imageId);
+                    curZoom = curZoom + 1;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            if (g1Element != nullptr && g1Element->flags.has(G1Flag::noZoomDraw) && targetZoom > curZoom)
+            {
+                return;
+            }
+            if (g1Element == nullptr)
+            {
+                return;
+            }
+        }
     }
 
     if (rt.zoom_level > ZoomLevel{ 0 })
@@ -927,8 +969,9 @@ void OpenGLDrawingContext::DrawSprite(RenderTarget& rt, const ImageId imageId, c
     right += clip.getLeft() - rt.x;
     bottom += clip.getTop() - rt.y;
 
-    const float zoom = rt.zoom_level >= ZoomLevel{ 0 } ? static_cast<float>(rt.zoom_level.ApplyTo(1))
-                                                       : 1.0f / static_cast<float>(rt.zoom_level.ApplyInversedTo(1));
+    const ZoomLevel activeZoom = rt.zoom_level;
+    const float zoom = activeZoom >= ZoomLevel{ 0 } ? static_cast<float>(activeZoom.ApplyTo(1))
+                                                    : 1.0f / static_cast<float>(activeZoom.ApplyInversedTo(1));
 
     int paletteCount;
     ivec3 palettes{};
