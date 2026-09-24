@@ -75,11 +75,46 @@ namespace OpenRCT2::Ui
 
         void OpenFolder(const std::string& path) override
         {
+            JNIEnv* env = static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv());
+            jobject activity = static_cast<jobject>(SDL_AndroidGetActivity());
+            if (activity == nullptr)
+            {
+                return;
+            }
+
+            jclass activityClass = env->GetObjectClass(activity);
+            jmethodID launchFolderMethod = env->GetMethodID(activityClass, "launchFolder", "(Ljava/lang/String;)V");
+            if (launchFolderMethod != nullptr)
+            {
+                jstring jPath = env->NewStringUTF(path.c_str());
+                env->CallVoidMethod(activity, launchFolderMethod, jPath);
+                env->DeleteLocalRef(jPath);
+            }
+
+            env->DeleteLocalRef(activityClass);
+            env->DeleteLocalRef(activity);
         }
 
         void OpenURL(const std::string& url) override
         {
-            LOG_WARNING("Function %s at %s:%d is a stub.", __PRETTY_FUNCTION__, __FILE__, __LINE__);
+            JNIEnv* env = static_cast<JNIEnv*>(SDL_AndroidGetJNIEnv());
+            jobject activity = static_cast<jobject>(SDL_AndroidGetActivity());
+            if (activity == nullptr)
+            {
+                return;
+            }
+
+            jclass activityClass = env->GetObjectClass(activity);
+            jmethodID launchURLMethod = env->GetMethodID(activityClass, "launchURL", "(Ljava/lang/String;)V");
+            if (launchURLMethod != nullptr)
+            {
+                jstring jUrl = env->NewStringUTF(url.c_str());
+                env->CallVoidMethod(activity, launchURLMethod, jUrl);
+                env->DeleteLocalRef(jUrl);
+            }
+
+            env->DeleteLocalRef(activityClass);
+            env->DeleteLocalRef(activity);
         }
 
         bool HasFilePicker() const override
