@@ -85,6 +85,8 @@
 #include <exception>
 #include <future>
 #include <memory>
+#include <mutex>
+#include <queue>
 #include <string>
 
 using namespace OpenRCT2;
@@ -155,6 +157,15 @@ namespace OpenRCT2
         Timer _forcedUpdateTimer;
 
         BackgroundWorker _backgroundWorker;
+
+        struct QueuedIntent
+        {
+            Intent intent;
+            bool isBroadcast;
+        };
+
+        std::mutex _intentQueueMutex;
+        std::queue<QueuedIntent> _intentQueue;
 
     public:
         // Singleton of Context.
@@ -663,9 +674,7 @@ namespace OpenRCT2
             ContextOpenIntent(&intent);
 
             // When we call this from the main thread we can pump messages and redraw.
-            const auto isMainThread = _mainThreadId == std::this_thread::get_id();
-
-            if (!gOpenRCT2Headless && isMainThread)
+            if (!gOpenRCT2Headless && IsMainThread())
             {
                 _uiContext->ProcessMessages();
                 auto* windowMgr = GetWindowManager();
@@ -1390,6 +1399,28 @@ namespace OpenRCT2
         {
             PROFILED_FUNCTION();
 
+            // Process any deferred intents from background threads
+            {
+                std::unique_lock<std::mutex> lock(_intentQueueMutex);
+                while (!_intentQueue.empty())
+                {
+                    QueuedIntent queuedIntent = std::move(_intentQueue.front());
+                    _intentQueue.pop();
+                    lock.unlock();
+
+                    if (queuedIntent.isBroadcast)
+                    {
+                        ContextBroadcastIntent(&queuedIntent.intent);
+                    }
+                    else
+                    {
+                        ContextOpenIntent(&queuedIntent.intent);
+                    }
+
+                    lock.lock();
+                }
+            }
+
             // TODO: This variable has been never "variable" in time, some code expects
             // this to be 40Hz (25 ms). Refactor this once the UI is decoupled.
             gCurrentDeltaTime = static_cast<uint16_t>(kGameUpdateTimeMS * 1000.0f);
@@ -1555,6 +1586,17 @@ namespace OpenRCT2
         {
             return _backgroundWorker;
         }
+
+        bool IsMainThread() const override
+        {
+            return _mainThreadId == std::this_thread::get_id();
+        }
+
+        void EnqueueIntent(const Intent& intent, bool isBroadcast) override
+        {
+            std::lock_guard<std::mutex> lock(_intentQueueMutex);
+            _intentQueue.push({ intent, isBroadcast });
+        }
     };
 
     Context* Context::Instance = nullptr;
@@ -1714,14 +1756,28 @@ namespace OpenRCT2
 
     WindowBase* ContextOpenIntent(Intent* intent)
     {
-        auto windowManager = GetWindowManager();
-        return windowManager->OpenIntent(intent);
+        auto context = GetContext();
+        if (context->IsMainThread())
+        {
+            auto windowManager = GetWindowManager();
+            return windowManager->OpenIntent(intent);
+        }
+
+        context->EnqueueIntent(*intent, false);
+        return nullptr;
     }
 
     void ContextBroadcastIntent(Intent* intent)
     {
-        auto windowManager = GetWindowManager();
-        windowManager->BroadcastIntent(*intent);
+        auto context = GetContext();
+        if (context->IsMainThread())
+        {
+            auto windowManager = GetWindowManager();
+            windowManager->BroadcastIntent(*intent);
+            return;
+        }
+
+        context->EnqueueIntent(*intent, true);
     }
 
     void ContextForceCloseWindowByClass(WindowClass windowClass)
