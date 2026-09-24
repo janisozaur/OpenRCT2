@@ -450,6 +450,8 @@ namespace OpenRCT2
         Console::WriteLine(versionInfo.c_str());
         Console::WriteFormat("%s (%s)", OPENRCT2_PLATFORM, OPENRCT2_ARCHITECTURE);
         Console::WriteLine();
+        Console::WriteFormat("Compiler: %s", gCompilerInfo);
+        Console::WriteLine();
         Console::WriteFormat("Network version: %s", Network::GetVersion().c_str());
         Console::WriteLine();
 #ifdef ENABLE_SCRIPTING
@@ -482,6 +484,8 @@ namespace OpenRCT2
         u8string versionInfo = gVersionInfoFull;
         Console::WriteLine(versionInfo.c_str());
         Console::WriteFormat("%s (%s)", OPENRCT2_PLATFORM, OPENRCT2_ARCHITECTURE);
+        Console::WriteLine();
+        Console::WriteFormat("Compiler: %s", gCompilerInfo);
         Console::WriteLine();
         Console::WriteLine();
 

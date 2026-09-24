@@ -81,6 +81,7 @@
 
 extern const char gVersionInfoFull[];
 extern const char gVersionInfoTag[];
+extern const char gCompilerInfo[];
 struct NewVersionInfo
 {
     std::string tag;
