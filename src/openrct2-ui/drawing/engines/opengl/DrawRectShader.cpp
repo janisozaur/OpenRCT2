@@ -95,9 +95,6 @@ DrawRectShader::DrawRectShader()
     glCall(
         glVertexAttribIPointer, vDepth, 1, GL_INT, glSizeOf<DrawRectCommand>(),
         reinterpret_cast<void*>(offsetof(DrawRectCommand, depth)));
-    glCall(
-        glVertexAttribPointer, vZoom, 1, GL_FLOAT, GL_FALSE, glSizeOf<DrawRectCommand>(),
-        reinterpret_cast<void*>(offsetof(DrawRectCommand, zoom)));
 
     glCall(glEnableVertexAttribArray, vVertMat + 0);
     glCall(glEnableVertexAttribArray, vVertMat + 1);
@@ -115,7 +112,6 @@ DrawRectShader::DrawRectShader()
     glCall(glEnableVertexAttribArray, vColour);
     glCall(glEnableVertexAttribArray, vBounds);
     glCall(glEnableVertexAttribArray, vDepth);
-    glCall(glEnableVertexAttribArray, vZoom);
 
     glCall(glVertexAttribDivisor, vClip, 1);
     glCall(glVertexAttribDivisor, vTexColourAtlas, 1);
@@ -127,7 +123,6 @@ DrawRectShader::DrawRectShader()
     glCall(glVertexAttribDivisor, vColour, 1);
     glCall(glVertexAttribDivisor, vBounds, 1);
     glCall(glVertexAttribDivisor, vDepth, 1);
-    glCall(glVertexAttribDivisor, vZoom, 1);
 
     Use();
     glCall(glUniform1i, uTexture, 0);
@@ -163,7 +158,6 @@ void DrawRectShader::GetLocations()
     vColour = GetAttributeLocation("vColour");
     vBounds = GetAttributeLocation("vBounds");
     vDepth = GetAttributeLocation("vDepth");
-    vZoom = GetAttributeLocation("vZoom");
 
     vVertMat = GetAttributeLocation("vVertMat");
     vVertVec = GetAttributeLocation("vVertVec");
@@ -198,6 +192,8 @@ void DrawRectShader::SetInstances(const RectCommandBatch& instances)
     }
     else
     {
+        // Orphan the buffer to avoid synchronization stalls
+        glCall(glBufferData, GL_ARRAY_BUFFER, sizeof(DrawRectCommand) * _maxInstancesBufferSize, nullptr, GL_STREAM_DRAW);
         glCall(glBufferSubData, GL_ARRAY_BUFFER, 0, sizeof(DrawRectCommand) * instances.size(), instances.data());
     }
 

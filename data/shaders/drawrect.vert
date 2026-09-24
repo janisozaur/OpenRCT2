@@ -16,22 +16,19 @@ in int   vFlags;
 in uint  vColour;
 in ivec4 vBounds;
 in int   vDepth;
-in float vZoom;
 
 in mat4x2 vVertMat;
 in vec2   vVertVec;
 
-flat out vec2  fPosition;
+out vec2       vTexColourCoord;
+out vec2       vTexMaskCoord;
+out vec2       vPosition;
 out vec3       fPeelPos;
 flat out int   fFlags;
 flat out uint  fColour;
-flat out vec4  fTexColour;
-flat out vec4  fTexMask;
 flat out vec3  fPalettes;
-flat out float fZoom;
 flat out int   fTexColourAtlas;
 flat out int   fTexMaskAtlas;
-flat out int   fScreenHeight;
 // clang-format on
 
 void main()
@@ -40,11 +37,11 @@ void main()
     vec2 m = clamp(
         ((vVertMat * vec4(vClip)) - (vVertMat * vec4(vBounds))) / vec2(vBounds.zw - vBounds.xy) + vVertVec, 0.0, 1.0);
     vec2 pos = mix(vec2(vBounds.xy), vec2(vBounds.zw), m);
-    fTexColour = vTexColourCoords;
-    fTexMask = vTexMaskCoords;
 
-    fPosition = vBounds.xy;
-    fZoom = vZoom;
+    vTexColourCoord = mix(vTexColourCoords.xy, vTexColourCoords.zw, m);
+    vTexMaskCoord = mix(vTexMaskCoords.xy, vTexMaskCoords.zw, m);
+    vPosition = pos;
+
     fTexColourAtlas = vTexColourAtlas;
     fTexMaskAtlas = vTexMaskAtlas;
 
@@ -57,8 +54,6 @@ void main()
     fFlags = vFlags;
     fColour = vColour;
     fPalettes = vec3(vPalettes);
-
-    fScreenHeight = uScreenSize.y;
 
     // Transform texture coordinates to viewport coordinates
     pos = pos * 2.0 - 1.0;
