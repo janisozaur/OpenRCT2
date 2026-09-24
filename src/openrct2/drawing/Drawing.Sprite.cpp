@@ -835,12 +835,12 @@ void FASTCALL GfxDrawSpritePaletteSetSoftware(
                 {
                     imageId = imageId.WithIndex(imageId.GetIndex() - g1Elem->zoomedOffset);
                     g1Elem = GfxGetG1Element(imageId);
+                    curZoom = curZoom + 1;
                 }
                 else
                 {
                     break;
                 }
-                curZoom = curZoom + 1;
             }
             if (g1Elem != nullptr && g1Elem->flags.has(G1Flag::noZoomDraw) && targetZoom > curZoom)
             {

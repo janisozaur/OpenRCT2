@@ -467,7 +467,7 @@ namespace OpenRCT2
         if (left >= right || top >= bottom)
             return;
 
-        if (DrawingEngineHasDirtyOptimisations())
+        if (DrawingEngineHasDirtyOptimisations() && !Drawing::gFoveatedRenderingSettings.enabled)
         {
             RenderTarget& rt = DrawingEngineGetRT();
             ViewportShiftPixels(rt, w, { left, top, right, bottom }, { x_diff, y_diff });

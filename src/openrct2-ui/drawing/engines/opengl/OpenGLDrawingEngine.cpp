@@ -373,7 +373,7 @@ public:
 
     void PaintWindows() override
     {
-        if (Weather::hasWeatherEffect() || gPaintForceRedraw)
+        if (Weather::hasWeatherEffect() || gPaintForceRedraw || gFoveatedRenderingSettings.enabled)
         {
             WindowUpdateAllViewports();
             // OpenGL doesn't support restoring pixels, always redraw.
@@ -896,12 +896,12 @@ void OpenGLDrawingContext::DrawSprite(RenderTarget& rt, ImageId imageId, const i
                 {
                     imageId = imageId.WithIndex(imageId.GetIndex() - g1Element->zoomedOffset);
                     g1Element = GfxGetG1Element(imageId);
+                    curZoom = curZoom + 1;
                 }
                 else
                 {
                     break;
                 }
-                curZoom = curZoom + 1;
             }
             if (g1Element != nullptr && g1Element->flags.has(G1Flag::noZoomDraw) && targetZoom > curZoom)
             {
