@@ -817,10 +817,18 @@ private:
         _codecContext->time_base = _videoStream->time_base;
         _codecContext->pix_fmt = _yuv444 ? AV_PIX_FMT_YUV444P : AV_PIX_FMT_YUV420P;
 
-        if (encoder->pix_fmts != nullptr)
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(62, 28, 100)
+        const void* supportedPixelFormatConfigs = nullptr;
+        avcodec_get_supported_config(
+            _codecContext, encoder, AV_CODEC_CONFIG_PIX_FORMAT, 0, &supportedPixelFormatConfigs, nullptr);
+        const auto* pixelFormats = static_cast<const enum AVPixelFormat*>(supportedPixelFormatConfigs);
+#else
+        const enum AVPixelFormat* pixelFormats = encoder->pix_fmts;
+#endif
+        if (pixelFormats != nullptr)
         {
             bool supported = false;
-            for (const enum AVPixelFormat* p = encoder->pix_fmts; *p != AV_PIX_FMT_NONE; p++)
+            for (const enum AVPixelFormat* p = pixelFormats; *p != AV_PIX_FMT_NONE; p++)
             {
                 if (*p == _codecContext->pix_fmt)
                 {
@@ -831,7 +839,7 @@ private:
             if (!supported)
             {
                 enum AVPixelFormat bestFmt = AV_PIX_FMT_NONE;
-                for (const enum AVPixelFormat* p = encoder->pix_fmts; *p != AV_PIX_FMT_NONE; p++)
+                for (const enum AVPixelFormat* p = pixelFormats; *p != AV_PIX_FMT_NONE; p++)
                 {
                     if (*p == AV_PIX_FMT_YUV420P || *p == AV_PIX_FMT_YUV444P || *p == AV_PIX_FMT_NV12 || *p == AV_PIX_FMT_P010)
                     {
@@ -841,7 +849,7 @@ private:
                 }
                 if (bestFmt == AV_PIX_FMT_NONE)
                 {
-                    bestFmt = encoder->pix_fmts[0];
+                    bestFmt = pixelFormats[0];
                 }
                 LOG_INFO("Selected pixel format %d for encoder %s", bestFmt, encoder->name);
                 _codecContext->pix_fmt = bestFmt;
@@ -1052,10 +1060,18 @@ private:
 
         // Configure audio codec context
         _audioCodecContext->sample_rate = 44100;
-        if (audioEncoder->supported_samplerates)
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(62, 28, 100)
+        const void* supportedSampleRateConfigs = nullptr;
+        avcodec_get_supported_config(
+            _audioCodecContext, audioEncoder, AV_CODEC_CONFIG_SAMPLE_RATE, 0, &supportedSampleRateConfigs, nullptr);
+        const auto* supportedSampleRates = static_cast<const int*>(supportedSampleRateConfigs);
+#else
+        const int* supportedSampleRates = audioEncoder->supported_samplerates;
+#endif
+        if (supportedSampleRates)
         {
             bool rateSupported = false;
-            for (const int* p = audioEncoder->supported_samplerates; *p != 0; p++)
+            for (const int* p = supportedSampleRates; *p != 0; p++)
             {
                 if (*p == 44100)
                 {
@@ -1065,7 +1081,7 @@ private:
             }
             if (!rateSupported)
             {
-                _audioCodecContext->sample_rate = audioEncoder->supported_samplerates[0];
+                _audioCodecContext->sample_rate = supportedSampleRates[0];
             }
         }
 
@@ -1075,10 +1091,18 @@ private:
 
         // Select sample format
         enum AVSampleFormat sampleFmt = AV_SAMPLE_FMT_S16;
-        if (audioEncoder->sample_fmts)
+#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(62, 28, 100)
+        const void* supportedSampleFormatConfigs = nullptr;
+        avcodec_get_supported_config(
+            _audioCodecContext, audioEncoder, AV_CODEC_CONFIG_SAMPLE_FORMAT, 0, &supportedSampleFormatConfigs, nullptr);
+        const auto* sampleFormats = static_cast<const enum AVSampleFormat*>(supportedSampleFormatConfigs);
+#else
+        const enum AVSampleFormat* sampleFormats = audioEncoder->sample_fmts;
+#endif
+        if (sampleFormats)
         {
             bool fmtSupported = false;
-            for (const enum AVSampleFormat* p = audioEncoder->sample_fmts; *p != AV_SAMPLE_FMT_NONE; p++)
+            for (const enum AVSampleFormat* p = sampleFormats; *p != AV_SAMPLE_FMT_NONE; p++)
             {
                 if (*p == AV_SAMPLE_FMT_S16)
                 {
@@ -1089,7 +1113,7 @@ private:
             }
             if (!fmtSupported)
             {
-                for (const enum AVSampleFormat* p = audioEncoder->sample_fmts; *p != AV_SAMPLE_FMT_NONE; p++)
+                for (const enum AVSampleFormat* p = sampleFormats; *p != AV_SAMPLE_FMT_NONE; p++)
                 {
                     if (*p == AV_SAMPLE_FMT_S16P || *p == AV_SAMPLE_FMT_FLT || *p == AV_SAMPLE_FMT_FLTP || *p == AV_SAMPLE_FMT_S32)
                     {
@@ -1101,7 +1125,7 @@ private:
             }
             if (!fmtSupported)
             {
-                sampleFmt = audioEncoder->sample_fmts[0];
+                sampleFmt = sampleFormats[0];
             }
         }
         _audioCodecContext->sample_fmt = sampleFmt;
