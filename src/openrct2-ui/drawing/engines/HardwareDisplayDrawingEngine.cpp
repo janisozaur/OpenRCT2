@@ -41,6 +41,7 @@
 extern "C" {
     #include <libavcodec/avcodec.h>
     #include <libavformat/avformat.h>
+    #include <libavutil/audio_fifo.h>
     #include <libavutil/avutil.h>
     #include <libavutil/channel_layout.h>
     #include <libavutil/imgutils.h>
@@ -249,6 +250,7 @@ struct EncodeThreadData
     AVStream* audioStream{};
     AVFrame* audioFrame{};
     SwrContext* swrContext{};
+    AVAudioFifo* audioFifo{};
     int64_t nextAudioPts{ 0 };
     int64_t audioSamplesWritten{ 0 };
     std::atomic<bool> forceKeyframe{ false };
@@ -346,49 +348,69 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                         const auto& activeAudioBuf = (etd.activeBuffer == 0) ? etd.audioBufferA : etd.audioBufferB;
 
                         // Encode audio for this frame if audio is initialized
-                        if (etd.audioCodecContext && etd.swrContext && !activeAudioBuf.empty())
+                        if (etd.audioCodecContext && etd.swrContext && etd.audioFifo && !activeAudioBuf.empty())
                         {
                             const uint8_t* inData[1] = { activeAudioBuf.data() };
                             int inSamples = static_cast<int>(activeAudioBuf.size() / 4); // 4 bytes per stereo sample (2x int16_t)
 
-                            int frameSize = etd.audioCodecContext->frame_size;
-                            if (frameSize <= 0)
-                            {
-                                frameSize = inSamples;
-                            }
-
-                            while (inSamples > 0 || swr_get_delay(etd.swrContext, 22050) >= frameSize)
+                            if (inSamples > 0)
                             {
                                 int dstNbSamples = av_rescale_rnd(
                                     swr_get_delay(etd.swrContext, 22050) + inSamples, etd.audioCodecContext->sample_rate,
                                     22050, AV_ROUND_UP);
 
-                                if (dstNbSamples < frameSize)
+                                if (dstNbSamples > 0)
                                 {
-                                    // Feed remaining input to resampler buffer
-                                    if (inSamples > 0)
-                                    {
-                                        swr_convert(etd.swrContext, nullptr, 0, inData, inSamples);
-                                        inSamples = 0;
-                                    }
-                                    break;
-                                }
+                                    uint8_t** resampledData = nullptr;
+                                    int resampledLinesize = 0;
+                                    av_samples_alloc_array_and_samples(
+                                        &resampledData,
+                                        &resampledLinesize,
+                                        etd.audioCodecContext->ch_layout.nb_channels,
+                                        dstNbSamples,
+                                        etd.audioCodecContext->sample_fmt,
+                                        0);
 
+                                    int converted = swr_convert(
+                                        etd.swrContext, resampledData, dstNbSamples, inData, inSamples);
+
+                                    if (converted > 0)
+                                    {
+                                        av_audio_fifo_realloc(
+                                            etd.audioFifo,
+                                            av_audio_fifo_size(etd.audioFifo) + converted);
+                                        av_audio_fifo_write(
+                                            etd.audioFifo,
+                                            reinterpret_cast<void**>(resampledData),
+                                            converted);
+                                    }
+
+                                    if (resampledData)
+                                    {
+                                        av_freep(&resampledData[0]);
+                                        av_freep(&resampledData);
+                                    }
+                                }
+                            }
+
+                            int frameSize = etd.audioCodecContext->frame_size;
+                            if (frameSize <= 0)
+                            {
+                                frameSize = av_audio_fifo_size(etd.audioFifo);
+                            }
+
+                            while (frameSize > 0 && av_audio_fifo_size(etd.audioFifo) >= frameSize)
+                            {
                                 av_frame_make_writable(etd.audioFrame);
                                 etd.audioFrame->nb_samples = frameSize;
 
-                                uint8_t** outData = etd.audioFrame->data;
-                                int converted = swr_convert(
-                                    etd.swrContext, outData, frameSize,
-                                    inSamples > 0 ? inData : nullptr, inSamples);
-
-                                inSamples = 0; // All input consumed by swr_convert
-
-                                if (converted > 0)
+                                if (av_audio_fifo_read(
+                                        etd.audioFifo,
+                                        reinterpret_cast<void**>(etd.audioFrame->data),
+                                        frameSize) == frameSize)
                                 {
-                                    etd.audioFrame->nb_samples = converted;
                                     etd.audioFrame->pts = etd.nextAudioPts;
-                                    etd.nextAudioPts += converted;
+                                    etd.nextAudioPts += frameSize;
 
                                     encode_frame(etd.audioCodecContext, etd.audioFrame, etd.formatContext, etd.audioStream);
                                 }
@@ -440,6 +462,7 @@ private:
     AVStream* _audioStream = nullptr;
     AVFrame* _audioFrame = nullptr;
     SwrContext* _swrContext = nullptr;
+    AVAudioFifo* _audioFifo = nullptr;
     double _audioSampleAcc = 0.0;
 #endif
 
@@ -497,28 +520,87 @@ public:
             {
                 encode_frame(_codecContext, nullptr, _formatContext, _videoStream);
             }
-            if (_audioCodecContext && _swrContext && _audioFrame)
+            if (_audioCodecContext && _swrContext && _audioFrame && _audioFifo)
             {
-                // Drain any remaining resampled audio samples from swrContext
-                int frameSize = _audioCodecContext->frame_size > 0 ? _audioCodecContext->frame_size : 1024;
-                while (true)
+                // Drain any remaining resampled audio samples from swrContext into _audioFifo
+                int delay = swr_get_delay(_swrContext, 22050);
+                if (delay > 0)
                 {
-                    int delay = swr_get_delay(_swrContext, 22050);
-                    if (delay <= 0)
+                    int dstNbSamples = av_rescale_rnd(
+                        delay, _audioCodecContext->sample_rate, 22050, AV_ROUND_UP);
+                    if (dstNbSamples > 0)
                     {
-                        break;
+                        uint8_t** resampledData = nullptr;
+                        int resampledLinesize = 0;
+                        av_samples_alloc_array_and_samples(
+                            &resampledData,
+                            &resampledLinesize,
+                            _audioCodecContext->ch_layout.nb_channels,
+                            dstNbSamples,
+                            _audioCodecContext->sample_fmt,
+                            0);
+
+                        int converted = swr_convert(_swrContext, resampledData, dstNbSamples, nullptr, 0);
+                        if (converted > 0)
+                        {
+                            av_audio_fifo_realloc(
+                                _audioFifo,
+                                av_audio_fifo_size(_audioFifo) + converted);
+                            av_audio_fifo_write(
+                                _audioFifo,
+                                reinterpret_cast<void**>(resampledData),
+                                converted);
+                        }
+
+                        if (resampledData)
+                        {
+                            av_freep(&resampledData[0]);
+                            av_freep(&resampledData);
+                        }
                     }
+                }
+
+                int frameSize = _audioCodecContext->frame_size;
+                if (frameSize <= 0)
+                {
+                    frameSize = av_audio_fifo_size(_audioFifo);
+                }
+
+                bool canTakePartialFrame = (_audioCodecContext->codec->capabilities & AV_CODEC_CAP_VARIABLE_FRAME_SIZE) != 0;
+
+                while (av_audio_fifo_size(_audioFifo) > 0)
+                {
+                    int samplesToRead = std::min(av_audio_fifo_size(_audioFifo), frameSize);
                     av_frame_make_writable(_audioFrame);
-                    _audioFrame->nb_samples = frameSize;
-                    uint8_t** outData = _audioFrame->data;
-                    int converted = swr_convert(_swrContext, outData, frameSize, nullptr, 0);
-                    if (converted <= 0)
+
+                    if (samplesToRead < frameSize && !canTakePartialFrame)
                     {
-                        break;
+                        // Encoder requires fixed frame size, pad remaining frame with silence
+                        _audioFrame->nb_samples = frameSize;
+                        av_samples_set_silence(
+                            _audioFrame->data,
+                            0,
+                            frameSize,
+                            _audioCodecContext->ch_layout.nb_channels,
+                            _audioCodecContext->sample_fmt);
+
+                        av_audio_fifo_read(
+                            _audioFifo,
+                            reinterpret_cast<void**>(_audioFrame->data),
+                            samplesToRead);
                     }
-                    _audioFrame->nb_samples = converted;
+                    else
+                    {
+                        _audioFrame->nb_samples = samplesToRead;
+                        av_audio_fifo_read(
+                            _audioFifo,
+                            reinterpret_cast<void**>(_audioFrame->data),
+                            samplesToRead);
+                    }
+
                     _audioFrame->pts = etd.nextAudioPts;
-                    etd.nextAudioPts += converted;
+                    etd.nextAudioPts += _audioFrame->nb_samples;
+
                     encode_frame(_audioCodecContext, _audioFrame, _formatContext, _audioStream);
                 }
 
@@ -544,6 +626,11 @@ public:
                 }
             }
 
+            if (_audioFifo)
+            {
+                av_audio_fifo_free(_audioFifo);
+                _audioFifo = nullptr;
+            }
             if (_audioCodecContext)
             {
                 avcodec_free_context(&_audioCodecContext);
@@ -1198,10 +1285,23 @@ private:
             return;
         }
 
+        int initialFifoSize = _audioCodecContext->frame_size > 0 ? _audioCodecContext->frame_size * 2 : 8192;
+        _audioFifo = av_audio_fifo_alloc(_audioCodecContext->sample_fmt, _audioCodecContext->ch_layout.nb_channels, initialFifoSize);
+        if (!_audioFifo)
+        {
+            LOG_ERROR("Could not allocate audio FIFO buffer");
+            av_frame_free(&_audioFrame);
+            swr_free(&_swrContext);
+            avcodec_free_context(&_audioCodecContext);
+            _audioCodecContext = nullptr;
+            return;
+        }
+
         etd.audioCodecContext = _audioCodecContext;
         etd.audioStream = _audioStream;
         etd.audioFrame = _audioFrame;
         etd.swrContext = _swrContext;
+        etd.audioFifo = _audioFifo;
         etd.nextAudioPts = 0;
         etd.audioSamplesWritten = 0;
 #endif
