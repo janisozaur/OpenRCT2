@@ -41,9 +41,11 @@ extern "C" {
     #include <libavformat/avformat.h>
     #include <libavutil/avutil.h>
     #include <libavutil/imgutils.h>
+    #include <libavutil/log.h>
     #include <libavutil/opt.h>
     #include <libswscale/swscale.h>
 }
+    #include <ctime>
 #endif
 #ifdef _WIN32
     #include <direct.h>
@@ -60,6 +62,63 @@ using namespace OpenRCT2::Ui;
 bool gShouldRender = true;
 
 #ifdef ENABLE_VIDEO_RECORDING
+static FILE* gFFmpegLogFile = nullptr;
+static std::mutex gFFmpegLogMutex;
+
+static void CustomAVLogCallback(void* ptr, int level, const char* fmt, va_list vl)
+{
+    va_list vl2;
+    va_copy(vl2, vl);
+
+    av_log_default_callback(ptr, level, fmt, vl);
+
+    std::lock_guard<std::mutex> lock(gFFmpegLogMutex);
+    if (gFFmpegLogFile != nullptr)
+    {
+        char line[4096];
+        int print_prefix = 1;
+        av_log_format_line(ptr, level, fmt, vl2, line, sizeof(line), &print_prefix);
+        fputs(line, gFFmpegLogFile);
+        fflush(gFFmpegLogFile);
+    }
+    va_end(vl2);
+}
+
+static void UnregisterFFmpegLogging()
+{
+    av_log_set_callback(av_log_default_callback);
+    std::lock_guard<std::mutex> lock(gFFmpegLogMutex);
+    if (gFFmpegLogFile != nullptr)
+    {
+        fclose(gFFmpegLogFile);
+        gFFmpegLogFile = nullptr;
+    }
+}
+
+static void RegisterFFmpegLogging(const std::string& videoName)
+{
+    UnregisterFFmpegLogging();
+
+    std::time_t t = std::time(nullptr);
+    std::tm tm = *std::localtime(&t);
+    char timestampBuf[32];
+    std::strftime(timestampBuf, sizeof(timestampBuf), "%Y%m%d-%H%M%S", &tm);
+
+    std::string logFilename = "ffmpeg-" + videoName + "-" + std::string(timestampBuf) + ".log";
+
+    std::lock_guard<std::mutex> lock(gFFmpegLogMutex);
+    gFFmpegLogFile = fopen(logFilename.c_str(), "w");
+    if (gFFmpegLogFile != nullptr)
+    {
+        LOG_INFO("FFmpeg log file created: %s", logFilename.c_str());
+    }
+    else
+    {
+        LOG_ERROR("Failed to create FFmpeg log file: %s", logFilename.c_str());
+    }
+    av_log_set_callback(CustomAVLogCallback);
+}
+
 static bool IsEncoderHW(const AVCodec* encoder)
 {
     if (encoder->capabilities & AV_CODEC_CAP_HARDWARE)
@@ -384,6 +443,7 @@ public:
                 avio_closep(&_formatContext->pb);
             avformat_free_context(_formatContext);
         }
+        UnregisterFFmpegLogging();
 #endif
     }
 
@@ -588,7 +648,10 @@ private:
         {
             titleSequenceNameStr = titleSeqName;
         }
-        std::string filename = "out"s + titleSequenceNameStr + ".webm";
+        std::string videoName = "out"s + titleSequenceNameStr;
+        RegisterFFmpegLogging(videoName);
+
+        std::string filename = videoName + ".webm";
 
         if (avformat_alloc_output_context2(&_formatContext, nullptr, nullptr, filename.c_str()) < 0)
         {
@@ -602,7 +665,7 @@ private:
             LOG_INFO("Encoder %s is not supported by WebM, switching to MKV container", encoder->name);
             avformat_free_context(_formatContext);
             _formatContext = nullptr;
-            filename = "out"s + titleSequenceNameStr + ".mkv";
+            filename = videoName + ".mkv";
             if (avformat_alloc_output_context2(&_formatContext, nullptr, nullptr, filename.c_str()) < 0)
             {
                 LOG_FATAL("Could not allocate output context for MKV");
@@ -629,6 +692,62 @@ private:
         _videoStream->time_base = { 1, static_cast<int>(FPS) };
         _codecContext->time_base = _videoStream->time_base;
         _codecContext->pix_fmt = _yuv444 ? AV_PIX_FMT_YUV444P : AV_PIX_FMT_YUV420P;
+
+        if (encoder->pix_fmts != nullptr)
+        {
+            bool supported = false;
+            for (const enum AVPixelFormat* p = encoder->pix_fmts; *p != AV_PIX_FMT_NONE; p++)
+            {
+                if (*p == _codecContext->pix_fmt)
+                {
+                    supported = true;
+                    break;
+                }
+            }
+            if (!supported)
+            {
+                enum AVPixelFormat bestFmt = AV_PIX_FMT_NONE;
+                for (const enum AVPixelFormat* p = encoder->pix_fmts; *p != AV_PIX_FMT_NONE; p++)
+                {
+                    if (*p == AV_PIX_FMT_YUV420P || *p == AV_PIX_FMT_YUV444P || *p == AV_PIX_FMT_NV12 || *p == AV_PIX_FMT_P010)
+                    {
+                        bestFmt = *p;
+                        break;
+                    }
+                }
+                if (bestFmt == AV_PIX_FMT_NONE)
+                {
+                    bestFmt = encoder->pix_fmts[0];
+                }
+                LOG_INFO("Selected pixel format %d for encoder %s", bestFmt, encoder->name);
+                _codecContext->pix_fmt = bestFmt;
+            }
+        }
+
+        if (IsEncoderHW(encoder))
+        {
+            const AVCodecHWConfig* config = nullptr;
+            for (int i = 0;; i++)
+            {
+                const AVCodecHWConfig* c = avcodec_get_hw_config(encoder, i);
+                if (!c)
+                    break;
+                if (c->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)
+                {
+                    config = c;
+                    break;
+                }
+            }
+            if (config)
+            {
+                AVBufferRef* hw_device_ctx = nullptr;
+                if (av_hwdevice_ctx_create(&hw_device_ctx, config->device_type, nullptr, nullptr, 0) >= 0)
+                {
+                    _codecContext->hw_device_ctx = hw_device_ctx;
+                    LOG_INFO("Created HW device context for device type %d", config->device_type);
+                }
+            }
+        }
 
         if (_formatContext->oformat->flags & AVFMT_GLOBALHEADER)
             _codecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
