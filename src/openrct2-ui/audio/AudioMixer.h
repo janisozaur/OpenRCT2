@@ -58,9 +58,9 @@ namespace OpenRCT2::Audio
         SDLAudioSource* AddSource(std::unique_ptr<SDLAudioSource> source);
 
         const AudioFormat& GetFormat() const;
+        void GetNextAudioChunk(uint8_t* dst, size_t length) override;
 
     private:
-        void GetNextAudioChunk(uint8_t* dst, size_t length);
         void UpdateAdjustedSound();
         void MixChannel(ISDLAudioChannel* channel, uint8_t* data, size_t length);
         void RemoveReleasedSources();

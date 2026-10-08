@@ -8,14 +8,47 @@
  *****************************************************************************/
 
 #include "AudioContext.h"
+#include "AudioMixer.h"
 
 namespace OpenRCT2::Audio
 {
-    class DummyAudioContext final : public IAudioContext
+    class DummyAudioMixer final : public IAudioMixer
     {
-        IAudioMixer* GetMixer() override
+    public:
+        void Init(const char* /* device */) override
+        {
+        }
+        void Close() override
+        {
+        }
+        void Lock() override
+        {
+        }
+        void Unlock() override
+        {
+        }
+        std::shared_ptr<IAudioChannel> Play(IAudioSource* /* source */, int32_t /* loop */, bool /* deleteondone */) override
         {
             return nullptr;
+        }
+        void SetVolume(float /* volume */) override
+        {
+        }
+        void GetNextAudioChunk(uint8_t* dst, size_t length) override
+        {
+            std::fill_n(dst, length, 0);
+        }
+    };
+
+    class DummyAudioContext final : public IAudioContext
+    {
+    private:
+        DummyAudioMixer _mixer;
+
+    public:
+        IAudioMixer* GetMixer() override
+        {
+            return &_mixer;
         }
 
         std::vector<std::string> GetOutputDevices() override

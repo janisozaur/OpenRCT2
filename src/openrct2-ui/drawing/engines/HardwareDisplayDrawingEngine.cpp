@@ -16,12 +16,16 @@
 #include <cmath>
 #include <condition_variable>
 #include <cstring>
-#include <libyuv.h>
-#include <libyuv/convert_from_argb.h>
+#ifdef ENABLE_VIDEO_RECORDING
+    #include <libyuv.h>
+    #include <libyuv/convert_from_argb.h>
+#endif
 #include <memory>
 #include <mutex>
 #include <openrct2/Diagnostic.h>
 #include <openrct2/Game.h>
+#include <openrct2/audio/AudioContext.h>
+#include <openrct2/audio/AudioMixer.h>
 #include <openrct2/config/Config.h>
 #include <openrct2/core/Guard.hpp>
 #include <openrct2/drawing/IDrawingEngine.h>
@@ -40,9 +44,11 @@ extern "C" {
     #include <libavcodec/avcodec.h>
     #include <libavformat/avformat.h>
     #include <libavutil/avutil.h>
+    #include <libavutil/channel_layout.h>
     #include <libavutil/imgutils.h>
     #include <libavutil/log.h>
     #include <libavutil/opt.h>
+    #include <libswresample/swresample.h>
     #include <libswscale/swscale.h>
 }
     #include <ctime>
@@ -241,6 +247,12 @@ struct EncodeThreadData
     AVCodecContext* codecContext{};
     AVStream* videoStream{};
     AVFrame* frame{};
+    AVCodecContext* audioCodecContext{};
+    AVStream* audioStream{};
+    AVFrame* audioFrame{};
+    SwrContext* swrContext{};
+    int64_t nextAudioPts{ 0 };
+    int64_t audioSamplesWritten{ 0 };
     std::atomic<bool> forceKeyframe{ false };
     int frameCount{ 0 };
 #endif
@@ -256,6 +268,10 @@ struct EncodeThreadData
 
     // Which buffer is currently being used by the encoding thread
     std::atomic<int> activeBuffer{ 0 }; // 0 = A, 1 = B
+
+    // Double buffering for audio: A/B audio buffers
+    std::vector<uint8_t> audioBufferA{};
+    std::vector<uint8_t> audioBufferB{};
 };
 
 static void EncodeThreadFunc(EncodeThreadData& etd)
@@ -295,6 +311,7 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                     // Scale the surface
                     if (SDL_BlitScaled(tempSurface, nullptr, scaledSurface, nullptr) == 0)
                     {
+#ifdef ENABLE_VIDEO_RECORDING
                         auto function = libyuv::ARGBToI420;
                         if (etd.yuv444)
                         {
@@ -302,14 +319,10 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                         }
                         // Convert to YUV for encoding
                         function(
-                            static_cast<uint8_t*>(scaledSurface->pixels), scaledSurface->pitch,
-#ifdef ENABLE_VIDEO_RECORDING
-                            etd.frame->data[0], etd.frame->linesize[0], etd.frame->data[1], etd.frame->linesize[1],
-                            etd.frame->data[2], etd.frame->linesize[2],
-#else
-                            nullptr, 0, nullptr, 0, nullptr, 0,
+                            static_cast<uint8_t*>(scaledSurface->pixels), scaledSurface->pitch, etd.frame->data[0],
+                            etd.frame->linesize[0], etd.frame->data[1], etd.frame->linesize[1], etd.frame->data[2],
+                            etd.frame->linesize[2], scaledWidth, scaledHeight);
 #endif
-                            scaledWidth, scaledHeight);
 
 #ifdef ENABLE_VIDEO_RECORDING
                         etd.frame->pts = etd.frameCount++;
@@ -326,6 +339,59 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                         {
                             printf("%d", etd.frameCount);
                             fflush(stdout);
+                        }
+
+                        // Get current active audio buffer for encoding thread
+                        const auto& activeAudioBuf = (etd.activeBuffer == 0) ? etd.audioBufferA : etd.audioBufferB;
+
+                        // Encode audio for this frame if audio is initialized
+                        if (etd.audioCodecContext && etd.swrContext && !activeAudioBuf.empty())
+                        {
+                            const uint8_t* inData[1] = { activeAudioBuf.data() };
+                            int inSamples = static_cast<int>(
+                                activeAudioBuf.size() / 4); // 4 bytes per stereo sample (2x int16_t)
+
+                            int frameSize = etd.audioCodecContext->frame_size;
+                            if (frameSize <= 0)
+                            {
+                                frameSize = inSamples;
+                            }
+
+                            while (inSamples > 0 || swr_get_delay(etd.swrContext, 22050) >= frameSize)
+                            {
+                                int dstNbSamples = av_rescale_rnd(
+                                    swr_get_delay(etd.swrContext, 22050) + inSamples, etd.audioCodecContext->sample_rate, 22050,
+                                    AV_ROUND_UP);
+
+                                if (dstNbSamples < frameSize)
+                                {
+                                    // Feed remaining input to resampler buffer
+                                    if (inSamples > 0)
+                                    {
+                                        swr_convert(etd.swrContext, nullptr, 0, inData, inSamples);
+                                        inSamples = 0;
+                                    }
+                                    break;
+                                }
+
+                                av_frame_make_writable(etd.audioFrame);
+                                etd.audioFrame->nb_samples = frameSize;
+
+                                uint8_t** outData = etd.audioFrame->data;
+                                int converted = swr_convert(
+                                    etd.swrContext, outData, frameSize, inSamples > 0 ? inData : nullptr, inSamples);
+
+                                inSamples = 0; // All input consumed by swr_convert
+
+                                if (converted > 0)
+                                {
+                                    etd.audioFrame->nb_samples = converted;
+                                    etd.audioFrame->pts = etd.nextAudioPts;
+                                    etd.nextAudioPts += converted;
+
+                                    encode_frame(etd.audioCodecContext, etd.audioFrame, etd.formatContext, etd.audioStream);
+                                }
+                            }
                         }
 #endif
                     }
@@ -368,6 +434,12 @@ private:
     AVCodecContext* _codecContext = nullptr;
     AVStream* _videoStream = nullptr;
     AVFrame* _frame = nullptr;
+
+    AVCodecContext* _audioCodecContext = nullptr;
+    AVStream* _audioStream = nullptr;
+    AVFrame* _audioFrame = nullptr;
+    SwrContext* _swrContext = nullptr;
+    double _audioSampleAcc = 0.0;
 #endif
 
     std::thread EncodeThread{};
@@ -418,12 +490,46 @@ public:
         SDL_DestroyRenderer(_sdlRenderer);
 
 #ifdef ENABLE_VIDEO_RECORDING
-        if (_codecContext)
+        if (_codecContext || _audioCodecContext)
         {
-            encode_frame(_codecContext, nullptr, _formatContext, _videoStream);
-            av_write_trailer(_formatContext);
+            if (_codecContext)
+            {
+                encode_frame(_codecContext, nullptr, _formatContext, _videoStream);
+            }
+            if (_audioCodecContext && _swrContext && _audioFrame)
+            {
+                // Drain any remaining resampled audio samples from swrContext
+                int frameSize = _audioCodecContext->frame_size > 0 ? _audioCodecContext->frame_size : 1024;
+                while (true)
+                {
+                    int delay = swr_get_delay(_swrContext, 22050);
+                    if (delay <= 0)
+                    {
+                        break;
+                    }
+                    av_frame_make_writable(_audioFrame);
+                    _audioFrame->nb_samples = frameSize;
+                    uint8_t** outData = _audioFrame->data;
+                    int converted = swr_convert(_swrContext, outData, frameSize, nullptr, 0);
+                    if (converted <= 0)
+                    {
+                        break;
+                    }
+                    _audioFrame->nb_samples = converted;
+                    _audioFrame->pts = etd.nextAudioPts;
+                    etd.nextAudioPts += converted;
+                    encode_frame(_audioCodecContext, _audioFrame, _formatContext, _audioStream);
+                }
 
-            if (_codecContext->flags & AV_CODEC_FLAG_PASS1 && _codecContext->stats_out)
+                encode_frame(_audioCodecContext, nullptr, _formatContext, _audioStream);
+            }
+
+            if (_formatContext)
+            {
+                av_write_trailer(_formatContext);
+            }
+
+            if (_codecContext && (_codecContext->flags & AV_CODEC_FLAG_PASS1) && _codecContext->stats_out)
             {
                 const char* envStats = getenv("OPENRCT2_ENCODER_STATS");
                 if (envStats)
@@ -437,11 +543,28 @@ public:
                 }
             }
 
-            avcodec_free_context(&_codecContext);
-            av_frame_free(&_frame);
-            if (!(_formatContext->oformat->flags & AVFMT_NOFILE))
-                avio_closep(&_formatContext->pb);
-            avformat_free_context(_formatContext);
+            if (_audioCodecContext)
+            {
+                avcodec_free_context(&_audioCodecContext);
+                av_frame_free(&_audioFrame);
+            }
+            if (_swrContext)
+            {
+                swr_free(&_swrContext);
+            }
+
+            if (_codecContext)
+            {
+                avcodec_free_context(&_codecContext);
+                av_frame_free(&_frame);
+            }
+
+            if (_formatContext)
+            {
+                if (!(_formatContext->oformat->flags & AVFMT_NOFILE))
+                    avio_closep(&_formatContext->pb);
+                avformat_free_context(_formatContext);
+            }
         }
         UnregisterFFmpegLogging();
 #endif
@@ -857,7 +980,199 @@ private:
         etd.videoStream = _videoStream;
         etd.frame = _frame;
 
+        InitializeAudioEncoding();
+
         _videoInitialized = true;
+#endif
+    }
+
+    void InitializeAudioEncoding()
+    {
+#ifdef ENABLE_VIDEO_RECORDING
+        const char* envAudioEncoder = getenv("OPENRCT2_AUDIO_ENCODER");
+        const char* envAudioBitrate = getenv("OPENRCT2_AUDIO_BITRATE");
+
+        const AVCodec* audioEncoder = nullptr;
+        if (envAudioEncoder)
+        {
+            audioEncoder = avcodec_find_encoder_by_name(envAudioEncoder);
+            if (!audioEncoder)
+            {
+                LOG_ERROR("Requested audio encoder '%s' not found, falling back", envAudioEncoder);
+            }
+        }
+
+        if (!audioEncoder)
+        {
+            // Try preferred encoders in order: FLAC, Opus, AAC, Vorbis
+            static const char* preferredEncoders[] = { "flac", "libopus", "opus", "aac", "libvorbis", "vorbis" };
+            for (const char* encName : preferredEncoders)
+            {
+                audioEncoder = avcodec_find_encoder_by_name(encName);
+                if (audioEncoder && avformat_query_codec(_formatContext->oformat, audioEncoder->id, 1) == 1)
+                {
+                    break;
+                }
+                audioEncoder = nullptr;
+            }
+        }
+
+        if (!audioEncoder)
+        {
+            // Fallback to format default audio codec
+            AVCodecID defaultAudioCodec = _formatContext->oformat->audio_codec;
+            if (defaultAudioCodec != AV_CODEC_ID_NONE)
+            {
+                audioEncoder = avcodec_find_encoder(defaultAudioCodec);
+            }
+        }
+
+        if (!audioEncoder)
+        {
+            LOG_ERROR("Could not find suitable audio encoder for format context");
+            return;
+        }
+
+        LOG_INFO("Using audio encoder: %s", audioEncoder->name);
+
+        _audioStream = avformat_new_stream(_formatContext, nullptr);
+        if (!_audioStream)
+        {
+            LOG_ERROR("Could not allocate audio stream");
+            return;
+        }
+
+        _audioCodecContext = avcodec_alloc_context3(audioEncoder);
+        if (!_audioCodecContext)
+        {
+            LOG_ERROR("Could not allocate audio codec context");
+            return;
+        }
+
+        // Configure audio codec context
+        _audioCodecContext->sample_rate = 44100;
+        if (audioEncoder->supported_samplerates)
+        {
+            bool rateSupported = false;
+            for (const int* p = audioEncoder->supported_samplerates; *p != 0; p++)
+            {
+                if (*p == 44100)
+                {
+                    rateSupported = true;
+                    break;
+                }
+            }
+            if (!rateSupported)
+            {
+                _audioCodecContext->sample_rate = audioEncoder->supported_samplerates[0];
+            }
+        }
+
+        // Always stereo layout
+        AVChannelLayout chLayout = AV_CHANNEL_LAYOUT_STEREO;
+        av_channel_layout_copy(&_audioCodecContext->ch_layout, &chLayout);
+
+        // Select sample format
+        enum AVSampleFormat sampleFmt = AV_SAMPLE_FMT_S16;
+        if (audioEncoder->sample_fmts)
+        {
+            bool fmtSupported = false;
+            for (const enum AVSampleFormat* p = audioEncoder->sample_fmts; *p != AV_SAMPLE_FMT_NONE; p++)
+            {
+                if (*p == AV_SAMPLE_FMT_S16)
+                {
+                    fmtSupported = true;
+                    sampleFmt = *p;
+                    break;
+                }
+            }
+            if (!fmtSupported)
+            {
+                for (const enum AVSampleFormat* p = audioEncoder->sample_fmts; *p != AV_SAMPLE_FMT_NONE; p++)
+                {
+                    if (*p == AV_SAMPLE_FMT_S16P || *p == AV_SAMPLE_FMT_FLT || *p == AV_SAMPLE_FMT_FLTP
+                        || *p == AV_SAMPLE_FMT_S32)
+                    {
+                        fmtSupported = true;
+                        sampleFmt = *p;
+                        break;
+                    }
+                }
+            }
+            if (!fmtSupported)
+            {
+                sampleFmt = audioEncoder->sample_fmts[0];
+            }
+        }
+        _audioCodecContext->sample_fmt = sampleFmt;
+
+        if (envAudioBitrate)
+        {
+            _audioCodecContext->bit_rate = atoll(envAudioBitrate);
+        }
+        else if (audioEncoder->id != AV_CODEC_ID_FLAC)
+        {
+            _audioCodecContext->bit_rate = 192000;
+        }
+
+        _audioStream->time_base = { 1, _audioCodecContext->sample_rate };
+        _audioCodecContext->time_base = _audioStream->time_base;
+
+        if (_formatContext->oformat->flags & AVFMT_GLOBALHEADER)
+        {
+            _audioCodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+        }
+
+        if (avcodec_open2(_audioCodecContext, audioEncoder, nullptr) < 0)
+        {
+            LOG_ERROR("Could not open audio codec %s", audioEncoder->name);
+            avcodec_free_context(&_audioCodecContext);
+            _audioCodecContext = nullptr;
+            return;
+        }
+
+        avcodec_parameters_from_context(_audioStream->codecpar, _audioCodecContext);
+
+        // Setup resampler from OpenRCT2 mixer (22050Hz S16 Stereo) to codec target
+        AVChannelLayout srcLayout = AV_CHANNEL_LAYOUT_STEREO;
+        swr_alloc_set_opts2(
+            &_swrContext, &_audioCodecContext->ch_layout, _audioCodecContext->sample_fmt, _audioCodecContext->sample_rate,
+            &srcLayout, AV_SAMPLE_FMT_S16, 22050, 0, nullptr);
+
+        if (!_swrContext || swr_init(_swrContext) < 0)
+        {
+            LOG_ERROR("Failed to initialize audio resampler");
+            if (_swrContext)
+            {
+                swr_free(&_swrContext);
+            }
+            avcodec_free_context(&_audioCodecContext);
+            _audioCodecContext = nullptr;
+            return;
+        }
+
+        _audioFrame = av_frame_alloc();
+        _audioFrame->format = _audioCodecContext->sample_fmt;
+        av_channel_layout_copy(&_audioFrame->ch_layout, &_audioCodecContext->ch_layout);
+        _audioFrame->sample_rate = _audioCodecContext->sample_rate;
+        _audioFrame->nb_samples = _audioCodecContext->frame_size > 0 ? _audioCodecContext->frame_size : 8192;
+
+        if (av_frame_get_buffer(_audioFrame, 0) < 0)
+        {
+            LOG_ERROR("Could not allocate audio frame buffer");
+            av_frame_free(&_audioFrame);
+            swr_free(&_swrContext);
+            avcodec_free_context(&_audioCodecContext);
+            _audioCodecContext = nullptr;
+            return;
+        }
+
+        etd.audioCodecContext = _audioCodecContext;
+        etd.audioStream = _audioStream;
+        etd.audioFrame = _audioFrame;
+        etd.swrContext = _swrContext;
+        etd.nextAudioPts = 0;
+        etd.audioSamplesWritten = 0;
 #endif
     }
 
@@ -1012,6 +1327,29 @@ private:
                         }
 
                         SDL_UnlockTexture(_screenTexture);
+
+                        // Fetch audio chunk for this video frame into write audio buffer
+                        if (_audioCodecContext != nullptr)
+                        {
+                            auto& writeAudioBuf = (writeBuffer == 0) ? etd.audioBufferA : etd.audioBufferB;
+
+                            _audioSampleAcc += 22050.0 / static_cast<double>(FPS);
+                            int samplesToFetch = static_cast<int>(_audioSampleAcc);
+                            _audioSampleAcc -= samplesToFetch;
+
+                            size_t audioBytes = samplesToFetch * 4; // 2 channels * 2 bytes per S16 sample
+                            writeAudioBuf.resize(audioBytes);
+
+                            auto* mixer = GetContext()->GetAudioContext().GetMixer();
+                            if (mixer != nullptr)
+                            {
+                                mixer->GetNextAudioChunk(writeAudioBuf.data(), audioBytes);
+                            }
+                            else
+                            {
+                                std::fill(writeAudioBuf.begin(), writeAudioBuf.end(), 0);
+                            }
+                        }
 
                         // Swap buffers atomically
                         etd.activeBuffer = writeBuffer;
