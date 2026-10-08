@@ -22,6 +22,8 @@
 #include <mutex>
 #include <openrct2/Diagnostic.h>
 #include <openrct2/Game.h>
+#include <openrct2/audio/AudioContext.h>
+#include <openrct2/audio/AudioMixer.h>
 #include <openrct2/config/Config.h>
 #include <openrct2/core/Guard.hpp>
 #include <openrct2/drawing/IDrawingEngine.h>
@@ -30,8 +32,6 @@
 #include <openrct2/interface/Window.h>
 #include <openrct2/paint/Paint.h>
 #include <openrct2/scenes/title/TitleScene.h>
-#include <openrct2/audio/AudioContext.h>
-#include <openrct2/audio/AudioMixer.h>
 #include <openrct2/scenes/title/TitleSequencePlayer.h>
 #include <openrct2/scenes/title/TitleSequenceRender.h>
 #include <openrct2/ui/UiContext.h>
@@ -351,38 +351,37 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                         if (etd.audioCodecContext && etd.swrContext && etd.audioFifo && !activeAudioBuf.empty())
                         {
                             const uint8_t* inData[1] = { activeAudioBuf.data() };
-                            int inSamples = static_cast<int>(activeAudioBuf.size() / 4); // 4 bytes per stereo sample (2x int16_t)
+                            int inSamples = static_cast<int>(
+                                activeAudioBuf.size() / 4); // 4 bytes per stereo sample (2x int16_t)
 
                             if (inSamples > 0)
                             {
                                 int dstNbSamples = av_rescale_rnd(
-                                    swr_get_delay(etd.swrContext, 22050) + inSamples, etd.audioCodecContext->sample_rate,
-                                    22050, AV_ROUND_UP);
+                                    swr_get_delay(etd.swrContext, 22050) + inSamples, etd.audioCodecContext->sample_rate, 22050,
+                                    AV_ROUND_UP);
 
                                 if (dstNbSamples > 0)
                                 {
                                     uint8_t** resampledData = nullptr;
                                     int resampledLinesize = 0;
                                     av_samples_alloc_array_and_samples(
-                                        &resampledData,
-                                        &resampledLinesize,
-                                        etd.audioCodecContext->ch_layout.nb_channels,
-                                        dstNbSamples,
-                                        etd.audioCodecContext->sample_fmt,
-                                        0);
+                                        &resampledData, &resampledLinesize, etd.audioCodecContext->ch_layout.nb_channels,
+                                        dstNbSamples, etd.audioCodecContext->sample_fmt, 0);
 
-                                    int converted = swr_convert(
-                                        etd.swrContext, resampledData, dstNbSamples, inData, inSamples);
+                                    int converted = swr_convert(etd.swrContext, resampledData, dstNbSamples, inData, inSamples);
 
                                     if (converted > 0)
                                     {
-                                        av_audio_fifo_realloc(
-                                            etd.audioFifo,
-                                            av_audio_fifo_size(etd.audioFifo) + converted);
-                                        av_audio_fifo_write(
-                                            etd.audioFifo,
-                                            reinterpret_cast<void**>(resampledData),
-                                            converted);
+                                        if (av_audio_fifo_realloc(etd.audioFifo, av_audio_fifo_size(etd.audioFifo) + converted)
+                                            < 0)
+                                        {
+                                            LOG_ERROR("Failed to reallocate audio FIFO");
+                                        }
+                                        else
+                                        {
+                                            av_audio_fifo_write(
+                                                etd.audioFifo, reinterpret_cast<void**>(resampledData), converted);
+                                        }
                                     }
 
                                     if (resampledData)
@@ -404,10 +403,8 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                                 av_frame_make_writable(etd.audioFrame);
                                 etd.audioFrame->nb_samples = frameSize;
 
-                                if (av_audio_fifo_read(
-                                        etd.audioFifo,
-                                        reinterpret_cast<void**>(etd.audioFrame->data),
-                                        frameSize) == frameSize)
+                                if (av_audio_fifo_read(etd.audioFifo, reinterpret_cast<void**>(etd.audioFrame->data), frameSize)
+                                    == frameSize)
                                 {
                                     etd.audioFrame->pts = etd.nextAudioPts;
                                     etd.nextAudioPts += frameSize;
@@ -526,30 +523,26 @@ public:
                 int delay = swr_get_delay(_swrContext, 22050);
                 if (delay > 0)
                 {
-                    int dstNbSamples = av_rescale_rnd(
-                        delay, _audioCodecContext->sample_rate, 22050, AV_ROUND_UP);
+                    int dstNbSamples = av_rescale_rnd(delay, _audioCodecContext->sample_rate, 22050, AV_ROUND_UP);
                     if (dstNbSamples > 0)
                     {
                         uint8_t** resampledData = nullptr;
                         int resampledLinesize = 0;
                         av_samples_alloc_array_and_samples(
-                            &resampledData,
-                            &resampledLinesize,
-                            _audioCodecContext->ch_layout.nb_channels,
-                            dstNbSamples,
-                            _audioCodecContext->sample_fmt,
-                            0);
+                            &resampledData, &resampledLinesize, _audioCodecContext->ch_layout.nb_channels, dstNbSamples,
+                            _audioCodecContext->sample_fmt, 0);
 
                         int converted = swr_convert(_swrContext, resampledData, dstNbSamples, nullptr, 0);
                         if (converted > 0)
                         {
-                            av_audio_fifo_realloc(
-                                _audioFifo,
-                                av_audio_fifo_size(_audioFifo) + converted);
-                            av_audio_fifo_write(
-                                _audioFifo,
-                                reinterpret_cast<void**>(resampledData),
-                                converted);
+                            if (av_audio_fifo_realloc(_audioFifo, av_audio_fifo_size(_audioFifo) + converted) < 0)
+                            {
+                                LOG_ERROR("Failed to reallocate audio FIFO");
+                            }
+                            else
+                            {
+                                av_audio_fifo_write(_audioFifo, reinterpret_cast<void**>(resampledData), converted);
+                            }
                         }
 
                         if (resampledData)
@@ -578,24 +571,15 @@ public:
                         // Encoder requires fixed frame size, pad remaining frame with silence
                         _audioFrame->nb_samples = frameSize;
                         av_samples_set_silence(
-                            _audioFrame->data,
-                            0,
-                            frameSize,
-                            _audioCodecContext->ch_layout.nb_channels,
+                            _audioFrame->data, 0, frameSize, _audioCodecContext->ch_layout.nb_channels,
                             _audioCodecContext->sample_fmt);
 
-                        av_audio_fifo_read(
-                            _audioFifo,
-                            reinterpret_cast<void**>(_audioFrame->data),
-                            samplesToRead);
+                        av_audio_fifo_read(_audioFifo, reinterpret_cast<void**>(_audioFrame->data), samplesToRead);
                     }
                     else
                     {
                         _audioFrame->nb_samples = samplesToRead;
-                        av_audio_fifo_read(
-                            _audioFifo,
-                            reinterpret_cast<void**>(_audioFrame->data),
-                            samplesToRead);
+                        av_audio_fifo_read(_audioFifo, reinterpret_cast<void**>(_audioFrame->data), samplesToRead);
                     }
 
                     _audioFrame->pts = etd.nextAudioPts;
@@ -904,14 +888,14 @@ private:
         _codecContext->time_base = _videoStream->time_base;
         _codecContext->pix_fmt = _yuv444 ? AV_PIX_FMT_YUV444P : AV_PIX_FMT_YUV420P;
 
-#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(62, 28, 100)
+    #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(62, 28, 100)
         const void* supportedPixelFormatConfigs = nullptr;
         avcodec_get_supported_config(
             _codecContext, encoder, AV_CODEC_CONFIG_PIX_FORMAT, 0, &supportedPixelFormatConfigs, nullptr);
         const auto* pixelFormats = static_cast<const enum AVPixelFormat*>(supportedPixelFormatConfigs);
-#else
+    #else
         const enum AVPixelFormat* pixelFormats = encoder->pix_fmts;
-#endif
+    #endif
         if (pixelFormats != nullptr)
         {
             bool supported = false;
@@ -1147,14 +1131,14 @@ private:
 
         // Configure audio codec context
         _audioCodecContext->sample_rate = 44100;
-#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(62, 28, 100)
+    #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(62, 28, 100)
         const void* supportedSampleRateConfigs = nullptr;
         avcodec_get_supported_config(
             _audioCodecContext, audioEncoder, AV_CODEC_CONFIG_SAMPLE_RATE, 0, &supportedSampleRateConfigs, nullptr);
         const auto* supportedSampleRates = static_cast<const int*>(supportedSampleRateConfigs);
-#else
+    #else
         const int* supportedSampleRates = audioEncoder->supported_samplerates;
-#endif
+    #endif
         if (supportedSampleRates)
         {
             bool rateSupported = false;
@@ -1178,14 +1162,14 @@ private:
 
         // Select sample format
         enum AVSampleFormat sampleFmt = AV_SAMPLE_FMT_S16;
-#if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(62, 28, 100)
+    #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(62, 28, 100)
         const void* supportedSampleFormatConfigs = nullptr;
         avcodec_get_supported_config(
             _audioCodecContext, audioEncoder, AV_CODEC_CONFIG_SAMPLE_FORMAT, 0, &supportedSampleFormatConfigs, nullptr);
         const auto* sampleFormats = static_cast<const enum AVSampleFormat*>(supportedSampleFormatConfigs);
-#else
+    #else
         const enum AVSampleFormat* sampleFormats = audioEncoder->sample_fmts;
-#endif
+    #endif
         if (sampleFormats)
         {
             bool fmtSupported = false;
@@ -1202,7 +1186,8 @@ private:
             {
                 for (const enum AVSampleFormat* p = sampleFormats; *p != AV_SAMPLE_FMT_NONE; p++)
                 {
-                    if (*p == AV_SAMPLE_FMT_S16P || *p == AV_SAMPLE_FMT_FLT || *p == AV_SAMPLE_FMT_FLTP || *p == AV_SAMPLE_FMT_S32)
+                    if (*p == AV_SAMPLE_FMT_S16P || *p == AV_SAMPLE_FMT_FLT || *p == AV_SAMPLE_FMT_FLTP
+                        || *p == AV_SAMPLE_FMT_S32)
                     {
                         fmtSupported = true;
                         sampleFmt = *p;
@@ -1247,15 +1232,8 @@ private:
         // Setup resampler from OpenRCT2 mixer (22050Hz S16 Stereo) to codec target
         AVChannelLayout srcLayout = AV_CHANNEL_LAYOUT_STEREO;
         swr_alloc_set_opts2(
-            &_swrContext,
-            &_audioCodecContext->ch_layout,
-            _audioCodecContext->sample_fmt,
-            _audioCodecContext->sample_rate,
-            &srcLayout,
-            AV_SAMPLE_FMT_S16,
-            22050,
-            0,
-            nullptr);
+            &_swrContext, &_audioCodecContext->ch_layout, _audioCodecContext->sample_fmt, _audioCodecContext->sample_rate,
+            &srcLayout, AV_SAMPLE_FMT_S16, 22050, 0, nullptr);
 
         if (!_swrContext || swr_init(_swrContext) < 0)
         {
@@ -1286,7 +1264,8 @@ private:
         }
 
         int initialFifoSize = _audioCodecContext->frame_size > 0 ? _audioCodecContext->frame_size * 2 : 8192;
-        _audioFifo = av_audio_fifo_alloc(_audioCodecContext->sample_fmt, _audioCodecContext->ch_layout.nb_channels, initialFifoSize);
+        _audioFifo = av_audio_fifo_alloc(
+            _audioCodecContext->sample_fmt, _audioCodecContext->ch_layout.nb_channels, initialFifoSize);
         if (!_audioFifo)
         {
             LOG_ERROR("Could not allocate audio FIFO buffer");

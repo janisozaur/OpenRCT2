@@ -15,15 +15,25 @@ namespace OpenRCT2::Audio
     class DummyAudioMixer final : public IAudioMixer
     {
     public:
-        void Init(const char* /* device */) override {}
-        void Close() override {}
-        void Lock() override {}
-        void Unlock() override {}
+        void Init(const char* /* device */) override
+        {
+        }
+        void Close() override
+        {
+        }
+        void Lock() override
+        {
+        }
+        void Unlock() override
+        {
+        }
         std::shared_ptr<IAudioChannel> Play(IAudioSource* /* source */, int32_t /* loop */, bool /* deleteondone */) override
         {
             return nullptr;
         }
-        void SetVolume(float /* volume */) override {}
+        void SetVolume(float /* volume */) override
+        {
+        }
         void GetNextAudioChunk(uint8_t* dst, size_t length) override
         {
             std::fill_n(dst, length, 0);
