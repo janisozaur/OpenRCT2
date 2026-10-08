@@ -288,5 +288,5 @@ target_link_libraries(${PROJECT_NAME}
     $<$<BOOL:${ENABLE_VIDEO_RECORDING}>:PkgConfig::AVUTIL>
     $<$<BOOL:${ENABLE_VIDEO_RECORDING}>:PkgConfig::SWSCALE>
     $<$<BOOL:${ENABLE_VIDEO_RECORDING}>:PkgConfig::SWRESAMPLE>
-    yuv
+    $<$<BOOL:${ENABLE_VIDEO_RECORDING}>:yuv>
 )
