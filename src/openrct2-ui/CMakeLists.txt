@@ -28,7 +28,8 @@ else ()
     PKG_CHECK_MODULES(AVFORMAT IMPORTED_TARGET libavformat)
     PKG_CHECK_MODULES(AVUTIL IMPORTED_TARGET libavutil)
     PKG_CHECK_MODULES(SWSCALE IMPORTED_TARGET libswscale)
-    if (AVCODEC_FOUND AND AVFORMAT_FOUND AND AVUTIL_FOUND AND SWSCALE_FOUND)
+    PKG_CHECK_MODULES(SWRESAMPLE IMPORTED_TARGET libswresample)
+    if (AVCODEC_FOUND AND AVFORMAT_FOUND AND AVUTIL_FOUND AND SWSCALE_FOUND AND SWRESAMPLE_FOUND)
         set(ENABLE_VIDEO_RECORDING ON)
     endif ()
 endif ()
@@ -109,7 +110,8 @@ target_include_directories(openrct2 PRIVATE "${CMAKE_CURRENT_LIST_DIR}/.."
                                               ${AVCODEC_INCLUDE_DIRS}
                                               ${AVFORMAT_INCLUDE_DIRS}
                                               ${AVUTIL_INCLUDE_DIRS}
-                                              ${SWSCALE_INCLUDE_DIRS})
+                                              ${SWSCALE_INCLUDE_DIRS}
+                                              ${SWRESAMPLE_INCLUDE_DIRS})
 target_include_directories(openrct2 SYSTEM PRIVATE ${SDL2_INCLUDE_DIRS}
                                                      "${CMAKE_CURRENT_LIST_DIR}/../thirdparty")
 
@@ -285,5 +287,6 @@ target_link_libraries(${PROJECT_NAME}
     $<$<BOOL:${ENABLE_VIDEO_RECORDING}>:PkgConfig::AVFORMAT>
     $<$<BOOL:${ENABLE_VIDEO_RECORDING}>:PkgConfig::AVUTIL>
     $<$<BOOL:${ENABLE_VIDEO_RECORDING}>:PkgConfig::SWSCALE>
+    $<$<BOOL:${ENABLE_VIDEO_RECORDING}>:PkgConfig::SWRESAMPLE>
     yuv
 )
