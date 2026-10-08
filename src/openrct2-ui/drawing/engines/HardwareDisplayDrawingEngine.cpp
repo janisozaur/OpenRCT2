@@ -958,6 +958,8 @@ private:
 
         avcodec_parameters_from_context(_videoStream->codecpar, _codecContext);
 
+        InitializeAudioEncoding();
+
         if (!(_formatContext->oformat->flags & AVFMT_NOFILE))
         {
             if (avio_open(&_formatContext->pb, filename.c_str(), AVIO_FLAG_WRITE) < 0)
@@ -988,8 +990,6 @@ private:
         etd.codecContext = _codecContext;
         etd.videoStream = _videoStream;
         etd.frame = _frame;
-
-        InitializeAudioEncoding();
 
         _videoInitialized = true;
 #endif
