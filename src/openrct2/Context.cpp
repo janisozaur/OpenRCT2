@@ -72,7 +72,6 @@
 #include "scenes/SceneManager.h"
 #include "scenes/editor/EditorScene.h"
 #include "scenes/preloader/PreloaderScene.h"
-#include "scenes/title/TitleSequenceManager.h"
 #include "scenes/title/TitleScene.h"
 #include "scenes/title/TitleSequence.h"
 #include "scenes/title/TitleSequenceManager.h"
