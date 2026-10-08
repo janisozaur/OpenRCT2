@@ -45,7 +45,7 @@ extern "C" {
     #include <libavutil/opt.h>
     #include <libswscale/swscale.h>
 }
-#include <ctime>
+    #include <ctime>
 #endif
 #ifdef _WIN32
     #include <direct.h>
