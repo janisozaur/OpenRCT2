@@ -16,8 +16,10 @@
 #include <cmath>
 #include <condition_variable>
 #include <cstring>
-#include <libyuv.h>
-#include <libyuv/convert_from_argb.h>
+#ifdef ENABLE_VIDEO_RECORDING
+    #include <libyuv.h>
+    #include <libyuv/convert_from_argb.h>
+#endif
 #include <memory>
 #include <mutex>
 #include <openrct2/Diagnostic.h>
@@ -311,6 +313,7 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                     // Scale the surface
                     if (SDL_BlitScaled(tempSurface, nullptr, scaledSurface, nullptr) == 0)
                     {
+#ifdef ENABLE_VIDEO_RECORDING
                         auto function = libyuv::ARGBToI420;
                         if (etd.yuv444)
                         {
@@ -318,16 +321,10 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                         }
                         // Convert to YUV for encoding
                         function(
-                            static_cast<uint8_t*>(scaledSurface->pixels), scaledSurface->pitch,
-#ifdef ENABLE_VIDEO_RECORDING
-                            etd.frame->data[0], etd.frame->linesize[0], etd.frame->data[1], etd.frame->linesize[1],
-                            etd.frame->data[2], etd.frame->linesize[2],
-#else
-                            nullptr, 0, nullptr, 0, nullptr, 0,
-#endif
-                            scaledWidth, scaledHeight);
+                            static_cast<uint8_t*>(scaledSurface->pixels), scaledSurface->pitch, etd.frame->data[0],
+                            etd.frame->linesize[0], etd.frame->data[1], etd.frame->linesize[1], etd.frame->data[2],
+                            etd.frame->linesize[2], scaledWidth, scaledHeight);
 
-#ifdef ENABLE_VIDEO_RECORDING
                         etd.frame->pts = etd.frameCount++;
                         if (etd.forceKeyframe.exchange(false))
                         {
@@ -1439,6 +1436,7 @@ private:
                         SDL_UnlockTexture(_screenTexture);
 
                         // Fetch audio chunk for this video frame into write audio buffer
+#ifdef ENABLE_VIDEO_RECORDING
                         if (_audioCodecContext != nullptr)
                         {
                             auto& writeAudioBuf = (writeBuffer == 0) ? etd.audioBufferA : etd.audioBufferB;
@@ -1460,6 +1458,7 @@ private:
                                 std::fill(writeAudioBuf.begin(), writeAudioBuf.end(), 0);
                             }
                         }
+#endif
 
                         // Swap buffers atomically
                         etd.activeBuffer = writeBuffer;

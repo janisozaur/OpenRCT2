@@ -30,7 +30,6 @@
 #include <time.h>
 
 #ifdef _WIN32
-static constexpr std::array _prohibitedCharacters = { '<', '>', '*', '\\', ':', '|', '?', '"', '/' };
 #else
 #endif
 
