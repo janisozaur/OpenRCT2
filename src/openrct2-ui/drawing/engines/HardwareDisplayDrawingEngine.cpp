@@ -22,6 +22,8 @@
 #include <mutex>
 #include <openrct2/Diagnostic.h>
 #include <openrct2/Game.h>
+#include <openrct2/audio/AudioContext.h>
+#include <openrct2/audio/AudioMixer.h>
 #include <openrct2/config/Config.h>
 #include <openrct2/core/Guard.hpp>
 #include <openrct2/drawing/IDrawingEngine.h>
@@ -30,8 +32,6 @@
 #include <openrct2/interface/Window.h>
 #include <openrct2/paint/Paint.h>
 #include <openrct2/scenes/title/TitleScene.h>
-#include <openrct2/audio/AudioContext.h>
-#include <openrct2/audio/AudioMixer.h>
 #include <openrct2/scenes/title/TitleSequencePlayer.h>
 #include <openrct2/scenes/title/TitleSequenceRender.h>
 #include <openrct2/ui/UiContext.h>
@@ -349,7 +349,8 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                         if (etd.audioCodecContext && etd.swrContext && !activeAudioBuf.empty())
                         {
                             const uint8_t* inData[1] = { activeAudioBuf.data() };
-                            int inSamples = static_cast<int>(activeAudioBuf.size() / 4); // 4 bytes per stereo sample (2x int16_t)
+                            int inSamples = static_cast<int>(
+                                activeAudioBuf.size() / 4); // 4 bytes per stereo sample (2x int16_t)
 
                             int frameSize = etd.audioCodecContext->frame_size;
                             if (frameSize <= 0)
@@ -360,8 +361,8 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                             while (inSamples > 0 || swr_get_delay(etd.swrContext, 22050) >= frameSize)
                             {
                                 int dstNbSamples = av_rescale_rnd(
-                                    swr_get_delay(etd.swrContext, 22050) + inSamples, etd.audioCodecContext->sample_rate,
-                                    22050, AV_ROUND_UP);
+                                    swr_get_delay(etd.swrContext, 22050) + inSamples, etd.audioCodecContext->sample_rate, 22050,
+                                    AV_ROUND_UP);
 
                                 if (dstNbSamples < frameSize)
                                 {
@@ -379,8 +380,7 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
 
                                 uint8_t** outData = etd.audioFrame->data;
                                 int converted = swr_convert(
-                                    etd.swrContext, outData, frameSize,
-                                    inSamples > 0 ? inData : nullptr, inSamples);
+                                    etd.swrContext, outData, frameSize, inSamples > 0 ? inData : nullptr, inSamples);
 
                                 inSamples = 0; // All input consumed by swr_convert
 
@@ -1091,7 +1091,8 @@ private:
             {
                 for (const enum AVSampleFormat* p = audioEncoder->sample_fmts; *p != AV_SAMPLE_FMT_NONE; p++)
                 {
-                    if (*p == AV_SAMPLE_FMT_S16P || *p == AV_SAMPLE_FMT_FLT || *p == AV_SAMPLE_FMT_FLTP || *p == AV_SAMPLE_FMT_S32)
+                    if (*p == AV_SAMPLE_FMT_S16P || *p == AV_SAMPLE_FMT_FLT || *p == AV_SAMPLE_FMT_FLTP
+                        || *p == AV_SAMPLE_FMT_S32)
                     {
                         fmtSupported = true;
                         sampleFmt = *p;
@@ -1136,15 +1137,8 @@ private:
         // Setup resampler from OpenRCT2 mixer (22050Hz S16 Stereo) to codec target
         AVChannelLayout srcLayout = AV_CHANNEL_LAYOUT_STEREO;
         swr_alloc_set_opts2(
-            &_swrContext,
-            &_audioCodecContext->ch_layout,
-            _audioCodecContext->sample_fmt,
-            _audioCodecContext->sample_rate,
-            &srcLayout,
-            AV_SAMPLE_FMT_S16,
-            22050,
-            0,
-            nullptr);
+            &_swrContext, &_audioCodecContext->ch_layout, _audioCodecContext->sample_fmt, _audioCodecContext->sample_rate,
+            &srcLayout, AV_SAMPLE_FMT_S16, 22050, 0, nullptr);
 
         if (!_swrContext || swr_init(_swrContext) < 0)
         {
