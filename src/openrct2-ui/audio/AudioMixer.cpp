@@ -123,6 +123,11 @@ const AudioFormat& AudioMixer::GetFormat() const
     return _outputFormat;
 }
 
+int32_t AudioMixer::GetOutputSampleRate() const
+{
+    return _outputFormat.freq;
+}
+
 // TODO: investigate replacing this with OpenAL (#26035)
 void AudioMixer::GetNextAudioChunk(uint8_t* dst, size_t length)
 {
@@ -154,6 +159,18 @@ void AudioMixer::GetNextAudioChunk(uint8_t* dst, size_t length)
             it++;
         }
     }
+
+    if (_audioCaptureCallback)
+    {
+        _audioCaptureCallback(dst, length);
+    }
+}
+
+void AudioMixer::SetAudioCaptureCallback(std::function<void(const uint8_t*, size_t)> callback)
+{
+    Lock();
+    _audioCaptureCallback = std::move(callback);
+    Unlock();
 }
 
 // TODO: investigate replacing this with OpenAL (#26035)

@@ -38,6 +38,13 @@ namespace OpenRCT2::Audio
         {
             std::fill_n(dst, length, 0);
         }
+        int32_t GetOutputSampleRate() const override
+        {
+            return 22050;
+        }
+        void SetAudioCaptureCallback(std::function<void(const uint8_t*, size_t)> /* callback */) override
+        {
+        }
     };
 
     class DummyAudioContext final : public IAudioContext

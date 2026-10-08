@@ -253,6 +253,9 @@ struct EncodeThreadData
     AVAudioFifo* audioFifo{};
     int64_t nextAudioPts{ 0 };
     int64_t audioSamplesWritten{ 0 };
+    std::mutex audioCaptureMutex{};
+    std::vector<uint8_t> audioCaptureBuffer{};
+    std::atomic<int32_t> audioSampleRate{ 22050 };
     std::atomic<bool> forceKeyframe{ false };
     int frameCount{ 0 };
 #endif
@@ -268,14 +271,87 @@ struct EncodeThreadData
 
     // Which buffer is currently being used by the encoding thread
     std::atomic<int> activeBuffer{ 0 }; // 0 = A, 1 = B
-
-    // Double buffering for audio: A/B audio buffers
-    std::vector<uint8_t> audioBufferA{};
-    std::vector<uint8_t> audioBufferB{};
 };
+
+#ifdef ENABLE_VIDEO_RECORDING
+static void EncodeAudioSamples(EncodeThreadData& etd, const uint8_t* audioData, size_t audioBytes)
+{
+    if (!etd.audioCodecContext || !etd.swrContext || !etd.audioFifo || !etd.audioFrame || audioBytes == 0)
+    {
+        return;
+    }
+
+    const int32_t inputSampleRate = etd.audioSampleRate.load(std::memory_order_relaxed);
+    const uint8_t* inputData[] = { audioData };
+    const int inputSamples = static_cast<int>(audioBytes / 4);
+    const int outputSamples = static_cast<int>(av_rescale_rnd(
+        swr_get_delay(etd.swrContext, inputSampleRate) + inputSamples, etd.audioCodecContext->sample_rate, inputSampleRate,
+        AV_ROUND_UP));
+    if (outputSamples <= 0)
+    {
+        return;
+    }
+
+    uint8_t** resampledData = nullptr;
+    int resampledLinesize = 0;
+    if (av_samples_alloc_array_and_samples(
+            &resampledData, &resampledLinesize, etd.audioCodecContext->ch_layout.nb_channels, outputSamples,
+            etd.audioCodecContext->sample_fmt, 0)
+        < 0)
+    {
+        LOG_ERROR("Failed to allocate resampled audio buffer");
+        return;
+    }
+
+    const int converted = swr_convert(etd.swrContext, resampledData, outputSamples, inputData, inputSamples);
+    if (converted > 0)
+    {
+        const int fifoSize = av_audio_fifo_size(etd.audioFifo);
+        if (av_audio_fifo_realloc(etd.audioFifo, fifoSize + converted) < 0)
+        {
+            LOG_ERROR("Failed to reallocate audio FIFO");
+        }
+        else if (av_audio_fifo_write(etd.audioFifo, reinterpret_cast<void**>(resampledData), converted) != converted)
+        {
+            LOG_ERROR("Failed to write resampled audio to FIFO");
+        }
+    }
+
+    av_freep(&resampledData[0]);
+    av_freep(&resampledData);
+
+    int frameSize = etd.audioCodecContext->frame_size;
+    if (frameSize <= 0)
+    {
+        frameSize = av_audio_fifo_size(etd.audioFifo);
+    }
+
+    while (frameSize > 0 && av_audio_fifo_size(etd.audioFifo) >= frameSize)
+    {
+        if (av_frame_make_writable(etd.audioFrame) < 0)
+        {
+            LOG_ERROR("Failed to make audio frame writable");
+            return;
+        }
+        etd.audioFrame->nb_samples = frameSize;
+        if (av_audio_fifo_read(etd.audioFifo, reinterpret_cast<void**>(etd.audioFrame->data), frameSize) != frameSize)
+        {
+            LOG_ERROR("Failed to read audio samples from FIFO");
+            return;
+        }
+
+        etd.audioFrame->pts = etd.nextAudioPts;
+        etd.nextAudioPts += frameSize;
+        encode_frame(etd.audioCodecContext, etd.audioFrame, etd.formatContext, etd.audioStream);
+    }
+}
+#endif
 
 static void EncodeThreadFunc(EncodeThreadData& etd)
 {
+#ifdef ENABLE_VIDEO_RECORDING
+    std::vector<uint8_t> capturedAudio;
+#endif
     while (true)
     {
         std::unique_lock lock(*etd.SurfaceMutex);
@@ -344,75 +420,12 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                             fflush(stdout);
                         }
 
-                        // Get current active audio buffer for encoding thread
-                        const auto& activeAudioBuf = (etd.activeBuffer == 0) ? etd.audioBufferA : etd.audioBufferB;
-
-                        // Encode audio for this frame if audio is initialized
-                        if (etd.audioCodecContext && etd.swrContext && etd.audioFifo && !activeAudioBuf.empty())
                         {
-                            const uint8_t* inData[1] = { activeAudioBuf.data() };
-                            int inSamples = static_cast<int>(
-                                activeAudioBuf.size() / 4); // 4 bytes per stereo sample (2x int16_t)
-
-                            if (inSamples > 0)
-                            {
-                                int dstNbSamples = av_rescale_rnd(
-                                    swr_get_delay(etd.swrContext, 22050) + inSamples, etd.audioCodecContext->sample_rate, 22050,
-                                    AV_ROUND_UP);
-
-                                if (dstNbSamples > 0)
-                                {
-                                    uint8_t** resampledData = nullptr;
-                                    int resampledLinesize = 0;
-                                    av_samples_alloc_array_and_samples(
-                                        &resampledData, &resampledLinesize, etd.audioCodecContext->ch_layout.nb_channels,
-                                        dstNbSamples, etd.audioCodecContext->sample_fmt, 0);
-
-                                    int converted = swr_convert(etd.swrContext, resampledData, dstNbSamples, inData, inSamples);
-
-                                    if (converted > 0)
-                                    {
-                                        if (av_audio_fifo_realloc(etd.audioFifo, av_audio_fifo_size(etd.audioFifo) + converted)
-                                            < 0)
-                                        {
-                                            LOG_ERROR("Failed to reallocate audio FIFO");
-                                        }
-                                        else
-                                        {
-                                            av_audio_fifo_write(
-                                                etd.audioFifo, reinterpret_cast<void**>(resampledData), converted);
-                                        }
-                                    }
-
-                                    if (resampledData)
-                                    {
-                                        av_freep(&resampledData[0]);
-                                        av_freep(&resampledData);
-                                    }
-                                }
-                            }
-
-                            int frameSize = etd.audioCodecContext->frame_size;
-                            if (frameSize <= 0)
-                            {
-                                frameSize = av_audio_fifo_size(etd.audioFifo);
-                            }
-
-                            while (frameSize > 0 && av_audio_fifo_size(etd.audioFifo) >= frameSize)
-                            {
-                                av_frame_make_writable(etd.audioFrame);
-                                etd.audioFrame->nb_samples = frameSize;
-
-                                if (av_audio_fifo_read(etd.audioFifo, reinterpret_cast<void**>(etd.audioFrame->data), frameSize)
-                                    == frameSize)
-                                {
-                                    etd.audioFrame->pts = etd.nextAudioPts;
-                                    etd.nextAudioPts += frameSize;
-
-                                    encode_frame(etd.audioCodecContext, etd.audioFrame, etd.formatContext, etd.audioStream);
-                                }
-                            }
+                            std::lock_guard audioLock(etd.audioCaptureMutex);
+                            capturedAudio.swap(etd.audioCaptureBuffer);
                         }
+                        EncodeAudioSamples(etd, capturedAudio.data(), capturedAudio.size());
+                        capturedAudio.clear();
 #endif
                     }
                     else
@@ -460,7 +473,8 @@ private:
     AVFrame* _audioFrame = nullptr;
     SwrContext* _swrContext = nullptr;
     AVAudioFifo* _audioFifo = nullptr;
-    double _audioSampleAcc = 0.0;
+    OpenRCT2::Audio::IAudioMixer* _audioMixer = nullptr;
+    bool _audioCaptureRegistered = false;
 #endif
 
     std::thread EncodeThread{};
@@ -491,6 +505,14 @@ public:
 
     ~HardwareDisplayDrawingEngine() override
     {
+#ifdef ENABLE_VIDEO_RECORDING
+        if (_audioCaptureRegistered && _audioMixer != nullptr)
+        {
+            _audioMixer->SetAudioCaptureCallback({});
+            _audioCaptureRegistered = false;
+            _audioMixer = nullptr;
+        }
+#endif
         gShouldRender = false;
         {
             std::unique_lock lock(SurfaceMutex);
@@ -498,6 +520,15 @@ public:
             NotifyCV.notify_one();
         }
         EncodeThread.join();
+
+#ifdef ENABLE_VIDEO_RECORDING
+        std::vector<uint8_t> capturedAudio;
+        {
+            std::lock_guard audioLock(etd.audioCaptureMutex);
+            capturedAudio.swap(etd.audioCaptureBuffer);
+        }
+        EncodeAudioSamples(etd, capturedAudio.data(), capturedAudio.size());
+#endif
 
         if (_screenTexture != nullptr)
         {
@@ -520,10 +551,12 @@ public:
             if (_audioCodecContext && _swrContext && _audioFrame && _audioFifo)
             {
                 // Drain any remaining resampled audio samples from swrContext into _audioFifo
-                int delay = swr_get_delay(_swrContext, 22050);
+                const int32_t inputSampleRate = etd.audioSampleRate.load(std::memory_order_relaxed);
+                int delay = swr_get_delay(_swrContext, inputSampleRate);
                 if (delay > 0)
                 {
-                    int dstNbSamples = av_rescale_rnd(delay, _audioCodecContext->sample_rate, 22050, AV_ROUND_UP);
+                    int dstNbSamples =
+                        av_rescale_rnd(delay, _audioCodecContext->sample_rate, inputSampleRate, AV_ROUND_UP);
                     if (dstNbSamples > 0)
                     {
                         uint8_t** resampledData = nullptr;
@@ -1029,6 +1062,7 @@ private:
 
         avcodec_parameters_from_context(_videoStream->codecpar, _codecContext);
 
+        _audioMixer = GetContext()->GetAudioContext().GetMixer();
         InitializeAudioEncoding();
 
         if (!(_formatContext->oformat->flags & AVFMT_NOFILE))
@@ -1063,6 +1097,22 @@ private:
         etd.frame = _frame;
 
         _videoInitialized = true;
+        if (_audioCodecContext != nullptr)
+        {
+            if (_audioMixer != nullptr)
+            {
+                etd.audioCaptureBuffer.reserve(
+                    static_cast<size_t>(etd.audioSampleRate.load(std::memory_order_relaxed)) * 4);
+                _audioMixer->SetAudioCaptureCallback([this](const uint8_t* data, size_t length) {
+                    std::lock_guard audioLock(etd.audioCaptureMutex);
+                    if (length > 0)
+                    {
+                        etd.audioCaptureBuffer.insert(etd.audioCaptureBuffer.end(), data, data + length);
+                    }
+                });
+                _audioCaptureRegistered = true;
+            }
+        }
 #endif
     }
 
@@ -1229,11 +1279,18 @@ private:
 
         avcodec_parameters_from_context(_audioStream->codecpar, _audioCodecContext);
 
-        // Setup resampler from OpenRCT2 mixer (22050Hz S16 Stereo) to codec target
+        int32_t inputSampleRate = _audioMixer != nullptr ? _audioMixer->GetOutputSampleRate() : 22050;
+        if (inputSampleRate <= 0)
+        {
+            inputSampleRate = 22050;
+        }
+        etd.audioSampleRate.store(inputSampleRate, std::memory_order_relaxed);
+
+        // Setup resampler from OpenRCT2 mixer (S16 Stereo) to codec target
         AVChannelLayout srcLayout = AV_CHANNEL_LAYOUT_STEREO;
         swr_alloc_set_opts2(
             &_swrContext, &_audioCodecContext->ch_layout, _audioCodecContext->sample_fmt, _audioCodecContext->sample_rate,
-            &srcLayout, AV_SAMPLE_FMT_S16, 22050, 0, nullptr);
+            &srcLayout, AV_SAMPLE_FMT_S16, inputSampleRate, 0, nullptr);
 
         if (!_swrContext || swr_init(_swrContext) < 0)
         {
@@ -1438,34 +1495,9 @@ private:
 
                         SDL_UnlockTexture(_screenTexture);
 
-                        // Fetch audio chunk for this video frame into write audio buffer
-                        if (_audioCodecContext != nullptr)
-                        {
-                            auto& writeAudioBuf = (writeBuffer == 0) ? etd.audioBufferA : etd.audioBufferB;
-
-                            _audioSampleAcc += 22050.0 / static_cast<double>(FPS);
-                            int samplesToFetch = static_cast<int>(_audioSampleAcc);
-                            _audioSampleAcc -= samplesToFetch;
-
-                            size_t audioBytes = samplesToFetch * 4; // 2 channels * 2 bytes per S16 sample
-                            writeAudioBuf.resize(audioBytes);
-
-                            auto* mixer = GetContext()->GetAudioContext().GetMixer();
-                            if (mixer != nullptr)
-                            {
-                                mixer->GetNextAudioChunk(writeAudioBuf.data(), audioBytes);
-                            }
-                            else
-                            {
-                                std::fill(writeAudioBuf.begin(), writeAudioBuf.end(), 0);
-                            }
-                        }
-
                         // Swap buffers atomically
-                        etd.activeBuffer = writeBuffer;
-
-                        // Notify encoding thread
                         std::unique_lock lock(SurfaceMutex);
+                        etd.activeBuffer = writeBuffer;
                         Ready = 1;
                         NotifyCV.notify_one();
                     }

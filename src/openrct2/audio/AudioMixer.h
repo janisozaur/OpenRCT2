@@ -9,7 +9,9 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
 
 namespace OpenRCT2::Audio
@@ -44,5 +46,7 @@ namespace OpenRCT2::Audio
         virtual std::shared_ptr<IAudioChannel> Play(IAudioSource* source, int32_t loop, bool deleteondone) = 0;
         virtual void SetVolume(float volume) = 0;
         virtual void GetNextAudioChunk(uint8_t* dst, size_t length) = 0;
+        virtual int32_t GetOutputSampleRate() const = 0;
+        virtual void SetAudioCaptureCallback(std::function<void(const uint8_t*, size_t)> callback) = 0;
     };
 } // namespace OpenRCT2::Audio

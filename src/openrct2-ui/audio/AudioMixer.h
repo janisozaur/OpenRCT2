@@ -15,6 +15,7 @@
 
 #include <SDL_audio.h>
 #include <cstdint>
+#include <functional>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -40,6 +41,7 @@ namespace OpenRCT2::Audio
         float _adjustMusicVolume = 0.0f;
         uint8_t _settingSoundVolume = 0xFF;
         uint8_t _settingMusicVolume = 0xFF;
+        std::function<void(const uint8_t*, size_t)> _audioCaptureCallback;
 
         std::vector<uint8_t> _channelBuffer;
         std::vector<uint8_t> _convertBuffer;
@@ -59,6 +61,8 @@ namespace OpenRCT2::Audio
 
         const AudioFormat& GetFormat() const;
         void GetNextAudioChunk(uint8_t* dst, size_t length) override;
+        int32_t GetOutputSampleRate() const override;
+        void SetAudioCaptureCallback(std::function<void(const uint8_t*, size_t)> callback) override;
 
     private:
         void UpdateAdjustedSound();
