@@ -18,6 +18,7 @@
 #include <condition_variable>
 #include <cstring>
 #include <libyuv.h>
+#include <libyuv/scale.h>
 #include <libyuv/convert_from_argb.h>
 #include <memory>
 #include <mutex>
@@ -390,8 +391,12 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
 
                 if (scaledSurface != nullptr)
                 {
-                    // Scale the surface
-                    if (SDL_BlitScaled(tempSurface, nullptr, scaledSurface, nullptr) == 0)
+                    // Nearest-neighbour scale; libyuv is ~20x faster than SDL_BlitScaled here
+                    if (libyuv::ARGBScale(
+                            static_cast<const uint8_t*>(tempSurface->pixels), tempSurface->pitch, etd.width, etd.height,
+                            static_cast<uint8_t*>(scaledSurface->pixels), scaledSurface->pitch, scaledWidth, scaledHeight,
+                            libyuv::kFilterNone)
+                        == 0)
                     {
                         auto function = libyuv::ARGBToI420;
                         if (etd.yuv444)
@@ -445,7 +450,7 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                     }
                     else
                     {
-                        LOG_ERROR("SDL_BlitScaled failed: %s", SDL_GetError());
+                        LOG_ERROR("ARGBScale failed");
                     }
                     SDL_FreeSurface(scaledSurface);
                 }
