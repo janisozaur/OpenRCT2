@@ -839,6 +839,7 @@ private:
         const char* envTune = getenv("OPENRCT2_ENCODER_TUNE");
         const char* envBitrate = getenv("OPENRCT2_ENCODER_BITRATE");
         const char* envGop = getenv("OPENRCT2_ENCODER_GOP");
+        const char* envBFrames = getenv("OPENRCT2_ENCODER_BFRAMES");
         const char* envQuality = getenv("OPENRCT2_ENCODER_QUALITY");
         const char* envPass = getenv("OPENRCT2_ENCODER_PASS");
 
@@ -1020,6 +1021,18 @@ private:
         if (envGop)
         {
             _codecContext->gop_size = atoi(envGop);
+        }
+        if (envBFrames)
+        {
+            const int bFrames = std::max(0, atoi(envBFrames));
+            _codecContext->max_b_frames = bFrames;
+            // Needed so the encoder reorders output and emits valid DTS.
+            _codecContext->has_b_frames = bFrames > 0 ? 1 : 0;
+            if (bFrames >= 2 && (strstr(encoder->name, "nvenc") != nullptr))
+            {
+                // Use middle B-frames as references (supported on Turing+ GPUs); ignored if unsupported.
+                av_opt_set(_codecContext->priv_data, "b_ref_mode", "middle", 0);
+            }
         }
         if (envQuality)
         {
