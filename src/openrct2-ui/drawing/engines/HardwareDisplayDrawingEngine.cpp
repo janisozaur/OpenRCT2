@@ -13,6 +13,7 @@
 #include <SDL_render.h>
 #include <SDL_version.h>
 #include <atomic>
+#include <chrono>
 #include <cmath>
 #include <condition_variable>
 #include <cstring>
@@ -253,6 +254,10 @@ struct EncodeThreadData
     AVAudioFifo* audioFifo{};
     int64_t nextAudioPts{ 0 };
     int64_t audioSamplesWritten{ 0 };
+    std::chrono::steady_clock::time_point recordingStartTime{};
+    int64_t pixelBufferPtsA{ 0 };
+    int64_t pixelBufferPtsB{ 0 };
+    bool audioCaptureEnabled{ false };
     std::mutex audioCaptureMutex{};
     std::vector<uint8_t> audioCaptureBuffer{};
     std::atomic<int32_t> audioSampleRate{ 22050 };
@@ -351,6 +356,7 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
 {
 #ifdef ENABLE_VIDEO_RECORDING
     std::vector<uint8_t> capturedAudio;
+    int64_t lastVideoPts = -1;
 #endif
     while (true)
     {
@@ -404,20 +410,29 @@ static void EncodeThreadFunc(EncodeThreadData& etd)
                             scaledWidth, scaledHeight);
 
 #ifdef ENABLE_VIDEO_RECORDING
-                        etd.frame->pts = etd.frameCount++;
-                        if (etd.forceKeyframe.exchange(false))
+                        const int64_t sampleTimestamp =
+                            (etd.activeBuffer == 0) ? etd.pixelBufferPtsA : etd.pixelBufferPtsB;
+                        const int64_t videoPts = etd.audioCaptureEnabled
+                            ? sampleTimestamp
+                            : etd.frameCount;
+                        if (videoPts > lastVideoPts)
                         {
-                            etd.frame->pict_type = AV_PICTURE_TYPE_I;
-                        }
-                        else
-                        {
-                            etd.frame->pict_type = AV_PICTURE_TYPE_NONE;
-                        }
-                        encode_frame(etd.codecContext, etd.frame, etd.formatContext, etd.videoStream);
-                        if (etd.frameCount % 100 == 0)
-                        {
-                            printf("%d", etd.frameCount);
-                            fflush(stdout);
+                            etd.frame->pts = videoPts;
+                            if (etd.forceKeyframe.exchange(false))
+                            {
+                                etd.frame->pict_type = AV_PICTURE_TYPE_I;
+                            }
+                            else
+                            {
+                                etd.frame->pict_type = AV_PICTURE_TYPE_NONE;
+                            }
+                            encode_frame(etd.codecContext, etd.frame, etd.formatContext, etd.videoStream);
+                            lastVideoPts = videoPts;
+                            if (++etd.frameCount % 100 == 0)
+                            {
+                                printf("%d", etd.frameCount);
+                                fflush(stdout);
+                            }
                         }
 
                         {
@@ -1096,7 +1111,6 @@ private:
         etd.videoStream = _videoStream;
         etd.frame = _frame;
 
-        _videoInitialized = true;
         if (_audioCodecContext != nullptr)
         {
             if (_audioMixer != nullptr)
@@ -1110,9 +1124,12 @@ private:
                         etd.audioCaptureBuffer.insert(etd.audioCaptureBuffer.end(), data, data + length);
                     }
                 });
+                etd.audioCaptureEnabled = true;
                 _audioCaptureRegistered = true;
             }
         }
+        etd.recordingStartTime = std::chrono::steady_clock::now();
+        _videoInitialized = true;
 #endif
     }
 
@@ -1494,6 +1511,22 @@ private:
                         }
 
                         SDL_UnlockTexture(_screenTexture);
+
+#ifdef ENABLE_VIDEO_RECORDING
+                        const auto captureTime = std::chrono::steady_clock::now();
+                        const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
+                            captureTime - etd.recordingStartTime);
+                        const auto videoTimestamp =
+                            av_rescale_q(elapsed.count(), AVRational{ 1, 1000000 }, etd.codecContext->time_base);
+                        if (writeBuffer == 0)
+                        {
+                            etd.pixelBufferPtsA = videoTimestamp;
+                        }
+                        else
+                        {
+                            etd.pixelBufferPtsB = videoTimestamp;
+                        }
+#endif
 
                         // Swap buffers atomically
                         std::unique_lock lock(SurfaceMutex);
